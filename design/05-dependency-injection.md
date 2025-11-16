@@ -1,8 +1,8 @@
 # Dependency Injection
 
-HyperProse uses **FastAPI-style dependency injection** adapted to module-level scope. Type hints automatically inject values into your route.
+Hyper uses **FastAPI-style dependency injection** adapted to module-level scope. Type hints automatically inject values into your route.
 
-**Key difference from FastAPI:** Instead of function parameters, HyperProse uses **module-level type-annotated variables**. This enables the framework to inject values before your code runs, making them available throughout the module scope and in your template.
+**Key difference from FastAPI:** Instead of function parameters, Hyper uses **module-level type-annotated variables**. This enables the framework to inject values before your code runs, making them available throughout the module scope and in your template.
 
 ---
 
@@ -77,7 +77,7 @@ Use `Annotated` with `Query()` for validation:
 ```python
 # routes/search.py
 from typing import Annotated
-from hyperprose import Query
+from hyper import Query
 
 # With validation
 q: Annotated[str, Query(min_length=1, max_length=100)] = ""
@@ -106,7 +106,7 @@ Inject HTTP headers with `Header()`:
 ```python
 # routes/profile.py
 from typing import Annotated
-from hyperprose import Header
+from hyper import Header
 
 # Automatically converts user_agent → "User-Agent"
 user_agent: Annotated[str, Header()] = "Unknown"
@@ -136,7 +136,7 @@ Inject cookies with `Cookie()`:
 ```python
 # routes/dashboard.py
 from typing import Annotated
-from hyperprose import Cookie
+from hyper import Cookie
 
 session_id: Annotated[str | None, Cookie()] = None
 
@@ -159,7 +159,7 @@ Use Pydantic models for JSON request bodies:
 # routes/api/users.py
 from typing import Annotated
 from pydantic import BaseModel, EmailStr
-from hyperprose import Body
+from hyper import Body
 
 class UserCreate(BaseModel):
     name: str
@@ -190,7 +190,7 @@ Use `Form()` to extract form fields:
 ```python
 # routes/contact.py
 from typing import Annotated
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 
 if GET:
     # Show form
@@ -230,7 +230,7 @@ Use Pydantic models for structured form data:
 # routes/signup.py
 from typing import Annotated
 from pydantic import BaseModel, EmailStr
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 
 class SignupForm(BaseModel):
     username: str
@@ -267,7 +267,7 @@ Handle file uploads with `File()` and `UploadFile`:
 ```python
 # routes/upload.py
 from typing import Annotated
-from hyperprose import Request, File, UploadFile, GET, POST
+from hyper import Request, File, UploadFile, GET, POST
 
 if GET:
     t"""
@@ -298,7 +298,7 @@ Note: Use `GET` or `POST` helpers for concise syntax.
 ```python
 # routes/upload-multiple.py
 from typing import Annotated
-from hyperprose import Request, File, UploadFile, POST
+from hyper import Request, File, UploadFile, POST
 
 if POST:
     # Multiple files
@@ -321,7 +321,7 @@ Inject the full Starlette `Request` object:
 
 ```python
 # routes/debug.py
-from hyperprose import Request
+from hyper import Request
 
 request: Request
 
@@ -346,7 +346,7 @@ Inject `Response` to set headers, status codes, and cookies:
 
 ```python
 # routes/set-cookie.py
-from hyperprose import Response
+from hyper import Response
 
 response: Response
 
@@ -374,7 +374,7 @@ You can combine different injection types:
 # routes/api/posts/{post_id}.py
 from typing import Annotated
 from pydantic import BaseModel
-from hyperprose import Request, Header, Body, PUT
+from hyper import Request, Header, Body, PUT
 
 class PostUpdate(BaseModel):
     title: str
@@ -411,7 +411,7 @@ if PUT:
 
 ## Key Differences from FastAPI
 
-| Feature | FastAPI | HyperProse |
+| Feature | FastAPI | Hyper |
 |---------|---------|--------|
 | **Scope** | Function parameters | Module-level variables |
 | **When injected** | During function call | Before module execution |
@@ -451,4 +451,4 @@ The patterns translate directly - just use module-level type hints instead of fu
 
 ---
 
-**[← Previous: Fragments](04-fragments.md)** | **[Back to Index](README.md)** | **[Next: Forms →](06-forms.md)**
+**[← Previous: Templates](03-templates.md)** | **[Back to Index](README.md)** | **[Next: Forms →](06-forms.md)**

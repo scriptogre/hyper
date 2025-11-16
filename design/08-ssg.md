@@ -1,6 +1,6 @@
 # Static Site Generation (SSG)
 
-HyperProse can work as a traditional web server, a static site generator, or a hybrid of both - just like Astro!
+Hyper can work as a traditional web server, a static site generator, or a hybrid of both - just like Astro!
 
 ---
 
@@ -12,7 +12,7 @@ By default, all routes are **server-rendered on demand**. This is perfect for dy
 # routes/dashboard.py
 # No marker needed - server-rendered by default
 
-from hyperprose import Request
+from hyper import Request
 
 request: Request
 
@@ -125,8 +125,8 @@ routes/
 All routes server-rendered:
 
 ```bash
-# Using HyperProse CLI
-hyperprose dev
+# Using Hyper CLI
+hyper dev
 
 # Or use any ASGI server
 uvicorn app:app --reload
@@ -137,13 +137,13 @@ uvicorn app:app --reload
 Generates HTML for routes with `prerender=True`:
 
 ```bash
-hyperprose build
+hyper build
 ```
 
 ### Preview Production Build
 
 ```bash
-hyperprose preview
+hyper preview
 ```
 
 ---
@@ -155,7 +155,7 @@ hyperprose preview
 Build and deploy to any static host:
 
 ```bash
-hyperprose build
+hyper build
 # Upload dist/ folder to:
 # - Netlify
 # - Vercel
@@ -178,7 +178,7 @@ Deploy to any ASGI-compatible host:
 ```
 
 **For hybrid apps:**
-1. Pre-build static files: `hyperprose build`
+1. Pre-build static files: `hyper build`
 2. Deploy the app with pre-generated `dist/` folder
 3. Server serves static files from `dist/` for prerendered routes
 4. Dynamic routes continue to work server-side

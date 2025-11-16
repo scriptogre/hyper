@@ -5,9 +5,9 @@
 ## Imports
 
 ```python
-from hyperprose import (
+from hyper import (
     # Core
-    HyperProse,            # Main application class
+    Hyper,            # Main application class
 
     # Request/Response
     Request,           # Starlette Request
@@ -59,10 +59,10 @@ from hyperprose import (
 
 ---
 
-## HyperProse Class
+## Hyper Class
 
 ```python
-app = HyperProse(
+app = Hyper(
     routes_dir: str = "routes",
     static_dir: str = "static",
     debug: bool = False,
@@ -123,9 +123,9 @@ my_app/
 
 ## Comparison with Other Frameworks
 
-### HyperProse vs FastAPI
+### Hyper vs FastAPI
 
-| Feature | HyperProse | FastAPI |
+| Feature | Hyper | FastAPI |
 |---------|--------|---------|
 | **Focus** | Server-side HTML | REST APIs |
 | **Routing** | File-based | Decorator-based |
@@ -133,9 +133,9 @@ my_app/
 | **DI Style** | Module-level type hints | Function parameters |
 | **Best for** | Hypermedia apps | JSON APIs |
 
-### HyperProse vs Django
+### Hyper vs Django
 
-| Feature | HyperProse | Django |
+| Feature | Hyper | Django |
 |---------|--------|--------|
 | **Templates** | Python t-strings | Django Template Language |
 | **Routing** | File-based | urls.py config |
@@ -143,9 +143,9 @@ my_app/
 | **Admin** | None | Built-in |
 | **Best for** | Modern HTMX apps | Traditional MVC apps |
 
-### HyperProse vs Flask
+### Hyper vs Flask
 
-| Feature | HyperProse | Flask |
+| Feature | Hyper | Flask |
 |---------|--------|-------|
 | **Async** | Native (Starlette) | Optional (Quart) |
 | **Routing** | File-based | Decorator-based |
@@ -204,7 +204,7 @@ Return partials for dynamic updates:
 
 ```python
 # routes/users/{user_id}/follow.py
-from hyperprose import POST
+from hyper import POST
 
 user_id: int
 
@@ -226,7 +226,7 @@ Define layouts once, use everywhere:
 
 ```python
 # routes/_base.py
-from hyperprose import Children
+from hyper import Children
 
 children: Children
 title: str = "My App"
@@ -329,7 +329,7 @@ async def load():
 ```python
 # ✅ Correct
 from typing import Annotated
-from hyperprose import POST, Form
+from hyper import POST, Form
 
 if POST:
     name: Annotated[str, Form()]
@@ -382,7 +382,7 @@ Starlette provides:
 
 ## Resources
 
-- **HyperProse Docs:** (coming soon)
+- **Hyper Docs:** (coming soon)
 - **tdom Documentation:** https://github.com/thoughtbot/tdom
 - **Starlette Documentation:** https://www.starlette.io
 - **HTMX Documentation:** https://htmx.org
@@ -391,7 +391,7 @@ Starlette provides:
 
 ---
 
-**Happy building with HyperProse! 🚀**
+**Happy building with Hyper! 🚀**
 
 ---
 

@@ -4,13 +4,13 @@
 
 ## HTMX Integration
 
-HyperProse is built for hypermedia-driven applications and works seamlessly with HTMX.
+Hyper is built for hypermedia-driven applications and works seamlessly with HTMX.
 
 ### Detecting HTMX Requests
 
 ```python
 # routes/users/index.py
-from hyperprose import Request
+from hyper import Request
 from routes._base import Layout
 
 request: Request
@@ -41,7 +41,7 @@ else:
 ### HTMX Helpers
 
 ```python
-from hyperprose import is_htmx, hx_redirect, hx_trigger, Request
+from hyper import is_htmx, hx_redirect, hx_trigger, Request
 
 request: Request
 
@@ -58,7 +58,7 @@ Set HTMX-specific headers:
 
 ```python
 # routes/api/delete_user.py
-from hyperprose import Request, Response
+from hyper import Request, Response
 
 request: Request
 response: Response
@@ -75,7 +75,7 @@ response.headers["HX-Trigger"] = '{"userDeleted": {"id": ' + str(user_id) + '}}'
 t"""<div>User deleted</div>"""
 ```
 
-**See [04-fragments.md](04-fragments.md) for fragment-based HTMX patterns.**
+**See [Fragments](03-templates.md#fragments) for fragment-based HTMX patterns.**
 
 ---
 
@@ -87,7 +87,7 @@ Inject `Response` to modify headers, status codes, and cookies:
 
 ```python
 # routes/api/create_user.py
-from hyperprose import Response
+from hyper import Response
 
 response: Response
 
@@ -103,7 +103,7 @@ t"""<div>User created: {user.id}</div>"""
 
 ```python
 # routes/api/data.py
-from hyperprose import Response
+from hyper import Response
 
 response: Response
 
@@ -118,7 +118,7 @@ t"""<div>Data</div>"""
 
 ```python
 # routes/login.py
-from hyperprose import POST, Response
+from hyper import POST, Response
 
 response: Response
 
@@ -143,7 +143,7 @@ if POST:
 
 ```python
 # routes/logout.py
-from hyperprose import Response
+from hyper import Response
 
 response: Response
 
@@ -163,7 +163,7 @@ Routes can return different response types:
 
 ```python
 # routes/api/users.py
-from hyperprose import JSONResponse
+from hyper import JSONResponse
 
 users = get_all_users()
 
@@ -178,7 +178,7 @@ JSONResponse([
 
 ```python
 # routes/health.py
-from hyperprose import Response
+from hyper import Response
 
 Response(content="OK", media_type="text/plain")
 ```
@@ -187,7 +187,7 @@ Response(content="OK", media_type="text/plain")
 
 ```python
 # routes/download/export.py
-from hyperprose import Response
+from hyper import Response
 
 csv_content = generate_csv_data()
 
@@ -206,7 +206,7 @@ Response(
 
 ```python
 # routes/login.py
-from hyperprose import GET, POST, RedirectResponse, Form
+from hyper import GET, POST, RedirectResponse, Form
 from typing import Annotated
 
 if GET:
@@ -262,9 +262,9 @@ Access them at `/static/*`:
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 
-app = HyperProse(
+app = Hyper(
     static_dir="static",  # Default: "static"
     static_url="/static"  # Default: "/static"
 )
@@ -280,10 +280,10 @@ Add Starlette middleware for additional functionality:
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 from starlette.middleware.sessions import SessionMiddleware
 
-app = HyperProse()
+app = Hyper()
 
 # Add session support
 app.add_middleware(
@@ -296,7 +296,7 @@ app.add_middleware(
 
 ```python
 # routes/counter.py
-from hyperprose import Request
+from hyper import Request
 
 request: Request
 
@@ -314,10 +314,10 @@ t"""<html><body><h1>Count: {count}</h1></body></html>"""
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 from starlette.middleware.cors import CORSMiddleware
 
-app = HyperProse()
+app = Hyper()
 
 # Add CORS
 app.add_middleware(
@@ -333,7 +333,7 @@ app.add_middleware(
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 from starlette.middleware.base import BaseHTTPMiddleware
 
 class CustomMiddleware(BaseHTTPMiddleware):
@@ -348,7 +348,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
 
         return response
 
-app = HyperProse()
+app = Hyper()
 app.add_middleware(CustomMiddleware)
 ```
 
@@ -358,10 +358,10 @@ app.add_middleware(CustomMiddleware)
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 from starlette.responses import HTMLResponse
 
-app = HyperProse()
+app = Hyper()
 
 @app.exception_handler(404)
 async def not_found(request, exc):
@@ -405,9 +405,9 @@ Add startup and shutdown handlers:
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 
-app = HyperProse()
+app = Hyper()
 
 @app.on_event("startup")
 async def startup():
@@ -426,7 +426,7 @@ async def shutdown():
 
 ## WebSocket Support
 
-HyperProse inherits WebSocket support from Starlette:
+Hyper inherits WebSocket support from Starlette:
 
 ```python
 # routes/ws/chat.py (requires special setup)
@@ -448,9 +448,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 
-app = HyperProse(
+app = Hyper(
     routes_dir="routes",      # Default: "routes"
     static_dir="static",      # Default: "static"
     debug=True,               # Default: False

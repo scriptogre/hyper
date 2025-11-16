@@ -1,6 +1,6 @@
 # Markdown Support
 
-HyperProse has **first-class markdown support** with full templating power, perfect for blogs, documentation, and content-heavy sites.
+Hyper has **first-class markdown support** with full templating power, perfect for blogs, documentation, and content-heavy sites.
 
 ---
 
@@ -11,7 +11,7 @@ Create `.md` files in your routes directory:
 ```markdown
 <!-- routes/blog/intro.md -->
 ---
-title: "Introduction to HyperProse"
+title: "Introduction to Hyper"
 date: 2025-01-15
 author: "Chris"
 excerpt: "Learn the basics"
@@ -19,9 +19,9 @@ layout: "_blog_layout"
 prerender: true
 ---
 
-# Introduction to HyperProse
+# Introduction to Hyper
 
-HyperProse makes building web apps **fun** and **productive**!
+Hyper makes building web apps **fun** and **productive**!
 
 ## Features
 
@@ -45,7 +45,7 @@ HyperProse makes building web apps **fun** and **productive**!
 
 ```python
 # routes/_blog_layout.py
-from hyperprose import Children, MarkdownMeta
+from hyper import Children, MarkdownMeta
 
 children: Children
 meta: MarkdownMeta  # Frontmatter data
@@ -187,7 +187,7 @@ prerender: false
 ---
 
 ```python exec
-from hyperprose import Request
+from hyper import Request
 
 # Inject request
 request: Request
@@ -259,7 +259,7 @@ Get all markdown files from a directory:
 # routes/blog/index.py
 prerender = True
 
-from hyperprose import get_collection
+from hyper import get_collection
 
 # Get all markdown files
 posts = get_collection("routes/blog/*.md")
@@ -322,9 +322,9 @@ const greet = (name) => {
 
 ```python
 # app.py
-from hyperprose import HyperProse
+from hyper import Hyper
 
-app = HyperProse(
+app = Hyper(
     markdown_extensions=[
         "fenced_code",      # Code blocks with syntax
         "tables",           # GitHub-style tables

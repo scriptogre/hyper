@@ -1,6 +1,6 @@
 # Form Handling
 
-HyperProse uses FastAPI-style dependency injection for form handling. Use `Form()` with type hints to automatically extract form fields.
+Hyper uses FastAPI-style dependency injection for form handling. Use `Form()` with type hints to automatically extract form fields.
 
 ---
 
@@ -9,7 +9,7 @@ HyperProse uses FastAPI-style dependency injection for form handling. Use `Form(
 ```python
 # routes/contact.py
 from typing import Annotated
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from layouts import Layout
 
 if GET:
@@ -69,7 +69,7 @@ Add validation to form fields:
 ```python
 # routes/signup.py
 from typing import Annotated
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from layouts import Base
 
 if GET:
@@ -115,7 +115,7 @@ Use Pydantic models for structured form handling:
 # routes/signup.py
 from typing import Annotated
 from pydantic import BaseModel, EmailStr, Field
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from layouts import Base
 
 class SignupForm(BaseModel):
@@ -168,7 +168,7 @@ elif POST:
 ```python
 # routes/users/create.py
 from typing import Annotated
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from components import AlertBox
 
 if GET:
@@ -226,7 +226,7 @@ elif POST:
 ```python
 # routes/profile/avatar.py
 from typing import Annotated
-from hyperprose import GET, POST, Form, File, UploadFile
+from hyper import GET, POST, Form, File, UploadFile
 from layouts import Base
 
 user = get_current_user()
@@ -271,7 +271,7 @@ Use `None` as default for optional fields:
 ```python
 # routes/profile/update.py
 from typing import Annotated
-from hyperprose import POST, Form
+from hyper import POST, Form
 
 if POST:
     # Required field
@@ -299,7 +299,7 @@ Handle multiple values for the same field:
 ```python
 # routes/preferences.py
 from typing import Annotated
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 
 if GET:
     t"""
@@ -330,7 +330,7 @@ Handle validation errors gracefully:
 # routes/signup.py
 from typing import Annotated
 from pydantic import BaseModel, EmailStr, ValidationError
-from hyperprose import POST, Form
+from hyper import POST, Form
 
 class SignupForm(BaseModel):
     username: str

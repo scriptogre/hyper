@@ -1,6 +1,6 @@
 # Routing
 
-HyperProse uses **file-based routing** - your file structure automatically maps to URLs.
+Hyper uses **file-based routing** - your file structure automatically maps to URLs.
 
 ---
 
@@ -95,13 +95,13 @@ t"""
 1. Framework executes the module
 2. Finds the t-string template (a `Template` object)
 3. Converts it to HTML using tdom's `html()` function
-4. Returns it as an `HTMLResponse`
+4. Returns it as a Starlette `TemplateResponse`
 
 ### Route with Logic
 
 ```python
 # routes/users.py
-from models import User
+from app.models import User
 
 users: list[User] = User.all()  # Your database call
 
@@ -125,7 +125,7 @@ t"""
 
 ```python
 # routes/users/{user_id}.py
-from models import User
+from app.models import User
 
 user_id: int  # Automatically injected from URL path
 
@@ -148,6 +148,8 @@ t"""
 **Result:** `user_id` is injected as `123` (converted to int)
 
 ### Route with Query Parameters
+
+TODO: Replace with https://htmx.org/examples/active-search/ example
 
 ```python
 # routes/search.py
@@ -186,7 +188,7 @@ Use `GET`, `POST`, `PUT`, `DELETE` helpers to handle different HTTP methods:
 
 ```python
 # routes/contact.py
-from hyperprose import GET, POST
+from hyper import GET, POST
 from layouts import Base
 
 if GET:

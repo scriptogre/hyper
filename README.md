@@ -1,21 +1,21 @@
-# HyperProse
+# Hyper
 
 **A hypermedia-driven web framework for Python 3.14 built on Starlette and tdom**
 
-Hyper (what: hypermedia) + Prose (how: like prose) = HyperProse
+Hyper (what: hypermedia) + Prose (how: like prose) = Hyper
 
 Write server-rendered HTML apps with the simplicity of modern Python. File-based routing meets FastAPI-style dependency injection, powered by native t-string templates.
 
 ```python
 # routes/index.py
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from typing import Annotated
 from layouts import Base
 
 if GET:
     t"""
     <{Base} title="Welcome">
-        <h1>Hello, HyperProse!</h1>
+        <h1>Hello, Hyper!</h1>
         <form method="POST">
             <input name="message" placeholder="Enter a message">
             <button>Submit</button>
@@ -71,7 +71,7 @@ t"""
 Clean syntax for conditional elements:
 
 ```python
-from hyperprose import _if
+from hyper import _if
 
 # Block syntax for multiple elements
 t"""
@@ -90,7 +90,7 @@ t"""
 Module-level type hints automatically inject what you need:
 
 ```python
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from typing import Annotated
 
 user_id: int  # Path parameter from URL
@@ -107,7 +107,7 @@ Layouts and components with slots—no JSX, just Python:
 
 ```python
 # layouts/Base.py
-from hyperprose import Slot
+from hyper import Slot
 
 title: str = "My App"
 content: Slot
@@ -139,7 +139,7 @@ t"""
 Perfect for hypermedia-driven applications:
 
 ```python
-from hyperprose import POST
+from hyper import POST
 
 user_id: int
 
@@ -159,7 +159,7 @@ if POST:
 Handle forms with automatic field extraction and validation:
 
 ```python
-from hyperprose import GET, POST, Form
+from hyper import GET, POST, Form
 from typing import Annotated
 from pydantic import BaseModel, EmailStr
 
@@ -181,7 +181,7 @@ elif POST:
 Render page sections independently with inline fragment markers:
 
 ```python
-from hyperprose import fragment, render
+from hyper import fragment, render
 
 user_id: int
 user = User.get(id=user_id)
@@ -271,14 +271,14 @@ def get_static_paths():
 
 ## Quick Links
 
-- **GitHub:** https://github.com/scriptogre/hyperprose
+- **GitHub:** https://github.com/scriptogre/hyper
 - **tdom:** https://github.com/thoughtbot/tdom
 - **Starlette:** https://www.starlette.io
 - **htmx:** https://htmx.org
 
 ---
 
-## What Makes HyperProse Different?
+## What Makes Hyper Different?
 
 - **File-based routing** - Your file structure IS your URL structure
 - **T-string templates** - Native Python 3.14 templates with full type safety

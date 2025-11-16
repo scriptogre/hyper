@@ -1,12 +1,12 @@
 # Streaming & Server-Sent Events
 
-HyperProse provides first-class support for streaming responses and Server-Sent Events (SSE), perfect for real-time updates with HTMX.
+Hyper provides first-class support for streaming responses and Server-Sent Events (SSE), perfect for real-time updates with HTMX.
 
 ---
 
 ## Async/Await Support
 
-HyperProse supports async operations while maintaining 100% legal Python syntax that works with all editors and tooling.
+Hyper supports async operations while maintaining 100% legal Python syntax that works with all editors and tooling.
 
 ### Sync Routes (No Async Needed)
 
@@ -341,10 +341,10 @@ async def stream():
 
 ## Streaming with Fragments
 
-Combine fragments with streaming for powerful patterns. See [04-fragments.md](04-fragments.md#streaming-with-fragments) for details.
+Combine fragments with streaming for powerful patterns. See [Streaming with Fragments](03-templates.md#streaming-with-fragments) for details.
 
 ```python
-from hyperprose import render, fragment
+from hyper import render, fragment
 
 user_id: int
 user = None
@@ -380,7 +380,7 @@ For full control over streaming responses:
 
 ```python
 # routes/download/csv.py
-from hyperprose import StreamingResponse
+from hyper import StreamingResponse
 
 async def generate_csv():
     yield "name,email,created_at\n"

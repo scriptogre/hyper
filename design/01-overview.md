@@ -1,14 +1,14 @@
 # Overview
 
-**HyperProse** is a hypermedia-driven web framework for Python 3.14 built on Starlette and tdom.
+**Hyper** is a hypermedia-driven web framework for Python 3.14 built on Starlette, FastAPI, and tdom.
 
-Hyper (what: hypermedia) + Prose (how: like prose) = HyperProse
+You could also think of it as "Astro" for Python, optimized for server-rendered HTML and HTMX.
 
 ---
 
 ## Philosophy
 
-HyperProse is designed around three core principles:
+Hyper is designed around three core principles:
 
 1. **Write like prose** - Your code should read naturally, with minimal boilerplate and maximum clarity
 2. **Convention over configuration** - Smart defaults and intuitive patterns mean you spend less time configuring and more time building
@@ -32,7 +32,7 @@ HyperProse is designed around three core principles:
 ## Installation
 
 ```bash
-pip install hyperprose
+pip install hyper
 ```
 
 Requires Python 3.14+
@@ -59,10 +59,49 @@ t"""
 ### 2. Run it
 
 ```bash
-hyperprose dev
+hyper dev
 ```
 
 Visit `http://localhost:8000` - that's it!
+
+---
+
+## Configuration (Optional)
+
+Hyper works with zero configuration. But if you need to customize settings, create a `main.py`:
+
+```python
+# main.py
+from hyper import Hyper
+
+app = Hyper(
+    templates={
+        "trim_newlines": True,  # Default: removes newlines after expressions
+        "trim_indent": True,    # Default: removes leading indentation
+    }
+)
+```
+
+Then run:
+```bash
+hyper dev
+```
+
+Hyper automatically detects and uses `main.py` if it exists.
+
+<details>
+<summary><strong>What do these settings do?</strong></summary>
+
+These settings control how whitespace in your templates is rendered:
+
+- **`trim_newlines`**: Removes the first newline after template expressions and blocks
+- **`trim_indent`**: Removes leading spaces/tabs from lines containing template expressions
+
+With both enabled (default), your nicely-indented templates produce clean HTML without extra blank lines or indentation artifacts.
+
+See [Whitespace Control](03-templates.md#whitespace-control) for detailed examples.
+
+</details>
 
 ---
 
@@ -107,9 +146,10 @@ Type hints automatically inject values:
 
 ```python
 # routes/users/{user_id}.py
-user_id: int  # Automatically injected from URL
+from app.models import User
 
-user = get_user(user_id)
+user_id: int  # Injected from URL
+user = User.get(id=user_id)
 
 t"""<html><body><h1>{user.name}</h1></body></html>"""
 ```
@@ -122,9 +162,10 @@ Mark elements with `{fragment}` to enable partial page updates - no duplication 
 
 ```python
 # routes/users.py
+from hyper import fragment
 from layouts import Base
 
-users = get_users()
+users = User.all()
 
 t"""
 <{Base}>
@@ -137,11 +178,12 @@ t"""
 ```
 
 **Full page request:** `/users` → Returns complete page with layout
+
 **Fragment request:** `/users?_fragment=user-list` → Returns just the `#user-list` div
 
-Perfect for HTMX partial updates without writing separate endpoints!
+Perfect for htmx partial updates without writing separate endpoints!
 
-See [04-fragments.md](04-fragments.md) for details.
+See [Templates & Fragments](03-templates.md#fragments) for details.
 
 ---
 
@@ -149,7 +191,7 @@ See [04-fragments.md](04-fragments.md) for details.
 
 - **[Routing](02-routing.md)** - Learn about file-based routing
 - **[Templates](03-templates.md)** - Build layouts and components
-- **[Fragments](04-fragments.md)** - Enable partial page updates
+- **[Fragments](03-templates.md#fragments)** - Enable partial page updates
 - **[Dependency Injection](05-dependency-injection.md)** - Master type-based injection
 
 ---
