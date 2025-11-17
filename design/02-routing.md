@@ -7,44 +7,66 @@ Hyper uses **file-based routing** - your file structure automatically maps to UR
 ## Project Structure
 
 ```
-routes/          # Pages and API endpoints
-  index.py              → /
-  about.py              → /about
-  contact.py            → /contact
-  users/
-    index.py            → /users
-    {user_id}.py        → /users/{user_id}
-    {user_id}/
-      edit.py           → /users/{user_id}/edit
-      posts/
-        {post_id}.py    → /users/{user_id}/posts/{post_id}
-  api/
-    posts.py            → /api/posts
+app/
+  pages/         # Hypermedia pages, layouts, and partials
+    Base.py             # Layout (PascalCase = not a route)
+    AuthLayout.py       # Layout (PascalCase = not a route)
+    index.py            → /
+    about.py            → /about
+    contact.py          → /contact
+    users/
+      index.py          → /users
+      [id]/
+        index.py        → /users/{id}
+        Form.py         # Partial (PascalCase = not a route)
+        Avatar.py       # Partial (PascalCase = not a route)
+      create.py         → /users/create
+  api/           # JSON endpoints (optional)
+    posts/
+      index.py          → /api/posts
+      [id].py           → /api/posts/{id}
+  models/        # Database models
+  services/      # Business logic
+  schemas/       # Validation schemas
 
-layouts/         # Layout templates (not routes)
-  Base.py               # PascalCase for layouts
-  Blog.py
-  Admin.py
-
-components/      # Reusable components (not routes)
-  UserCard.py           # PascalCase for components
+components/      # Shared, stateless UI (only after 3+ uses)
   Button.py
-  Alert.py
+  Card.py
+  Modal.py
 ```
 
 ---
 
 ## Rules
 
-### `{param}` Creates Path Parameters
+### PascalCase Files Are Not Routes
+
+Files with PascalCase names (e.g., `Base.py`, `Form.py`) are **layouts or partials**, not routes:
 
 ```
-routes/
+app/pages/
+  Base.py           # Layout - not a route
+  index.py          # Route: /
   users/
-    {user_id}.py      → /users/123
-    {user_id}/
+    [id]/
+      index.py      # Route: /users/{id}
+      Form.py       # Partial - not a route
+```
+
+The router skips PascalCase files when generating routes.
+
+### `[param]` Creates Path Parameters
+
+Use square brackets for dynamic URL segments:
+
+```
+app/pages/
+  users/
+    [id].py         → /users/123
+    [id]/
+      index.py      → /users/123
       posts/
-        {post_id}.py  → /users/123/posts/456
+        [post_id].py → /users/123/posts/456
 ```
 
 Parameters are injected via type hints (see [05-dependency-injection.md](05-dependency-injection.md)).
@@ -52,7 +74,7 @@ Parameters are injected via type hints (see [05-dependency-injection.md](05-depe
 ### `index.py` Maps to Directory Path
 
 ```
-routes/
+app/pages/
   index.py          → /
   users/
     index.py        → /users
@@ -63,11 +85,28 @@ routes/
 ### Nested Directories Create Nested Paths
 
 ```
-routes/
+app/pages/
   api/
     v1/
       users.py      → /api/v1/users
 ```
+
+### File vs Directory Routes
+
+**Single file** (for simple routes):
+```
+users/create.py     → /users/create
+```
+
+**Directory with `index.py`** (for complex routes with partials):
+```
+users/[id]/
+  index.py          → /users/{id}
+  Form.py           # Partial
+  Comments.py       # Partial
+```
+
+Both map to the same URL - use directories when you need partials.
 
 ---
 
@@ -124,12 +163,12 @@ t"""
 ### Route with Path Parameters
 
 ```python
-# routes/users/{user_id}.py
+# app/pages/users/[id].py
 from app.models import User
 
-user_id: int  # Automatically injected from URL path
+id: int  # Automatically injected from URL path
 
-user = User.get(id=user_id)
+user = User.get(id=id)
 
 t"""
 <!doctype html>
@@ -138,14 +177,16 @@ t"""
 <body>
     <h1>Profile: {user.name}</h1>
     <p>Email: {user.email}</p>
-    <p>User ID: {user_id}</p>
+    <p>User ID: {id}</p>
 </body>
 </html>
 """
 ```
 
 **URL:** `/users/123`
-**Result:** `user_id` is injected as `123` (converted to int)
+**Result:** `id` is injected as `123` (converted to int)
+
+**Note:** Use `[id]` in the filename, and `id` (without brackets) as the variable name.
 
 ### Route with Query Parameters
 
@@ -187,9 +228,9 @@ t"""
 Use `GET`, `POST`, `PUT`, `DELETE` helpers to handle different HTTP methods:
 
 ```python
-# routes/contact.py
+# app/pages/contact.py
 from hyper import GET, POST
-from layouts import Base
+from app.pages import Base
 
 if GET:
     # Show the form
@@ -215,14 +256,53 @@ See [06-forms.md](06-forms.md) for full form handling patterns.
 
 ---
 
+## Directory Structure Philosophy
+
+### Why `/app/pages`?
+
+**`/app`** contains all application code (pages, models, services, schemas). It's your application namespace.
+
+**`/pages`** emphasizes that Hyper is **hypermedia-first** - routes return HTML pages (or HTMX fragments), not JSON.
+
+This structure:
+- Keeps hypermedia endpoints (pages) separate from optional JSON endpoints (`/app/api`)
+- Co-locates layouts and partials with the routes that use them
+- Provides a clear application boundary (`/app` vs `/components`)
+- Scales from simple apps to complex ones with business logic layers
+
+### Why PascalCase for Non-Routes?
+
+Using **PascalCase** (`Base.py`, `Form.py`) signals "this is a component-like thing, not a route":
+
+1. **No import aliasing needed** - `from app.pages import Base` works directly
+2. **Visual distinction** - At a glance, you know what's a route vs a layout/partial
+3. **Semantic alignment** - Files used as components (`<{Base}>`) are named like components
+4. **Simple router logic** - Skip PascalCase files when generating routes
+
+Alternative conventions (underscores, reserved names) require more cognitive overhead or limit flexibility.
+
+### Why Co-locate Partials with Routes?
+
+Partials are **stateful, page-specific** template pieces. Keeping them next to their routes:
+
+1. **Makes dependencies obvious** - No guessing which route uses which partial
+2. **Reduces context switching** - Everything for a route is in one directory
+3. **Enables clean imports** - Use relative imports: `from . import Form`
+4. **Prevents premature abstraction** - Start in route, extract to partial only when needed
+
+Only promote to `/components` after 3+ uses across different routes.
+
+---
+
 ## Key Points
 
-- **`routes/` = URL structure**
-- **`layouts/` = layout templates (not routes)**
-- **`components/` = reusable components (not routes)**
-- **`{param}` = path parameter**
+- **`/app/pages` = hypermedia endpoints (HTML)**
+- **`/app/api` = JSON endpoints (optional)**
+- **PascalCase = not a route (layouts, partials)**
+- **`[param]` = path parameter**
 - **`index.py` = directory route**
 - **Type hints = automatic injection**
+- **Directory routes = routes with partials**
 
 ---
 

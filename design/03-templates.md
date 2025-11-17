@@ -24,10 +24,11 @@ Variables go in curly braces. They're automatically escaped for security.
 
 Layouts provide common structure across pages.
 
-Make a file: `app/layouts/Base.py`
+Make a file: `app/pages/Layout.py`
 
 ```python
-# app/layouts/Base.py
+# app/pages/Layout.py
+
 t'''
 <!doctype html>
 <html>
@@ -42,6 +43,8 @@ t'''
 ```
 
 The `{...}` marks where page content goes.
+
+**Note:** Layouts use **PascalCase** naming (e.g., `Layout.py`, `AuthLayout.py`) which signals they're not routes. The router automatically skips PascalCase files when generating routes.
 
 <details>
 <summary><strong>Note:</strong> Alternative <code>slot</code> syntax</summary>
@@ -66,25 +69,27 @@ This guide uses `...`.
 ## Use a Layout
 
 ```python
-# app/routes/index.py
-from app.layouts import Base
+# app/pages/index.py
+from app.pages import Layout
 
 t'''
-<{Base}>
+<{Layout}>
     <h1>Welcome Home!</h1>
     <p>This is the homepage.</p>
-</{Base}>
+</{Layout}>
 '''
 ```
 
-Content between `<{Base}>` and `</{Base}>` replaces `{...}`.
+Content between `<{Layout}>` and `</{Layout}>` replaces `{...}`.
+
+**Import tip:** Since layouts are in `/pages`, you import them just like any other module: `from app.pages import Layout`. No aliasing needed because the file is already named `Layout.py`.
 
 ## Layout Props
 
 Make layouts dynamic with props.
 
 ```python
-# app/layouts/Base.py
+# app/pages/Layout.py
 
 title: str = "My Site"  # Default value
 
@@ -106,25 +111,29 @@ Define props at the top. Use them in the template.
 **Pass props as attributes:**
 
 ```python
-from app.layouts import Base
+# app/pages/index.py
+
+from app.pages import Layout
 
 t'''
-<{Base} title="Homepage">
+<{Layout} title="Home">
     <h1>Welcome!</h1>
-</{Base}>
+</{Layout}>
 '''
 ```
 
 **Or import for editor support:**
 
 ```python
-from app.layouts import Base
-from app.layouts.Base import title
+# app/pages/index.py
+
+from app.pages import Layout
+from app.pages.Layout import title
 
 t'''
-<{Base} {title}="Homepage">
+<{Layout} {title}="Home">
     <h1>Welcome!</h1>
-</{Base}>
+</{Layout}>
 '''
 ```
 
@@ -138,41 +147,67 @@ Importing the prop variable gives you:
 - Makes it clear which are props vs. regular HTML attributes
 
 ```python
-from app.layouts import Base
-from app.layouts.Base import title, lang  # Import props
+# app/pages/index.py
+
+from app.pages import Layout
+from app.pages.Layout import title, lang  # Import props
 
 t'''
-<{Base} {title}="Home" {lang}="en">
-    ...
-</{Base}>
+<{Layout} {title}="Home" {lang}="en">
+    <h1>Welcome!</h1>
+</{Layout}>
 '''
 ```
 
 For brevity, you can import all props using `*`:
 
 ```python
-from app.layouts.Base import *  # Import all props
+from app.pages.Layout import *  # Import all props
 ```
 
 But beware that it may clutter your namespace.
 
 ```python
-from app.layouts.Base import title, lang
+from app.pages.Layout import title, lang
 ```
 
 </details>
 
-## Default Slot Content
-
-Slots can have fallback content:
+You can also pass variables:
 
 ```python
+# app/pages/index.py
+
+from datetime import datetime
+from app.pages import Layout
+from app.pages.Layout import title
+
 t'''
-<div class="alert">
+<{Layout} {title}={"Home | " + datetime.now().strftime("%Y")}>
+    <h1>Welcome!</h1>
+</{Layout}>
+'''
+```
+
+## Default Slot Content
+
+Slots can have fallback content. Use tag syntax (`<{...}>...</{...}>`).
+
+```python
+# app/pages/Layout.py
+
+t'''
+<!doctype html>
+<html>
+<head>
+    <title>My Site</title>
+</head>
+<body>
     <{...}>
-        <p>Default message</p>
+        <p>This is default content if slot is empty.</p>
     </{...}>
-</div>
+</body>
+</html>
 '''
 ```
 
@@ -183,7 +218,7 @@ If no content is provided, it shows the default. Otherwise, it's replaced.
 Layouts can have multiple content areas.
 
 ```python
-# app/layouts/Dashboard.py
+# app/pages/BlogLayout.py
 
 t'''
 <!doctype html>
@@ -192,7 +227,7 @@ t'''
     <aside>
         <{...} name="sidebar"/>
     </aside>
-    
+
     <main>
         {...}
     </main>
@@ -203,29 +238,23 @@ t'''
 
 Fill the slots:
 ```python
-from app.layouts import Dashboard
+from app.pages import BlogLayout
 
 t'''
-<{Dashboard}>
+<{BlogLayout}>
     <{...} name="sidebar">
-        <nav>
-            <a href="/settings">Settings</a>
-        </nav>
+        ...
     </{...}>
 
     <h1>Dashboard Content</h1>
     <p>This goes in the unnamed slot.</p>
-    
-    
-    {comment("This won't be rendered")}
-    
-</{Dashboard}>
+</{BlogLayout}>
 '''
 ```
 
 You can also fill slots using attributes, rather than tag syntax:
 ```python
-from app.layouts import Dashboard
+from app.pages import Dashboard
 
 t'''
 <{Dashboard}>
@@ -291,17 +320,17 @@ t'''
 ## Nest Layouts
 
 ```python
-# layouts/BlogLayout.py
-from app.layouts import Base
+# app/pages/BlogLayout.py
+from app.pages import Layout
 
 blog_title: str
 
 t'''
-<{Base} title={f"Blog - {blog_title}"}>
+<{Layout} title={f"Blog - {blog_title}"}>
     <div class="blog-container">
         {...}
     </div>
-</{Base}>
+</{Layout}>
 '''
 ```
 
@@ -309,47 +338,330 @@ t'''
 
 # Components
 
-## Create a Component
+Components let you break down your UI into reusable or extractable pieces.
 
-Components are reusable pieces in `components/`.
+## Types of Components
 
-Make a file: `components/Card.py`
+Hyper has two types of components:
+
+1. **Page components** - Live in `/app/pages`, page-specific, can be stateful
+2. **Shared components** - Live in `/app/components`, reusable across the app, should be stateless
+
+**Most of the time, you don't need components at all.** Keep HTML inline in your routes during active development.
+
+---
+
+## Page Components
+
+### ⚠️ When NOT to Extract
+
+**Don't extract components if:**
+
+1. **Elements depend on each other** - If you have `hx-get` with `hx-target` pointing to another part of the page, keep them together:
 
 ```python
-# components/Card.py
-title: str
+# ❌ BAD - Separated components lose context
+# SearchForm.py has hx-target="#results"
+# SearchResults.py defines id="results"
+# Now you have to jump between files to understand the connection
 
+# ✅ GOOD - Keep coupled elements together
 t'''
-<div class="bg-white shadow rounded p-4">
-    <h3>{title}</h3>
-    <div class="flex flex-col gap-2">
-        {...}
+<div>
+    <form hx-get="/search" hx-target="#results">
+        <input name="q" />
+    </form>
+    <div id="results">
+        {[t'<div>{result.title}</div>' for result in results]}
     </div>
 </div>
 '''
 ```
 
-Use it:
+2. **You're in active development** - Constantly changing things means constantly switching files. Keep it inline until things stabilize.
+
+3. **The component would be used once** - No point extracting something that's only used in one place.
+
+### When to Extract
+
+**Only extract when the route file becomes genuinely hard to read** - you'll know when this happens.
+
+**Start with everything inline in your route:**
 
 ```python
-from components import Card
+# app/pages/posts/index.py
+from app.pages import Layout
+
+posts = get_all_posts()
 
 t'''
-<{Card} title="User Info">
-    <p>Name: Alice</p>
-    <p>Email: alice@example.com</p>
-</{Card}>
+<{Layout} title="Blog Posts">
+    <h1>Recent Posts</h1>
+
+    {[t'''
+        <article class="post-card">
+            <img src={post.image} />
+            <h2>{post.title}</h2>
+            <p>{post.excerpt}</p>
+            <a href="/posts/{post.id}">Read more</a>
+        </article>
+    ''' for post in posts]}
+</{Layout}>
 '''
 ```
 
-Self-closing syntax for components without content:
+**This inline approach is often clearer than extracting `<PostCard>`.** Everything is visible in one place.
+
+**Only if the route becomes truly cluttered (200+ lines, multiple concerns), consider extracting:**
+
+### Step 1: Add the component file
+
+Create `PostCard.py` as a sibling to your route:
+
+```
+posts/
+  index.py       # Route file
+  PostCard.py    # Component (PascalCase = not a route)
+```
+
+### Step 2: Move the HTML
+
 ```python
-from components import Button
+# app/pages/posts/PostCard.py
+from app.models import Post
+
+post: Post  # Receives data from parent
 
 t'''
-<{Button} text="Click Me" />
+<article class="post-card">
+    <img src={post.image} />
+    <h2>{post.title}</h2>
+    <p>{post.excerpt}</p>
+    <a href="/posts/{post.id}">Read more</a>
+</article>
 '''
 ```
+
+### Step 3: Import and use
+
+```python
+# app/pages/posts/index.py
+from app.pages import Layout
+from . import PostCard  # Import from same directory
+
+posts = get_all_posts()
+
+t'''
+<{Layout} title="Blog Posts">
+    <h1>Recent Posts</h1>
+    {[t'<{PostCard} post={post} />' for post in posts]}
+</{Layout}>
+'''
+```
+
+✅ **Now your route is clean and readable!**
+
+---
+
+## Complex Pages with Multiple Components
+
+For routes with several components, use a directory structure:
+
+### Example: User Profile Page
+
+**Before (cluttered):**
+```python
+# app/pages/users/[id].py - 200 lines!
+from app.pages import Layout
+
+id: int
+user = get_user(id)
+
+t'''
+<{Layout} title={user.name}>
+    <!-- 30 lines of avatar/header HTML -->
+    <!-- 50 lines of edit form HTML -->
+    <!-- 40 lines of activity feed HTML -->
+    <!-- 30 lines of settings panel HTML -->
+</{Layout}>
+'''
+```
+
+**After (organized):**
+
+### Step 1: Convert to directory
+
+```
+users/
+  [id]/
+    index.py        # Main route
+    Avatar.py       # Component
+    EditForm.py     # Component
+    Activity.py     # Component
+    Settings.py     # Component
+```
+
+### Step 2: Extract components
+
+```python
+# app/pages/users/[id]/index.py
+from app.pages import Layout
+from . import Avatar, EditForm, Activity, Settings
+
+id: int
+user = get_user(id)
+
+t'''
+<{Layout} title={user.name}>
+    <{Avatar} user={user} />
+    <{EditForm} user={user} />
+    <{Activity} user={user} />
+    <{Settings} user={user} />
+</{Layout}>
+'''
+```
+
+```python
+# app/pages/users/[id]/Avatar.py
+from app.models import User
+
+user: User
+
+t'''
+<header class="profile-header">
+    <img src={user.avatar} alt={user.name} />
+    <h1>{user.name}</h1>
+    <p>{user.bio}</p>
+</header>
+'''
+```
+
+```python
+# app/pages/users/[id]/EditForm.py
+from app.models import User
+
+user: User
+
+t'''
+<form method="POST" action="/users/{user.id}/edit">
+    <input name="name" value={user.name} />
+    <textarea name="bio">{user.bio}</textarea>
+    <button>Save</button>
+</form>
+'''
+```
+
+✅ **Each file is now focused and manageable!**
+
+---
+
+## Adding Page Components to Simple Routes
+
+You can add components even to single-file routes:
+
+```
+posts/
+  index.py       # Route: /posts
+  PostCard.py    # Component (sibling)
+  Filters.py     # Component (sibling)
+```
+
+```python
+# app/pages/posts/index.py
+from app.pages import Layout
+from . import PostCard, Filters
+
+posts = get_all_posts()
+
+t'''
+<{Layout} title="Blog">
+    <{Filters} />
+    {[t'<{PostCard} post={post} />' for post in posts]}
+</{Layout}>
+'''
+```
+
+**PascalCase files are ignored by the router** - they won't create routes.
+
+---
+
+## Shared Components
+
+**When you copy-paste the same HTML across 3+ different routes**, then consider creating a shared component in `/app/components`.
+
+### Example: Button Component
+
+**You notice you're using this pattern everywhere:**
+
+```python
+# app/pages/posts/index.py
+t'<button class="btn btn-primary" hx-post="/posts/create">New Post</button>'
+
+# app/pages/users/index.py
+t'<button class="btn btn-primary" hx-post="/users/create">New User</button>'
+
+# app/pages/settings/index.py
+t'<button class="btn btn-primary" hx-post="/settings/save">Save</button>'
+```
+
+### Step 1: Create shared component
+
+```python
+# app/components/Button.py
+text: str
+action: str = ""
+variant: str = "primary"
+
+t'''
+<button class="btn btn-{variant}" hx-post={action}>
+    {text}
+</button>
+'''
+```
+
+### Step 2: Use across routes
+
+```python
+# app/pages/posts/index.py
+from app.components import Button
+
+t'<{Button} text="New Post" action="/posts/create" />'
+
+# app/pages/users/index.py
+from app.components import Button
+
+t'<{Button} text="New User" action="/users/create" />'
+```
+
+✅ **One change updates everywhere!**
+
+---
+
+## Component Guidelines
+
+### Page Components vs Shared Components
+
+| **Page Components** | **Shared Components** |
+|---------------------|----------------------|
+| Live in `/app/pages` | Live in `/app/components` |
+| Page-specific, can be stateful | Reusable, should be stateless |
+| Extract when cluttered (rarely) | Create after 3+ uses |
+| Import: `from . import Form` | Import: `from app.components import Button` |
+| PascalCase (e.g., `EditForm.py`) | PascalCase (e.g., `Button.py`) |
+
+### Progression
+
+1. **Start inline** - Write HTML directly in route (stay here as long as possible!)
+2. **Extract to page component** - Only when route becomes unmanageably cluttered
+3. **Promote to shared component** - Only after copy-pasting across 3+ routes
+
+**Premature extraction makes projects harder to work with:**
+- Switching between files during development is tedious
+- Coupled elements (like `hx-target` pairs) become obscured
+- Changes require navigating multiple files
+- Inline code is often clearer, especially with simple loops
+
+Keep it simple. Extract only when the pain of not extracting exceeds the pain of extracting.
 
 ---
 
@@ -461,171 +773,292 @@ that won't be sent to the browser
 
 ---
 
-## Fragments
+## Partials
 
-Fragments let you render just part of a page. Perfect for HTMX partial updates.
+Partials let you render only part of a page for HTMX updates.
 
-### Basic Usage
+### Mark a Partial
 
-Mark an element as a fragment with `{fragment}`:
+Add `{partial}` to any element with an `id`:
 
 ```python
-from hyper import fragment
+from hyper import partial
 
 users = User.all()
 
 t'''
 <div>
     <h1>Users</h1>
-
-    <div id="user-list" {fragment}>
-        <ul>
-            {[t'<li>{u.name}</li>' for u in users]}
-        </ul>
-    </div>
+    <ul {partial} id="user-list">
+        {[t'<li>{user.name}</li>' for user in users]}
+    </ul>
 </div>
 '''
 ```
 
-By default, `{fragment}` uses the element's `id` as the fragment name.
+### Return a Partial
 
-**If the element has no `id`, it will fail.**
-
-### Custom Fragment Names
-
-Override the fragment name:
+Use `render()` to return only specific partials:
 
 ```python
-from hyper import fragment
-
-user = get_user(user_id)
-
-t'''
-<div>
-    <h1>{user.name}'s Profile</h1>
-
-    <div {fragment}="profile-info">
-        <p>Email: {user.email}</p>
-        <p>Joined: {user.created_at}</p>
-    </div>
-</div>
-'''
-```
-
-Fragment names can be dynamic:
-
-```python
-t'''
-<form {fragment}="edit-user-{user.id}" method="POST">
-    <input name="email" value="{user.email}">
-    <button>Update</button>
-</form>
-'''
-```
-
-### Rendering Fragments
-
-Control which fragments render from your route:
-
-```python
-from typing import Annotated
-from hyper import Request, Header, render, fragment
-
-request: Request
-is_htmx: Annotated[str | None, Header("HX-Request")]
+from hyper import partial, render
 
 users = User.all()
 
 t'''
 <div>
     <h1>Users</h1>
-    <div id="user-list" {fragment}>
-        <ul>{[t'<li>{user.name}</li>' for user in users]}</ul>
-    </div>
+    <ul {partial} id="user-list">
+        {[t'<li>{user.name}</li>' for user in users]}
+    </ul>
 </div>
 '''
 
-if is_htmx:
-    render(fragments=["user-list"])  # Render only this fragment
+# Return only the user-list partial
+render(partial="user-list")
 ```
 
-The framework automatically calls `render()` at the end if you don't. Call `render(fragments=[...])` to extract specific fragments instead of the full page.
+The template runs completely. Only the `user-list` partial is rendered in the response.
 
-### Multiple Fragments
+### HTMX Example
+
+Combine partials with page components for clean HTMX patterns:
 
 ```python
-from typing import Annotated
-from hyper import Query, fragment, render
+# app/pages/users/index.py
+from hyper import partial, render, Header
+from app.pages import Layout
+from . import UserList
+
+hx_request: bool | None = Header("HX-Request")
+
+users = get_all_users()
+
+t'''
+<{Layout} title="Users">
+    <h1>All Users</h1>
+    <{UserList} users={users} {partial}="user-list" />
+</{Layout}>
+'''
+
+if hx_request:
+    render(partial="user-list")
+```
+
+```python
+# app/pages/users/UserList.py
+from app.models import User
+
+users: list[User]
+
+t'''
+<div class="user-grid">
+    {[t'<div class="user-card">{user.name}</div>' for user in users]}
+</div>
+'''
+```
+
+**First request:** Full page with layout
+**HTMX requests:** Just the `UserList` component
+
+### Multiple Partials
+
+Specify which partials to return:
+
+```python
+from hyper import partial, render
+
+t'''
+<div {partial} id="stats">
+    Users: {User.count()}
+</div>
+
+<div {partial} id="activity">
+    Last login: {last_login}
+</div>
+'''
+
+render(partials=["stats", "activity"])
+```
+
+### Named Partials
+
+Set partial names explicitly instead of using `id`:
+
+```python
+from hyper import partial
+
+t'''
+<div {partial}="user-list">
+    ...
+</div>
+'''
+```
+
+### Dynamic Partial Names
+
+Generate partial names programmatically:
+
+```python
+from hyper import partial
 
 users = User.all()
-stats = get_stats()
 
 t'''
-<div>
-    <div id="user-list" {fragment}>
-        <h2>Users</h2>
-        <ul>{[t'<li>{u.name}</li>' for u in users]}</ul>
-    </div>
-
-    <div id="stats" {fragment}>
-        <h2>Statistics</h2>
-        <p>Total: {stats.total}</p>
-    </div>
+<div id="user-list">
+    {[t'<div {partial}={f"user-{user.id}"}>{user.name}</div>' for user in users]}
 </div>
 '''
 
-fragments: Annotated[list, Query("_fragment")] = []
-
-if fragments:
-    render(fragments=fragments)
+render(partial=f"user-{user_id}")
 ```
 
-Request `/?_fragment=user-list&_fragment=stats` to render both fragments.
+Useful for updating individual items in a list.
 
-### Streaming with Fragments
+### Multiple Top-Level Tags as a Partial
+
+Use `<{Fragment}>` to group multiple elements into one partial, without adding extra wrapper tags:
 
 ```python
-from hyper import render, fragment
-
-user = User.get(id=user_id)
+from hyper import Fragment, partial
 
 t'''
-<div>
-    <h1>{user.name}</h1>
-    <div id="status" {fragment}>
-        Status: {user.status}
-        Last updated: {user.updated_at}
+<{Fragment} {partial}="multi-tags">
+    <div>
+        ...
     </div>
-</div>
+    <span>
+        ...
+    </span>
+</{Fragment}>
 '''
-
-async def stream():
-    yield render(fragments=["status"])
-
-    async for update in subscribe_to_updates(user_id):
-        yield render(fragments=["status"])
 ```
 
-The template logic re-runs on each iteration, keeping fragments in sync with current data.
+The entire `<{Fragment}>...</{Fragment}>` block is treated as a single partial named `multi-tags`.
 
 ---
 
 ## Whitespace Control
 
-Hyper automatically removes unwanted whitespace from your templates so you can write readable, indented code that produces clean HTML.
+Hyper removes unwanted whitespace from templates automatically.
 
-### Global Settings (Enabled by Default)
+### The Default Behavior
 
-Two settings control how whitespace is handled:
+Templates handle whitespace like Jinja2.
 
-**`trim_newlines`** - Removes the first newline after expressions and list comprehensions.
+**Without whitespace control:**
+```python
+users = ["Alice", "Bob"]
 
-**`trim_indent`** - Removes leading spaces/tabs from lines containing expressions.
+t'''
+<ul>
+    {[t'<li>{user}</li>' for user in users]}
+</ul>
+'''
+```
 
-Both are **enabled by default**. You can configure them in `main.py` if needed:
+Would render as:
+```html
+<ul>
+
+    <li>Alice</li><li>Bob</li>
+</ul>
+```
+
+Extra blank line after `<ul>`. Indentation issues.
+
+**With Hyper's defaults (already enabled):**
+```html
+<ul>
+    <li>Alice</li><li>Bob</li>
+</ul>
+```
+
+Clean output. No extra whitespace.
+
+### How It Works
+
+Two settings handle whitespace (both enabled by default):
+
+**`trim_newlines`** - Removes newline after `{expressions}` and `{[...]}`. Same as Jinja2's `trim_blocks`.
+
+**`trim_indent`** - Removes leading whitespace before `{expressions}` and `{[...]}`. Same as Jinja2's `lstrip_blocks`.
+
+### Whitespace Is Preserved Where It Matters
+
+Inside these elements, whitespace is kept:
+- `<pre>` - Preformatted text
+- `<code>` - Code blocks
+- `<textarea>` - Form inputs
+- `<script>` - JavaScript
+- `<style>` - CSS
 
 ```python
-# main.py
+t'''
+<pre>
+    {code}
+</pre>
+'''
+```
+
+Indentation inside `<pre>` stays intact.
+
+### The `:empty` Selector Problem
+
+CSS `:empty` selector requires truly empty elements. Template whitespace breaks this:
+
+```python
+message: str = ""
+
+t'''
+<div class="empty:hidden">
+    {message}
+</div>
+'''
+```
+
+Renders as:
+```html
+<div class="empty:hidden">
+
+</div>
+```
+
+The div contains whitespace. `:empty` doesn't match.
+
+**Solution: Use `{trim}="all"`**
+
+```python
+from hyper import trim
+
+message: str = ""
+
+t'''
+<div class="empty:hidden" {trim}="all">
+    {message}
+</div>
+'''
+```
+
+Renders as:
+```html
+<div class="empty:hidden"></div>
+```
+
+Truly empty. The `:empty` selector works.
+
+**Note:** `{trim}="all"` only removes whitespace between tags. Text content stays normal:
+```python
+t'''<div {trim}="all">Hello world</div>'''
+```
+Renders: `<div>Hello world</div>` (the space in "Hello world" is preserved)
+
+<details>
+<summary><strong>Advanced:</strong> Global Settings</summary>
+
+Configure defaults in `main.py`:
+
+```python
 from hyper import Hyper
 
 app = Hyper(
@@ -636,144 +1069,28 @@ app = Hyper(
 )
 ```
 
-### How It Works
+Most projects never need to change these.
 
-**With both enabled (default):**
+</details>
 
-```python
-users = ["Alice", "Bob"]
+<details>
+<summary><strong>Advanced:</strong> Per-Element Control</summary>
 
-t'''
-<div>
-    <ul>
-        {[t'<li>{user}</li>' for user in users]}
-    </ul>
-</div>
-'''
-```
-
-Renders as:
-```html
-<div>
-    <ul>
-        <li>Alice</li><li>Bob</li>
-    </ul>
-</div>
-```
-
-**With `trim_newlines=False`:**
-
-```python
-t'''
-<div>
-    <ul>
-        {[t'<li>{user}</li>' for user in users]}
-    </ul>
-</div>
-'''
-```
-
-Renders as:
-```html
-<div>
-    <ul>
-
-        <li>Alice</li><li>Bob</li>
-    </ul>
-</div>
-```
-(Extra blank line after `<ul>`)
-
-**With `trim_indent=False`:**
-
-```python
-t'''
-<div>
-    <ul>
-        {[t'<li>{user}</li>' for user in users]}
-    </ul>
-</div>
-'''
-```
-
-Renders as:
-```html
-<div>
-    <ul>
-<li>Alice</li><li>Bob</li>
-    </ul>
-</div>
-```
-(Indentation before expression is preserved, breaking alignment)
-
-### Automatic Exceptions
-
-Trimming is **automatically disabled** inside elements where whitespace matters:
-
-- `<pre>` - Preformatted text
-- `<code>` - Code blocks
-- `<textarea>` - Form inputs
-- `<script>` - JavaScript (whitespace can affect code)
-- `<style>` - CSS (whitespace can affect selectors)
-
-```python
-t'''
-<pre>
-    {code_snippet}
-</pre>
-'''
-```
-
-Whitespace is preserved inside `<pre>`, so indentation remains intact.
-
-### Per-Element Override with `{trim}`
-
-Override trimming behavior for specific elements:
+Override trimming for specific elements:
 
 ```python
 from hyper import trim
 
-# Override settings for this element's children
+# Custom trim settings
 t'''<div {trim}={{"newlines": False, "indent": True}}>{content}</div>'''
 
 # Force trimming inside <pre> (override automatic exception)
-t'''<pre {trim}={{"newlines": True, "indent": True}}>{content}</pre>'''
-
-# Strip ALL whitespace inside element
-t'''<div {trim}="all">{content}</div>'''
+t'''<pre {trim}={{"newlines": True, "indent": True}}>{code}</pre>'''
 ```
 
-### The `:empty` Selector Solution
+Rarely needed in practice.
 
-Use `{trim}="all"` for truly empty elements:
-
-```python
-from hyper import trim
-
-user_message: str = ""
-
-t'''
-<div class="empty:hidden" {trim}="all">
-    {user_message}
-</div>
-'''
-```
-
-When `user_message` is empty, renders as:
-```html
-<div class="empty:hidden"></div>
-```
-
-The div is truly empty, so the `:empty` CSS selector works correctly.
-
-**Without `{trim}="all"`**, the div would contain whitespace from the template:
-```html
-<div class="empty:hidden">
-
-</div>
-```
-
-The `:empty` selector would not match.
+</details>
 
 ---
 
@@ -781,17 +1098,17 @@ The `:empty` selector would not match.
 
 ### Template Syntax
 
-| Jinja2                                 | Hyper                                                      |
-|----------------------------------------|------------------------------------------------------------|
-| `{% extends "base.html" %}`            | `from app.layouts import Base` then `<{Base}>...</{Base}>` |
-| `{% block content %}...{% endblock %}` | `{...}` or `<{...} name="content"/>`                       |
-| `{% include "header.html" %}`          | `from components import Header` then `<{Header}/>`         |
-| `{% if condition %}`                   | `{condition and t'<div>...</div>'}`                        |
-| `{% for item in items %}`              | `{[t'<div>{item}</div>' for item in items]}`               |
-| `{{ variable }}`                       | `{variable}`                                               |
-| `{{ variable\|safe }}`                 | `{variable:safe}`                                          |
-| `{# comment #}`                        | `<!--# comment #-->`                                       |
-| `{% set x = value %}`                  | `x = value` (at module top)                                |
+| Jinja2                                 | Hyper                                                          |
+|----------------------------------------|----------------------------------------------------------------|
+| `{% extends "base.html" %}`            | `from app.pages import Layout` then `<{Layout}>...</{Layout}>` |
+| `{% block content %}...{% endblock %}` | `{...}` or `<{...} name="content"/>`                           |
+| `{% include "header.html" %}`          | `from app.pages import Header` then `<{Header}/>`              |
+| `{% if condition %}`                   | `{condition and t'<div>...</div>'}`                            |
+| `{% for item in items %}`              | `{[t'<div>{item}</div>' for item in items]}`                   |
+| `{{ variable }}`                       | `{variable}`                                                   |
+| `{{ variable\|safe }}`                 | `{variable:safe}`                                              |
+| `{# comment #}`                        | `<!--# comment #-->`                                           |
+| `{% set x = value %}`                  | `x = value` (at module top)                                    |
 
 ### Filters
 
