@@ -1,5 +1,7 @@
 # Form Handling
 
+> **🔮 SSR Mode** - This feature requires server-side rendering (planned). Forms are not available in SSG mode, which generates static HTML at build time.
+
 Hyper uses FastAPI-style dependency injection for form handling. Use `Form()` with type hints to automatically extract form fields.
 
 ---

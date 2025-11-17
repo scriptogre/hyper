@@ -1,5 +1,7 @@
 # Advanced Features
 
+> **🔮 SSR Mode** - Most features in this document require server-side rendering (planned). Some advanced patterns may work in SSG mode where applicable.
+
 ---
 
 ## HTMX Integration

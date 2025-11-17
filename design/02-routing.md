@@ -4,7 +4,86 @@ Hyper uses **file-based routing** - your file structure automatically maps to UR
 
 ---
 
-## Project Structure
+## Project Structure by Mode
+
+Hyper supports three modes: **SSG** (static generation), **SSR** (server rendering), and **Hybrid** (both).
+
+### ✓ SSG (Static Site Generation) - Available Now
+
+```
+app/
+  pages/         # Pages and layouts
+    Layout.py           # Layout (PascalCase = not a route)
+    index.py            → /
+    about.py            → /about
+    blog/
+      Layout.py         # Blog-specific layout
+      index.py          → /blog
+      [slug].py         → /blog/{slug} (generates multiple pages)
+  content/       # Content collections
+    __init__.py         # Content definitions
+    blog/
+      post-1.md
+      post-2.md
+
+public/          # Static assets (copied to dist/)
+  styles.css
+  images/
+```
+
+### 🔮 SSR (Server-Side Rendering) - Planned
+
+```
+app/
+  pages/         # Server-rendered pages
+    Base.py             # Layout (PascalCase = not a route)
+    AuthLayout.py       # Layout (PascalCase = not a route)
+    index.py            → /
+    about.py            → /about
+    contact.py          → /contact
+    users/
+      index.py          → /users
+      [id]/
+        index.py        → /users/{id} (renders on demand)
+        Form.py         # Partial (PascalCase = not a route)
+        Avatar.py       # Partial (PascalCase = not a route)
+      create.py         → /users/create
+  api/           # JSON endpoints (optional)
+    posts/
+      index.py          → /api/posts
+      [id].py           → /api/posts/{id}
+  models/        # Database models
+  services/      # Business logic
+  schemas/       # Validation schemas
+
+components/      # Shared, stateless UI (only after 3+ uses)
+  Button.py
+  Card.py
+  Modal.py
+```
+
+### 🔮 Hybrid (Mixed SSG + SSR) - Planned
+
+```
+app/
+  pages/
+    index.py            → / (SSG: prerendered)
+    about.py            → /about (SSG: prerendered)
+    blog/
+      index.py          → /blog (SSG: prerendered)
+      [slug].py         → /blog/{slug} (SSG: prerendered)
+    dashboard/
+      index.py          → /dashboard (SSR: on-demand)
+      [id].py           → /dashboard/{id} (SSR: on-demand)
+  content/       # Content for SSG routes
+  models/        # Database for SSR routes
+```
+
+---
+
+## SSR Project Structure (Full Details)
+
+This is the structure for a full SSR application. SSG projects use a simpler structure (see above).
 
 ```
 app/
@@ -114,7 +193,87 @@ Both map to the same URL - use directories when you need partials.
 
 A route file is just Python code with a t-string template.
 
-### Simple Route
+### ✓ SSG - Simple Route
+
+```python
+# app/pages/about.py
+t"""
+<!doctype html>
+<html>
+<head><title>About</title></head>
+<body>
+    <h1>About Us</h1>
+    <p>We build amazing things.</p>
+</body>
+</html>
+"""
+```
+
+**How it works (SSG):**
+1. CLI executes the Python file at build time
+2. Extracts the t-string output
+3. Writes to `dist/about/index.html`
+
+### ✓ SSG - Route with Data
+
+```python
+# app/pages/blog/index.py
+from app.content import blogs
+
+# Sort and filter at build time
+recent = sorted(blogs, key=lambda b: b.date, reverse=True)[:10]
+
+t"""
+<!doctype html>
+<html>
+<head><title>Blog</title></head>
+<body>
+    <h1>Recent Posts</h1>
+    <ul>
+        {[t'<li><a href="/blog/{post.slug}">{post.title}</a></li>' for post in recent]}
+    </ul>
+</body>
+</html>
+"""
+```
+
+**All code runs once at build time.** Variables in scope are available in the template.
+
+### ✓ SSG - Dynamic Routes
+
+```python
+# app/pages/blog/[slug].py
+from typing import Literal
+from app.content import blogs
+
+# Path parameter (injected by CLI)
+slug: Literal[*[b.slug for b in blogs]]
+
+# ---
+
+# Use injected parameter to find the post
+post = next(b for b in blogs if b.slug == slug)
+
+t"""
+<!doctype html>
+<html>
+<head><title>{post.title}</title></head>
+<body>
+    <h1>{post.title}</h1>
+    <time>{post.date}</time>
+    <article>{post.html}</article>
+</body>
+</html>
+"""
+```
+
+**Result:** Generates `/blog/post-1.html`, `/blog/post-2.html`, etc.
+
+The `Literal[*[...]]` tells the CLI which paths to generate. See [08-ssg.md](08-ssg.md) for full details.
+
+---
+
+### 🔮 SSR - Simple Route (Planned)
 
 ```python
 # routes/about.py
@@ -130,13 +289,13 @@ t"""
 """
 ```
 
-**How it works:**
-1. Framework executes the module
+**How it works (SSR):**
+1. Framework executes the module on each request
 2. Finds the t-string template (a `Template` object)
 3. Converts it to HTML using tdom's `html()` function
 4. Returns it as a Starlette `TemplateResponse`
 
-### Route with Logic
+### 🔮 SSR - Route with Logic (Planned)
 
 ```python
 # routes/users.py
@@ -160,7 +319,7 @@ t"""
 
 **Variables in scope are available in the template!**
 
-### Route with Path Parameters
+### 🔮 SSR - Route with Path Parameters (Planned)
 
 ```python
 # app/pages/users/[id].py
@@ -188,7 +347,7 @@ t"""
 
 **Note:** Use `[id]` in the filename, and `id` (without brackets) as the variable name.
 
-### Route with Query Parameters
+### 🔮 SSR - Route with Query Parameters (Planned)
 
 TODO: Replace with https://htmx.org/examples/active-search/ example
 
@@ -223,7 +382,7 @@ t"""
 
 ---
 
-## Multiple HTTP Methods
+## 🔮 Multiple HTTP Methods (SSR - Planned)
 
 Use `GET`, `POST`, `PUT`, `DELETE` helpers to handle different HTTP methods:
 

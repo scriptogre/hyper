@@ -1,5 +1,7 @@
 # API Reference
 
+> **🔮 SSR Mode** - This API reference is primarily for server-side rendering (planned). SSG mode uses a simpler API focused on content collections and static generation.
+
 ---
 
 ## Imports

@@ -1,35 +1,23 @@
 # Hyper
 
-**A hypermedia-driven web framework for Python 3.14 built on Starlette and tdom**
+**A Python-powered static site generator built for speed**
 
-Hyper (what: hypermedia) + Prose (how: like prose) = Hyper
-
-Write server-rendered HTML apps with the simplicity of modern Python. File-based routing meets FastAPI-style dependency injection, powered by native t-string templates.
+Write static sites with Python 3.14's t-strings. Full Python ecosystem at build time. Zero runtime dependencies.
 
 ```python
-# routes/index.py
-from hyper import GET, POST, Form
-from typing import Annotated
-from layouts import Base
+# app/pages/index.py
 
-if GET:
-    t"""
-    <{Base} title="Welcome">
-        <h1>Hello, Hyper!</h1>
-        <form method="POST">
-            <input name="message" placeholder="Enter a message">
-            <button>Submit</button>
-        </form>
-    </{Base}>
-    """
-
-elif POST:
-    message: Annotated[str, Form()]
-    t"""
-    <{Base} title="Success">
-        <h2>You said: {message}</h2>
-    </{Base}>
-    """
+t"""
+<html>
+<head>
+    <title>Welcome to Hyper</title>
+</head>
+<body>
+    <h1>Hello, Hyper!</h1>
+    <p>Built with Python. Served as static HTML.</p>
+</body>
+</html>
+"""
 ```
 
 ---
@@ -37,259 +25,246 @@ elif POST:
 ## Key Features
 
 ### 🗂️ File-Based Routing
-Your file structure **is** your URL structure. No decorators, no configuration.
+
+Your file structure **is** your URL structure.
 
 ```
-routes/
+app/pages/
   index.py              → /
   about.py              → /about
   blog/
     index.py            → /blog
-    {slug}.py           → /blog/{slug}
+    [slug].py           → /blog/:slug
 ```
 
 ### 🎨 Native T-String Templates
-Python 3.14's t-strings with tdom provide type-safe, compiled templates with zero learning curve.
+
+Python 3.14's t-strings provide type-safe templates with zero learning curve.
 
 ```python
-# Advanced attribute handling
-classes = ["btn", "btn-primary", {"active": is_admin}]
-styles = {"color": "red", "margin": "10px"}
+# app/pages/team.py
+
+members = get_team_members()
 
 t"""
-<button
-    class={classes}
-    style={styles}
-    data={{"user-id": 123}}
-    {_if(is_visible)}>
-    Click Me
-</button>
-"""
-```
-
-### 🎯 Conditional Rendering
-Clean syntax for conditional elements:
-
-```python
-from hyper import _if
-
-# Block syntax for multiple elements
-t"""
-{_if(show_sidebar):}
-    <aside>{sidebar}</aside>
-{_if:end}
-"""
-
-# Inline syntax for single elements
-t"""
-<a href="/admin" {_if(is_admin)}>Admin Panel</a>
-"""
-```
-
-### 💉 FastAPI-Style Dependency Injection
-Module-level type hints automatically inject what you need:
-
-```python
-from hyper import GET, POST, Form
-from typing import Annotated
-
-user_id: int  # Path parameter from URL
-page: int = 1  # Query parameter with default
-user: User = Depends(get_current_user)  # Custom dependency
-
-if POST:
-    name: Annotated[str, Form()]  # Form field
-    email: Annotated[str, Form()]
-```
-
-### 🧩 Component System
-Layouts and components with slots—no JSX, just Python:
-
-```python
-# layouts/Base.py
-from hyper import Slot
-
-title: str = "My App"
-content: Slot
-
-t"""
-<!doctype html>
 <html>
-<head><title>{title}</title></head>
 <body>
-    <nav>...</nav>
-    <main>{content}</main>
+    <h1>Our Team</h1>
+    {[t'<div>{member.name} - {member.role}</div>' for member in members]}
 </body>
 </html>
 """
 ```
 
+### 📝 Content Collections
+
+Organize content with Python dataclasses or plain dictionaries.
+
 ```python
-# routes/index.py
-from layouts import Base
+# app/content/__init__.py
+from dataclasses import dataclass
+from datetime import date
+
+@dataclass
+class Blog:
+    title: str
+    slug: str
+    date: date
+
+    class Meta:
+        path = "app/content/blog/*.md"
+
+blogs: list[Blog]
+```
+
+```python
+# app/pages/blog/index.py
+from app.content import blogs
+
+recent = sorted(blogs, key=lambda b: b.date, reverse=True)[:10]
 
 t"""
-<{Base} title="Home">
-    <h1>Welcome!</h1>
-</{Base}>
+<h1>Recent Posts</h1>
+{[t'<a href="/blog/{post.slug}">{post.title}</a>' for post in recent]}
 """
 ```
 
-### ⚡ HTMX-Ready
-Perfect for hypermedia-driven applications:
+### 🎯 Dynamic Routes
+
+Generate pages from content automatically.
 
 ```python
-from hyper import POST
+# app/pages/blog/[slug].py
+from typing import Literal
+from app.content import blogs
 
-user_id: int
+# Path parameter (injected by framework)
+slug: Literal[*[b.slug for b in blogs]]
 
-if POST:
-    follow_user(user_id)
-    count = get_follower_count(user_id)
+# ---
 
-    # Return just the updated element
-    t"""
-    <button hx-post="/users/{user_id}/unfollow" hx-swap="outerHTML">
-        Unfollow ({count} followers)
-    </button>
-    """
-```
-
-### 📝 Forms Made Easy
-Handle forms with automatic field extraction and validation:
-
-```python
-from hyper import GET, POST, Form
-from typing import Annotated
-from pydantic import BaseModel, EmailStr
-
-class SignupForm(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-if GET:
-    t"""<form method="POST">...</form>"""
-
-elif POST:
-    form: Annotated[SignupForm, Form()]
-    user = create_user(form.username, form.email, form.password)
-    t"""<h1>Welcome, {user.username}!</h1>"""
-```
-
-### 🔄 Fragments & Streaming
-Render page sections independently with inline fragment markers:
-
-```python
-from hyper import fragment, render
-
-user_id: int
-user = User.get(id=user_id)
+post = next(b for b in blogs if b.slug == slug)
 
 t"""
-<html>
-<body>
-    <h1>{user.name}</h1>
-
-    <div id="status" {fragment}>
-        Status: {user.status}
-        Last updated: {user.updated_at}
-    </div>
-
-    <div id="activity" {fragment}>
-        Recent activity: {user.recent_activity}
-    </div>
-</body>
-</html>
+<article>
+    <h1>{post.title}</h1>
+    <div>{post.html}</div>
+</article>
 """
-
-# Render only specific fragments
-render(fragments=["status"])
-
-# Stream real-time updates
-async def stream():
-    yield render(fragments="status")
-    async for update in subscribe_to_updates(user_id):
-        yield render(fragments="status")
 ```
 
-### 📄 Markdown-First
-Full Python execution in markdown files with frontmatter and inline Python:
+### 🚀 The Power of Python
+
+Use any Python library at build time.
 
 ```python
-# routes/blog/{slug}.md
-# ---
-# title: My Blog Post
-# date: 2025-01-15
-# ---
-#
-# # {frontmatter.title}
-# Published on {frontmatter.date}
-#
-# Python code blocks execute and populate variables:
-# posts = get_recent_posts(limit=5)
-#
-# ## Recent Posts
-# {[t'<li><a href="/blog/{p.slug}">{p.title}</a></li>' for p in posts]}
+# app/pages/stats.py
+from app.content import blogs
+import pandas as pd
+
+df = pd.DataFrame([{'date': b.date, 'words': len(b.content.split())} for b in blogs])
+avg_words = df['words'].mean()
+
+t"""
+<h1>Blog Statistics</h1>
+<p>Average: {avg_words:.0f} words per post</p>
+"""
 ```
 
-### 🏗️ SSG + SSR Hybrid
-Static site generation with dynamic capabilities:
+Need data analysis? Image processing? API calls? Just `pip install` and use it.
 
-```python
-# Pre-render at build time
-@staticmethod
-def get_static_paths():
-    return [{"slug": post.slug} for post in get_all_posts()]
+### 📄 Markdown Files
+
+Write content in Markdown with frontmatter and Python execution blocks.
+
+```markdown
+---
+title: "My Post"
+date: 2025-01-15
+---
+
+# {frontmatter.title}
+
+```python exec
+recent_posts = get_recent_posts(5)
+```
+
+## Related Posts
+{[t'<li>{p.title}</li>' for p in recent_posts]}
+```
+
+### ⚡ Built for Speed
+
+- Rust CLI for millisecond builds
+- Incremental builds
+- Instant hot reload
+- Single binary distribution
+
+---
+
+## Installation
+
+```bash
+# Via uv (recommended):
+uvx hyper init myblog
+cd myblog
+uvx hyper dev
+
+# Or install:
+uv tool install hyper
+hyper build
 ```
 
 ---
 
-## Table of Contents
+## Documentation
 
-### Core Concepts
+### Getting Started
 
-1. **[Overview](design/01-overview.md)** - Philosophy, installation, and quick start
-2. **[Routing](design/02-routing.md)** - File-based routing and route structure
-3. **[Templates & Layouts](design/03-templates.md)** - T-string templates, layouts, and components
-4. **[Fragments](design/04-fragments.md)** - Inline fragments for partial page updates
-5. **[Dependency Injection](design/05-dependency-injection.md)** - FastAPI-style injection patterns
+- **[Architecture](design/00-architecture.md)** - Technical decisions and implementation plan
+- **[Overview](design/01-overview.md)** - What is Hyper and why use it
 
-### Features
+### SSG Documentation
 
-6. **[Forms](design/06-forms.md)** - Form handling with automatic field extraction
-7. **[Streaming & SSE](design/07-streaming.md)** - Server-Sent Events and async/await
-8. **[Static Site Generation](design/08-ssg.md)** - SSG + SSR hybrid mode
-9. **[Markdown](design/09-markdown.md)** - First-class markdown support
+1. **[Routing](design/02-routing.md)** - File-based routing, dynamic routes
+2. **[Templates](design/03-templates.md)** - t-strings, layouts, components
+3. **[Markdown](design/04-markdown.md)** - Markdown files with Python
+4. **[Static Site Generation](design/08-ssg.md)** - Building static HTML, path generation
+5. **[Content Collections](design/09-content.md)** - Organize and query content
 
-### Advanced
-
-10. **[Advanced Features](design/10-advanced.md)** - Response manipulation, HTMX, static files, error pages
-11. **[API Reference](design/11-api-reference.md)** - Complete API, project structure, tips & troubleshooting
-
----
-
-## Quick Links
-
-- **GitHub:** https://github.com/scriptogre/hyper
-- **tdom:** https://github.com/thoughtbot/tdom
-- **Starlette:** https://www.starlette.io
-- **htmx:** https://htmx.org
+See [design/00-index.md](design/00-index.md) for complete documentation index.
 
 ---
 
 ## What Makes Hyper Different?
 
-- **File-based routing** - Your file structure IS your URL structure
-- **T-string templates** - Native Python 3.14 templates with full type safety
-- **FastAPI-style injection** - Module-level type hints for automatic dependency injection
-- **Inline fragments** - Render page sections without duplication
-- **SSG + SSR hybrid** - Static when possible, dynamic when needed
-- **Streaming built-in** - Real-time updates with Server-Sent Events
-- **Markdown-first** - Full Python execution in markdown files
+**Compared to Hugo/Zola/Jekyll:**
+- Full Python at build time (not template language)
+- Any PyPI package available
+- Python dataclasses for content
+- Type-safe with IDE autocomplete
+
+**Compared to Astro:**
+- Simpler API - no `getStaticPaths()` boilerplate
+- Python instead of JavaScript
+- More flexible content organization
+- Rust CLI for speed
+
+**Compared to Python frameworks:**
+- Zero runtime dependencies
+- Pure static output
+- No server needed
+- Deploy anywhere
 
 ---
 
-## Getting Started
+## Philosophy
 
-Start with [01-overview.md](design/01-overview.md) for installation and your first route, then explore the other guides based on what you're building.
+### Simple Things Simple
+
+```python
+# app/content/__init__.py
+blogs: list[dict]  # That's it. No schema needed.
+```
+
+### Powerful When Needed
+
+```python
+@dataclass
+class Blog:
+    title: str
+    date: date
+
+    class Meta:
+        path = "app/content/blog/*.md"
+
+    @property
+    def url(self) -> str:
+        return f"/blog/{self.slug}"
+
+blogs: list[Blog]  # Full validation, IDE autocomplete, type safety
+```
+
+---
+
+## Status
+
+**Current:** Planning & design phase
+**Next:** Rust CLI implementation
+**Future:** SSR mode (server-side rendering)
+
+See [design/00-architecture.md](design/00-architecture.md) for implementation roadmap.
+
+---
+
+## Links
+
+- **Documentation:** [design/00-index.md](design/00-index.md)
+- **GitHub:** https://github.com/yourusername/hyper
+- **Python 3.14 t-strings:** [PEP 750](https://peps.python.org/pep-0750/)
+
+---
+
+## License
+
+MIT

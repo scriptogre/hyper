@@ -773,9 +773,9 @@ that won't be sent to the browser
 
 ---
 
-## Partials
+## 🔮 Partials (SSR - Planned)
 
-Partials let you render only part of a page for HTMX updates.
+Partials let you render only part of a page for HTMX updates. This feature requires server-side rendering.
 
 ### Mark a Partial
 
@@ -938,9 +938,9 @@ The entire `<{Fragment}>...</{Fragment}>` block is treated as a single partial n
 
 ---
 
-## Whitespace Control
+## 🔮 Whitespace Control (SSR - Planned)
 
-Hyper removes unwanted whitespace from templates automatically.
+Hyper removes unwanted whitespace from templates automatically. This feature is for server-side rendering.
 
 ### The Default Behavior
 

@@ -1,5 +1,7 @@
 # Streaming & Server-Sent Events
 
+> **🔮 SSR Mode** - This feature requires server-side rendering (planned). Streaming and SSE require a running server and are not available in SSG mode.
+
 Hyper provides first-class support for streaming responses and Server-Sent Events (SSE), perfect for real-time updates with HTMX.
 
 ---

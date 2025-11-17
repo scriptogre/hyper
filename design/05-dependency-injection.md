@@ -1,12 +1,68 @@
 # Dependency Injection
 
-Hyper uses **FastAPI-style dependency injection** adapted to module-level scope. Type hints automatically inject values into your route.
-
-**Key difference from FastAPI:** Instead of function parameters, Hyper uses **module-level type-annotated variables**. This enables the framework to inject values before your code runs, making them available throughout the module scope and in your template.
+Hyper uses type hints to inject values into your routes. The injection mechanism differs between SSG and SSR modes.
 
 ---
 
-## Path Parameters
+## ✓ SSG - Path Parameters
+
+In SSG mode, path parameters are injected at build time using `Literal` type hints.
+
+### Static Values
+
+```python
+# app/pages/docs/[lang].py
+from typing import Literal
+
+# Path parameter (injected by CLI at build time)
+lang: Literal['en', 'es', 'fr']
+
+t"""
+<html>
+<body>
+    <h1>Documentation - {lang}</h1>
+    <p>Language: {lang}</p>
+</body>
+</html>
+"""
+```
+
+**Result:** Generates `/docs/en`, `/docs/es`, `/docs/fr`
+
+### Dynamic Values from Content
+
+```python
+# app/pages/blog/[slug].py
+from typing import Literal
+from app.content import blogs
+
+# Path parameter (injected by CLI)
+slug: Literal[*[b.slug for b in blogs]]
+
+# ---
+
+# Use injected value
+post = next(b for b in blogs if b.slug == slug)
+
+t"""
+<html>
+<body>
+    <h1>{post.title}</h1>
+    <article>{post.html}</article>
+</body>
+</html>
+"""
+```
+
+**Result:** Generates one page per blog post
+
+**The `# ---` separator** distinguishes injected variables (above) from computed variables (below).
+
+See [08-ssg.md](08-ssg.md) for full SSG path generation patterns.
+
+---
+
+## 🔮 SSR - Path Parameters (Planned)
 
 Variables with type hints and **no default value** become path parameters:
 
@@ -39,7 +95,7 @@ t"""
 
 ---
 
-## Query Parameters
+## 🔮 SSR - Query Parameters (Planned)
 
 Variables with type hints and **a default value** become query parameters:
 
@@ -70,7 +126,7 @@ t"""
 
 ---
 
-## Query Parameter Validation
+## 🔮 SSR - Query Parameter Validation (Planned)
 
 Use `Annotated` with `Query()` for validation:
 
@@ -99,7 +155,7 @@ t"""<html><body>Results: {len(results)}</body></html>"""
 
 ---
 
-## Headers
+## 🔮 SSR - Headers (Planned)
 
 Inject HTTP headers with `Header()`:
 
@@ -129,7 +185,7 @@ t"""
 
 ---
 
-## Cookies
+## 🔮 SSR - Cookies (Planned)
 
 Inject cookies with `Cookie()`:
 
@@ -151,7 +207,7 @@ else:
 
 ---
 
-## Request Body (JSON)
+## 🔮 SSR - Request Body (JSON) (Planned)
 
 Use Pydantic models for JSON request bodies:
 
@@ -183,7 +239,7 @@ t"""<html><body><h1>Created user {new_user.id}</h1></body></html>"""
 
 ---
 
-## Form Data
+## 🔮 SSR - Form Data (Planned)
 
 Use `Form()` to extract form fields:
 
@@ -222,7 +278,7 @@ elif POST:
 
 ---
 
-## Form Models
+## 🔮 SSR - Form Models (Planned)
 
 Use Pydantic models for structured form data:
 
@@ -260,7 +316,7 @@ elif POST:
 
 ---
 
-## File Uploads
+## 🔮 SSR - File Uploads (Planned)
 
 Handle file uploads with `File()` and `UploadFile`:
 
@@ -315,7 +371,7 @@ if POST:
 
 ---
 
-## Request Object
+## 🔮 SSR - Request Object (Planned)
 
 Inject the full Starlette `Request` object:
 
@@ -340,7 +396,7 @@ t"""
 
 ---
 
-## Response Manipulation
+## 🔮 SSR - Response Manipulation (Planned)
 
 Inject `Response` to set headers, status codes, and cookies:
 
@@ -366,7 +422,7 @@ t"""<html><body><h1>Cookie set!</h1></body></html>"""
 
 ---
 
-## Combining Multiple Injections
+## 🔮 SSR - Combining Multiple Injections (Planned)
 
 You can combine different injection types:
 

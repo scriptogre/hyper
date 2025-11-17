@@ -1,5 +1,7 @@
 # HyperLive - Real-Time Server-Driven UI
 
+> **🔮 SSR Mode** - HyperLive is an advanced feature for server-side rendering (planned for future). This requires WebSocket support and server-side state management.
+
 **Goal:** Build the foundation for next-gen hypermedia-driven applications (HDAs). Learn from Livewire/LiveView, avoid their mistakes, exceed their capabilities.
 
 ---
