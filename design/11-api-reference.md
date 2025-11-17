@@ -25,7 +25,6 @@ from hyper import (
     PATCH,             # Check if request is PATCH
 
     # Dependency Injection
-    Children,          # For layout components
     Query,             # Query parameter config
     Header,            # Header injection
     Cookie,            # Cookie injection
@@ -39,21 +38,9 @@ from hyper import (
     get_collection,    # Get markdown files
     render_markdown,   # Render markdown string
 
-    # tdom Types (re-exported)
-    Node,              # Base node type
-    Element,           # Element node
-    Markup,            # Safe HTML wrapper
-    Slot,              # Slot type for component content
-    _if,               # Conditional rendering helper
-
-    # HTMX Helpers
-    is_htmx,           # Check if HTMX request
-    hx_redirect,       # HX-Redirect helper
-    hx_trigger,        # HX-Trigger helper
-
-    # Fragment Support
-    fragment,          # Fragment marker
-    render,            # Fragment rendering
+    # Partials
+    Fragment,          # Fragment tag
+    partial,           # Partial attribute
 )
 ```
 
@@ -63,22 +50,85 @@ from hyper import (
 
 ```python
 app = Hyper(
-    routes_dir: str = "routes",
+    pages_dir: str = "pages",
     static_dir: str = "static",
     debug: bool = False,
+    templates: dict = {
+        "trim_newlines": True,  # Remove newlines after expressions
+        "trim_indent": True,    # Remove leading indentation
+    },
 )
 ```
 
 **Parameters:**
-- `routes_dir` - Directory containing route files (default: `"routes"`)
+- `pages_dir` - Directory containing page files (default: `"pages"`)
 - `static_dir` - Directory for static files (default: `"static"`)
 - `debug` - Enable debug mode (default: `False`)
+- `templates` - Template configuration (whitespace control, etc.)
 
 **Methods:**
 - `add_middleware(middleware_class, **options)` - Add Starlette middleware
-- `add_event_handler(event_type, func)` - Add startup/shutdown handlers
 - `exception_handler(status_code)` - Decorator for custom error handlers
-- `on_event(event_type)` - Decorator for lifecycle events
+
+---
+
+## Lifespan Events
+
+Handle startup and shutdown logic using the `lifespan` parameter, just like FastAPI:
+
+```python
+# app/main.py
+from contextlib import asynccontextmanager
+from hyper import Hyper
+
+# Shared resources
+ml_models = {}
+
+@asynccontextmanager
+async def lifespan(app: Hyper):
+    # Startup: Load resources before handling requests
+    ml_models["model"] = load_ml_model()
+    print("Application started")
+
+    yield  # Application runs and handles requests
+
+    # Shutdown: Clean up resources after handling requests
+    ml_models.clear()
+    print("Application stopped")
+
+app = Hyper(lifespan=lifespan)
+```
+
+**For complex scenarios**, extract to `app/lifecycle.py`:
+
+```python
+# app/lifecycle.py
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app):
+    # Startup
+    await init_database()
+    await load_cache()
+    yield
+    # Shutdown
+    await close_database()
+    await clear_cache()
+```
+
+```python
+# app/main.py
+from hyper import Hyper
+from app.lifecycle import lifespan
+
+app = Hyper(lifespan=lifespan)
+```
+
+**When to use:**
+- Database connection pools
+- Loading ML models or caching data
+- Background task setup/cleanup
+- Resource initialization that should happen once
 
 ---
 
@@ -86,27 +136,42 @@ app = Hyper(
 
 ```
 my_app/
-├── app.py                    # Application entry point
-├── routes/
-│   ├── _base.py              # Base layout
-│   ├── _components.py        # Shared components
-│   ├── index.py              # /
-│   ├── about.py              # /about
-│   ├── contact.py            # /contact
-│   ├── users/
-│   │   ├── index.py          # /users
-│   │   ├── {user_id}.py      # /users/{user_id}
-│   │   └── {user_id}/
-│   │       ├── edit.py       # /users/{user_id}/edit
-│   │       └── posts/
-│   │           └── {post_id}.py  # /users/{user_id}/posts/{post_id}
-│   ├── blog/
-│   │   ├── _layout.py        # Blog layout
-│   │   ├── index.py          # /blog
-│   │   └── {slug}.py         # /blog/{slug}
-│   └── api/
-│       ├── users.py          # /api/users
-│       └── posts.py          # /api/posts
+├── main.py                   # Application entry point
+├── app/
+│   ├── pages/                # Hypermedia pages, layouts, partials
+│   │   ├── Base.py           # Base layout (PascalCase = not a route)
+│   │   ├── AuthLayout.py     # Auth layout (PascalCase = not a route)
+│   │   ├── index.py          # /
+│   │   ├── about.py          # /about
+│   │   ├── contact.py        # /contact
+│   │   ├── users/
+│   │   │   ├── index.py      # /users
+│   │   │   ├── [id]/
+│   │   │   │   ├── index.py  # /users/{id}
+│   │   │   │   ├── Form.py   # Partial (PascalCase = not a route)
+│   │   │   │   └── Avatar.py # Partial (PascalCase = not a route)
+│   │   │   └── create.py     # /users/create
+│   │   └── blog/
+│   │       ├── BlogLayout.py # Blog layout (PascalCase = not a route)
+│   │       ├── index.py      # /blog
+│   │       └── [slug].py     # /blog/{slug}
+│   ├── api/                  # JSON endpoints (optional)
+│   │   └── posts/
+│   │       ├── index.py      # /api/posts
+│   │       └── [id].py       # /api/posts/{id}
+│   ├── models/               # Database models
+│   │   ├── user.py
+│   │   └── post.py
+│   ├── services/             # Business logic
+│   │   ├── auth.py
+│   │   └── email.py
+│   └── schemas/              # Validation schemas
+│       ├── user.py
+│       └── post.py
+├── components/               # Shared, stateless UI (only after 3+ uses)
+│   ├── Button.py
+│   ├── Card.py
+│   └── Modal.py
 ├── static/
 │   ├── css/
 │   │   └── style.css
@@ -114,9 +179,7 @@ my_app/
 │   │   └── app.js
 │   └── images/
 │       └── logo.png
-├── models.py                 # Database models
-├── database.py               # Database connection
-└── utils.py                  # Helper functions
+└── .env                      # Environment variables
 ```
 
 ---
@@ -125,113 +188,140 @@ my_app/
 
 ### Hyper vs FastAPI
 
-| Feature | Hyper | FastAPI |
-|---------|--------|---------|
-| **Focus** | Server-side HTML | REST APIs |
-| **Routing** | File-based | Decorator-based |
-| **Templates** | Built-in (tdom) | External (Jinja2) |
-| **DI Style** | Module-level type hints | Function parameters |
-| **Best for** | Hypermedia apps | JSON APIs |
+| Feature       | Hyper                   | FastAPI             |
+|---------------|-------------------------|---------------------|
+| **Focus**     | Server-side HTML        | REST APIs           |
+| **Routing**   | File-based              | Decorator-based     |
+| **Templates** | Built-in (tdom)         | External (Jinja2)   |
+| **DI Style**  | Module-level type hints | Function parameters |
+| **Best for**  | Hypermedia apps         | JSON APIs           |
 
 ### Hyper vs Django
 
-| Feature | Hyper | Django |
-|---------|--------|--------|
+| Feature       | Hyper            | Django                   |
+|---------------|------------------|--------------------------|
 | **Templates** | Python t-strings | Django Template Language |
-| **Routing** | File-based | urls.py config |
-| **ORM** | BYO | Built-in |
-| **Admin** | None | Built-in |
-| **Best for** | Modern HTMX apps | Traditional MVC apps |
+| **Routing**   | File-based       | urls.py config           |
+| **ORM**       | BYO              | Built-in                 |
+| **Admin**     | None             | Built-in                 |
+| **Best for**  | Modern HTMX apps | Traditional MVC apps     |
 
 ### Hyper vs Flask
 
-| Feature | Hyper | Flask |
-|---------|--------|-------|
-| **Async** | Native (Starlette) | Optional (Quart) |
-| **Routing** | File-based | Decorator-based |
-| **Templates** | T-strings (tdom) | Jinja2 |
-| **DI** | Type hints | Manual |
-| **Best for** | Async hypermedia | Sync traditional |
+| Feature       | Hyper              | Flask            |
+|---------------|--------------------|------------------|
+| **Async**     | Native (Starlette) | Optional (Quart) |
+| **Routing**   | File-based         | Decorator-based  |
+| **Templates** | T-strings (tdom)   | Jinja2           |
+| **DI**        | Type hints         | Manual           |
+| **Best for**  | Async hypermedia   | Sync traditional |
 
 ---
 
 ## Tips & Best Practices
 
-### 1. Organize with Underscored Files
+### 1. Use PascalCase for Non-Routes
 
-Use `_` prefix for non-route files:
-- `_base.py` - Layouts
-- `_components.py` - Components
-- `_utils.py` - Utilities
-- `_models.py` - Data models
+Files with PascalCase names are automatically excluded from routing:
+- `Base.py` - Layouts
+- `Form.py` - Partials
+- `Button.py` - Components
+
+No prefixes or special markers needed - the naming itself signals intent.
 
 ### 2. Keep Routes Simple
 
 Do heavy logic in separate modules:
 
 ```python
-# routes/users/index.py
-from services.users import get_all_users_with_stats
-from routes._base import Layout
+# app/pages/users/index.py
+from app.services.users import get_all_users_with_stats
+from app.pages import Base
 
 users = get_all_users_with_stats()
 
 t"""
-<{Layout} title="Users">
+<{Base} title="Users">
     {[t'<div>{u.name} - {u.post_count} posts</div>' for u in users]}
-</{Layout}>
+</{Base}>
 """
 ```
 
-### 3. Use Components for Reusability
+### 3. Avoid Premature Extraction
 
-Extract common patterns into components:
+**Keep HTML inline as long as possible:**
+- Don't extract during active development
+- Don't extract coupled elements (e.g., `hx-target` pairs)
+- Inline loops are often clearer than components
 
 ```python
-# routes/_components.py
-def Card(*, title, children=(), **attrs):
-    return t"""
-    <div class="card" {attrs}>
-        <h3>{title}</h3>
-        <div class="card-body">{children}</div>
-    </div>
-    """
+# ✅ GOOD - Clear and inline
+t"""
+<{Base}>
+    {[t'<article class="post-card">{post.title}</article>' for post in posts]}
+</{Base}>
+"""
+
+# ❌ PREMATURE - Unnecessary abstraction
+t"""
+<{Base}>
+    {[t"<{PostCard} post={post} />" for post in posts]}
+</{Base}>
+"""
 ```
 
-### 4. Leverage HTMX for Interactivity
+**Only extract when:**
+1. Route file becomes truly cluttered (200+ lines)
+2. After copy-pasting across 3+ routes (→ `/app/components`)
+
+Premature extraction makes projects harder to work with.
+
+### 4. Use Directory Routes for Complex Pages
+
+When a route needs partials, make it a directory:
+
+```python
+# Simple route (single file)
+users/create.py
+
+# Complex route (directory with partials)
+users/[id]/
+  index.py      # Main route
+  Form.py       # Partial
+  Avatar.py     # Partial
+```
+
+### 5. Leverage HTMX for Interactivity
 
 Return partials for dynamic updates:
 
 ```python
-# routes/users/{user_id}/follow.py
+# app/pages/users/[id]/follow.py
 from hyper import POST
 
-user_id: int
+id: int
 
 if POST:
-    follow_user(user_id)
-    follower_count = get_follower_count(user_id)
+    follow_user(id)
+    follower_count = get_follower_count(id)
 
     # Return just the updated button
     t"""
-    <button hx-post="/users/{user_id}/unfollow" hx-swap="outerHTML">
+    <button hx-post="/users/{id}/unfollow" hx-swap="outerHTML">
         Unfollow ({follower_count} followers)
     </button>
     """
 ```
 
-### 5. Use Layouts for Consistency
+### 6. Use Layouts for Consistency
 
 Define layouts once, use everywhere:
 
 ```python
-# routes/_base.py
-from hyper import Children
-
-children: Children
+# app/pages/Base.py
 title: str = "My App"
 
-Layout = t"""
+t"""
 <!doctype html>
 <html lang="en">
 <head>
@@ -247,7 +337,7 @@ Layout = t"""
             <a href="/about">About</a>
         </nav>
     </header>
-    <main>{children}</main>
+    <main>{...}</main>
     <footer>&copy; 2025</footer>
 </body>
 </html>
@@ -258,125 +348,18 @@ Layout = t"""
 
 ## Troubleshooting
 
-### Template Not Found
-
-**Error:** `No template found in module`
-
-**Solution:** Make sure you have a bare t-string in your route file:
-
-```python
-# ✅ Correct
-t"""<html>...</html>"""
-
-# ❌ Wrong - variable assignment
-page = t"""<html>...</html>"""
-```
-
-### Path Parameter Not Injected
-
-**Error:** `NameError: name 'user_id' is not defined`
-
-**Solution:** Add type hint:
-
-```python
-# ✅ Correct
-user_id: int
-user = get_user(user_id)
-
-# ❌ Wrong - no type hint
-user = get_user(user_id)  # user_id not injected!
-```
-
-### Query Parameter Not Working
-
-**Error:** Query param not populated
-
-**Solution:** Add type hint AND default value:
-
-```python
-# ✅ Correct
-limit: int = 10
-
-# ❌ Wrong - no default
-limit: int  # Treated as required path param!
-```
-
-### Async Function Not Called
-
-**Error:** Async function defined but data not loaded
-
-**Solution:** Make sure function is actually async and uses `global`:
-
-```python
-# ✅ Correct
-user: User
-
-async def load():
-    global user
-    user = await get_user(user_id)
-
-# ❌ Wrong - not using global
-async def load():
-    user = await get_user(user_id)  # Local variable!
-```
-
-### Form Fields Not Injected
-
-**Error:** Form fields undefined in POST handler
-
-**Solution:** Use `Annotated[type, Form()]` and check with `POST`:
-
-```python
-# ✅ Correct
-from typing import Annotated
-from hyper import POST, Form
-
-if POST:
-    name: Annotated[str, Form()]
-    # Use name here
-
-# ❌ Wrong - no method check
-name: Annotated[str, Form()]  # Will fail on GET!
-```
+<!-- TODO: Add common issues as they arise during actual usage -->
 
 ---
 
-## Philosophy & Design Decisions
+## Design Principles
 
-### Why No Decorators?
-
-File-based routing eliminates the need for route decorators. Your file structure IS your routing configuration.
-
-### Why Type Hints for DI?
-
-Type hints are explicit, tooling-friendly, and Pythonic. They provide:
-- IDE autocomplete
-- Type checking
-- Self-documenting code
-- No magic strings
-
-### Why T-Strings?
-
-T-strings are:
-- Native Python (3.14+)
-- Type-safe
-- Fast (compiled)
-- Familiar (like f-strings)
-- Powerful (via tdom)
-
-### Why No `page =` Variable?
-
-Less boilerplate = better DX. The framework is smart enough to find the template in your module.
-
-### Why Starlette?
-
-Starlette provides:
-- High performance
-- Full async support
-- Proven stability
-- Rich ecosystem
-- WebSocket support
-- Middleware system
+- **File-based routing** - Your file structure IS your routing configuration
+- **Hypermedia-first** - Built for server-rendered HTML and HTMX
+- **Type-based injection** - Module-level type hints for dependencies
+- **No decorators needed** - Convention over configuration
+- **Inline by default** - Extract only when necessary
+- **Native Python** - T-strings (3.14+), async/await throughout
 
 ---
 

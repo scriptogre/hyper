@@ -44,7 +44,7 @@ Requires Python 3.14+
 ### 1. Create a route
 
 ```python
-# routes/index.py
+# app/pages/index.py
 t"""
 <!doctype html>
 <html>
@@ -112,11 +112,11 @@ See [Whitespace Control](03-templates.md#whitespace-control) for detailed exampl
 Your file structure automatically maps to URLs:
 
 ```
-routes/
+app/pages/
   index.py          → /
   about.py          → /about
   users/
-    {user_id}.py    → /users/{user_id}
+    [id].py         → /users/{id}
 ```
 
 See [02-routing.md](02-routing.md) for details.
@@ -126,7 +126,7 @@ See [02-routing.md](02-routing.md) for details.
 Routes use Python 3.14's t-string templates:
 
 ```python
-# routes/index.py
+# app/pages/index.py
 name = "World"
 
 t"""
@@ -138,18 +138,18 @@ t"""
 """
 ```
 
-See [03-templates.md](03-templates.md) for layouts and components.
+See [03-templates.md](03-templates.md) for layouts, partials, and components.
 
 ### Dependency Injection
 
 Type hints automatically inject values:
 
 ```python
-# routes/users/{user_id}.py
+# app/pages/users/[id].py
 from app.models import User
 
-user_id: int  # Injected from URL
-user = User.get(id=user_id)
+id: int  # Injected from URL
+user = User.get(id=id)
 
 t"""<html><body><h1>{user.name}</h1></body></html>"""
 ```
@@ -161,9 +161,9 @@ See [05-dependency-injection.md](05-dependency-injection.md) for all injection p
 Mark elements with `{fragment}` to enable partial page updates - no duplication needed:
 
 ```python
-# routes/users.py
+# app/pages/users/index.py
 from hyper import fragment
-from layouts import Base
+from app.pages import Base
 
 users = User.all()
 
