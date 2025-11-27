@@ -453,14 +453,14 @@ async def websocket_endpoint(websocket: WebSocket):
 from hyper import Hyper
 
 app = Hyper(
-    routes_dir="routes",      # Default: "routes"
+    pages_dir="pages",        # Default: "pages"
     static_dir="static",      # Default: "static"
     debug=True,               # Default: False
 )
 ```
 
 **Options:**
-- `routes_dir` - Directory containing route files
+- `pages_dir` - Directory containing route files
 - `static_dir` - Directory for static files
 - `debug` - Enable debug mode (detailed error pages)
 
