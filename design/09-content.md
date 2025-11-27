@@ -1068,6 +1068,62 @@ app/_hyper_generated/
 
 ---
 
+## Ordering Content
+
+Files sort alphabetically by filename. Control order with prefixes.
+
+### Number Prefixes
+
+```
+app/content/
+  chapters/
+    01-intro.md
+    02-basics.md
+    03-advanced.md
+```
+
+Or:
+
+```
+app/content/
+  steps/
+    001-setup.md
+    002-install.md
+    003-configure.md
+```
+
+### Access Order
+
+The `order` field is added automatically:
+
+```python
+@dataclass
+class Chapter:
+    id: str
+    order: int  # Extracted from filename prefix
+    title: str
+```
+
+Use to sort:
+
+```python
+from app.content import chapters
+
+sorted_chapters = sorted(chapters, key=lambda c: c.order)
+
+t"""
+<ol>
+    {[t'<li>{ch.title}</li>' for ch in sorted_chapters]}
+</ol>
+"""
+```
+
+For `01-intro.md`, `order = 1`.  
+For `002-setup.md`, `order = 2`.  
+No prefix means `order = 0`.
+
+---
+
 ## Key Points
 
 - **Start simple with `list[dict]`**
