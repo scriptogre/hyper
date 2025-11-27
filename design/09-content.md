@@ -983,6 +983,91 @@ Import and use in your pages. Everything runs during `hyper build`.
 
 ---
 
+## Type Inference and IDE Integration
+
+### Auto-Generate Types from Frontmatter
+
+Hyper scans content files at build time and infers dataclass definitions from frontmatter keys and values. Developers get full IDE autocomplete without writing schemas.
+
+**How it works:**
+1. Scan `app/content/**/*.md` for YAML frontmatter
+2. Infer Python types from values (strings, dates, arrays, objects)
+3. Generate `app/_hyper_generated/content.pyi` with full type hints
+4. User code imports normally; type checkers see rich types
+
+**Example:**
+
+```
+# Developer writes only markdown
+# app/content/blog/my-post.md
+***
+title: "Understanding Python"
+date: 2025-01-15
+tags: [python, tutorial]
+***
+
+# Build output (auto-generated)
+# app/_hyper_generated/content.pyi
+
+@dataclass
+class Blog:
+    title: str
+    date: date
+    tags: list[str]
+
+blogs: list[Blog]
+```
+
+**IDE Integration:**
+```
+from app.content import blogs
+
+for post in blogs:
+    print(post.date)    # ✅ IDE knows type is `date`
+    print(post.invalid) # ❌ Caught by type checker
+```
+
+### Type Safety Constraints
+
+Enforce consistency to prevent silent bugs:
+
+- **Strict validation:** All files must have consistent field types. Missing optional fields must be explicit.
+- **Inference fallback:** If fields conflict (e.g., string in one file, int in another), fail at build with clear error message.
+- **Optional override:** Allow `schema_overrides` to specify custom types when inference isn't precise enough.
+
+```
+from hyper import auto_collection
+
+# Simple: auto-infer everything
+blogs = auto_collection("app/content/blog/*.md")
+
+# Advanced: override complex types
+from dataclasses import dataclass
+
+@dataclass
+class Author:
+    name: str
+    email: str
+
+blogs = auto_collection(
+    "app/content/blog/*.md",
+    schema_overrides={"author": Author}
+)
+```
+
+### Generated Files and `.gitignore`
+
+Generated type stubs live in `app/_hyper_generated/` and must be added to `.gitignore`. Hyper maintains them automatically during `hyper dev` and `hyper build`.
+
+Developers should never edit generated files directly; they're regenerated on each build.
+
+```
+# .gitignore
+app/_hyper_generated/
+```
+
+---
+
 ## Key Points
 
 - **Start simple with `list[dict]`**
