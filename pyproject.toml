@@ -1,9 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "hyper"
 version = "0.1.0"
-description = "Add your description here"
+description = "A modular Python framework - umbrella package"
+readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "tdom",
-    "starlette"
+    "hyper-content",
+    "msgspec>=0.20.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "hyper-content[dev]",
+]
+
+[tool.uv.sources]
+hyper-content = { workspace = true }
+
+[tool.uv.workspace]
+members = ["hyper/content"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["hyper"]
+exclude = ["hyper/content/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["hyper/*/tests"]
+python_files = ["test_*.py"]

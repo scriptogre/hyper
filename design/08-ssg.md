@@ -4,7 +4,9 @@ Build static HTML files at build time.
 
 ---
 
-## Your First Static Page
+## Static Pages
+
+Every file in `app/pages` becomes a URL. 
 
 Create a page file.
 
@@ -27,14 +29,32 @@ Build the site.
 hyper build
 ```
 
-**Build generates:**
+**Output:**
 ```
-dist/about/index.html
+app/pages/about.py → dist/about/index.html
 ```
-
-Every page file generates one HTML file. The `/about` URL serves `/about/index.html`.
 
 ---
+
+## Loading Data
+
+Hyper provides a unified `load` tool. 
+
+It reads files, parses them, and validates them into Python objects using `msgspec`.
+
+```python
+from hyper import load, Markdown
+
+posts = load[list[Markdown]]("content/blog/*.md")
+
+# Access fields
+for post in posts:
+    print(post.title)  # from frontmatter
+    print(post.html)   # rendered HTML
+    print(post.content)  # raw markdown
+
+
+```
 
 ## Configuration
 
@@ -176,7 +196,8 @@ Load content using the `load()` function.
 ### Simple Loading
 
 ```python
-from hyper import load, Markdown
+from hyper import loader, Markdown
+
 
 def generate():
     # Load markdown files
@@ -248,7 +269,8 @@ from hyper import Markdown, JSON, YAML, TOML
 Use `list[Type]` for multiple files, `Type` for single file.
 
 ```python
-from hyper import load, Markdown, JSON
+from hyper import loader, Markdown, JSON
+
 
 def generate():
     # Load multiple files → list
@@ -283,32 +305,35 @@ This is the body of the article.
 **Loaded as `Markdown`:**
 
 ```python
-from hyper import load, Markdown
+from hyper import loader, Markdown
+
 
 def generate():
     articles = load[list[Markdown]]("articles/*.md")
     article = articles[0]
 
     # Built-in fields
-    article.id        # "my-article" (filename)
-    article.title     # "My Article" (from frontmatter)
-    article.content   # Raw markdown: "# Article Content\n\n..."
-    article.html      # Rendered HTML: "<h1>Article Content</h1>..."
+    article.id  # "my-article" (filename)
+    article.title  # "My Article" (from frontmatter)
+    article.content  # Raw markdown: "# Article Content\n\n..."
+    article.html  # Rendered HTML: "<h1>Article Content</h1>..."
 
     # Custom fields (from frontmatter)
-    article.slug      # "my-article" (works via Pydantic extra='allow')
+    article.slug  # "my-article" (works via Pydantic extra='allow')
 ```
 
 **Use in pages:**
 
 ```python
 # app/pages/blog/[slug].py
-from hyper import load, Markdown
+from hyper import loader, Markdown
+
 
 def generate():
     articles = load[list[Markdown]]("articles/*.md")
     for article in articles:
         yield {"slug": article.slug, "article": article}
+
 
 slug: str
 article: Markdown
