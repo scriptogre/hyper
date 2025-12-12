@@ -375,11 +375,11 @@ if POST:
 
 ## Related
 
-- **[Dependency Injection](05-dependency-injection.md)** - Full injection patterns
+- **[Dependency Injection](dependency-injection.md)** - Full injection patterns
 - **FastAPI [Form Data](https://fastapi.tiangolo.com/tutorial/request-forms/) docs**
 - **FastAPI [Form Models](https://fastapi.tiangolo.com/tutorial/request-form-models/) docs**
 - **FastAPI [Request Files](https://fastapi.tiangolo.com/tutorial/request-files/) docs**
 
 ---
 
-**[← Previous: Dependency Injection](05-dependency-injection.md)** | **[Back to Index](README.md)** | **[Next: Streaming & SSE →](07-streaming.md)**
+**[← Previous: Dependency Injection](dependency-injection.md)** | **[Next: Streaming →](streaming.md)**

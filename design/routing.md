@@ -148,7 +148,7 @@ app/pages/
         [post_id].py → /users/123/posts/456
 ```
 
-Parameters are injected via type hints (see [05-dependency-injection.md](05-dependency-injection.md)).
+Parameters are injected via type hints (see [dependency-injection.md](dependency-injection.md)).
 
 ### `index.py` Maps to Directory Path
 
@@ -269,7 +269,7 @@ t"""
 
 **Result:** Generates `/blog/post-1.html`, `/blog/post-2.html`, etc.
 
-The `Literal[*[...]]` tells the CLI which paths to generate. See [08-ssg.md](08-ssg.md) for full details.
+The `Literal[*[...]]` tells the CLI which paths to generate. See [ssg.md](ssg.md) for full details.
 
 ---
 
@@ -411,7 +411,7 @@ elif POST:
     """
 ```
 
-See [06-forms.md](06-forms.md) for full form handling patterns.
+See [forms.md](forms.md) for full form handling patterns.
 
 ---
 
@@ -465,4 +465,4 @@ Only promote to `/components` after 3+ uses across different routes.
 
 ---
 
-**[← Previous: Overview](01-overview.md)** | **[Back to Index](README.md)** | **[Next: Templates →](03-templates.md)**
+**[Next: Templates →](templates.md)**
