@@ -179,20 +179,22 @@ hyper build
 
 ## Documentation
 
-### Getting Started
+**Core Concepts** (SSG + SSR)
+- [Routing](design/routing.md) - File-based routing, dynamic routes
+- [Templates](design/templates.md) - t-strings, layouts, components
+- [Content](design/content.md) - Content collections, markdown, frontmatter
 
-- **[Architecture](design/00-architecture.md)** - Technical decisions and implementation plan
-- **[Overview](design/01-overview.md)** - What is Hyper and why use it
+**SSG-Specific**
+- [Static Site Generation](design/ssg.md) - Building static HTML, path generation
 
-### SSG Documentation
+**SSR-Specific** *(planned)*
+- [Dependency Injection](design/dependency-injection.md) - Type-based injection
+- [Forms](design/forms.md) - Form handling
+- [Streaming](design/streaming.md) - SSE, streaming responses
+- [SSR Patterns](design/ssr-patterns.md) - HTMX, middleware, sessions
 
-1. **[Routing](design/02-routing.md)** - File-based routing, dynamic routes
-2. **[Templates](design/03-templates.md)** - t-strings, layouts, components
-3. **[Markdown](design/04-markdown.md)** - Markdown files with Python
-4. **[Static Site Generation](design/08-ssg.md)** - Building static HTML, path generation
-5. **[Content Collections](design/09-content.md)** - Organize and query content
-
-See [design/00-index.md](design/00-index.md) for complete documentation index.
+**Planning**
+- [Architecture](design/architecture.md) - Technical decisions and implementation plan
 
 ---
 
@@ -247,20 +249,26 @@ blogs: list[Blog]  # Full validation, IDE autocomplete, type safety
 
 ---
 
+## Modes
+
+**SSG (Static Site Generation)** - Build static HTML at build time *(current focus)*
+**SSR (Server-Side Rendering)** - Render HTML on-demand *(planned)*
+
+Both modes share the same routing, templates, and content features.
+
 ## Status
 
 **Current:** Planning & design phase
-**Next:** Rust CLI implementation
-**Future:** SSR mode (server-side rendering)
+**Next:** Rust CLI implementation for SSG
 
-See [design/00-architecture.md](design/00-architecture.md) for implementation roadmap.
+See [design/architecture.md](design/architecture.md) for implementation roadmap.
 
 ---
 
 ## Links
 
-- **Documentation:** [design/00-index.md](design/00-index.md)
-- **GitHub:** https://github.com/yourusername/hyper
+- **Documentation:** [design/](design/)
+- **GitHub:** https://github.com/scriptogre/hyper
 - **Python 3.14 t-strings:** [PEP 750](https://peps.python.org/pep-0750/)
 
 ---

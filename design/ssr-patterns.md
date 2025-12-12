@@ -77,7 +77,7 @@ response.headers["HX-Trigger"] = '{"userDeleted": {"id": ' + str(user_id) + '}}'
 t"""<div>User deleted</div>"""
 ```
 
-**See [Fragments](03-templates.md#fragments) for fragment-based HTMX patterns.**
+**See [Fragments](templates.md#fragments) for fragment-based HTMX patterns.**
 
 ---
 
@@ -479,4 +479,4 @@ app = Hyper(
 
 ---
 
-**[← Previous: Markdown](09-markdown.md)** | **[Back to Index](README.md)** | **[Next: API Reference →](11-api-reference.md)**
+**[← Previous: Streaming](streaming.md)**

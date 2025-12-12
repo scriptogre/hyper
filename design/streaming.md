@@ -343,7 +343,7 @@ async def stream():
 
 ## Streaming with Fragments
 
-Combine fragments with streaming for powerful patterns. See [Streaming with Fragments](03-templates.md#streaming-with-fragments) for details.
+Combine fragments with streaming for powerful patterns. See [Streaming with Fragments](templates.md#streaming-with-fragments) for details.
 
 ```python
 from hyper import render, fragment
@@ -414,4 +414,4 @@ response = StreamingResponse(
 
 ---
 
-**[← Previous: Forms](06-forms.md)** | **[Back to Index](README.md)** | **[Next: Static Site Generation →](08-ssg.md)**
+**[← Previous: Forms](forms.md)** | **[Next: Static Site Generation →](ssg.md)**

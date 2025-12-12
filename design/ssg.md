@@ -1907,4 +1907,4 @@ Upload the `dist/` folder to any static host:
 
 ---
 
-**[← Previous: Streaming & SSE](07-streaming.md)** | **[Back to Index](README.md)** | **[Next: Content Collections →](09-content.md)**
+**[← Previous: Content](content.md)**

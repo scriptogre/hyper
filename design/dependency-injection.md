@@ -58,7 +58,7 @@ t"""
 
 **The `# ---` separator** distinguishes injected variables (above) from computed variables (below).
 
-See [08-ssg.md](08-ssg.md) for full SSG path generation patterns.
+See [ssg.md](ssg.md) for full SSG path generation patterns.
 
 ---
 
@@ -274,7 +274,7 @@ elif POST:
     t"""<html><body><h1>Thank you, {name}!</h1></body></html>"""
 ```
 
-**See [06-forms.md](06-forms.md) for full form handling patterns and FastAPI's [Form Data](https://fastapi.tiangolo.com/tutorial/request-forms/) docs.**
+**See [forms.md](forms.md) for full form handling patterns and FastAPI's [Form Data](https://fastapi.tiangolo.com/tutorial/request-forms/) docs.**
 
 ---
 
@@ -418,7 +418,7 @@ response.status_code = 201
 t"""<html><body><h1>Cookie set!</h1></body></html>"""
 ```
 
-**See [10-advanced.md](10-advanced.md) for more response manipulation patterns.**
+**See [ssr-patterns.md](ssr-patterns.md) for more response manipulation patterns.**
 
 ---
 
@@ -507,4 +507,4 @@ The patterns translate directly - just use module-level type hints instead of fu
 
 ---
 
-**[← Previous: Templates](03-templates.md)** | **[Back to Index](README.md)** | **[Next: Forms →](06-forms.md)**
+**[← Previous: Content](content.md)** | **[Next: Forms →](forms.md)**
