@@ -2,7 +2,7 @@
 
 Hyper uses Python 3.14 t-strings for HTML templates with Python variables.
 
-***
+---
 
 # Your First Template
 
@@ -16,7 +16,7 @@ t"""
 
 Put variables in curly braces.
 
-***
+---
 
 # Simple Layouts
 
@@ -169,7 +169,7 @@ t"""
 """
 ```
 
-***
+---
 
 # Advanced Layouts
 
@@ -240,7 +240,7 @@ Potential future idea (more magic, still to explore):
 title: str = (t"Blog - {...}" if ... else "Blog")
 ```
 
-***
+---
 
 # Components
 
@@ -276,7 +276,7 @@ t"""
 # </button>
 ```
 
-***
+---
 
 # Control Flow
 
@@ -301,7 +301,7 @@ t"""
 
 Alternative syntax: `{@: for {item} in {items}}`
 
-***
+---
 
 ## Conditionals
 
@@ -321,7 +321,7 @@ t"""
 
 Alternative syntax: `{@: if {condition}}`
 
-***
+---
 
 # Advanced Attributes
 
@@ -359,7 +359,7 @@ t"""
 
 Classes merge. Other attributes override.
 
-***
+---
 
 ## Conditional Classes
 
@@ -381,7 +381,7 @@ t'<button class={_class}>Click</button>'
 
 Use `_class` because `class` is a Python keyword.
 
-***
+---
 
 ## Dynamic Styles
 
@@ -395,7 +395,7 @@ t'<p {style}>Important</p>'
 # <p style="color:red;font-weight:bold">Important</p>
 ```
 
-***
+---
 
 ## Data Attributes
 
@@ -433,7 +433,7 @@ t'<div {data:flat}>...</div>'
 # <div data-user-id="Aaron" data-user-role="admin" data-state="success">...</div>
 ```
 
-***
+---
 
 ## Spread Attributes
 
@@ -450,7 +450,7 @@ t'<a {attrs}>Link</a>'
 # <a href="https://example.com" target="_blank">Link</a>
 ```
 
-***
+---
 
 ## Boolean Attributes
 
@@ -462,7 +462,7 @@ t'<input disabled={True} readonly={False} />'
 # <input disabled>
 ```
 
-***
+---
 
 # Comments
 
@@ -494,7 +494,7 @@ t"""
 """
 ```
 
-***
+---
 
 # Escaping & Trusted HTML
 

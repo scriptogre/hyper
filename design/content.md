@@ -1,124 +1,348 @@
 # Content
 
-Organize structured data. Write content in markdown.
+Load structured data from files.
 
 ***
 
-# Content Collections
+# Loading Content
 
-Store data in `app/content/`. Query from pages.
+Use `load()` to read files.
 
-## Simple Start
-
-```
-app/content/
-  blog/
-    intro.md
-    tips.md
-```
-
-Add type hint:
+## Without Type Checking
 
 ```python
-# app/content/__init__.py
+from hyper import load
 
-blogs: list[dict]
+# Single file
+settings = load("settings.json")  # dict
+
+# Multiple files
+posts = load("posts/*.json")  # list[dict]
 ```
 
-Done. CLI finds markdown files. Populates `blogs` list automatically.
+No validation. Returns raw dicts.
 
-## Type-Safe Collections
+## With Type Checking
 
-Add structure when needed:
+Use `Collection` or `Singleton` base classes:
 
 ```python
-# app/content/__init__.py
-from dataclasses import dataclass
-from datetime import date
+from hyper import Collection
 
-@dataclass
-class Blog:
+class Post(Collection):
     title: str
-    slug: str
-    date: date
-    content: str  # Raw markdown
-    html: str     # Rendered HTML
+    date: str
 
     class Meta:
-        path = "app/content/blog/*.md"
+        pattern = "posts/*.json"
 
-blogs: list[Blog]
+# Load all posts
+posts = Post.load()  # list[Post]
+```
+
+Auto-validates against your schema.
+
+***
+
+# Markdown Content
+
+Use `MarkdownCollection` or `MarkdownSingleton` for markdown files.
+
+## Simple Example
+
+```python
+from hyper import MarkdownCollection
+
+class Post(MarkdownCollection):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "posts/*.md"
+
+posts = Post.load()
+```
+
+Markdown files look like:
+
+```markdown
+---
+title: "My First Post"
+date: "2025-01-15"
+---
+
+# Hello World
+
+This is the **content**.
+```
+
+## Magic Markdown Fields
+
+`MarkdownCollection` provides automatic fields:
+
+```python
+post = posts[0]
+
+post.id        # "my-first-post" (filename without extension)
+post.slug      # "my-first-post" (URL-friendly)
+post.body      # "# Hello World\n\nThis is the **content**."
+post.html      # "<h1>Hello World</h1><p>This is the <strong>content</strong>.</p>"
+post.title     # "My First Post" (from frontmatter)
+post.date      # "2025-01-15" (from frontmatter)
+```
+
+**Built-in fields:**
+- `id` - Filename without extension
+- `slug` - URL-friendly identifier
+- `body` - Raw markdown text
+- `html` - Rendered HTML
+
+**Custom fields** come from frontmatter.
+
+## Table of Contents
+
+Extract headings and generate TOC:
+
+```python
+from hyper import MarkdownCollection
+
+class Post(MarkdownCollection):
+    title: str
+
+    class Meta:
+        pattern = "posts/*.md"
+
+post = posts[0]
+
+# Access headings
+for heading in post.headings:
+    print(f"{'  ' * (heading.level - 1)}{heading.text}")
+    print(f"  → #{heading.slug}")
+
+# Nested TOC structure
+toc = post.toc.nested()  # Returns hierarchical structure
+```
+
+***
+
+# Validation Libraries
+
+Choose your preferred validation library.
+
+## With Dataclass (Auto)
+
+`Collection` and `Singleton` auto-apply `@dataclass`:
+
+```python
+from hyper import Collection
+
+class Post(Collection):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "posts/*.json"
+```
+
+No explicit decorator needed.
+
+## With Pydantic
+
+```python
+import pydantic
+from hyper import Collection
+
+class Post(Collection, pydantic.BaseModel):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "posts/*.json"
+```
+
+Get Pydantic validation and features.
+
+## With msgspec
+
+```python
+import msgspec
+from hyper import Collection
+
+class Post(Collection, msgspec.Struct):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "posts/*.json"
+```
+
+Fast serialization with msgspec.
+
+***
+
+# Collections vs Singletons
+
+## Collection (Multiple Files)
+
+```python
+from hyper import Collection
+
+class Post(Collection):
+    title: str
+
+    class Meta:
+        pattern = "posts/*.md"
+
+posts = Post.load()  # list[Post]
+```
+
+Returns a list.
+
+## Singleton (Single File)
+
+```python
+from hyper import Singleton
+
+class Config(Singleton):
+    site_name: str
+    theme: str
+
+    class Meta:
+        pattern = "config.json"
+
+config = Config.load()  # Config (single instance)
+```
+
+Returns a single object.
+
+***
+
+# File Formats
+
+All formats auto-detected by extension.
+
+## JSON
+
+```json
+{
+  "title": "My Post",
+  "tags": ["python", "web"]
+}
+```
+
+## YAML
+
+```yaml
+title: My Post
+tags:
+  - python
+  - web
+```
+
+## TOML
+
+```toml
+title = "My Post"
+tags = ["python", "web"]
+```
+
+## Markdown
+
+```markdown
+---
+title: "My Post"
+tags: ["python", "web"]
+---
+
+Content here.
+```
+
+***
+
+# Patterns
+
+Use glob patterns to find files.
+
+```python
+class Post(Collection):
+    title: str
+
+    class Meta:
+        # Match specific directory
+        pattern = "posts/*.md"
+
+        # Recursive search
+        pattern = "posts/**/*.md"
+
+        # Multiple extensions
+        pattern = "posts/*.{md,json}"
+
+        # Multiple directories
+        pattern = "{posts,articles}/*.md"
+```
+
+**Glob syntax:**
+- `*` - Match any characters
+- `**` - Match any depth (recursive)
+- `{a,b}` - Match either `a` or `b`
+
+***
+
+# Using in Pages
+
+Import and use content in pages.
+
+```python
+# app/content/__init__.py
+from hyper import MarkdownCollection
+
+class Post(MarkdownCollection):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "content/posts/*.md"
+
+posts = Post.load()
 ```
 
 Use in pages:
 
 ```python
-# app/pages/blog/index.py
-from app.content import blogs
+# app/pages/blog.py
+from app.content import posts
 
-recent = sorted(blogs, key=lambda b: b.date, reverse=True)[:10]
+# Filter
+recent = [p for p in posts if p.date > "2025-01-01"]
 
+# Sort
+sorted_posts = sorted(posts, key=lambda p: p.date, reverse=True)
+
+# Render
 t"""
-<h1>Recent Posts</h1>
-{[t'<a href="/blog/{post.slug}">{post.title}</a>' for post in recent]}
+<h1>Blog</h1>
+{[t'<article><h2>{post.title}</h2></article>' for post in sorted_posts[:10]]}
 """
 ```
 
-## Markdown Files
+Pure Python. No special query language.
 
-Create files with frontmatter:
+***
 
-```markdown
----
-title: "Introduction to Hyper"
-slug: "intro"
-date: 2025-01-15
-tags: ["python", "web"]
----
+# Computed Properties
 
-# Introduction
-
-Content here.
-```
-
-Frontmatter maps to dataclass fields.
-
-## Generate Pages from Content
+Add methods to your models:
 
 ```python
-# app/pages/blog/[slug].py
-from typing import Literal
-from app.content import blogs
+from hyper import MarkdownCollection
+from datetime import datetime
 
-slug: Literal[*[b.slug for b in blogs]]
-
-# ---
-
-post = next(b for b in blogs if b.slug == slug)
-
-t"""
-<article>
-    <h1>{post.title}</h1>
-    <div>{post.html}</div>
-</article>
-"""
-```
-
-Framework generates one page per blog post.
-
-## Dataclass Methods
-
-Add helpers:
-
-```python
-@dataclass
-class Blog:
+class Post(MarkdownCollection):
     title: str
-    slug: str
-    date: date
+    date: str
 
     class Meta:
-        path = "app/content/blog"
+        pattern = "posts/*.md"
 
     @property
     def url(self) -> str:
@@ -126,127 +350,32 @@ class Blog:
 
     @property
     def formatted_date(self) -> str:
-        return self.date.strftime("%B %d, %Y")
+        dt = datetime.fromisoformat(self.date)
+        return dt.strftime("%B %d, %Y")
+
+    @property
+    def word_count(self) -> int:
+        return len(self.body.split())
 ```
 
 Use in templates:
 
 ```python
-t'<a href="{post.url}">{post.title}</a>'
-t'<time>{post.formatted_date}</time>'
+t"""
+<a href="{post.url}">{post.title}</a>
+<time>{post.formatted_date}</time>
+<span>{post.word_count} words</span>
+"""
 ```
 
-## File Formats
+***
 
-### Markdown (.md)
-
-```markdown
----
-title: "Post Title"
----
-
-Content here.
-```
-
-### JSON (.json)
-
-```json
-{
-  "name": "Acme Corp",
-  "tier": "gold"
-}
-```
-
-### YAML (.yaml)
-
-```yaml
-name: Chris
-bio: Creator
-```
-
-### TOML (.toml)
-
-```toml
-name = "Acme Corp"
-tier = "gold"
-```
-
-CLI parses all formats automatically.
-
-## Single File Config
+# Optional Fields
 
 ```python
-# app/content/__init__.py
-@dataclass
-class SiteConfig:
-    title: str
-    description: str
+from hyper import Collection
 
-    class Meta:
-        path = "app/content/site.toml"
-
-config: SiteConfig  # Single instance
-```
-
-```toml
-# app/content/site.toml
-title = "My Site"
-description = "A great site"
-```
-
-Use:
-
-```python
-from app.content import config
-
-t'<title>{config.title}</title>'
-```
-
-## Multiple Collections
-
-```python
-# app/content/__init__.py
-@dataclass
-class Blog:
-    title: str
-
-    class Meta:
-        path = "app/content/blog"
-
-@dataclass
-class Author:
-    name: str
-
-    class Meta:
-        path = "app/content/authors"
-
-blogs: list[Blog]
-authors: list[Author]
-```
-
-## Filtering and Sorting
-
-Pure Python:
-
-```python
-from app.content import blogs
-
-# Filter
-published = [b for b in blogs if b.published]
-python_posts = [b for b in blogs if "python" in b.tags]
-
-# Sort
-recent = sorted(blogs, key=lambda b: b.date, reverse=True)
-
-# Limit
-top_10 = recent[:10]
-```
-
-## Optional Fields
-
-```python
-@dataclass
-class Blog:
+class Post(Collection):
     title: str
     slug: str
 
@@ -254,231 +383,50 @@ class Blog:
     excerpt: str | None = None
     tags: list[str] = []
     published: bool = True
+
+    class Meta:
+        pattern = "posts/*.md"
 ```
-
-## Entry IDs
-
-Each entry gets automatic `id` field:
-
-```python
-@dataclass
-class Blog:
-    id: str  # Filename without extension
-    title: str
-```
-
-For `app/content/blog/intro.md`, `id = "intro"`.
-
-For `app/content/blog/tutorials/intro.md`, `id = "tutorials/intro"`.
 
 ***
 
-# Markdown Pages
+# Entry IDs
 
-Place `.md` files in `app/pages/`. They become pages.
+Each entry gets automatic `id` field.
 
-```
-app/pages/
-  about.md              → /about
-  blog/
-    post-1.md           → /blog/post-1
-```
+For `content/posts/intro.md`:
+- `id = "content/posts/intro"`
 
-## Basic Markdown
+For nested files, includes full path.
 
-```markdown
-# About Us
-
-We build **great software**.
-
-- Fast
-- Reliable
-```
-
-Renders to HTML.
-
-## Frontmatter
-
-Add YAML between `---` delimiters:
+Override in frontmatter if needed:
 
 ```markdown
 ---
-title: "About Us"
-date: 2025-01-15
+id: "my-custom-id"
+title: "Post Title"
 ---
-
-# {frontmatter.title}
-
-Published on {frontmatter.date}.
 ```
-
-Access with `{frontmatter.field}`.
-
-## Python Execution Blocks
-
-Run Python at build time. Use ` ```python exec ` blocks:
-
-```markdown
----
-title: "Blog"
----
-
-```python exec
-from app.content import blogs
-recent = sorted(blogs, key=lambda b: b.date, reverse=True)[:5]
-```
-
-## Recent Posts
-
-{[t'- [{p.title}]({p.url})' for p in recent]}
-```
-
-Variables become available in markdown.
-
-## Layouts for Markdown
-
-Wrap markdown in layout. Create `Layout.py` in same folder:
-
-```python
-# app/pages/blog/Layout.py
-
-html: str          # Rendered markdown
-frontmatter: dict  # YAML frontmatter
-content: str       # Raw markdown
-
-t"""
-<html>
-<head>
-    <title>{frontmatter.get('title', 'Blog')}</title>
-</head>
-<body>
-    <article>
-        {html}
-    </article>
-</body>
-</html>
-"""
-```
-
-Layout receives `html`, `frontmatter`, and `content`.
-
-## Dynamic Routes with Markdown
-
-```markdown
-<!-- app/pages/blog/[slug].md -->
----
----
-
-```python exec
-from typing import Literal
-from app.content import blogs
-
-slug: Literal[*[b.slug for b in blogs]]
-
-post = next(b for b in blogs if b.slug == slug)
-```
-
-# {post.title}
-
-Published on {post.date}
-
-{post.content}
-```
-
-## Multiple Execution Blocks
-
-Variables persist across blocks:
-
-```markdown
-```python exec
-from app.content import blogs
-total = len(blogs)
-```
-
-We have {total} posts.
-
-```python exec
-avg_words = sum(len(b.content.split()) for b in blogs) // total
-```
-
-Average: {avg_words} words.
-```
-
-## When to Use Markdown
-
-**Use markdown for:**
-- Blog posts
-- Documentation
-- Content-heavy pages
-
-**Use Python for:**
-- Complex logic
-- Multiple layouts
-- Component composition
 
 ***
 
-# Ordering Content
+# Direct load() Usage
 
-Files sort alphabetically. Control with prefixes.
-
-## Number Prefixes
-
-```
-app/content/
-  chapters/
-    01-intro.md
-    02-basics.md
-    03-advanced.md
-```
-
-## Access Order Field
+Use `load()` directly without classes:
 
 ```python
-@dataclass
-class Chapter:
-    id: str
-    order: int  # Auto-extracted from prefix
-    title: str
+from hyper import load
+
+# Load without validation
+posts = load("posts/*.json")  # list[dict]
+config = load("config.json")  # dict
+
+# With type hints
+posts = load[list[dict]]("posts/*.json")
+config = load[dict]("config.json")
 ```
 
-Sort by order:
-
-```python
-sorted_chapters = sorted(chapters, key=lambda c: c.order)
-```
-
-For `01-intro.md`, `order = 1`.
-For `002-setup.md`, `order = 2`.
-No prefix means `order = 0`.
-
-***
-
-# Python at Build Time
-
-Use any library during builds.
-
-```python
-# app/pages/stats.py
-from app.content import blogs
-import pandas as pd
-
-df = pd.DataFrame([{'date': b.date, 'words': len(b.content.split())} for b in blogs])
-avg_words = df['words'].mean()
-
-t"""
-<h1>Statistics</h1>
-<p>Average: {avg_words:.0f} words per post</p>
-"""
-```
-
-Install libraries:
-
-```bash
-pip install pandas httpx pillow matplotlib
-```
-
-Use in pages. Runs during `hyper build`.
+Good for quick scripts. Use classes for validation.
 
 ---
 
