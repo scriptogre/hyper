@@ -47,7 +47,7 @@ Use `{...}` to mark where page content goes.
 <details>
 <summary><strong>Note:</strong> Alternative <code>slot</code> syntax</summary>
 
-Use `slot` syntax instead of `...`:
+Alternatively, use `slot` syntax instead of `...`:
 
 ```python
 from hyper import slot
@@ -62,14 +62,15 @@ t"""
 Both are identical, except that `slot` requires an import.
 
 This guide uses `...`.
+
 </details>
 
 ## Use a Layout
 
 ```python
 # app/pages/index.py
-from app.pages import Layout
 
+from app.pages import Layout
 t"""
 <{Layout}>
     <h1>Welcome Home!</h1>
@@ -104,6 +105,7 @@ Pass props:
 
 ```python
 # app/pages/index.py
+
 from app.pages import Layout
 
 t"""
@@ -117,6 +119,7 @@ Pass variables:
 
 ```python
 # app/pages/index.py
+
 from datetime import datetime
 from app.pages import Layout
 
@@ -131,10 +134,11 @@ t"""
 
 ## Shorthand Props
 
-If a variable name matches a prop name, write `{name}`:
+You can skip the attribute name if the variable matches it.
 
 ```python
 # app/pages/index.py
+
 from app.pages import Layout
 
 title = "Home"
@@ -178,16 +182,20 @@ t"""
     <aside>
         <{...} name="sidebar" />
     </aside>
-
     <main>
         {...}
     </main>
 </body>
+
 """
+
 ```
+
+
 
 ```python
 # app/pages/index.py
+
 from app.pages import Layout
 
 t"""
@@ -197,7 +205,6 @@ t"""
             <a href="/settings">Settings</a>
         </nav>
     </{...}>
-
     <h1>Dashboard Content</h1>
 </{Layout}>
 """
@@ -214,6 +221,7 @@ app/
 
 ```python
 # app/layouts/BlogLayout.py
+
 from app.layouts import Layout
 
 title: str = t"Blog - {...}"
@@ -246,24 +254,34 @@ Put reusable pieces in `app/components`.
 ```python
 # app/components/Button.py
 
-text: str
-
 t"""
-<button {...}>
-    {text}
+<button type="button" {...}>
+    {...}
 </button>
 """
 ```
+
+Note: The functionality of `...` depends on the context where it's used.
 
 ## Use a Component
 
 ```python
 from app.components import Button
 
-t'<{Button} text="Save" hx-post="/settings/save" class="btn btn-primary" />'
+t"""
+<{Button} hx-post="/settings/save" class="bg-white text-black rounded">
+    Save
+</{Button}>
+"""
+
+# <button type="button" hx-post="/settings/save" class="bg-white text-black rounded">
+#   Save
+# </button>
 ```
 
 ***
+
+# Control Flow
 
 ## For Loops
 
@@ -293,7 +311,7 @@ is_admin: bool
 
 t"""
 <nav>
-    <!--@ if {is_admin} -->
+    <!--@ if {'is_admin'} -->
         <a href="/admin">Admin</a>
     <!--@ else -->
         <a href="/account">Account</a>
@@ -302,83 +320,213 @@ t"""
 """
 ```
 
+Alternative syntax:
+- `{@: if {condition}}`
+- `{@: for {item} in {items}}`
+
 ***
 
 ## Advanced Attributes
 
-### Conditional Classes
 ```python
-classes = ["btn", {"active": is_active, "disabled": is_disabled}]
-t'<button class={classes}>Click</button>'
+# app/components/Button.py
+
+t"""
+<button class="text-black bg-white" {...}>
+    {...}
+</button>
+"""
 ```
 
-### Dynamic Styles
 ```python
-styles = {"color": "red", "font-weight": "bold"}
-t'<p style={styles}>Important</p>'
+from app.components import Button
+
+disabled = False
+
+t"""
+<{Button} class="border border-neutral-900" type="button" {disabled}>
+    Click Me
+</{Button}>
+"""
+
+# <button class="text-black bg-white border border-neutral-900" type="button">
+#    Click Me
+# </button>
+```
+
+### Conditional Classes
+
+```python
+# app/components/Button.py
+
+_class = ["bg-neutral-950 text-neutral-100", "border border-neutral-900", {"active": False, "disabled": True}]
+
+t'<button class={_class}>Click</button>'
+```
+
+Note: `class` is a reserved keyword in Python.
+
+### Dynamic Styles
+
+```python
+style = {"color": "red", "font-weight": "bold"}
+
+t"""
+<p {style}>Important</p>
+"""
+# <p style="color:red;font-weight:bold">Important</p>
 ```
 
 ### Data Attributes
+
+TODO: Decide what's the default - flat or JSON string?
+TODO 2: Decide name for changing format
+
 ```python
-data = {"user-id": 123, "role": "admin"}
-t'<div data={data}>Content</div>'
+state = "success"
+
+t"""
+<div data-state={state}>...</div>
+"""
+
+# <div data-state="success">...</div>
+```
+
+```python
+data = {
+    "user": {
+        "id": "Aaron",
+        "role": "admin",
+    },
+    "state": "success",
+}
+
+t"""
+<div {data}>...</div>
+"""
+# <div data-user='{"id":"Aaron","role":"admin"}' data-state="success">...</div>
+
+t"""
+<div {data:flat}>...</div>
+"""
+# <div data-user-id="Aaron" data-user-role="admin" data-state="success">Content</div>
 ```
 
 ### Spread Attributes
+
 ```python
-attrs = {"href": "https://example.com", "target": "_blank"}
+
+attrs = {
+    "href": "https://example.com",
+    "target": "_blank",
+}
+
 t'<a {attrs}>Link</a>'
+# <a href="https://examples.com" target="_blank">Link</a>
 ```
+
+
 
 ### Boolean Attributes
+
 ```python
+
 t'<input disabled={True} readonly={False} />'
+
 # <input disabled>
+
 ```
 
+
+
 ***
+
+
 
 ## Comments
 
+
+
 HTML comments are sent to the browser.
 
+
+
 ```python
+
 t"""
+
 <!-- This appears in page source -->
+
 <h1>Title</h1>
+
 """
+
 ```
+
+
 
 Server-side comments are stripped from output.
 
+
+
 ```python
+
 t"""
+
 <!--# This won't appear in page source -->
+
 <h1>Title</h1>
+
 """
+
 ```
+
+
 
 Use directive comments for control flow.
 
+
+
 ```python
+
 t"""
+
 <!--@ if {show_title} -->
+
   <h1>Title</h1>
+
 <!--@ end -->
+
 """
+
 ```
+
+
 
 ***
 
+
+
 # Escaping & trusted HTML
 
+
+
 Hyper escapes interpolated values by default.
+
 To render trusted HTML, use the `:safe` format specifier:
 
+
+
 ```python
+
 t"{post.html_content:safe}"
+
 ```
 
+
+
 ---
+
+
 
 **[← Previous: Routing](routing.md)** | **[Next: Content →](content.md)**
