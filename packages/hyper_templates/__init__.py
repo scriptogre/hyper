@@ -92,84 +92,67 @@ from hyper_templates.slots import slot
 from hyper_templates import context
 
 
-class _ComponentImportEnabler:
-    """Enable component imports in a package.
+def enable_component_import(exclude=None):
+    """Enable lazy component imports in the calling package.
 
-    Import this to enable component loading in your package.
-    Call it to exclude specific files.
+    Call this in a package's __init__.py. Hooks into module __getattr__.
+    When someone imports a name, finds matching .py file and loads as component.
 
-    Usage - no exclusions:
+    Args:
+        exclude: List of glob patterns to skip. Example: ["legacy.py", "draft_*.py"]
+
+    Usage:
         # app/components/__init__.py
         from hyper_templates import enable_component_import
+        enable_component_import()
 
-    Usage - with exclusions:
-        # app/components/__init__.py
-        from hyper_templates import enable_component_import
-        enable_component_import(exclude=["legacy.py", "draft_*.py"])
-
-    How it works:
-        Changes import behavior in the current package.
-        When you import a name, it looks for a matching .py file.
-        Loads that file as a component instead of a normal module.
-
-    Example:
+    Now imports work:
         from app.components import Button  # Finds Button.py, loads as component
         # Use: <{Button}>Click</{Button}>
+
+    With exclusions:
+        enable_component_import(exclude=["legacy.py", "old_*.py"])
     """
+    import inspect
+    import sys
+    from pathlib import Path
+    from fnmatch import fnmatch
 
-    def _enable(self, exclude=None):
-        import inspect
-        import sys
-        from pathlib import Path
-        from fnmatch import fnmatch
+    exclude = exclude or []
 
-        exclude = exclude or []
+    # Get the caller's package
+    frame = inspect.currentframe().f_back
+    caller_module_name = frame.f_globals['__name__']
+    caller_file = Path(frame.f_globals['__file__'])
+    package_dir = caller_file.parent
 
-        # Get caller's package
-        frame = inspect.currentframe().f_back.f_back  # Skip this method and __repr__ or __call__
-        caller_module_name = frame.f_globals['__name__']
-        caller_file = Path(frame.f_globals['__file__'])
-        package_dir = caller_file.parent
+    caller_module = sys.modules[caller_module_name]
 
-        caller_module = sys.modules[caller_module_name]
+    def is_excluded(filename):
+        return any(fnmatch(filename, p) for p in exclude)
 
-        def is_excluded(filename):
-            return any(fnmatch(filename, p) for p in exclude)
+    # Hook for lazy loading
+    def __getattr__(name):
+        # Map import name to possible filenames
+        possible = []
+        if name[0].isupper():
+            snake = ''.join(['_'+c.lower() if c.isupper() else c for c in name]).lstrip('_')
+            possible = [f"{name}.py", f"{name.lower()}.py", f"{snake}.py"]
+        else:
+            pascal = ''.join(w.capitalize() for w in name.split('_'))
+            possible = [f"{name}.py", f"{pascal}.py"]
 
-        # Hook for lazy loading
-        def __getattr__(name):
-            # Map import name to possible filenames
-            possible = []
-            if name[0].isupper():
-                snake = ''.join(['_'+c.lower() if c.isupper() else c for c in name]).lstrip('_')
-                possible = [f"{name}.py", f"{name.lower()}.py", f"{snake}.py"]
-            else:
-                pascal = ''.join(w.capitalize() for w in name.split('_'))
-                possible = [f"{name}.py", f"{pascal}.py"]
+        for filename in possible:
+            if not is_excluded(filename):
+                path = package_dir / filename
+                if path.exists():
+                    comp = load_component(path)
+                    setattr(caller_module, name, comp)
+                    return comp
 
-            for filename in possible:
-                if not is_excluded(filename):
-                    path = package_dir / filename
-                    if path.exists():
-                        comp = load_component(path)
-                        setattr(caller_module, name, comp)
-                        return comp
+        raise AttributeError(f"No component '{name}' in {caller_module_name}")
 
-            raise AttributeError(f"No component '{name}' in {caller_module_name}")
-
-        caller_module.__getattr__ = __getattr__
-
-    def __call__(self, exclude=None):
-        """Enable with exclusions."""
-        self._enable(exclude=exclude)
-
-    def __repr__(self):
-        """Enable when imported (without calling)."""
-        self._enable()
-        return "<ComponentImportEnabler>"
-
-
-enable_component_import = _ComponentImportEnabler()
+    caller_module.__getattr__ = __getattr__
 
 
 __all__ = [
