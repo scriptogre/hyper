@@ -100,7 +100,7 @@ class InterpolatedAttribute:
     interpolation_index: int
 
 
-type TNode = TElement | TComponent | TFragment | TText | TComment | TDocumentType
+type TNode = TElement | TComponent | TFragment | TText | TComment | TDocumentType | TConditional | TMatch
 
 
 @dataclass
@@ -268,3 +268,30 @@ class Element(Node):
             return f"<{self.tag}{attrs_str}></{self.tag}>"
         children_str = self._children_to_str()
         return f"<{self.tag}{attrs_str}>{children_str}</{self.tag}>"
+
+
+@dataclass
+class TConditionalBranch:
+    """Represents a single if/elif/else branch."""
+    condition_index: int | None  # None for else branch
+    children: tuple[TNode, ...] = field(default_factory=tuple)
+
+
+@dataclass
+class TConditional(TNodeBase):
+    """Represents if/elif/else control flow."""
+    branches: tuple[TConditionalBranch, ...] = field(default_factory=tuple)
+
+
+@dataclass
+class TCase:
+    """Represents a single case in a match statement."""
+    pattern_index: int  # Index of the interpolation containing the pattern
+    children: tuple[TNode, ...] = field(default_factory=tuple)
+
+
+@dataclass
+class TMatch(TNodeBase):
+    """Represents match/case control flow."""
+    subject_index: int  # Index of the interpolation containing the value to match
+    cases: tuple[TCase, ...] = field(default_factory=tuple)

@@ -34,3 +34,9 @@ packages = ["hyper"]
 [tool.pytest.ini_options]
 testpaths = ["packages/*/tests"]
 python_files = ["test_*.py"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+]
