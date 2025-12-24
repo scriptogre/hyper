@@ -26,6 +26,10 @@ from .nodes import (
     StaticAttribute,
     InterpolatedAttribute,
     TemplatedAttribute,
+    TConditional,
+    TConditionalBranch,
+    TMatch,
+    TCase,
 )
 from .parser import parse_html
 from .escaping import format_interpolation
@@ -340,6 +344,20 @@ def _invoke_component(
     return _node_from_value(result)
 
 
+def _is_wildcard(pattern: object) -> bool:
+    """Check if a pattern is a wildcard for match/case.
+
+    A wildcard is represented by any object instance that doesn't have
+    meaningful equality semantics. We check type name as a heuristic.
+    """
+    # Check if it's literally the builtin '_' or Ellipsis
+    if pattern is ... or pattern is Ellipsis:
+        return True
+    # Check by type name for objects created as _ = object()
+    type_name = type(pattern).__name__
+    return type_name == "object" and not isinstance(pattern, (str, int, float, bool, type(None)))
+
+
 def _substitute_node(tnode: TNode, interpolations: tuple[Interpolation, ...]) -> Node:
     """Substitute placeholders in a node based on the corresponding interpolations."""
     match tnode:
@@ -374,6 +392,42 @@ def _substitute_node(tnode: TNode, interpolations: tuple[Interpolation, ...]) ->
                 if len(f.children) == 1:
                     return f.children[0]
                 return f
+        case TConditional(branches=branches):
+            # Evaluate branches in order and return the first truthy one
+            for branch in branches:
+                if branch.condition_index is None:
+                    # else branch - always execute
+                    new_children = _substitute_and_flatten_children(
+                        branch.children, interpolations
+                    )
+                    return Fragment(children=new_children)
+                else:
+                    # if/elif branch - check condition
+                    condition_value = format_interpolation(
+                        interpolations[branch.condition_index]
+                    )
+                    if condition_value:
+                        new_children = _substitute_and_flatten_children(
+                            branch.children, interpolations
+                        )
+                        return Fragment(children=new_children)
+            # No branch matched - return empty fragment
+            return Fragment(children=[])
+        case TMatch(subject_index=subject_index, cases=cases):
+            # Evaluate the subject
+            subject = format_interpolation(interpolations[subject_index])
+            # Try each case in order
+            for case in cases:
+                pattern = format_interpolation(interpolations[case.pattern_index])
+                # Check for wildcard pattern (any object with a special marker)
+                # We'll use the pattern being the same object instance as a wildcard indicator
+                if pattern is subject or _is_wildcard(pattern) or subject == pattern:
+                    new_children = _substitute_and_flatten_children(
+                        case.children, interpolations
+                    )
+                    return Fragment(children=new_children)
+            # No case matched - return empty fragment
+            return Fragment(children=[])
         case TComponent() as component:
             # Runtime check
             if (

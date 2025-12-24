@@ -19,6 +19,10 @@ from .nodes import (
     TemplatedAttribute,
     StaticAttribute,
     SpreadAttribute,
+    TConditional,
+    TConditionalBranch,
+    TMatch,
+    TCase,
 )
 from .placeholders import (
     placeholder as construct_placeholder,
@@ -27,7 +31,7 @@ from .placeholders import (
     FRAGMENT_TAG,
 )
 
-type OpenTag = OpenTElement | OpenTFragment | OpenTComponent
+type OpenTag = OpenTElement | OpenTFragment | OpenTComponent | OpenTConditional | OpenTMatch
 
 
 @dataclass
@@ -48,6 +52,21 @@ class OpenTComponent:
     starttag_string_index: int
     attrs: tuple[TAttribute, ...]
     children: list[TNode] = field(default_factory=list)
+
+
+@dataclass
+class OpenTConditional:
+    """Tracks state while parsing if/elif/else directives."""
+    branches: list[TConditionalBranch] = field(default_factory=list)
+    current_branch_children: list[TNode] = field(default_factory=list)
+
+
+@dataclass
+class OpenTMatch:
+    """Tracks state while parsing match/case directives."""
+    subject_index: int
+    cases: list[TCase] = field(default_factory=list)
+    current_case_children: list[TNode] | None = None
 
 
 @dataclass
@@ -302,9 +321,173 @@ class TemplateParser(HTMLParser):
             self.append_child(text)
 
     def handle_comment(self, data: str) -> None:
-        text_t = self.extract_template(data)
-        comment = TComment(text_t)
-        self.append_child(comment)
+        # Check if this is a directive comment
+        stripped = data.lstrip()
+        if stripped.startswith('@'):
+            self.handle_directive_comment(stripped[1:].strip())
+        elif stripped.startswith('#'):
+            # Server-side comment - don't include in output
+            pass
+        else:
+            # Regular HTML comment
+            text_t = self.extract_template(data)
+            comment = TComment(text_t)
+            self.append_child(comment)
+
+    def handle_directive_comment(self, directive: str) -> None:
+        """Parse and handle directive comments like <!--@ if {cond} -->"""
+        if directive.startswith('if '):
+            self.handle_directive_if(directive[3:].strip())
+        elif directive.startswith('elif '):
+            self.handle_directive_elif(directive[5:].strip())
+        elif directive == 'else':
+            self.handle_directive_else()
+        elif directive.startswith('match '):
+            self.handle_directive_match(directive[6:].strip())
+        elif directive.startswith('case '):
+            self.handle_directive_case(directive[5:].strip())
+        elif directive == 'end':
+            self.handle_directive_end()
+        else:
+            raise ValueError(f"Unknown directive: {directive}")
+
+    def handle_directive_if(self, condition_expr: str) -> None:
+        """Handle <!--@ if {condition} -->"""
+        condition_t = self.extract_template(condition_expr)
+
+        # Template should have exactly one interpolation and two strings (before and after)
+        if len(condition_t.strings) != 2 or len(condition_t.interpolations) != 1:
+            raise ValueError(f"if directive expects a single interpolation, got: {condition_expr}")
+
+        condition_index = condition_t.interpolations[0].value
+
+        # Create a new conditional with the first branch
+        open_conditional = OpenTConditional()
+        open_conditional.branches.append(
+            TConditionalBranch(condition_index=condition_index, children=tuple())
+        )
+        self.tstate.stack.append(open_conditional)
+
+    def handle_directive_elif(self, condition_expr: str) -> None:
+        """Handle <!--@ elif {condition} -->"""
+        if not self.tstate.stack or not isinstance(self.tstate.stack[-1], OpenTConditional):
+            raise ValueError("elif directive without matching if")
+
+        open_conditional = self.tstate.stack[-1]
+        # Check if we already have an else branch (condition_index=None)
+        if open_conditional.branches and open_conditional.branches[-1].condition_index is None:
+            raise ValueError("elif directive cannot come after else")
+
+        condition_t = self.extract_template(condition_expr)
+
+        if len(condition_t.strings) != 2 or len(condition_t.interpolations) != 1:
+            raise ValueError(f"elif directive expects a single interpolation, got: {condition_expr}")
+
+        condition_index = condition_t.interpolations[0].value
+
+        # Finalize current branch
+        open_conditional.branches[-1] = TConditionalBranch(
+            condition_index=open_conditional.branches[-1].condition_index,
+            children=tuple(open_conditional.current_branch_children)
+        )
+        # Start new elif branch
+        open_conditional.current_branch_children = []
+        open_conditional.branches.append(
+            TConditionalBranch(condition_index=condition_index, children=tuple())
+        )
+
+    def handle_directive_else(self) -> None:
+        """Handle <!--@ else -->"""
+        if not self.tstate.stack or not isinstance(self.tstate.stack[-1], OpenTConditional):
+            raise ValueError("else directive without matching if")
+
+        open_conditional = self.tstate.stack[-1]
+        # Check if we already have an else branch
+        if open_conditional.branches and open_conditional.branches[-1].condition_index is None:
+            raise ValueError("multiple else clauses not allowed")
+
+        # Finalize current branch
+        open_conditional.branches[-1] = TConditionalBranch(
+            condition_index=open_conditional.branches[-1].condition_index,
+            children=tuple(open_conditional.current_branch_children)
+        )
+        # Start else branch (condition_index=None)
+        open_conditional.current_branch_children = []
+        open_conditional.branches.append(
+            TConditionalBranch(condition_index=None, children=tuple())
+        )
+
+    def handle_directive_match(self, subject_expr: str) -> None:
+        """Handle <!--@ match {subject} -->"""
+        subject_t = self.extract_template(subject_expr)
+
+        if len(subject_t.strings) != 2 or len(subject_t.interpolations) != 1:
+            raise ValueError(f"match directive expects a single interpolation, got: {subject_expr}")
+
+        subject_index = subject_t.interpolations[0].value
+
+        open_match = OpenTMatch(subject_index=subject_index)
+        self.tstate.stack.append(open_match)
+
+    def handle_directive_case(self, pattern_expr: str) -> None:
+        """Handle <!--@ case {pattern} -->"""
+        if not self.tstate.stack or not isinstance(self.tstate.stack[-1], OpenTMatch):
+            raise ValueError("case directive without matching match")
+
+        pattern_t = self.extract_template(pattern_expr)
+
+        if len(pattern_t.strings) != 2 or len(pattern_t.interpolations) != 1:
+            raise ValueError(f"case directive expects a single interpolation, got: {pattern_expr}")
+
+        pattern_index = pattern_t.interpolations[0].value
+
+        open_match = self.tstate.stack[-1]
+        # Finalize previous case if any
+        if open_match.current_case_children is not None:
+            open_match.cases[-1] = TCase(
+                pattern_index=open_match.cases[-1].pattern_index,
+                children=tuple(open_match.current_case_children)
+            )
+        # Start new case
+        open_match.current_case_children = []
+        open_match.cases.append(TCase(pattern_index=pattern_index, children=tuple()))
+
+    def handle_directive_end(self) -> None:
+        """Handle <!--@ end -->"""
+        # Find the control flow directive on the stack
+        control_flow_index = None
+        for i in range(len(self.tstate.stack) - 1, -1, -1):
+            if isinstance(self.tstate.stack[i], (OpenTConditional, OpenTMatch)):
+                control_flow_index = i
+                break
+
+        if control_flow_index is None:
+            raise ValueError("end directive without matching control flow directive")
+
+        open_tag = self.tstate.stack.pop(control_flow_index)
+
+        if isinstance(open_tag, OpenTConditional):
+            # Finalize the last branch
+            open_tag.branches[-1] = TConditionalBranch(
+                condition_index=open_tag.branches[-1].condition_index,
+                children=tuple(open_tag.current_branch_children)
+            )
+            # Create the TConditional node
+            conditional = TConditional(branches=tuple(open_tag.branches))
+            self.append_child(conditional)
+        elif isinstance(open_tag, OpenTMatch):
+            # Finalize the last case
+            if open_tag.current_case_children is not None:
+                open_tag.cases[-1] = TCase(
+                    pattern_index=open_tag.cases[-1].pattern_index,
+                    children=tuple(open_tag.current_case_children)
+                )
+            # Create the TMatch node
+            match_node = TMatch(
+                subject_index=open_tag.subject_index,
+                cases=tuple(open_tag.cases)
+            )
+            self.append_child(match_node)
 
     def handle_decl(self, decl: str) -> None:
         if decl.upper().startswith("DOCTYPE"):
@@ -316,7 +499,15 @@ class TemplateParser(HTMLParser):
 
     def get_latest_text_child(self) -> TText | None:
         """Get the latest text child of the current parent or None if one does not exist."""
-        children = self.get_parent().children
+        parent = self.get_parent()
+        # Get the appropriate children list based on parent type
+        if isinstance(parent, OpenTConditional):
+            children = parent.current_branch_children
+        elif isinstance(parent, OpenTMatch):
+            children = parent.current_case_children if parent.current_case_children is not None else []
+        else:
+            children = parent.children
+
         if children and isinstance(children[-1], TText):
             return children[-1]
         return None
@@ -327,7 +518,25 @@ class TemplateParser(HTMLParser):
 
     def append_child(self, child: TNode) -> None:
         parent = self.get_parent()
-        parent.children.append(child)
+        # Special handling for control flow directives
+        if isinstance(parent, OpenTConditional):
+            parent.current_branch_children.append(child)
+        elif isinstance(parent, OpenTMatch):
+            if parent.current_case_children is not None:
+                parent.current_case_children.append(child)
+            else:
+                # Ignore whitespace-only text before first case
+                if isinstance(child, TText):
+                    # Check if it's only whitespace
+                    is_whitespace_only = all(
+                        isinstance(part, str) and part.strip() == ""
+                        for part in child.text_t
+                    )
+                    if is_whitespace_only:
+                        return  # Silently ignore whitespace before first case
+                raise ValueError("match directive requires at least one case before content")
+        else:
+            parent.children.append(child)
 
     def close(self) -> None:
         if self.tstate.stack:
