@@ -1,42 +1,46 @@
 [project]
 name = "hyper"
 version = "0.1.0"
-description = "A modular Python framework - umbrella package"
+description = "A Python framework for hypermedia-driven applications"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "hyper_content",
-    "hyper_templates",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=9.0",
-    "pytest-cov>=6.3",
-    "msgspec>=0.20",
-    "pydantic>=2.12",
+    "markupsafe>=3.0.3",
+    "markdown>=3.10",
+    "pyyaml>=6.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv.sources]
-hyper_content = { workspace = true }
-hyper_templates = { workspace = true }
-
-[tool.uv.workspace]
-members = ["packages/*"]
-
 [tool.hatch.build.targets.wheel]
 packages = ["hyper"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "hyper/",
+    "README.md",
+    "pyproject.toml",
+]
+
 [tool.pytest.ini_options]
-testpaths = ["packages/*/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
+    "msgspec>=0.20",
+    "pydantic>=2.12",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"playground/**" = ["F821"]
+
+[tool.pyright]
+stubPath = ".hyper/stubs"
+
+[tool.mypy]
+mypy_path = ".hyper/stubs"

@@ -2,13 +2,6 @@ version = 1
 revision = 3
 requires-python = ">=3.14"
 
-[manifest]
-members = [
-    "hyper",
-    "hyper-content",
-    "hyper-templates",
-]
-
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -67,11 +60,12 @@ name = "hyper"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "hyper-content" },
-    { name = "hyper-templates" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "pyyaml" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "msgspec" },
     { name = "pydantic" },
@@ -79,54 +73,20 @@ dev = [
     { name = "pytest-cov" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "hyper-content", editable = "packages/hyper_content" },
-    { name = "hyper-templates", editable = "packages/hyper_templates" },
-    { name = "msgspec", marker = "extra == 'dev'", specifier = ">=0.20" },
-    { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2.12" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.3" },
-]
-provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.1" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-]
-
-[[package]]
-name = "hyper-content"
-version = "0.1.0"
-source = { editable = "packages/hyper_content" }
-dependencies = [
-    { name = "markdown" },
-    { name = "pyyaml" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "markdown", specifier = ">=3.10" },
+    { name = "markupsafe", specifier = ">=3.0.3" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 
-[[package]]
-name = "hyper-templates"
-version = "0.1.0"
-source = { editable = "packages/hyper_templates" }
-dependencies = [
-    { name = "markupsafe" },
+[package.metadata.requires-dev]
+dev = [
+    { name = "msgspec", specifier = ">=0.20" },
+    { name = "pydantic", specifier = ">=2.12" },
+    { name = "pytest", specifier = ">=9.0.1" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "markupsafe", specifier = ">=3.0.3" }]
 
 [[package]]
 name = "iniconfig"
