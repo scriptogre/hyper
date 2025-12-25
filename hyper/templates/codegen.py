@@ -1,7 +1,7 @@
 """Code generator for templates.
 
-Walks TNode tree and emits Python source code.
-The generated code uses f-strings and runtime utilities for efficient rendering.
+Generates Python code that builds output by appending to a parts list.
+This approach handles control flow (if/match) naturally as regular statements.
 """
 
 from dataclasses import dataclass, field
@@ -27,21 +27,10 @@ from ._tdom.nodes import (
 )
 
 
-def escape_string_for_python(s: str, quote: str = '"') -> str:
-    """Escape a string for use in a Python string literal.
-
-    Args:
-        s: The string to escape
-        quote: The quote character being used (' or ")
-
-    Returns:
-        The escaped string (without surrounding quotes)
-    """
-    # Escape backslashes first
+def escape_string(s: str, quote: str = '"') -> str:
+    """Escape a string for use in a Python string literal."""
     s = s.replace("\\", "\\\\")
-    # Escape the quote character
     s = s.replace(quote, "\\" + quote)
-    # Escape newlines and other special characters
     s = s.replace("\n", "\\n")
     s = s.replace("\r", "\\r")
     s = s.replace("\t", "\\t")
@@ -49,16 +38,8 @@ def escape_string_for_python(s: str, quote: str = '"') -> str:
 
 
 def escape_for_fstring(s: str) -> str:
-    """Escape a string for use inside an f-string.
-
-    Args:
-        s: The string to escape
-
-    Returns:
-        The escaped string with braces doubled
-    """
-    s = escape_string_for_python(s, quote='"')
-    # Double braces for f-string
+    """Escape a string for use inside an f-string."""
+    s = escape_string(s, quote='"')
     s = s.replace("{", "{{")
     s = s.replace("}", "}}")
     return s
@@ -70,7 +51,7 @@ class CodeGenContext:
 
     interpolations: tuple[Interpolation, ...]
     props: dict[str, Prop]
-    indent: int = 0
+    indent: int = 1  # Start at 1 (inside function)
     _temp_counter: int = field(default=0, repr=False)
 
     def get_temp_var(self, prefix: str = "_t") -> str:
@@ -81,27 +62,26 @@ class CodeGenContext:
     def get_expression(self, interpolation_index: int) -> str:
         """Get the Python expression for an interpolation."""
         ip = self.interpolations[interpolation_index]
-        # Use expression if available, otherwise use repr of value
-        if ip.expression:
-            return ip.expression
-        return repr(ip.value)
+        return ip.expression if ip.expression else repr(ip.value)
 
-    def indent_str(self) -> str:
-        """Get the current indentation string."""
-        return "    " * self.indent
+    def i(self, line: str = "") -> str:
+        """Return line with current indentation."""
+        if not line:
+            return ""
+        return "    " * self.indent + line
 
-    def indented(self, delta: int = 1) -> "CodeGenContext":
-        """Return a new context with increased indentation."""
+    def deeper(self) -> "CodeGenContext":
+        """Return context with one more level of indentation."""
         return CodeGenContext(
             interpolations=self.interpolations,
             props=self.props,
-            indent=self.indent + delta,
+            indent=self.indent + 1,
             _temp_counter=self._temp_counter,
         )
 
 
 class CodeGenerator:
-    """Generates Python code from TNode tree."""
+    """Generates Python code from TNode tree using parts-based approach."""
 
     def __init__(
         self, template: Template, props: dict[str, Prop], pre_template_stmts: list
@@ -111,19 +91,7 @@ class CodeGenerator:
         self.pre_template_stmts = pre_template_stmts
 
     def generate(self, tree: TNode) -> str:
-        """Generate Python source code from the parsed tree.
-
-        Returns the complete Python module source.
-        """
-        ctx = CodeGenContext(
-            interpolations=self.template.interpolations,
-            props=self.props,
-        )
-
-        # Generate the render function body
-        render_body = self._generate_node(tree, ctx)
-
-        # Build the module
+        """Generate complete Python module source."""
         lines = [
             "from hyper.templates.runtime import (",
             "    escape_html,",
@@ -138,35 +106,34 @@ class CodeGenerator:
             "",
         ]
 
-        # Generate render function signature
+        # Function signature
         params = self._generate_params()
         lines.append(f"def render({params}) -> str:")
 
-        # Add __slot__ computation at the start (for children)
+        # Initialize
         lines.append('    __slot__ = Markup("".join(str(c) for c in __children__))')
+        lines.append("    __p__ = []  # Output parts")
         lines.append("")
 
-        # Add pre-template statements (arbitrary Python code)
+        # Pre-template statements
         if self.pre_template_stmts:
             import ast
-
             for stmt in self.pre_template_stmts:
-                stmt_code = ast.unparse(stmt)
-                # Add proper indentation for each line
-                for line in stmt_code.split("\n"):
+                for line in ast.unparse(stmt).split("\n"):
                     lines.append(f"    {line}")
             lines.append("")
 
-        # Add the body
-        if isinstance(render_body, str) and render_body.startswith("return "):
-            # Simple case: just a return expression
-            lines.append(f"    {render_body}")
-        else:
-            # Complex case: multiple statements
-            for line in render_body.split("\n"):
-                if line.strip():
-                    lines.append(f"    {line}")
+        # Generate body
+        ctx = CodeGenContext(
+            interpolations=self.template.interpolations,
+            props=self.props,
+        )
+        body_lines = self._emit(tree, ctx)
+        lines.extend(body_lines)
 
+        # Return joined parts
+        lines.append("")
+        lines.append('    return "".join(__p__)')
         lines.append("")
         lines.append("")
         lines.append("# Public API")
@@ -175,319 +142,252 @@ class CodeGenerator:
         return "\n".join(lines)
 
     def _generate_params(self) -> str:
-        """Generate function parameter list from props."""
+        """Generate function parameters from props."""
         params = []
         for name, prop in self.props.items():
-            if prop.type_name:
-                param = f"{name}: {prop.type_name}"
-            else:
-                param = name
-
+            param = f"{name}: {prop.type_name}" if prop.type_name else name
             if prop.has_default:
-                default = repr(prop.default)
-                param = f"{param} = {default}"
-
+                param = f"{param} = {repr(prop.default)}"
             params.append(param)
 
-        # Add special parameters for children and extra attrs
         params.append("__children__: tuple = ()")
         params.append("__attrs__: dict = {}")
-
         return ", ".join(params)
 
-    def _generate_node(self, node: TNode, ctx: CodeGenContext) -> str:
-        """Generate code for a node, dispatching by type."""
+    def _emit(self, node: TNode, ctx: CodeGenContext) -> list[str]:
+        """Emit code lines for a node."""
         match node:
-            case TElement():
-                return self._generate_element(node, ctx)
             case TFragment():
-                return self._generate_fragment(node, ctx)
+                return self._emit_fragment(node, ctx)
+            case TElement():
+                return self._emit_element(node, ctx)
             case TText():
-                return self._generate_text(node, ctx)
+                return self._emit_text(node, ctx)
             case TComment():
-                return self._generate_comment(node, ctx)
+                return self._emit_comment(node, ctx)
             case TDocumentType():
-                return self._generate_doctype(node, ctx)
+                return self._emit_doctype(node, ctx)
             case TComponent():
-                return self._generate_component(node, ctx)
+                return self._emit_component(node, ctx)
             case TConditional():
-                return self._generate_conditional(node, ctx)
+                return self._emit_conditional(node, ctx)
             case TMatch():
-                return self._generate_match(node, ctx)
+                return self._emit_match(node, ctx)
             case _:
                 raise ValueError(f"Unknown node type: {type(node)}")
 
-    def _generate_element(self, node: TElement, ctx: CodeGenContext) -> str:
-        """Generate code for an element node."""
+    def _emit_fragment(self, node: TFragment, ctx: CodeGenContext) -> list[str]:
+        """Emit code for a fragment (just its children)."""
+        lines = []
+        for child in node.children:
+            lines.extend(self._emit(child, ctx))
+        return lines
+
+    def _emit_element(self, node: TElement, ctx: CodeGenContext) -> list[str]:
+        """Emit code for an element."""
         tag = node.tag
+        lines = []
 
-        # Generate attributes
-        attrs_code = self._generate_attrs(node.attrs, ctx)
-
-        # Handle void elements (no children)
-        if tag in VOID_ELEMENTS:
-            if attrs_code:
-                return f'return "<{tag}" + {attrs_code} + " />"'
-            else:
-                return f'return "<{tag} />"'
-
-        # Generate children
-        children_code = self._generate_children(node.children, ctx)
-
-        # Check if children_code has pre-statements (multi-line with return)
-        if "\nreturn " in children_code:
-            # Split into pre-statements and the result expression
-            lines = children_code.split("\n")
-            pre_stmts = []
-            result_expr = "''"
-            for i, line in enumerate(lines):
-                if line.strip().startswith("return "):
-                    result_expr = line.strip()[7:]
-                    pre_stmts = lines[:i]
-                    break
-
-            # Build the element with pre-statements
-            pre_code = "\n".join(pre_stmts)
-            if attrs_code:
-                return f'{pre_code}\nreturn "<{tag}" + {attrs_code} + ">" + {result_expr} + "</{tag}>"'
-            else:
-                return f'{pre_code}\nreturn "<{tag}>" + {result_expr} + "</{tag}>"'
-
-        # Simple case: no pre-statements
-        if attrs_code and children_code:
-            return (
-                f'return "<{tag}" + {attrs_code} + ">" + {children_code} + "</{tag}>"'
-            )
-        elif attrs_code:
-            return f'return "<{tag}" + {attrs_code} + "></{tag}>"'
-        elif children_code:
-            return f'return "<{tag}>" + {children_code} + "</{tag}>"'
+        # Opening tag
+        attrs_code = self._attrs_expr(node.attrs, ctx)
+        if attrs_code:
+            lines.append(ctx.i(f'__p__.append("<{tag}" + {attrs_code} + ">")'))
         else:
-            return f'return "<{tag}></{tag}>"'
+            lines.append(ctx.i(f'__p__.append("<{tag}>")'))
 
-    def _generate_fragment(self, node: TFragment, ctx: CodeGenContext) -> str:
-        """Generate code for a fragment node."""
-        if not node.children:
-            return "return ''"
+        # Handle void elements
+        if tag in VOID_ELEMENTS:
+            # Replace the line we just added
+            if attrs_code:
+                lines[-1] = ctx.i(f'__p__.append("<{tag}" + {attrs_code} + " />")')
+            else:
+                lines[-1] = ctx.i(f'__p__.append("<{tag} />")')
+            return lines
 
-        children_code = self._generate_children(node.children, ctx)
-        if not children_code:
-            return "return ''"
+        # Children
+        for child in node.children:
+            lines.extend(self._emit(child, ctx))
 
-        # If children_code already contains return (multi-line with pre-statements),
-        # return it as-is; otherwise wrap in return
-        if "\nreturn " in children_code or children_code.startswith("return "):
-            return children_code
-        return f"return {children_code}"
+        # Closing tag
+        lines.append(ctx.i(f'__p__.append("</{tag}>")'))
+        return lines
 
-    def _generate_text(self, node: TText, ctx: CodeGenContext) -> str:
-        """Generate code for a text node."""
+    def _emit_text(self, node: TText, ctx: CodeGenContext) -> list[str]:
+        """Emit code for text content."""
         parts = list(node.text_t)
-
         if not parts:
-            return 'return ""'
+            return []
 
+        # Pure static text
         if len(parts) == 1 and isinstance(parts[0], str):
-            # Pure static text
-            escaped = escape_string_for_python(parts[0])
-            return f'return "{escaped}"'
+            escaped = escape_string(parts[0])
+            return [ctx.i(f'__p__.append("{escaped}")')]
 
-        # Mixed content - build f-string parts
-        result_parts = []
+        # Mixed content - use f-string
+        fstring_parts = []
         for part in parts:
             if isinstance(part, str):
-                # Static text - escape for f-string
-                escaped = escape_for_fstring(part)
-                result_parts.append(escaped)
+                fstring_parts.append(escape_for_fstring(part))
             else:
-                # Interpolation
                 expr = ctx.get_expression(part.value)
-                result_parts.append(f"{{escape_html({expr})}}")
+                fstring_parts.append(f"{{escape_html({expr})}}")
 
-        return f'return f"{"".join(result_parts)}"'
+        return [ctx.i(f'__p__.append(f"{"".join(fstring_parts)}")')]
 
-    def _generate_comment(self, node: TComment, ctx: CodeGenContext) -> str:
-        """Generate code for a comment node."""
+    def _emit_comment(self, node: TComment, ctx: CodeGenContext) -> list[str]:
+        """Emit code for HTML comment."""
         parts = list(node.text_t)
 
         if len(parts) == 1 and isinstance(parts[0], str):
-            text = escape_string_for_python(parts[0])
-            return f'return "<!--{text}-->"'
+            escaped = escape_string(parts[0])
+            return [ctx.i(f'__p__.append("<!--{escaped}-->")')]
 
-        result_parts = []
+        fstring_parts = []
         for part in parts:
             if isinstance(part, str):
-                escaped = escape_for_fstring(part)
-                result_parts.append(escaped)
+                fstring_parts.append(escape_for_fstring(part))
             else:
                 expr = ctx.get_expression(part.value)
-                result_parts.append(f"{{escape_html({expr})}}")
+                fstring_parts.append(f"{{escape_html({expr})}}")
 
-        return f'return f"<!--{"".join(result_parts)}-->"'
+        return [ctx.i(f'__p__.append(f"<!--{"".join(fstring_parts)}-->")')]
 
-    def _generate_doctype(self, node: TDocumentType, ctx: CodeGenContext) -> str:
-        """Generate code for a doctype node."""
-        return f"return '<!DOCTYPE {node.text}>'"
+    def _emit_doctype(self, node: TDocumentType, ctx: CodeGenContext) -> list[str]:
+        """Emit code for DOCTYPE."""
+        return [ctx.i(f'__p__.append("<!DOCTYPE {node.text}>")')]
 
-    def _generate_component(self, node: TComponent, ctx: CodeGenContext) -> str:
-        """Generate code for a component invocation."""
-        # Get the component expression
+    def _emit_component(self, node: TComponent, ctx: CodeGenContext) -> list[str]:
+        """Emit code for component invocation."""
         comp_expr = ctx.get_expression(node.starttag_interpolation_index)
 
-        # Generate children
+        # Build children as a tuple of strings
         if node.children:
-            children_parts = []
+            # For components, we need to render children to strings
+            # Create a temporary parts list for children
+            child_var = ctx.get_temp_var("_children")
+            lines = [ctx.i(f"{child_var} = []")]
+
+            # Save current __p__ and use child_var
             for child in node.children:
-                child_code = self._generate_node(child, ctx)
-                # Extract the expression from "return X"
-                if child_code.startswith("return "):
-                    children_parts.append(child_code[7:])
-            children_expr = " + ".join(children_parts) if children_parts else "''"
+                child_lines = self._emit(child, ctx)
+                # Replace __p__ with child_var in the generated lines
+                for line in child_lines:
+                    lines.append(line.replace("__p__", child_var))
+
+            children_expr = f'"".join({child_var})'
         else:
-            children_expr = "()"
+            lines = []
+            children_expr = None
 
-        # Generate attributes as kwargs
-        kwargs = self._generate_component_kwargs(node.attrs, ctx)
+        # Build kwargs
+        kwargs = self._component_kwargs(node.attrs, ctx)
 
-        # Build the component call
-        if kwargs and children_expr != "()":
-            return f"return str({comp_expr}(children=({children_expr},), {kwargs}))"
+        # Build the call
+        if kwargs and children_expr:
+            call = f'{comp_expr}(children=({children_expr},), {kwargs})'
         elif kwargs:
-            return f"return str({comp_expr}({kwargs}))"
-        elif children_expr != "()":
-            return f"return str({comp_expr}(children=({children_expr},)))"
+            call = f'{comp_expr}({kwargs})'
+        elif children_expr:
+            call = f'{comp_expr}(children=({children_expr},))'
         else:
-            return f"return str({comp_expr}())"
+            call = f'{comp_expr}()'
 
-    def _generate_conditional(self, node: TConditional, ctx: CodeGenContext) -> str:
-        """Generate code for if/elif/else conditional."""
+        lines.append(ctx.i(f'__p__.append(str({call}))'))
+        return lines
+
+    def _emit_conditional(self, node: TConditional, ctx: CodeGenContext) -> list[str]:
+        """Emit code for if/elif/else."""
         lines = []
-        var = ctx.get_temp_var("_cond")
+        deeper = ctx.deeper()
 
         for i, branch in enumerate(node.branches):
-            children_code = self._generate_children(branch.children, ctx)
-
             if branch.condition_index is None:
-                # else branch
-                lines.append("else:")
-                lines.append(f"    {var} = {children_code}")
+                # else
+                lines.append(ctx.i("else:"))
             elif i == 0:
-                # if branch
-                cond_expr = ctx.get_expression(branch.condition_index)
-                lines.append(f"if {cond_expr}:")
-                lines.append(f"    {var} = {children_code}")
+                # if
+                cond = ctx.get_expression(branch.condition_index)
+                lines.append(ctx.i(f"if {cond}:"))
             else:
-                # elif branch
-                cond_expr = ctx.get_expression(branch.condition_index)
-                lines.append(f"elif {cond_expr}:")
-                lines.append(f"    {var} = {children_code}")
+                # elif
+                cond = ctx.get_expression(branch.condition_index)
+                lines.append(ctx.i(f"elif {cond}:"))
 
-        # Handle case where no else branch (default to empty string)
+            # Branch body
+            branch_lines = []
+            for child in branch.children:
+                branch_lines.extend(self._emit(child, deeper))
+
+            if branch_lines:
+                lines.extend(branch_lines)
+            else:
+                lines.append(deeper.i("pass"))
+
+        # If no else, add empty else
         if node.branches[-1].condition_index is not None:
-            lines.append("else:")
-            lines.append(f"    {var} = ''")
+            lines.append(ctx.i("else:"))
+            lines.append(deeper.i("pass"))
 
-        lines.append(f"return {var}")
-        return "\n".join(lines)
+        return lines
 
-    def _generate_match(self, node: TMatch, ctx: CodeGenContext) -> str:
-        """Generate code for match/case pattern matching."""
-        subject_expr = ctx.get_expression(node.subject_index)
-        var = ctx.get_temp_var("_match")
-        lines = [f"match {subject_expr}:"]
-
+    def _emit_match(self, node: TMatch, ctx: CodeGenContext) -> list[str]:
+        """Emit code for match/case."""
+        subject = ctx.get_expression(node.subject_index)
+        lines = [ctx.i(f"match {subject}:")]
+        deeper = ctx.deeper()
         has_wildcard = False
+
         for case in node.cases:
-            pattern_expr = ctx.get_expression(case.pattern_index)
-            # Handle {...} wildcard pattern - __slot__ in case patterns means wildcard
-            if pattern_expr == "__slot__":
-                pattern_expr = "_"
+            pattern = ctx.get_expression(case.pattern_index)
+            # Handle {...} wildcard
+            if pattern == "__slot__":
+                pattern = "_"
                 has_wildcard = True
-            children_code = self._generate_children(case.children, ctx)
-            lines.append(f"    case {pattern_expr}:")
-            lines.append(f"        {var} = {children_code}")
 
-        # Add default case only if user didn't provide a wildcard
-        if not has_wildcard:
-            lines.append("    case _:")
-            lines.append(f"        {var} = ''")
+            lines.append(deeper.i(f"case {pattern}:"))
 
-        lines.append(f"return {var}")
-        return "\n".join(lines)
+            # Case body
+            case_deeper = deeper.deeper()
+            case_lines = []
+            for child in case.children:
+                case_lines.extend(self._emit(child, case_deeper))
 
-    def _generate_children(
-        self, children: tuple[TNode, ...], ctx: CodeGenContext
-    ) -> str:
-        """Generate code to render children and concatenate them."""
-        if not children:
-            return "''"
-
-        parts = []
-        pre_statements = []
-
-        for child in children:
-            child_code = self._generate_node(child, ctx)
-
-            # Single-line: extract expression from "return X"
-            if child_code.startswith("return "):
-                parts.append(child_code[7:])
-            elif "\n" in child_code:
-                # Multi-line code (conditionals, match) - extract statements and return var
-                lines = child_code.split("\n")
-                last_line = lines[-1].strip()
-                if last_line.startswith("return "):
-                    # Add all lines except the last as pre-statements
-                    pre_statements.extend(lines[:-1])
-                    # Extract the variable from the return
-                    parts.append(last_line[7:])
-                else:
-                    raise ValueError(f"Multi-line code must end with return: {child_code}")
+            if case_lines:
+                lines.extend(case_lines)
             else:
-                raise ValueError(f"Unexpected code format: {child_code}")
+                lines.append(case_deeper.i("pass"))
 
-        if len(parts) == 1 and not pre_statements:
-            return parts[0]
+        # Default case if no wildcard
+        if not has_wildcard:
+            lines.append(deeper.i("case _:"))
+            lines.append(deeper.deeper().i("pass"))
 
-        # If we have pre-statements, we need to return them along with the expression
-        # This is handled by the caller who will see the newlines
-        result_expr = " + ".join(parts)
-        if pre_statements:
-            return "\n".join(pre_statements) + f"\nreturn {result_expr}"
+        return lines
 
-        return result_expr
-
-    def _generate_attrs(
-        self, attrs: tuple[TAttribute, ...], ctx: CodeGenContext
-    ) -> str:
-        """Generate code for element attributes."""
+    def _attrs_expr(self, attrs: tuple[TAttribute, ...], ctx: CodeGenContext) -> str:
+        """Generate expression for element attributes."""
         if not attrs:
             return ""
 
         parts = []
         for attr in attrs:
-            attr_code = self._generate_attr(attr, ctx)
-            if attr_code:
-                parts.append(attr_code)
+            code = self._attr_expr(attr, ctx)
+            if code:
+                parts.append(code)
 
-        if not parts:
-            return ""
+        return " + ".join(parts) if parts else ""
 
-        return " + ".join(parts)
-
-    def _generate_attr(self, attr: TAttribute, ctx: CodeGenContext) -> str:
-        """Generate code for a single attribute."""
+    def _attr_expr(self, attr: TAttribute, ctx: CodeGenContext) -> str:
+        """Generate expression for a single attribute."""
         match attr:
             case StaticAttribute(name=name, value=value):
                 if value is None:
-                    # Boolean attribute
                     return f'" {name}"'
-                else:
-                    escaped = escape_string_for_python(value)
-                    return f'" {name}=\\"{escaped}\\""'
+                escaped = escape_string(value)
+                return f'" {name}=\\"{escaped}\\""'
 
             case InterpolatedAttribute(name=name, interpolation_index=idx):
                 expr = ctx.get_expression(idx)
-                # Handle special attributes
                 if name == "class":
                     return f'" class=\\"" + format_classes({expr}) + "\\""'
                 elif name == "style":
@@ -497,17 +397,18 @@ class CodeGenerator:
                 elif name == "aria":
                     return f"render_aria_attrs({expr})"
                 else:
-                    # Standard attribute - handle True/False/None
-                    # Use conditional expression for inline evaluation
-                    return f'("" if ({expr}) is False or ({expr}) is None else (" {name}" if ({expr}) is True else " {name}=\\"" + str(escape_html({expr})) + "\\""))'
+                    # Handle True/False/None
+                    return (
+                        f'("" if ({expr}) is False or ({expr}) is None else '
+                        f'(" {name}" if ({expr}) is True else '
+                        f'" {name}=\\"" + str(escape_html({expr})) + "\\""))'
+                    )
 
             case TemplatedAttribute(name=name, value_t=value_t):
-                # Mix of static and dynamic parts - build concatenation
                 parts = []
                 for part in value_t:
                     if isinstance(part, str):
-                        escaped = escape_string_for_python(part)
-                        parts.append(f'"{escaped}"')
+                        parts.append(f'"{escape_string(part)}"')
                     else:
                         expr = ctx.get_expression(part.value)
                         parts.append(f"str(escape_html({expr}))")
@@ -520,29 +421,27 @@ class CodeGenerator:
 
         return ""
 
-    def _generate_component_kwargs(
+    def _component_kwargs(
         self, attrs: tuple[TAttribute, ...], ctx: CodeGenContext
     ) -> str:
-        """Generate keyword arguments for a component call."""
+        """Generate kwargs for component call."""
         kwargs = []
         for attr in attrs:
             match attr:
                 case StaticAttribute(name=name, value=value):
-                    # Convert kebab-case to snake_case
-                    param_name = name.replace("-", "_")
+                    param = name.replace("-", "_")
                     if value is None:
-                        kwargs.append(f"{param_name}=True")
+                        kwargs.append(f"{param}=True")
                     else:
-                        kwargs.append(f"{param_name}={repr(value)}")
+                        kwargs.append(f"{param}={repr(value)}")
 
                 case InterpolatedAttribute(name=name, interpolation_index=idx):
-                    param_name = name.replace("-", "_")
+                    param = name.replace("-", "_")
                     expr = ctx.get_expression(idx)
-                    kwargs.append(f"{param_name}={expr}")
+                    kwargs.append(f"{param}={expr}")
 
                 case TemplatedAttribute(name=name, value_t=value_t):
-                    param_name = name.replace("-", "_")
-                    # Build the templated value
+                    param = name.replace("-", "_")
                     parts = []
                     for part in value_t:
                         if isinstance(part, str):
@@ -550,7 +449,7 @@ class CodeGenerator:
                         else:
                             expr = ctx.get_expression(part.value)
                             parts.append(f"{{{expr}}}")
-                    kwargs.append(f"{param_name}=f'{''.join(parts)}'")
+                    kwargs.append(f"{param}=f'{''.join(parts)}'")
 
                 case SpreadAttribute(interpolation_index=idx):
                     expr = ctx.get_expression(idx)
@@ -565,16 +464,6 @@ def generate_code(
     props: dict[str, Prop],
     pre_template_stmts: list | None = None,
 ) -> str:
-    """Generate Python source code from a parsed template.
-
-    Args:
-        template: The parsed Template object (for interpolation expressions)
-        tree: The TNode tree from parsing
-        props: Props dict for function signature
-        pre_template_stmts: Optional list of AST statements to include before return
-
-    Returns:
-        Complete Python module source code
-    """
+    """Generate Python source code from a parsed template."""
     generator = CodeGenerator(template, props, pre_template_stmts or [])
     return generator.generate(tree)
