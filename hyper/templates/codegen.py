@@ -234,7 +234,26 @@ class CodeGenerator:
         # Generate children
         children_code = self._generate_children(node.children, ctx)
 
-        # Build the element string using string concatenation to avoid nested f-string issues
+        # Check if children_code has pre-statements (multi-line with return)
+        if "\nreturn " in children_code:
+            # Split into pre-statements and the result expression
+            lines = children_code.split("\n")
+            pre_stmts = []
+            result_expr = "''"
+            for i, line in enumerate(lines):
+                if line.strip().startswith("return "):
+                    result_expr = line.strip()[7:]
+                    pre_stmts = lines[:i]
+                    break
+
+            # Build the element with pre-statements
+            pre_code = "\n".join(pre_stmts)
+            if attrs_code:
+                return f'{pre_code}\nreturn "<{tag}" + {attrs_code} + ">" + {result_expr} + "</{tag}>"'
+            else:
+                return f'{pre_code}\nreturn "<{tag}>" + {result_expr} + "</{tag}>"'
+
+        # Simple case: no pre-statements
         if attrs_code and children_code:
             return (
                 f'return "<{tag}" + {attrs_code} + ">" + {children_code} + "</{tag}>"'
@@ -252,9 +271,14 @@ class CodeGenerator:
             return "return ''"
 
         children_code = self._generate_children(node.children, ctx)
-        if children_code:
-            return f"return {children_code}"
-        return "return ''"
+        if not children_code:
+            return "return ''"
+
+        # If children_code already contains return (multi-line with pre-statements),
+        # return it as-is; otherwise wrap in return
+        if "\nreturn " in children_code or children_code.startswith("return "):
+            return children_code
+        return f"return {children_code}"
 
     def _generate_text(self, node: TText, ctx: CodeGenContext) -> str:
         """Generate code for a text node."""
