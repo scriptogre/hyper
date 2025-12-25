@@ -393,20 +393,38 @@ class CodeGenerator:
             return "''"
 
         parts = []
+        pre_statements = []
+
         for child in children:
             child_code = self._generate_node(child, ctx)
-            # Extract expression from "return X"
+
+            # Single-line: extract expression from "return X"
             if child_code.startswith("return "):
                 parts.append(child_code[7:])
+            elif "\n" in child_code:
+                # Multi-line code (conditionals, match) - extract statements and return var
+                lines = child_code.split("\n")
+                last_line = lines[-1].strip()
+                if last_line.startswith("return "):
+                    # Add all lines except the last as pre-statements
+                    pre_statements.extend(lines[:-1])
+                    # Extract the variable from the return
+                    parts.append(last_line[7:])
+                else:
+                    raise ValueError(f"Multi-line code must end with return: {child_code}")
             else:
-                # Multi-line code - need to handle differently
-                # For now, wrap in a helper
-                parts.append(f"({child_code})")
+                raise ValueError(f"Unexpected code format: {child_code}")
 
-        if len(parts) == 1:
+        if len(parts) == 1 and not pre_statements:
             return parts[0]
 
-        return " + ".join(parts)
+        # If we have pre-statements, we need to return them along with the expression
+        # This is handled by the caller who will see the newlines
+        result_expr = " + ".join(parts)
+        if pre_statements:
+            return "\n".join(pre_statements) + f"\nreturn {result_expr}"
+
+        return result_expr
 
     def _generate_attrs(
         self, attrs: tuple[TAttribute, ...], ctx: CodeGenContext

@@ -223,7 +223,7 @@ def load_template(path: Path | str) -> Template:
             sys.modules.pop(module_name, None)
             raise TemplateCompileError(
                 f"Error importing template {path.name}", path=path, original_error=e
-            ) from e
+            ) from None  # Suppress noisy traceback chain
 
     # Resolve types at compile time
     resolved_props = {}
@@ -267,7 +267,7 @@ def load_template(path: Path | str) -> Template:
     except Exception as e:
         raise TemplateCompileError(
             f"Error compiling {path.name}", path=path, original_error=e
-        ) from e
+        ) from None  # Suppress noisy traceback chain
     finally:
         # Clean up sys.modules
         sys.modules.pop(module_name, None)
