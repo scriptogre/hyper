@@ -170,8 +170,14 @@ class TemplateParser(HTMLParser):
     def handle_start_component(
         self, interpolation_index: int, attrs: t.Sequence[tuple[str, str | None]]
     ) -> OpenTComponent:
-        if not callable(self.tstate.interpolations[interpolation_index].value):
-            raise TypeError("Component value should be callable.")  # @TODO: Cleanup
+        ip = self.tstate.interpolations[interpolation_index]
+        # Skip check when value is an int (codegen mode uses indices as placeholders)
+        if not isinstance(ip.value, int) and not callable(ip.value):
+            expr = getattr(ip, "expression", repr(ip.value))
+            raise TypeError(
+                f"Component <{{{expr}}}> is not callable. "
+                f"Got {type(ip.value).__name__}: {ip.value!r}"
+            )
         return OpenTComponent(
             starttag_interpolation_index=interpolation_index,
             starttag_string_index=self.tstate.strings_index,
@@ -214,8 +220,14 @@ class TemplateParser(HTMLParser):
     def handle_startend_component(
         self, interpolation_index: int, attrs: t.Sequence[tuple[str, str | None]]
     ) -> TComponent:
-        if not callable(self.tstate.interpolations[interpolation_index].value):
-            raise TypeError("Component value should be callable.")  # @TODO: Cleanup
+        ip = self.tstate.interpolations[interpolation_index]
+        # Skip check when value is an int (codegen mode uses indices as placeholders)
+        if not isinstance(ip.value, int) and not callable(ip.value):
+            expr = getattr(ip, "expression", repr(ip.value))
+            raise TypeError(
+                f"Component <{{{expr}}}> is not callable. "
+                f"Got {type(ip.value).__name__}: {ip.value!r}"
+            )
         return TComponent(
             starttag_interpolation_index=interpolation_index,
             endtag_interpolation_index=interpolation_index,
