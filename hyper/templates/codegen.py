@@ -396,15 +396,21 @@ class CodeGenerator:
         var = ctx.get_temp_var("_match")
         lines = [f"match {subject_expr}:"]
 
+        has_wildcard = False
         for case in node.cases:
             pattern_expr = ctx.get_expression(case.pattern_index)
+            # Handle {...} wildcard pattern - __slot__ in case patterns means wildcard
+            if pattern_expr == "__slot__":
+                pattern_expr = "_"
+                has_wildcard = True
             children_code = self._generate_children(case.children, ctx)
             lines.append(f"    case {pattern_expr}:")
             lines.append(f"        {var} = {children_code}")
 
-        # Default case
-        lines.append("    case _:")
-        lines.append(f"        {var} = ''")
+        # Add default case only if user didn't provide a wildcard
+        if not has_wildcard:
+            lines.append("    case _:")
+            lines.append(f"        {var} = ''")
 
         lines.append(f"return {var}")
         return "\n".join(lines)

@@ -195,9 +195,7 @@ class TestMatch:
         assert "<p>Done!</p>" not in str(result)
 
     def test_match_with_wildcard(self):
-        """Test match with wildcard pattern."""
-        # Create a wildcard sentinel
-        _ = object()  # Wildcard pattern
+        """Test match with wildcard pattern using {...}."""
         status = "unknown"
         result = html(t"""
             <div>
@@ -206,7 +204,7 @@ class TestMatch:
                         <p>Loading...</p>
                     <!--@ case {"error"} -->
                         <p>Error!</p>
-                    <!--@ case {_} -->
+                    <!--@ case {...} -->
                         <p>Unknown status</p>
                 <!--@ end -->
             </div>
