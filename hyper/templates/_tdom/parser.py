@@ -269,14 +269,15 @@ class TemplateParser(HTMLParser):
                     f"Mismatched closing tag </{self.get_comp_endtag(interpolation_index)}> for </>."
                 )
             case OpenTComponent():
-                if (
-                    self.tstate.interpolations[
-                        open_tag.starttag_interpolation_index
-                    ].value
-                    != self.tstate.interpolations[interpolation_index].value
-                ):
+                start_ip = self.tstate.interpolations[open_tag.starttag_interpolation_index]
+                end_ip = self.tstate.interpolations[interpolation_index]
+                # In codegen mode, compare expressions; at runtime, compare values
+                start_key = getattr(start_ip, "expression", None) or start_ip.value
+                end_key = getattr(end_ip, "expression", None) or end_ip.value
+                if start_key != end_key:
                     raise ValueError(
-                        f"Mismatched component value for <{self.get_comp_starttag(open_tag.starttag_interpolation_index)}> and </{self.get_comp_endtag(interpolation_index)}>"
+                        f"Mismatched component tags: <{self.get_comp_starttag(open_tag.starttag_interpolation_index)}> "
+                        f"closed with </{self.get_comp_endtag(interpolation_index)}>"
                     )
                 return TComponent(
                     starttag_interpolation_index=open_tag.starttag_interpolation_index,
