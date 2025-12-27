@@ -1,20 +1,20 @@
 # Templates & Layouts
 
-Hyper uses Python 3.14 t-strings for HTML templates with Python variables.
+Hyper uses `.hyper` files for HTML templates with Python variables and control flow.
 
 ---
 
 # Your First Template
 
 ```python
-name = "Alice"
+# Greeting.hyper
 
-t"""
+name: str
+
 <h1>Hello {name}</h1>
-"""
 ```
 
-Put variables in curly braces.
+Put variables in curly braces. Under the hood, these are just Python f-strings.
 
 ---
 
@@ -24,12 +24,11 @@ Layouts provide shared structure across pages.
 
 ## Create a Layout
 
-Make a file: `app/pages/Layout.py`
+Make a file: `app/pages/Layout.hyper`
 
 ```python
-# app/pages/Layout.py
+# app/pages/Layout.hyper
 
-t"""
 <!doctype html>
 <html>
 <head>
@@ -39,7 +38,6 @@ t"""
     {...}
 </body>
 </html>
-"""
 ```
 
 Use `{...}` to mark where page content goes.
@@ -50,16 +48,10 @@ Use `{...}` to mark where page content goes.
 Alternatively, use `slot` syntax instead of `...`:
 
 ```python
-from hyper import slot
-
-t"""
 <body>
     {slot} <!-- or <{slot}/> -->
 </body>
-"""
 ```
-
-Both are identical, except that `slot` requires an import.
 
 This guide uses `...`.
 
@@ -68,16 +60,14 @@ This guide uses `...`.
 ## Use a Layout
 
 ```python
-# app/pages/index.py
+# app/pages/index.hyper
 
 from app.pages import Layout
 
-t"""
 <{Layout}>
     <h1>Welcome Home!</h1>
     <p>This is the homepage.</p>
 </{Layout}>
-"""
 ```
 
 Content between `<{Layout}>` and `</{Layout}>` replaces `{...}`.
@@ -85,11 +75,10 @@ Content between `<{Layout}>` and `</{Layout}>` replaces `{...}`.
 ## Layout Props
 
 ```python
-# app/pages/Layout.py
+# app/pages/Layout.hyper
 
 title: str = "My Site"
 
-t"""
 <!doctype html>
 <html>
 <head>
@@ -99,38 +88,33 @@ t"""
     {...}
 </body>
 </html>
-"""
 ```
 
 Pass props:
 
 ```python
-# app/pages/index.py
+# app/pages/index.hyper
 
 from app.pages import Layout
 
-t"""
 <{Layout} title="Home">
     <h1>Welcome!</h1>
 </{Layout}>
-"""
 ```
 
 Pass variables:
 
 ```python
-# app/pages/index.py
+# app/pages/index.hyper
 
 from datetime import datetime
 from app.pages import Layout
 
 title = "Home | " + datetime.now().strftime("%Y")
 
-t"""
 <{Layout} title={title}>
     <h1>Welcome!</h1>
 </{Layout}>
-"""
 ```
 
 ## Shorthand Props
@@ -138,17 +122,15 @@ t"""
 Skip the attribute name if the variable matches it.
 
 ```python
-# app/pages/index.py
+# app/pages/index.hyper
 
 from app.pages import Layout
 
 title = "Home"
 
-t"""
 <{Layout} {title}>
     <h1>Welcome!</h1>
 </{Layout}>
-"""
 ```
 
 This expands to `title={title}`.
@@ -158,15 +140,13 @@ This expands to `title={title}`.
 Give slots fallback content:
 
 ```python
-# app/pages/Layout.py
+# app/pages/Layout.hyper
 
-t"""
 <body>
     <{...}>
         <p>Default content if slot is empty.</p>
     </{...}>
 </body>
-"""
 ```
 
 ---
@@ -176,9 +156,8 @@ t"""
 ## Named Slots
 
 ```python
-# app/pages/Layout.py
+# app/pages/Layout.hyper
 
-t"""
 <body>
     <aside>
         <{...} name="sidebar" />
@@ -187,15 +166,13 @@ t"""
         {...}
     </main>
 </body>
-"""
 ```
 
 ```python
-# app/pages/index.py
+# app/pages/index.hyper
 
 from app.pages import Layout
 
-t"""
 <{Layout}>
     <{...} name="sidebar">
         <nav>
@@ -204,7 +181,6 @@ t"""
     </{...}>
     <h1>Dashboard Content</h1>
 </{Layout}>
-"""
 ```
 
 ## Nest Layouts
@@ -217,27 +193,17 @@ app/
 ```
 
 ```python
-# app/layouts/BlogLayout.py
+# app/layouts/BlogLayout.hyper
 
 from app.layouts import Layout
 
-title: str = t"Blog - {...}"
+title: str = "Blog"
 
-t"""
 <{Layout} {title}>
     <div class="blog-container">
         {...}
     </div>
 </{Layout}>
-"""
-```
-
-### Exploring: inline `...` conditional (not decided)
-
-Potential future idea (more magic, still to explore):
-
-```python
-title: str = (t"Blog - {...}" if ... else "Blog")
 ```
 
 ---
@@ -249,13 +215,11 @@ Put reusable pieces in `app/components`.
 ## Create a Component
 
 ```python
-# app/components/Button.py
+# app/components/Button.hyper
 
-t"""
 <button type="button" {...}>
     {...}
 </button>
-"""
 ```
 
 The `{...}` spreads attributes and content based on context.
@@ -263,17 +227,21 @@ The `{...}` spreads attributes and content based on context.
 ## Use a Component
 
 ```python
+# app/pages/index.hyper
+
 from app.components import Button
 
-t"""
 <{Button} hx-post="/settings/save" class="bg-white text-black rounded">
     Save
 </{Button}>
-"""
+```
 
-# <button type="button" hx-post="/settings/save" class="bg-white text-black rounded">
-#   Save
-# </button>
+Output:
+
+```html
+<button type="button" hx-post="/settings/save" class="bg-white text-black rounded">
+  Save
+</button>
 ```
 
 ---
@@ -282,44 +250,37 @@ t"""
 
 ## For Loops
 
-Use directive comments for block loops.
-
 ```python
+# app/pages/users.hyper
+
 from app.models import User
 
 users: list[User]
-user: User
 
-t"""
 <div class="users">
-    <!--@ for {user} in {users} -->
+    for user in users:
         <div class="user">{user.name}</div>
-    <!--@ end -->
+    end
 </div>
-"""
 ```
-
-Alternative syntax: `{@: for {item} in {items}}`
 
 ---
 
 ## Conditionals
 
 ```python
+# app/pages/nav.hyper
+
 is_admin: bool
 
-t"""
 <nav>
-    <!--@ if {is_admin} -->
+    if is_admin:
         <a href="/admin">Admin</a>
-    <!--@ else -->
+    else:
         <a href="/account">Account</a>
-    <!--@ end -->
+    end
 </nav>
-"""
 ```
-
-Alternative syntax: `{@: if {condition}}`
 
 ---
 
@@ -328,57 +289,41 @@ Alternative syntax: `{@: if {condition}}`
 Pattern match against values.
 
 ```python
+# app/components/Status.hyper
+
 status: str
 
-t"""
 <div>
-    <!--@ match {status} -->
-        <!--@ case {"loading"} -->
+    match status:
+        case "loading":
             <p>Loading...</p>
-        <!--@ case {"error"} -->
+        case "error":
             <p>Error!</p>
-        <!--@ case {"success"} -->
+        case "success":
             <p>Done!</p>
-    <!--@ end -->
+    end
 </div>
-"""
 ```
 
 Match numeric values:
 
 ```python
+# app/components/HttpStatus.hyper
+
 code: int
 
-t"""
 <div>
-    <!--@ match {code} -->
-        <!--@ case {200} -->
+    match code:
+        case 200:
             <span>OK</span>
-        <!--@ case {404} -->
+        case 404:
             <span>Not Found</span>
-        <!--@ case {500} -->
+        case 500:
             <span>Server Error</span>
-    <!--@ end -->
+        case _:
+            <span>Unknown Status</span>
+    end
 </div>
-"""
-```
-
-Use `...` for a wildcard:
-
-```python
-status: str
-_ = object()
-
-t"""
-<div>
-    <!--@ match {status} -->
-        <!--@ case {"loading"} -->
-            <p>Loading...</p>
-        <!--@ case {...} -->
-            <p>Unknown status</p>
-    <!--@ end -->
-</div>
-"""
 ```
 
 ---
@@ -390,31 +335,33 @@ t"""
 Spread attributes from a component to its root element.
 
 ```python
-# app/components/Button.py
+# app/components/Button.hyper
 
-t"""
 <button class="text-black bg-white" {...}>
     {...}
 </button>
-"""
 ```
 
 Attributes passed to the component merge with existing ones:
 
 ```python
+# app/pages/index.hyper
+
 from app.components import Button
 
 disabled = False
 
-t"""
 <{Button} class="border border-neutral-900" type="button" {disabled}>
     Click Me
 </{Button}>
-"""
+```
 
-# <button class="text-black bg-white border border-neutral-900" type="button">
-#    Click Me
-# </button>
+Output:
+
+```html
+<button class="text-black bg-white border border-neutral-900" type="button">
+   Click Me
+</button>
 ```
 
 Classes merge. Other attributes override.
@@ -426,20 +373,22 @@ Classes merge. Other attributes override.
 Combine class strings, arrays, and objects:
 
 ```python
-_class = [
+class = [
     "bg-neutral-950 text-neutral-100",
     "border border-neutral-900",
     {"active": False, "disabled": True}
 ]
 
-t'<button class={_class}>Click</button>'
-
-# <button class="bg-neutral-950 text-neutral-100 border border-neutral-900 disabled">
-#   Click
-# </button>
+<button {class}>Click</button>
 ```
 
-Use `_class` because `class` is a Python keyword.
+Output:
+
+```html
+<button class="bg-neutral-950 text-neutral-100 border border-neutral-900 disabled">
+  Click
+</button>
+```
 
 ---
 
@@ -450,9 +399,13 @@ Pass style object:
 ```python
 style = {"color": "red", "font-weight": "bold"}
 
-t'<p {style}>Important</p>'
+<p {style}>Important</p>
+```
 
-# <p style="color:red;font-weight:bold">Important</p>
+Output:
+
+```html
+<p style="color:red;font-weight:bold">Important</p>
 ```
 
 ---
@@ -464,9 +417,13 @@ Single data attribute:
 ```python
 state = "success"
 
-t'<div data-state={state}>...</div>'
+<div data-state={state}>...</div>
+```
 
-# <div data-state="success">...</div>
+Output:
+
+```html
+<div data-state="success">...</div>
 ```
 
 Multiple data attributes:
@@ -480,17 +437,13 @@ data = {
     "state": "success",
 }
 
-t'<div {data}>...</div>'
-
-# <div data-user='{"id":"Aaron","role":"admin"}' data-state="success">...</div>
+<div {data}>...</div>
 ```
 
-Flatten nested objects:
+Output:
 
-```python
-t'<div {data:flat}>...</div>'
-
-# <div data-user-id="Aaron" data-user-role="admin" data-state="success">...</div>
+```html
+<div data-user='{"id":"Aaron","role":"admin"}' data-state="success">...</div>
 ```
 
 ---
@@ -505,9 +458,13 @@ attrs = {
     "target": "_blank",
 }
 
-t'<a {attrs}>Link</a>'
+<a {**attrs}>Link</a>
+```
 
-# <a href="https://example.com" target="_blank">Link</a>
+Output:
+
+```html
+<a href="https://example.com" target="_blank">Link</a>
 ```
 
 ---
@@ -517,41 +474,32 @@ t'<a {attrs}>Link</a>'
 `True` renders the attribute. `False` omits it.
 
 ```python
-t'<input disabled={True} readonly={False} />'
+<input disabled={True} readonly={False} />
+```
 
-# <input disabled>
+Output:
+
+```html
+<input disabled>
 ```
 
 ---
 
 # Comments
 
-HTML comments are sent to the browser:
+Nothing special here.
+
+Write HTML comments for client-side comments.
 
 ```python
-t"""
 <!-- This appears in page source -->
-<h1>Title</h1>
-"""
 ```
 
-Server-side comments are stripped from output:
+Write Python comments for server-side comments.
 
 ```python
-t"""
-<!--# This won't appear in page source -->
+# This won't appear in page source
 <h1>Title</h1>
-"""
-```
-
-Use directive comments for control flow:
-
-```python
-t"""
-<!--@ if {show_title} -->
-  <h1>Title</h1>
-<!--@ end -->
-"""
 ```
 
 ---
@@ -563,9 +511,9 @@ Hyper escapes interpolated values by default.
 Render trusted HTML with `:safe`:
 
 ```python
-t"{post.content:safe}"
+{post.content:safe}
 ```
 
 ---
 
-**[← Previous: Routing](routing.md)** | **[Next: Content →](content.md)**
+**[← Previous: Routing](routing.md)** | **[Next: Fragments →](fragments.md)**
