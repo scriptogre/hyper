@@ -1,0 +1,37 @@
+{
+  parserClass="com.hyper.plugin.parser.HyperParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Hyper"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.hyper.plugin.psi"
+  psiImplPackage="com.hyper.plugin.psi.impl"
+
+  elementTypeHolderClass="com.hyper.plugin.psi.HyperTypes"
+  elementTypeClass="com.hyper.plugin.psi.HyperElementType"
+  tokenTypeClass="com.hyper.plugin.psi.HyperTokenType"
+
+  tokens = [
+    HTML_LINE_TOKEN = "regexp:\s*<.*"
+    CONTROL_LINE_TOKEN = "regexp:\s*(if|for|while|match|def|class|elif|else|case).*"
+    END_LINE_TOKEN = "regexp:\s*end"
+    PYTHON_LINE_TOKEN = "regexp:.*"
+  ]
+}
+
+hyperFile ::= root_element
+
+root_element ::= element* {
+  implements="com.intellij.psi.PsiLanguageInjectionHost"
+  mixin="com.hyper.plugin.psi.impl.HyperRootMixin"
+}
+
+private element ::= html_line | control_line | end_line | python_line
+
+html_line ::= HTML_LINE_TOKEN {
+  mixin="com.hyper.plugin.psi.impl.HyperHtmlLineMixin"
+}
+control_line ::= CONTROL_LINE_TOKEN
+end_line ::= END_LINE_TOKEN
+python_line ::= PYTHON_LINE_TOKEN

@@ -1,0 +1,22 @@
+# Default to building the plugin
+default: build
+
+# Build the plugin
+build:
+    ./gradlew buildPlugin
+
+# Run the IDE with the plugin installed
+run:
+    ./gradlew runIde
+
+# Clean the build directory
+clean:
+    ./gradlew clean
+
+# Verify the plugin for compatibility and errors
+verify:
+    ./gradlew verifyPlugin
+
+# Run tests
+test:
+    ./gradlew test

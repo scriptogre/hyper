@@ -1,0 +1,16 @@
+# GENERATOR TEST: Comments in various positions
+
+# Header comment 1
+# Header comment 2
+
+name: str  # Inline comment on parameter
+
+# Comment after parameter, before body
+
+<div>
+    # Comment inside body
+    <span>{name}</span>
+    # Another body comment
+</div>
+
+# Trailing comment

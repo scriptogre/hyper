@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+
+# Virtual/generated files
+*.virtual.py
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.claude/
+
+# JetBrains plugin build artifacts
+editors/jetbrains-plugin/.intellijPlatform/
+editors/jetbrains-plugin/.gradle/
+editors/jetbrains-plugin/build/
+editors/jetbrains-plugin/src/main/gen/
+
+# Temp files
+*.log
+.DS_Store

@@ -1,0 +1,38 @@
+<idea-plugin>
+    <id>com.hyper.plugin</id>
+    <name>Hyper</name>
+    <vendor>Hyper</vendor>
+    <description><![CDATA[
+        Support for Hyper template files (.hyper) - a language combining Python control flow with HTML.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <actions>
+        <action id="com.hyper.plugin.actions.ShowVirtualPythonAction"
+                class="com.hyper.plugin.actions.ShowVirtualPythonAction"
+                text="Show Virtual Python"
+                description="Shows the generated virtual Python code for debugging">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift P"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="Hyper"
+            implementationClass="com.hyper.plugin.HyperFileType"
+            language="Hyper"
+            extensions="hyper"/>
+
+        <lang.parserDefinition
+            language="Hyper"
+            implementationClass="com.hyper.plugin.HyperParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory
+            language="Hyper"
+            implementationClass="com.hyper.plugin.HyperSyntaxHighlighterFactory"/>
+
+        <multiHostInjector implementation="com.hyper.plugin.HyperLanguageInjector"/>
+    </extensions>
+</idea-plugin>
