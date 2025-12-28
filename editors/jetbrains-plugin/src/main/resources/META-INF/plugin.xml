@@ -8,16 +8,6 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <actions>
-        <action id="com.hyper.plugin.actions.ShowVirtualPythonAction"
-                class="com.hyper.plugin.actions.ShowVirtualPythonAction"
-                text="Show Virtual Python"
-                description="Shows the generated virtual Python code for debugging">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift P"/>
-        </action>
-    </actions>
-
     <extensions defaultExtensionNs="com.intellij">
         <fileType
             name="Hyper"
@@ -34,5 +24,9 @@
             implementationClass="com.hyper.plugin.HyperSyntaxHighlighterFactory"/>
 
         <multiHostInjector implementation="com.hyper.plugin.HyperLanguageInjector"/>
+        <multiHostInjector implementation="com.hyper.plugin.HyperHtmlInjector"/>
+
+        <!-- Auto-generate .py on save -->
+        <vfs.asyncListener implementation="com.hyper.plugin.HyperFileListener"/>
     </extensions>
 </idea-plugin>

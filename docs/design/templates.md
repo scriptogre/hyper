@@ -516,4 +516,145 @@ Render trusted HTML with `:safe`:
 
 ---
 
+# Fragments
+
+Render a section in place AND make it callable independently.
+
+```python
+# app/pages/Layout.hyper
+
+user: User
+
+<html>
+    <body>
+        @fragment
+        def Sidebar(user: User):
+            <aside>{user.name}</aside>
+        end
+
+        <main>{...}</main>
+    </body>
+</html>
+```
+
+Call the fragment standalone:
+
+```python
+from app.pages import Layout
+
+Layout.Sidebar(user=current_user)
+```
+
+Or import directly:
+
+```python
+from app.pages.Layout import Sidebar
+
+Sidebar(user=current_user)
+```
+
+---
+
+# Functions
+
+## Component Functions
+
+Functions that contain HTML produce markup. No `return` needed.
+
+```python
+def Card(title: str):
+    <div class="card">
+        <h2>{title}</h2>
+        {...}
+    </div>
+```
+
+## Python Functions
+
+Regular Python functions use `return`.
+
+```python
+def format_date(d: datetime) -> str:
+    return d.strftime("%B %d, %Y")
+
+<p>Last login: {format_date(user.last_login)}</p>
+```
+
+---
+
+# HTML Variables
+
+Store HTML in variables for reuse:
+
+```python
+title = <span>Welcome</span>
+
+<div class="card">
+    {title}
+</div>
+```
+
+Multi-line with parentheses:
+
+```python
+header = (
+    <div class="header">
+        <h1>Title</h1>
+        <p>Subtitle</p>
+    </div>
+)
+```
+
+## Inline Components with Lambda
+
+```python
+greet = lambda name: <span>Hello {name}</span>
+
+<div>
+    {greet("John")}
+    <{greet} name="Jane"/>
+</div>
+```
+
+Multi-line lambda:
+
+```python
+card = lambda title, subtitle: (
+    <div class="card">
+        <h1>{title}</h1>
+        <p>{subtitle}</p>
+    </div>
+)
+
+<{card} title="Welcome" subtitle="Get started"/>
+```
+
+---
+
+# Multiple Components Per File
+
+```python
+# app/components/forms.hyper
+
+def Form(action: str):
+    <form {action}>{...}</form>
+
+def Input(name: str, type: str = "text"):
+    <input {name} {type}/>
+
+def Button(type: str = "submit"):
+    <button {type}>{...}</button>
+```
+
+```python
+from app.components.forms import Form, Input, Button
+
+<{Form} action="/login">
+    <{Input} name="email" type="email"/>
+    <{Button}>Sign In</{Button}>
+</{Form}>
+```
+
+---
+
 **[← Previous: Routing](routing.md)** | **[Next: Fragments →](fragments.md)**

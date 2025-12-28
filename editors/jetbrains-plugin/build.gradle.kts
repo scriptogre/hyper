@@ -1,6 +1,7 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
     id("org.jetbrains.intellij.platform") version "2.2.1"
     id("org.jetbrains.grammarkit") version "2022.3.2.2"
 }
@@ -24,9 +25,10 @@ sourceSets {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
     intellijPlatform {
-        // Use PyCharm 2024.3 for building (grammarkit needs this)
-        pycharmCommunity("2024.3")
+        pycharmCommunity("2025.1")
         bundledPlugin("PythonCore")
     }
 }

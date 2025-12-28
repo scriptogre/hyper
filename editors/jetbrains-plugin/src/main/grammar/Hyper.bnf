@@ -30,6 +30,7 @@ root_element ::= element* {
 private element ::= html_line | control_line | end_line | python_line
 
 html_line ::= HTML_LINE_TOKEN {
+  implements="com.intellij.psi.PsiLanguageInjectionHost"
   mixin="com.hyper.plugin.psi.impl.HyperHtmlLineMixin"
 }
 control_line ::= CONTROL_LINE_TOKEN

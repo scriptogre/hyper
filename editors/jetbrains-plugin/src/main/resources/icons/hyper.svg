@@ -1,4 +1,9 @@
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="16" height="16" rx="3" fill="#3776AB"/>
-  <text x="8" y="12" font-family="Arial" font-size="10" font-weight="bold" fill="white" text-anchor="middle">H</text>
+  <path d="M9 1L4 9H8L7 15L12 7H8L9 1Z" fill="url(#paint0_linear)"/>
+  <defs>
+    <linearGradient id="paint0_linear" x1="8" y1="1" x2="8" y2="15" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD54F"/>
+      <stop offset="1" stop-color="#FF6F00"/>
+    </linearGradient>
+  </defs>
 </svg>

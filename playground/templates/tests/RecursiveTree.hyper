@@ -1,6 +1,7 @@
 # Recursive function for tree structures
 node: dict
 
+
 def render_node(n: dict, depth: int = 0):
     <div class="tree-node" style="margin-left: {depth * 20}px">
         <span class="label">{n.get('label', 'Node')}</span>
@@ -16,5 +17,20 @@ def render_node(n: dict, depth: int = 0):
 end
 
 <div class="tree">
-    render_node(node)
+
+    @fragment
+    def Node(n: dict, depth: int = 0):
+        <div class="tree-node" style="margin-left: {depth * 20}px">
+            <span class="label">{n.get('label', 'Node')}</span>
+
+            if n.get('children'):
+                <div class="children">
+                    for child in n['children']:
+                        render_node(child, depth + 1)
+                    end
+                </div>
+            end
+        </div>
+    end
+
 </div>

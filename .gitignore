@@ -9,6 +9,10 @@ build/
 
 # Virtual/generated files
 *.virtual.py
+playground/templates/**/*.py
+
+# Rust build artifacts
+rust/target/
 
 # IDE
 .idea/

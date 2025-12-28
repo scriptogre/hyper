@@ -2,7 +2,31 @@
 title: str
 content: str
 
+title = (
+    <span>Welcome to the basic card</span>
+)
+
 <div class="card">
-    <h2>{title}</h2>
-    <p>{content}</p>
+    {title}
+</div>
+
+# Returns:
+# <div class="card">
+#     <span>Welcome to the basic card</span>
+# </div>
+
+# Or alternative syntax:
+<div class="card">
+    <{title}/>
+</div>
+
+# And maybe enable even lambda syntax for simple inline components:
+
+title = lambda first_name, last_name: (
+    <span>Hello, {first_name} {last_name}!</span>
+)
+
+<div class="card">
+    for i in range(3):
+        {title("first", "last")}
 </div>
