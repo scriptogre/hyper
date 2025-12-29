@@ -1,0 +1,9 @@
+def GeneratorEdge_LongLines(
+        # GENERATOR TEST: Very long lines
+        data: dict[str, list[tuple[int, str, bool, dict[str, Any]]]] = {},
+):
+    _parts = []
+    _parts.append(f"""<div class="very-long-class-name-that-goes-on-and-on-and-might-cause-issues-with-parsing-or-display component-variant-primary component-size-large component-state-active">
+    <span>{data.get('some_very_long_key_name_that_is_unnecessarily_verbose', {}).get('another_nested_key', 'default_fallback_value_here')}</span>
+</div>""")
+    return "".join(_parts)

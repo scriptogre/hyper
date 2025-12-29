@@ -1,4 +1,7 @@
+from typing import Callable, Awaitable
+
 # Async data fetching - triggers async def generation
+
 user_id: int
 fetch_user: Callable[[int], Awaitable[dict]]
 fetch_posts: Callable[[int], Awaitable[list]]

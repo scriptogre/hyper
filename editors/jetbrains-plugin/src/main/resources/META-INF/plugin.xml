@@ -24,9 +24,14 @@
             implementationClass="com.hyper.plugin.HyperSyntaxHighlighterFactory"/>
 
         <multiHostInjector implementation="com.hyper.plugin.HyperLanguageInjector"/>
-        <multiHostInjector implementation="com.hyper.plugin.HyperHtmlInjector"/>
 
         <!-- Auto-generate .py on save -->
         <vfs.asyncListener implementation="com.hyper.plugin.HyperFileListener"/>
+
+        <!-- Debug tool window showing virtual injected files -->
+        <toolWindow id="Hyper Injection"
+                    anchor="right"
+                    factoryClass="com.hyper.plugin.HyperInjectionViewerToolWindowFactory"
+                    icon="/icons/hyper-icon.svg"/>
     </extensions>
 </idea-plugin>
