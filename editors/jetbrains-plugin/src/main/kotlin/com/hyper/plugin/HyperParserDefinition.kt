@@ -19,8 +19,6 @@ class HyperParserDefinition : ParserDefinition {
 
     companion object {
         val FILE = IFileElementType(HyperLanguage)
-
-        val WHITE_SPACES = TokenSet.WHITE_SPACE
     }
 
     override fun createLexer(project: Project?): Lexer = FlexAdapter(_HyperLexer())
@@ -33,7 +31,7 @@ class HyperParserDefinition : ParserDefinition {
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
 
-    override fun getWhitespaceTokens(): TokenSet = WHITE_SPACES
+    override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
 
     override fun createElement(node: ASTNode): PsiElement = HyperTypes.Factory.createElement(node)
 

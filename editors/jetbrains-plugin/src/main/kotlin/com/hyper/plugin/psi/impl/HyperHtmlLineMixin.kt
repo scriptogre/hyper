@@ -12,9 +12,7 @@ abstract class HyperHtmlLineMixin(node: ASTNode) : ASTWrapperPsiElement(node), P
         return true
     }
 
-    override fun updateText(text: String): PsiLanguageInjectionHost {
-        return this
-    }
+    override fun updateText(text: String): PsiLanguageInjectionHost = this
 
     override fun createLiteralTextEscaper(): LiteralTextEscaper<out PsiLanguageInjectionHost> {
         return LiteralTextEscaper.createSimple(this)

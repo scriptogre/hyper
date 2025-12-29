@@ -1,0 +1,21 @@
+from typing import Callable, Awaitable
+
+# Async data fetching - triggers async def generation
+async def AsyncFetch(user_id: int, fetch_user: Callable[[int], Awaitable[dict]], fetch_posts: Callable[[int], Awaitable[list]]):
+    _parts = []
+    # await keyword triggers async def __hyper_template__
+    user = await fetch_user(user_id)
+    posts = await fetch_posts(user_id)
+
+    _parts.append(f"""<div class="async-content">
+    <h1>{user['name']}</h1>
+
+    <div class="posts">""")
+    for post in posts:
+        _parts.append(f"""            <article>
+                <h2>{post['title']}</h2>
+                <p>{post['content']}</p>
+            </article>""")
+    _parts.append(f"""    </div>
+</div>""")
+    return "".join(_parts)

@@ -9,6 +9,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
+/**
+ * Injects Python and HTML into .hyper files.
+ * Python injection enables go-to-definition, autocomplete etc.
+ * HTML injection enables HTML syntax highlighting.
+ */
 class HyperLanguageInjector : MultiHostInjector {
 
     companion object {
@@ -16,44 +21,65 @@ class HyperLanguageInjector : MultiHostInjector {
         private val PYTHON_LANGUAGE: Language? by lazy {
             Language.findLanguageByID("Python")
         }
+        private val HTML_LANGUAGE: Language? by lazy {
+            Language.findLanguageByID("HTML")
+        }
     }
 
     override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
         if (context !is HyperRootElement) return
-        val python = PYTHON_LANGUAGE ?: run {
-            LOG.warn("Python language not found")
-            return
-        }
         val project = context.project
 
         try {
             val service = HyperTranspilerService.getInstance(project)
-            LOG.info("Transpiling ${context.text.length} chars...")
-            val start = System.currentTimeMillis()
-            val result = service.transpile(context.text, includeInjection = true)
-            LOG.info("Transpile took ${System.currentTimeMillis() - start}ms, got ${result.python_pieces?.size ?: 0} python pieces")
+            val text = context.text
+            val textLength = text.length
+            val result = service.transpile(text, includeInjection = true)
 
-            val pythonPieces = result.python_pieces
-            if (pythonPieces.isNullOrEmpty()) {
-                LOG.warn("No python pieces returned")
-                return
+            // Inject Python
+            val python = PYTHON_LANGUAGE
+            val pythonPieces = result.injections?.python
+            if (python != null && !pythonPieces.isNullOrEmpty()) {
+                val validPythonPieces = pythonPieces.filter { piece ->
+                    piece.start >= 0 && piece.end <= textLength && piece.start <= piece.end
+                }
+                if (validPythonPieces.isNotEmpty()) {
+                    registrar.startInjecting(python)
+                    for (piece in validPythonPieces) {
+                        val range = TextRange(piece.start, piece.end)
+                        registrar.addPlace(piece.prefix, piece.suffix, context, range)
+                    }
+                    registrar.doneInjecting()
+                    LOG.debug("Python injection: ${validPythonPieces.size} pieces")
+                }
             }
 
-            registrar.startInjecting(python)
-            for (piece in pythonPieces) {
-                val range = TextRange(piece.src_start, piece.src_end)
-                registrar.addPlace(piece.prefix, piece.suffix, context, range)
+            // Inject HTML
+            val html = HTML_LANGUAGE
+            val htmlPieces = result.injections?.html
+            if (html != null && !htmlPieces.isNullOrEmpty()) {
+                val validHtmlPieces = htmlPieces.filter { piece ->
+                    piece.start >= 0 && piece.end <= textLength && piece.start < piece.end
+                }
+                if (validHtmlPieces.isNotEmpty()) {
+                    registrar.startInjecting(html)
+                    for (piece in validHtmlPieces) {
+                        val range = TextRange(piece.start, piece.end)
+                        registrar.addPlace(null, null, context, range)
+                    }
+                    registrar.doneInjecting()
+                    LOG.debug("HTML injection: ${validHtmlPieces.size} pieces")
+                }
+            } else if (html == null) {
+                LOG.info("HTML language not available in this IDE")
             }
-            registrar.doneInjecting()
-            LOG.info("Python injection complete with ${pythonPieces.size} pieces")
 
         } catch (e: ProcessCanceledException) {
-            LOG.info("Injection cancelled")
             throw e
         } catch (e: HyperTranspilerService.TranspileException) {
-            LOG.warn("Failed to transpile .hyper file: ${e.message}")
+            LOG.debug("Transpile error: ${e.message}")
         } catch (e: Exception) {
-            LOG.warn("Unexpected error during .hyper transpilation", e)
+            LOG.warn("Unexpected error during injection", e)
         }
     }
 

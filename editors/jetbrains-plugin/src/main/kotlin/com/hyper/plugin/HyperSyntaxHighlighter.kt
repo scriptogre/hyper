@@ -17,7 +17,6 @@ import com.intellij.psi.tree.IElementType
 class HyperSyntaxHighlighter : SyntaxHighlighterBase() {
 
     companion object {
-        // We now rely mostly on injection, but we can style the 'end' keyword or headers if injection fails
         val KEYWORD = createTextAttributesKey("HYPER_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
         val BAD_CHARACTER = createTextAttributesKey("HYPER_BAD_CHARACTER", com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER)
 

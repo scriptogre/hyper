@@ -3,9 +3,23 @@
 # Header comment 1
 # Header comment 2
 
-name: str  # Inline comment on parameter
+"""
+This is a docstring
+"""
+
+# test
+
+# Inline comment on parameter
+name: str
+# Another comment
+count: int
 
 # Comment after parameter, before body
+
+
+
+
+
 
 <div>
     # Comment inside body
