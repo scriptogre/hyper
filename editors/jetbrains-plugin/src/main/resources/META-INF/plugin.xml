@@ -33,5 +33,8 @@
                     anchor="right"
                     factoryClass="com.hyper.plugin.HyperInjectionViewerToolWindowFactory"
                     icon="/icons/hyper-icon.svg"/>
+
+        <!-- File nesting: .py files nest under their corresponding .hyper files -->
+        <treeStructureProvider implementation="com.hyper.plugin.HyperFileNestingProvider"/>
     </extensions>
 </idea-plugin>
