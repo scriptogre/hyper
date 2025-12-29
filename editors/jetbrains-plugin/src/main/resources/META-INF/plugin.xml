@@ -29,10 +29,10 @@
         <vfs.asyncListener implementation="com.hyper.plugin.HyperFileListener"/>
 
         <!-- Debug tool window showing virtual injected files -->
-        <toolWindow id="Hyper Injection"
+        <toolWindow id="Hyper Inspector"
                     anchor="right"
-                    factoryClass="com.hyper.plugin.HyperInjectionViewerToolWindowFactory"
-                    icon="/icons/hyper-icon.svg"/>
+                    factoryClass="com.hyper.plugin.HyperInspectorToolWindowFactory"
+                    icon="/icons/hyper.svg"/>
 
         <!-- File nesting: .py files nest under their corresponding .hyper files -->
         <treeStructureProvider implementation="com.hyper.plugin.HyperFileNestingProvider"/>
