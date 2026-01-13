@@ -1,0 +1,14 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: r.code.trim()
+input_file: transpiler/tests/control_flow/for_loop.hyper
+---
+from hyper import escape, replace_markers
+
+def ForLoop(items: list[str]) -> str:
+    _parts = []
+    _parts.append("<ul>")
+    for item in items:
+        _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
+    _parts.append("</ul>")
+    return replace_markers("".join(_parts))

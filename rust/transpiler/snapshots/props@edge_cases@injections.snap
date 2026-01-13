@@ -1,0 +1,92 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/props/edge_cases.hyper
+---
+injections:
+  - end: 384
+    prefix: "from hyper import escape, replace_markers\n\ndef EdgeCases(simple: str, with_default: str = \"default value\", none_default: str | None = None, empty_string: str = \"\", zero_default: int = 0, false_default: bool = False, empty_list: list = [], empty_dict: dict = {}, complex_default: dict = {\"key\": \"value\"}, *args: tuple, **kwargs: dict) -> str:\n    _parts = []\n    \"\"\"This is a component docstring.\"\"\"\n    _parts.append(f\"\"\"<div><span>‹ESCAPE:{"
+    start: 378
+    suffix: ""
+    type: python
+  - end: 416
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 404
+    suffix: ""
+    type: python
+  - end: 458
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 436
+    suffix: "}›</span></div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 68
+    compiled_start: 57
+    range_type: Python
+    source_end: 100
+    source_start: 89
+  - compiled_end: 105
+    compiled_start: 70
+    range_type: Python
+    source_end: 136
+    source_start: 101
+  - compiled_end: 138
+    compiled_start: 107
+    range_type: Python
+    source_end: 168
+    source_start: 137
+  - compiled_end: 162
+    compiled_start: 140
+    range_type: Python
+    source_end: 191
+    source_start: 169
+  - compiled_end: 185
+    compiled_start: 164
+    range_type: Python
+    source_end: 213
+    source_start: 192
+  - compiled_end: 214
+    compiled_start: 187
+    range_type: Python
+    source_end: 241
+    source_start: 214
+  - compiled_end: 237
+    compiled_start: 216
+    range_type: Python
+    source_end: 263
+    source_start: 242
+  - compiled_end: 260
+    compiled_start: 239
+    range_type: Python
+    source_end: 285
+    source_start: 264
+  - compiled_end: 302
+    compiled_start: 262
+    range_type: Python
+    source_end: 326
+    source_start: 286
+  - compiled_end: 316
+    compiled_start: 304
+    range_type: Python
+    source_end: 339
+    source_start: 327
+  - compiled_end: 332
+    compiled_start: 318
+    range_type: Python
+    source_end: 354
+    source_start: 340
+  - compiled_end: 447
+    compiled_start: 441
+    range_type: Python
+    source_end: 384
+    source_start: 378
+  - compiled_end: 483
+    compiled_start: 471
+    range_type: Python
+    source_end: 416
+    source_start: 404
+  - compiled_end: 529
+    compiled_start: 507
+    range_type: Python
+    source_end: 458
+    source_start: 436

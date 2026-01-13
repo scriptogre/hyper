@@ -1,0 +1,7 @@
+<div>
+    if show:
+        for item in items:
+            <span>{item}</span>
+        # Missing end for for loop
+    end
+</div>

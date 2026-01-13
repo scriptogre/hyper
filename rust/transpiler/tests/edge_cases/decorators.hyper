@@ -1,0 +1,33 @@
+items: list
+
+---
+
+# Simple decorator
+@fragment
+def Badge(text: str):
+    <span class="badge">{text}</span>
+end
+
+# Multiple decorators
+@cache
+@fragment
+def CachedList(items: list):
+    <ul>
+        for item in items:
+            <li>{item}</li>
+        end
+    </ul>
+end
+
+# Decorator with arguments
+@fragment(name="card")
+def Card(title: str):
+    <div class="card">
+        <h2>{title}</h2>
+        {...}
+    </div>
+end
+
+# Use decorated functions
+{Badge("New")}
+{CachedList(items)}

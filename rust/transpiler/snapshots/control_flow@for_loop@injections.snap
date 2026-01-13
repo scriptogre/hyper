@@ -1,0 +1,22 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/for_loop.hyper
+---
+injections:
+  - end: 68
+    prefix: "from hyper import escape, replace_markers\n\ndef ForLoop(items: list[str]) -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in items:\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 64
+    suffix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 71
+    compiled_start: 55
+    range_type: Python
+    source_end: 16
+    source_start: 0
+  - compiled_end: 189
+    compiled_start: 185
+    range_type: Python
+    source_end: 68
+    source_start: 64

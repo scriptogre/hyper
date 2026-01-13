@@ -1,0 +1,11 @@
+is_admin: bool
+
+---
+
+<nav>
+    if is_admin:
+        <a href="/admin">Admin</a>
+    else:
+        <a href="/account">Account</a>
+    end
+</nav>

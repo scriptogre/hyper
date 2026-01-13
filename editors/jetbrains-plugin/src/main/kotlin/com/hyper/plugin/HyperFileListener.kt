@@ -38,10 +38,11 @@ class HyperFileListener : AsyncFileListener {
 
         try {
             val content = String(hyperFile.contentsToByteArray(), Charsets.UTF_8)
+            val functionName = hyperFile.nameWithoutExtension
             val service = HyperTranspilerService.getInstance(project)
-            val result = service.transpile(content, includeInjection = false)
+            val result = service.transpile(content, includeInjection = false, functionName = functionName)
 
-            val outputName = hyperFile.nameWithoutExtension + ".py"
+            val outputName = "$functionName.py"
             val parent = hyperFile.parent ?: return
             val outputFile = parent.findOrCreateChildData(this, outputName)
 

@@ -1,0 +1,29 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: r.code.trim()
+input_file: transpiler/tests/edge_cases/decorators.hyper
+---
+from hyper import escape, replace_markers
+
+def Decorators(items: list, *, _children: str = "") -> str:
+    _parts = []
+    @fragment
+    def Badge(text: str):
+        _parts.append(f"""<span class="badge">‹ESCAPE:{text}›</span>""")
+    @cache
+    @fragment
+    def CachedList(items: list):
+        _parts.append("<ul>")
+        for item in items:
+            _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
+        _parts.append("</ul>")
+    @fragment(name="card")
+    def Card(title: str):
+        _parts.append("<div class=\"card\">")
+        _parts.append("<h2>")
+        _parts.append(escape(title))
+        _parts.append("</h2>")
+        _parts.append(_children)
+        _parts.append("</div>")
+    _parts.append(f"""‹ESCAPE:{Badge("New")}›‹ESCAPE:{CachedList(items)}›""")
+    return replace_markers("".join(_parts))

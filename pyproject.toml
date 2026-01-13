@@ -1,35 +1,12 @@
-[project]
-name = "hyper"
-version = "0.1.0"
-description = "A Python framework for hypermedia-driven applications"
-readme = "README.md"
-requires-python = ">=3.14"
-dependencies = [
-    "markupsafe>=3.0.3",
-    "markdown>=3.10",
-    "pyyaml>=6.0",
-]
+[tool.uv.workspace]
+members = ["python"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["hyper"]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "hyper/",
-    "README.md",
-    "pyproject.toml",
-]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
+[tool.uv.sources]
+hyper = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "hyper[content]",
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
     "msgspec>=0.20",
@@ -38,9 +15,3 @@ dev = [
 
 [tool.ruff.lint.per-file-ignores]
 "playground/**" = ["F821"]
-
-[tool.pyright]
-stubPath = ".hyper/stubs"
-
-[tool.mypy]
-mypy_path = ".hyper/stubs"

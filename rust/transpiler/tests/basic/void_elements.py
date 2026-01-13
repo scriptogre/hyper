@@ -1,0 +1,4 @@
+def VoidElements() -> str:
+    _parts = []
+    _parts.append("""<br /><hr /><img src="photo.jpg" alt="Photo" /><input type="text" name="field" /><meta charset="utf-8" /><link rel="stylesheet" href="style.css" />""")
+    return "".join(_parts)

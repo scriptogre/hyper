@@ -1,0 +1,7 @@
+name: str = "World"
+count: int = 0
+
+---
+
+<h1>Hello {name}</h1>
+<p>Count: {count}</p>

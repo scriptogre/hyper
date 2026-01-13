@@ -1,0 +1,16 @@
+name: str
+
+---
+
+Text before any element
+<div>Inside div</div>
+Text between elements
+<span>Inside span</span>
+Text after elements
+More text
+<p>
+    Multiline
+    text inside
+    paragraph
+</p>
+Final text

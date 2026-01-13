@@ -1,0 +1,47 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/edge_cases/unicode.hyper
+---
+injections:
+  - end: 136
+    prefix: "from hyper import escape, replace_markers\n\ndef Unicode(emoji: str, name: str) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>Hello 👋</span><span>Stars: ⭐⭐⭐</span><span>‹ESCAPE:{"
+    start: 131
+    suffix: ""
+    type: python
+  - end: 161
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 152
+    suffix: ""
+    type: python
+  - end: 419
+    prefix: "}›</span><p lang=\"zh\">你好世界</p><p lang=\"ja\">こんにちは</p><p lang=\"ko\">안녕하세요</p><p dir=\"rtl\" lang=\"ar\">مرحبا بالعالم</p><p dir=\"rtl\" lang=\"he\">שלום עולם</p><p>‹ESCAPE:{"
+    start: 415
+    suffix: "}›: 你好, مرحبا, שלום</p><span>En dash: –</span><span>Em dash: —</span><span>Ellipsis: …</span><span>Quotes: \"quoted\"</span><span>Arrows: ← → ↑ ↓</span><span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 65
+    compiled_start: 55
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 76
+    compiled_start: 67
+    range_type: Python
+    source_end: 20
+    source_start: 11
+  - compiled_end: 188
+    compiled_start: 183
+    range_type: Python
+    source_end: 136
+    source_start: 131
+  - compiled_end: 219
+    compiled_start: 212
+    range_type: Python
+    source_end: 161
+    source_start: 152
+  - compiled_end: 385
+    compiled_start: 381
+    range_type: Python
+    source_end: 419
+    source_start: 415

@@ -1,0 +1,6 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "format!(\"{}\", e)"
+input_file: transpiler/tests/errors/duplicate_attribute.hyper
+---
+"class" is set twice on this element.

@@ -1,0 +1,8 @@
+is_hidden: bool
+
+---
+
+data = {"user-id": 123, "role": "admin"}
+aria = {"label": "Close", "hidden": is_hidden}
+
+<div {data} {aria}>Content</div>

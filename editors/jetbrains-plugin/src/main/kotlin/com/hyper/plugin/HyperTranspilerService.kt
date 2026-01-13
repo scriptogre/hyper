@@ -1,24 +1,31 @@
 package com.hyper.plugin
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
-import java.io.OutputStreamWriter
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Service that calls the Rust hyper CLI to transpile .hyper to Python.
- * Uses a bundled binary extracted from plugin resources, with fallback to system PATH.
- * Caches results to avoid duplicate transpiler calls from multiple injectors.
+ * Uses daemon mode for instant responses (no process spawn overhead).
+ * Falls back to per-request mode if daemon unavailable.
  */
 @Service(Service.Level.PROJECT)
-class HyperTranspilerService(private val project: Project) {
+class HyperTranspilerService(private val project: Project) : Disposable {
 
     companion object {
         private val LOG = Logger.getInstance(HyperTranspilerService::class.java)
@@ -52,11 +59,26 @@ class HyperTranspilerService(private val project: Project) {
         }
     }
 
+    // Daemon process management
+    private var daemonProcess: Process? = null
+    private var daemonInput: DataInputStream? = null
+    private var daemonOutput: DataOutputStream? = null
+    private val daemonLock = ReentrantLock()
+    private var daemonFailed = false
+
     // Cache: content hash -> result (single entry, replaced on new content)
     @Volatile
     private var cachedContentHash: Int = 0
     @Volatile
     private var cachedResult: TranspileResult? = null
+
+    init {
+        Disposer.register(project, this)
+    }
+
+    override fun dispose() {
+        shutdownDaemon()
+    }
 
     @Serializable
     data class Mapping(
@@ -67,7 +89,17 @@ class HyperTranspilerService(private val project: Project) {
     )
 
     @Serializable
-    data class PythonInjection(
+    data class Range(
+        val type: String,  // "python" or "html"
+        val source_start: Int,
+        val source_end: Int,
+        val compiled_start: Int,
+        val compiled_end: Int
+    )
+
+    @Serializable
+    data class InjectionJson(
+        val type: String,
         val start: Int,
         val end: Int,
         val prefix: String,
@@ -75,25 +107,75 @@ class HyperTranspilerService(private val project: Project) {
     )
 
     @Serializable
-    data class HtmlInjection(
-        val start: Int,
-        val end: Int
+    data class TranspileResultJson(
+        val compiled: String,
+        val mappings: List<Mapping>,
+        val ranges: List<Range>? = null,
+        val injections: List<InjectionJson>? = null
     )
 
-    @Serializable
-    data class Injections(
-        val python: List<PythonInjection> = emptyList(),
-        val html: List<HtmlInjection> = emptyList()
+    /**
+     * Computed injection with prefix/suffix for JetBrains language injection.
+     * Computed from Range + compiled code.
+     */
+    data class Injection(
+        val start: Int,       // source start (UTF-16)
+        val end: Int,         // source end (UTF-16)
+        val prefix: String,
+        val suffix: String,
+        val type: String      // "python" or "html"
     )
 
-    @Serializable
+    /**
+     * Result with computed injections for IDE use.
+     */
     data class TranspileResult(
         val code: String,
         val mappings: List<Mapping>,
-        val injections: Injections? = null
+        val ranges: List<Range>,
+        val injections: List<Injection>
+    ) {
+        val pythonInjections: List<Injection>
+            get() = injections.filter { it.type == "python" }
+
+        val htmlInjections: List<Injection>
+            get() = injections.filter { it.type == "html" }
+    }
+
+    @Serializable
+    private data class DaemonRequest(
+        val content: String,
+        val injection: Boolean = false,
+        val name: String? = null
     )
 
-    fun transpile(content: String, includeInjection: Boolean = false): TranspileResult {
+    /**
+     * Parse JSON response - injections are computed by the transpiler.
+     */
+    private fun parseResponse(jsonString: String): TranspileResult {
+        val parsed = json.decodeFromString<TranspileResultJson>(jsonString)
+        val ranges = parsed.ranges ?: emptyList()
+
+        // Use injections from transpiler (already computed with prefix/suffix)
+        val injections = parsed.injections?.map { inj ->
+            Injection(
+                start = inj.start,
+                end = inj.end,
+                prefix = inj.prefix,
+                suffix = inj.suffix,
+                type = inj.type
+            )
+        } ?: emptyList()
+
+        return TranspileResult(
+            code = parsed.compiled,
+            mappings = parsed.mappings,
+            ranges = ranges,
+            injections = injections
+        )
+    }
+
+    fun transpile(content: String, includeInjection: Boolean = false, functionName: String? = null): TranspileResult {
         // Check cache first (only for injection mode which is called by multiple injectors)
         if (includeInjection) {
             val contentHash = content.hashCode()
@@ -104,22 +186,158 @@ class HyperTranspilerService(private val project: Project) {
             }
         }
 
+        // Try daemon mode first (much faster)
+        if (!daemonFailed) {
+            try {
+                val result = transpileViaDaemon(content, includeInjection, functionName)
+                if (includeInjection) {
+                    cachedContentHash = content.hashCode()
+                    cachedResult = result
+                }
+                return result
+            } catch (e: Exception) {
+                LOG.warn("Daemon mode failed, falling back to per-request mode", e)
+                daemonFailed = true
+                shutdownDaemon()
+            }
+        }
+
+        // Fallback to per-request mode
+        return transpileViaProcess(content, includeInjection, functionName)
+    }
+
+    private fun transpileViaDaemon(content: String, includeInjection: Boolean, functionName: String?): TranspileResult {
+        daemonLock.withLock {
+            ensureDaemonRunning()
+
+            val output = daemonOutput ?: throw TranspileException("Daemon not available")
+            val input = daemonInput ?: throw TranspileException("Daemon not available")
+
+            // Build request
+            val request = DaemonRequest(
+                content = content,
+                injection = includeInjection,
+                name = functionName
+            )
+            val requestJson = json.encodeToString(DaemonRequest.serializer(), request)
+            val requestBytes = requestJson.toByteArray(Charsets.UTF_8)
+
+            // Write length-prefixed request
+            val lenBuf = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN)
+            lenBuf.putInt(requestBytes.size)
+            output.write(lenBuf.array())
+            output.write(requestBytes)
+            output.flush()
+
+            // Read response with timeout (10 seconds)
+            val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+            try {
+                val future = executor.submit<String> {
+                    val respLenBytes = ByteArray(4)
+                    input.readFully(respLenBytes)
+                    val respLen = ByteBuffer.wrap(respLenBytes).order(ByteOrder.BIG_ENDIAN).getInt()
+
+                    val respBytes = ByteArray(respLen)
+                    input.readFully(respBytes)
+                    String(respBytes, Charsets.UTF_8)
+                }
+
+                val respJson = future.get(10, TimeUnit.SECONDS)
+                return parseResponse(respJson)
+            } catch (e: java.util.concurrent.TimeoutException) {
+                // Daemon hung, restart it next time
+                shutdownDaemon()
+                throw TranspileException("Daemon response timed out")
+            } catch (e: Exception) {
+                shutdownDaemon()
+                throw TranspileException("Daemon communication failed: ${e.message}")
+            } finally {
+                executor.shutdown()
+            }
+        }
+    }
+
+    private fun ensureDaemonRunning() {
+        val process = daemonProcess
+        if (process != null && process.isAlive) {
+            return
+        }
+
+        val hyperPath = findHyperBinary()
+            ?: throw TranspileException("Could not find 'hyper' binary")
+
+        LOG.info("Starting hyper daemon: $hyperPath")
+
+        val processBuilder = ProcessBuilder(hyperPath, "generate", "--daemon")
+        val newProcess = processBuilder.start()
+
+        val newInput = DataInputStream(newProcess.inputStream)
+        val newOutput = DataOutputStream(newProcess.outputStream)
+
+        // Read ready message with timeout (5 seconds)
+        val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+        try {
+            val future = executor.submit<String> {
+                val readyLenBytes = ByteArray(4)
+                newInput.readFully(readyLenBytes)
+                val readyLen = ByteBuffer.wrap(readyLenBytes).order(ByteOrder.BIG_ENDIAN).getInt()
+                val readyBytes = ByteArray(readyLen)
+                newInput.readFully(readyBytes)
+                String(readyBytes, Charsets.UTF_8)
+            }
+
+            val readyMsg = future.get(5, TimeUnit.SECONDS)
+            LOG.info("Daemon ready: $readyMsg")
+
+            daemonProcess = newProcess
+            daemonInput = newInput
+            daemonOutput = newOutput
+        } catch (e: java.util.concurrent.TimeoutException) {
+            newProcess.destroyForcibly()
+            throw TranspileException("Daemon startup timed out")
+        } catch (e: Exception) {
+            newProcess.destroyForcibly()
+            throw TranspileException("Daemon startup failed: ${e.message}")
+        } finally {
+            executor.shutdown()
+        }
+    }
+
+    private fun shutdownDaemon() {
+        daemonLock.withLock {
+            try {
+                daemonOutput?.close()
+                daemonInput?.close()
+                daemonProcess?.destroyForcibly()
+            } catch (e: Exception) {
+                LOG.debug("Error shutting down daemon", e)
+            }
+            daemonProcess = null
+            daemonInput = null
+            daemonOutput = null
+        }
+    }
+
+    private fun transpileViaProcess(content: String, includeInjection: Boolean, functionName: String?): TranspileResult {
         val hyperPath = findHyperBinary()
             ?: throw TranspileException("Could not find 'hyper' binary. No bundled binary for this platform and none found in PATH.")
 
-        LOG.debug("Using hyper binary: $hyperPath")
+        LOG.debug("Using hyper binary (per-request): $hyperPath")
 
         val args = mutableListOf(hyperPath, "generate", "--stdin", "--json")
         if (includeInjection) {
             args.add("--injection")
         }
+        if (functionName != null) {
+            args.add("--name")
+            args.add(functionName)
+        }
 
         val processBuilder = ProcessBuilder(args)
-            .redirectErrorStream(true)  // Merge stderr into stdout to avoid separate buffer
+            .redirectErrorStream(true)
 
         val process = processBuilder.start()
 
-        // Write input and close stdin in a separate thread to avoid deadlock
         val writeThread = Thread {
             try {
                 process.outputStream.bufferedWriter().use { writer ->
@@ -131,10 +349,7 @@ class HyperTranspilerService(private val project: Project) {
         }
         writeThread.start()
 
-        // Read output while process runs (prevents buffer deadlock)
         val output = process.inputStream.bufferedReader().readText()
-
-        // Wait for write thread to finish
         writeThread.join(1000)
 
         val completed = process.waitFor(10, TimeUnit.SECONDS)
@@ -147,9 +362,8 @@ class HyperTranspilerService(private val project: Project) {
             throw TranspileException("Transpiler failed: $output")
         }
 
-        val result = json.decodeFromString<TranspileResult>(output)
+        val result = parseResponse(output)
 
-        // Cache the result for injection mode
         if (includeInjection) {
             cachedContentHash = content.hashCode()
             cachedResult = result
@@ -159,20 +373,17 @@ class HyperTranspilerService(private val project: Project) {
     }
 
     private fun findHyperBinary(): String? {
-        // First, try to use cached extracted binary
         extractedBinaryPath?.let { path ->
             if (File(path).canExecute()) {
                 return path
             }
         }
 
-        // Try to extract bundled binary
         extractBundledBinary()?.let { path ->
             extractedBinaryPath = path
             return path
         }
 
-        // Fallback to system locations
         return findSystemBinary()
     }
 
@@ -187,19 +398,15 @@ class HyperTranspilerService(private val project: Project) {
         }
 
         return try {
-            // Extract to a temp directory that persists across IDE restarts
             val cacheDir = File(System.getProperty("java.io.tmpdir"), "hyper-plugin")
             cacheDir.mkdirs()
 
             val targetFile = File(cacheDir, binaryName)
 
-            // Only extract if not already present or if plugin was updated
-            // For simplicity, always extract (it's fast)
             inputStream.use { stream ->
                 Files.copy(stream, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
 
-            // Make executable on Unix
             if (!System.getProperty("os.name").lowercase().contains("win")) {
                 targetFile.setExecutable(true)
             }
@@ -215,7 +422,6 @@ class HyperTranspilerService(private val project: Project) {
     private fun findSystemBinary(): String? {
         val homeDir = System.getProperty("user.home")
 
-        // Check common locations
         val candidates = listOf(
             "$homeDir/.cargo/bin/hyper",
             "$homeDir/.local/bin/hyper",
@@ -230,7 +436,6 @@ class HyperTranspilerService(private val project: Project) {
             }
         }
 
-        // Try PATH using platform-appropriate command
         val isWindows = System.getProperty("os.name").lowercase().contains("win")
         val cmd = if (isWindows) listOf("where", "hyper") else listOf("which", "hyper")
         return try {

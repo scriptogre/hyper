@@ -1,0 +1,12 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/basic/text_positions.hyper
+---
+injections: []
+ranges:
+  - compiled_end: 27
+    compiled_start: 18
+    range_type: Python
+    source_end: 9
+    source_start: 0

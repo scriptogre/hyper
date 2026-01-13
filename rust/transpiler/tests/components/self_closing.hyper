@@ -1,0 +1,20 @@
+name: str
+onClick: object
+props: dict
+
+---
+
+# Simple self-closing
+<{Button} />
+
+# With attributes
+<{Button} label="Click me" />
+
+# With expression attributes
+<{Button} label={name} onClick={onClick} />
+
+# With spread
+<{Button} {**props} />
+
+# Mixed
+<{Icon} name="star" size={24} {**props} />

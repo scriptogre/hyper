@@ -1,0 +1,67 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/break_continue.hyper
+---
+injections:
+  - end: 151
+    prefix: "from hyper import escape, replace_markers\n\ndef BreakContinue(items: list, limit: int) -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in items:\n        if item == \"stop\":\n            break\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 147
+    suffix: ""
+    type: python
+  - end: 307
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ul>\")\n    for item in items:\n        if item.startswith(\"_\"):\n            continue\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 303
+    suffix: ""
+    type: python
+  - end: 434
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    count = 0\n    while True:\n        if count >= limit:\n            break\n        _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 429
+    suffix: ""
+    type: python
+  - end: 606
+    prefix: "}›</span>\"\"\")\n        count = count + 1\n    for outer in items:\n        for inner in items:\n            if inner == outer:\n                break\n            _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 601
+    suffix: ""
+    type: python
+  - end: 614
+    prefix: "}›-‹ESCAPE:{"
+    start: 609
+    suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 72
+    compiled_start: 61
+    range_type: Python
+    source_end: 11
+    source_start: 0
+  - compiled_end: 84
+    compiled_start: 74
+    range_type: Python
+    source_end: 22
+    source_start: 12
+  - compiled_end: 247
+    compiled_start: 243
+    range_type: Python
+    source_end: 151
+    source_start: 147
+  - compiled_end: 432
+    compiled_start: 428
+    range_type: Python
+    source_end: 307
+    source_start: 303
+  - compiled_end: 592
+    compiled_start: 587
+    range_type: Python
+    source_end: 434
+    source_start: 429
+  - compiled_end: 787
+    compiled_start: 782
+    range_type: Python
+    source_end: 606
+    source_start: 601
+  - compiled_end: 804
+    compiled_start: 799
+    range_type: Python
+    source_end: 614
+    source_start: 609

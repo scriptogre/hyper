@@ -1,0 +1,52 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/edge_cases/decorators.hyper
+---
+injections:
+  - end: 98
+    prefix: "from hyper import escape, replace_markers\n\ndef Decorators(items: list, *, _children: str = \"\") -> str:\n    _parts = []\n    @fragment\n    def Badge(text: str):\n        _parts.append(f\"\"\"<span class=\"badge\">‹ESCAPE:{"
+    start: 94
+    suffix: ""
+    type: python
+  - end: 237
+    prefix: "}›</span>\"\"\")\n    @cache\n    @fragment\n    def CachedList(items: list):\n        _parts.append(\"<ul>\")\n        for item in items:\n            _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 233
+    suffix: ""
+    type: python
+  - end: 460
+    prefix: "}›</li>\"\"\")\n        _parts.append(\"</ul>\")\n    @fragment(name=\"card\")\n    def Card(title: str):\n        _parts.append(\"<div class=\\\"card\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        _parts.append(_children)\n        _parts.append(\"</div>\")\n    _parts.append(f\"\"\"‹ESCAPE:{"
+    start: 448
+    suffix: ""
+    type: python
+  - end: 480
+    prefix: "}›‹ESCAPE:{"
+    start: 463
+    suffix: "}›\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 69
+    compiled_start: 58
+    range_type: Python
+    source_end: 11
+    source_start: 0
+  - compiled_end: 218
+    compiled_start: 214
+    range_type: Python
+    source_end: 98
+    source_start: 94
+  - compiled_end: 394
+    compiled_start: 390
+    range_type: Python
+    source_end: 237
+    source_start: 233
+  - compiled_end: 742
+    compiled_start: 730
+    range_type: Python
+    source_end: 460
+    source_start: 448
+  - compiled_end: 770
+    compiled_start: 753
+    range_type: Python
+    source_end: 480
+    source_start: 463

@@ -1,0 +1,9 @@
+title: str
+count: int
+
+---
+
+<div>
+    <h1>{title}</h1>
+    <p>Count: {count}</p>
+</div>

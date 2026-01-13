@@ -1,0 +1,77 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/edge_cases/tables.hyper
+---
+injections:
+  - end: 418
+    prefix: "from hyper import escape, replace_markers\n\ndef Tables(headers: list, rows: list, totals: dict, caption: str) -> str:\n    _parts = []\n    _parts.append(\"<table class=\\\"data-table\\\">\")\n    _parts.append(\"<caption>\")\n    _parts.append(escape(caption))\n    _parts.append(\"</caption>\")\n    _parts.append(\"<colgroup>\")\n    _parts.append(\"<col style=\\\"width: 50px\\\" />\")\n    for header in headers:\n        _parts.append(\"\"\"<col />\"\"\")\n    _parts.append(\"</colgroup>\")\n    _parts.append(\"<thead>\")\n    _parts.append(\"<tr>\")\n    _parts.append(\"<th scope=\\\"col\\\">\")\n    _parts.append(\"#\")\n    _parts.append(\"</th>\")\n    for header in headers:\n        _parts.append(f\"\"\"<th scope=\"col\">‹ESCAPE:{"
+    start: 412
+    suffix: ""
+    type: python
+  - end: 674
+    prefix: "}›</th>\"\"\")\n    _parts.append(\"</tr>\")\n    _parts.append(\"</thead>\")\n    _parts.append(\"<tbody>\")\n    for i, row in enumerate(rows):\n        _parts.append(\"<tr class=\\\"{'even' if i % 2 == 0 else 'odd'}\\\">\")\n        _parts.append(\"<td>\")\n        _parts.append(escape(i + 1))\n        _parts.append(\"</td>\")\n        for cell in row:\n            _parts.append(f\"\"\"<td>‹ESCAPE:{"
+    start: 670
+    suffix: ""
+    type: python
+  - end: 876
+    prefix: "}›</td>\"\"\")\n        _parts.append(\"</tr>\")\n    _parts.append(\"</tbody>\")\n    _parts.append(\"<tfoot>\")\n    _parts.append(\"<tr>\")\n    _parts.append(\"<td>\")\n    _parts.append(\"Total\")\n    _parts.append(\"</td>\")\n    for header in headers:\n        _parts.append(f\"\"\"<td>‹ESCAPE:{"
+    start: 853
+    suffix: ""
+    type: python
+  - end: 1080
+    prefix: "}›</td>\"\"\")\n    _parts.append(\"</tr>\")\n    _parts.append(\"</tfoot>\")\n    _parts.append(\"</table>\")\n    _parts.append(\"<table>\")\n    _parts.append(\"<tr>\")\n    _parts.append(\"<th>\")\n    _parts.append(\"Name\")\n    _parts.append(\"</th>\")\n    _parts.append(\"<th>\")\n    _parts.append(\"Value\")\n    _parts.append(\"</th>\")\n    _parts.append(\"</tr>\")\n    for row in rows:\n        _parts.append(f\"\"\"<tr><td>‹ESCAPE:{"
+    start: 1074
+    suffix: ""
+    type: python
+  - end: 1110
+    prefix: "}›</td><td>‹ESCAPE:{"
+    start: 1104
+    suffix: "}›</td></tr>\"\"\")\n    _parts.append(\"</table>\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 67
+    compiled_start: 54
+    range_type: Python
+    source_end: 13
+    source_start: 0
+  - compiled_end: 79
+    compiled_start: 69
+    range_type: Python
+    source_end: 24
+    source_start: 14
+  - compiled_end: 93
+    compiled_start: 81
+    range_type: Python
+    source_end: 37
+    source_start: 25
+  - compiled_end: 107
+    compiled_start: 95
+    range_type: Python
+    source_end: 50
+    source_start: 38
+  - compiled_end: 690
+    compiled_start: 684
+    range_type: Python
+    source_end: 418
+    source_start: 412
+  - compiled_end: 1067
+    compiled_start: 1063
+    range_type: Python
+    source_end: 674
+    source_start: 670
+  - compiled_end: 1364
+    compiled_start: 1341
+    range_type: Python
+    source_end: 876
+    source_start: 853
+  - compiled_end: 1774
+    compiled_start: 1768
+    range_type: Python
+    source_end: 1080
+    source_start: 1074
+  - compiled_end: 1800
+    compiled_start: 1794
+    range_type: Python
+    source_end: 1110
+    source_start: 1104

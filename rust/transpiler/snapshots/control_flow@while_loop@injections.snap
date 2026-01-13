@@ -1,0 +1,22 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/while_loop.hyper
+---
+injections:
+  - end: 68
+    prefix: "from hyper import escape, replace_markers\n\ndef WhileLoop(count: int) -> str:\n    _parts = []\n    _parts.append(\"<div>\")\n    while count > 0:\n        _parts.append(f\"\"\"<p>Count: ‹ESCAPE:{"
+    start: 63
+    suffix: "}›</p>\"\"\")\n    _parts.append(\"</div>\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 67
+    compiled_start: 57
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 191
+    compiled_start: 186
+    range_type: Python
+    source_end: 68
+    source_start: 63

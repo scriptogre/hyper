@@ -1,0 +1,27 @@
+title: str
+
+---
+
+<div class="layout">
+    <header>
+        <{...header}>
+            <h1>Default Header</h1>
+        </{...header}>
+    </header>
+
+    <nav>
+        <{...sidebar}>
+            <p>Default sidebar content</p>
+        </{...sidebar}>
+    </nav>
+
+    <main>
+        {...}
+    </main>
+
+    <footer>
+        <{...footer}>
+            <p>Default footer</p>
+        </{...footer}>
+    </footer>
+</div>

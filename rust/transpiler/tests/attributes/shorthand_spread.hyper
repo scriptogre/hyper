@@ -1,0 +1,18 @@
+name: str
+value: str
+disabled: bool
+props: dict
+
+---
+
+# Shorthand attributes
+<input {name} {value} {disabled} />
+
+# Spread attributes
+<div {**props}>Content</div>
+
+# Mixed shorthand and spread
+<button {name} {**props} {disabled}>Click</button>
+
+# Spread with other attributes
+<input type="text" {**props} class="input" />

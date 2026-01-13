@@ -1,0 +1,8 @@
+show_warning: bool
+message: str
+
+---
+
+<div>
+    {show_warning and <p class="warning">{message}</p>}
+</div>

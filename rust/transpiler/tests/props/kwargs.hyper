@@ -1,0 +1,6 @@
+label: str
+**attrs: dict
+
+---
+
+<button {attrs}>{label}</button>

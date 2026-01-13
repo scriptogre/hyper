@@ -1,0 +1,44 @@
+items: list
+limit: int
+
+---
+
+# Break in for loop
+<ul>
+    for item in items:
+        if item == "stop":
+            break
+        end
+        <li>{item}</li>
+    end
+</ul>
+
+# Continue in for loop
+<ul>
+    for item in items:
+        if item.startswith("_"):
+            continue
+        end
+        <li>{item}</li>
+    end
+</ul>
+
+# Break in while loop
+count = 0
+while True:
+    if count >= limit:
+        break
+    end
+    <span>{count}</span>
+    count = count + 1
+end
+
+# Nested break
+for outer in items:
+    for inner in items:
+        if inner == outer:
+            break
+        end
+        <span>{outer}-{inner}</span>
+    end
+end

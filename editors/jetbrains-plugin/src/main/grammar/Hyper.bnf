@@ -13,10 +13,10 @@
   tokenTypeClass="com.hyper.plugin.psi.HyperTokenType"
 
   tokens = [
-    HTML_LINE_TOKEN = "regexp:\s*<.*"
-    CONTROL_LINE_TOKEN = "regexp:\s*(if|for|while|match|def|class|elif|else|case).*"
-    END_LINE_TOKEN = "regexp:\s*end"
-    PYTHON_LINE_TOKEN = "regexp:.*"
+    HTML_LINE_TOKEN = "regexp:[ \t]*<[^\r\n]*"
+    CONTROL_LINE_TOKEN = "regexp:[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with|fragment)[ \t(:][^\r\n]*"
+    END_LINE_TOKEN = "regexp:[ \t]*end[ \t]*"
+    PYTHON_LINE_TOKEN = "regexp:[^\r\n]+"
   ]
 }
 

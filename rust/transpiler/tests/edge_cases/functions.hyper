@@ -1,0 +1,38 @@
+name: str
+
+---
+
+# Simple function
+def greet(who: str):
+    <h1>Hello, {who}!</h1>
+end
+
+# Function with return type
+def make_badge(text: str, color: str = "blue") -> str:
+    <span class="badge badge-{color}">{text}</span>
+end
+
+# Async function
+async def fetch_and_render(url: str):
+    <div class="loading">Fetching {url}...</div>
+end
+
+# Function with complex body
+def render_list(items: list, title: str = "List"):
+    <div class="list-container">
+        <h2>{title}</h2>
+        if items:
+            <ul>
+                for item in items:
+                    <li>{item}</li>
+                end
+            </ul>
+        else:
+            <p>No items</p>
+        end
+    </div>
+end
+
+# Call the function
+greet(name)
+{make_badge("Admin", "red")}

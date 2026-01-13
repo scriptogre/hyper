@@ -1,0 +1,11 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: r.code.trim()
+input_file: transpiler/tests/expressions/ternary.hyper
+---
+from hyper import escape, replace_markers
+
+def Ternary(count: int) -> str:
+    _parts = []
+    _parts.append(f"""<span>‹ESCAPE:{count}› ‹ESCAPE:{"item" if count == 1 else "items"}›</span>""")
+    return replace_markers("".join(_parts))

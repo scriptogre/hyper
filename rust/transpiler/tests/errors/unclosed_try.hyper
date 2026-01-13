@@ -1,0 +1,4 @@
+try:
+    <span>{risky()}</span>
+except ValueError:
+    <span>Error</span>

@@ -1,83 +1,128 @@
-# Templates & Layouts
+# Templates
 
-Hyper uses `.hyper` files for HTML templates with Python variables and control flow.
+Hyper templates are `.hyper` files that combine Python and HTML.
 
 ---
 
-# Your First Template
+## Your First Template
+
+Set up your project:
+
+```
+app/
+├── components/
+│   ├── __init__.py
+│   └── Hello.hyper
+└── main.py
+```
+
+Create `components/Hello.hyper`:
+
+```hyper
+<h1>Hello World</h1>
+```
+
+Render it in `main.py`:
 
 ```python
-# Greeting.hyper
+from components import Hello
 
+print(Hello())
+```
+
+```html
+<h1>Hello World</h1>
+```
+
+<details>
+<summary>How imports work</summary>
+
+The compiler automatically updates `__init__.py` to export your templates:
+
+```python
+# components/__init__.py (auto-generated)
+from .Hello import Hello
+
+__all__ = ["Hello"]
+```
+
+This enables clean imports like `from components import Hello`.
+
+To opt out, add `# hyper: no-init` at the top of your `.hyper` file.
+
+</details>
+
+---
+
+## Props
+
+Props make your template accept inputs. Define them above `---`.
+
+Create `components/Greeting.hyper`:
+
+```hyper
 name: str
+
+---
 
 <h1>Hello {name}</h1>
 ```
 
-Put variables in curly braces. Under the hood, these are just Python f-strings.
+```python
+from components import Greeting
+
+print(Greeting(name="Alice"))
+```
+
+```html
+<h1>Hello Alice</h1>
+```
+
+Props can have defaults:
+
+Create `components/Counter.hyper`:
+
+```hyper
+name: str = "World"
+count: int = 0
 
 ---
 
-# Simple Layouts
-
-Layouts provide shared structure across pages.
-
-## Create a Layout
-
-Make a file: `app/pages/Layout.hyper`
-
-```python
-# app/pages/Layout.hyper
-
-<!doctype html>
-<html>
-<head>
-    <title>My Site</title>
-</head>
-<body>
-    {...}
-</body>
-</html>
+<h1>Hello {name}</h1>
+<p>Count: {count}</p>
 ```
 
-Use `{...}` to mark where page content goes.
-
-<details>
-<summary><strong>Note:</strong> Alternative <code>slot</code> syntax</summary>
-
-Alternatively, use `slot` syntax instead of `...`:
-
 ```python
-<body>
-    {slot} <!-- or <{slot}/> -->
-</body>
+from components import Counter
+
+print(Counter())                    # Uses defaults
+print(Counter(name="Bob", count=5)) # Override defaults
 ```
 
-This guide uses `...`.
+---
 
-</details>
+## Slots
 
-## Use a Layout
+Slots let your template accept content from the caller.
 
-```python
-# app/pages/index.hyper
+Add a `layouts/` folder:
 
-from app.pages import Layout
-
-<{Layout}>
-    <h1>Welcome Home!</h1>
-    <p>This is the homepage.</p>
-</{Layout}>
+```
+app/
+├── components/
+│   └── ...
+├── layouts/
+│   ├── __init__.py
+│   └── Layout.hyper
+└── main.py
 ```
 
-Content between `<{Layout}>` and `</{Layout}>` replaces `{...}`.
+Create `layouts/Layout.hyper`:
 
-## Layout Props
-
-```python
-# app/pages/Layout.hyper
-
+```hyper
 title: str = "My Site"
+
+---
 
 <!doctype html>
 <html>
@@ -90,188 +135,76 @@ title: str = "My Site"
 </html>
 ```
 
-Pass props:
+The `{...}` marks where caller content is inserted.
 
-```python
-# app/pages/index.hyper
+Create `pages/Home.hyper`:
 
-from app.pages import Layout
+```hyper
+from layouts import Layout
+
+---
 
 <{Layout} title="Home">
     <h1>Welcome!</h1>
+    <p>This replaces the {...} in Layout.</p>
 </{Layout}>
 ```
 
-Pass variables:
+Render it:
 
 ```python
-# app/pages/index.hyper
+from pages import Home
 
-from datetime import datetime
-from app.pages import Layout
-
-title = "Home | " + datetime.now().strftime("%Y")
-
-<{Layout} title={title}>
-    <h1>Welcome!</h1>
-</{Layout}>
+print(Home())
 ```
-
-## Shorthand Props
-
-Skip the attribute name if the variable matches it.
-
-```python
-# app/pages/index.hyper
-
-from app.pages import Layout
-
-title = "Home"
-
-<{Layout} {title}>
-    <h1>Welcome!</h1>
-</{Layout}>
-```
-
-This expands to `title={title}`.
-
-## Default Slot Content
-
-Give slots fallback content:
-
-```python
-# app/pages/Layout.hyper
-
-<body>
-    <{...}>
-        <p>Default content if slot is empty.</p>
-    </{...}>
-</body>
-```
-
----
-
-# Advanced Layouts
-
-## Named Slots
-
-```python
-# app/pages/Layout.hyper
-
-<body>
-    <aside>
-        <{...} name="sidebar" />
-    </aside>
-    <main>
-        {...}
-    </main>
-</body>
-```
-
-```python
-# app/pages/index.hyper
-
-from app.pages import Layout
-
-<{Layout}>
-    <{...} name="sidebar">
-        <nav>
-            <a href="/settings">Settings</a>
-        </nav>
-    </{...}>
-    <h1>Dashboard Content</h1>
-</{Layout}>
-```
-
-## Nest Layouts
-
-```
-app/
-  pages/
-  layouts/
-  components/
-```
-
-```python
-# app/layouts/BlogLayout.hyper
-
-from app.layouts import Layout
-
-title: str = "Blog"
-
-<{Layout} {title}>
-    <div class="blog-container">
-        {...}
-    </div>
-</{Layout}>
-```
-
----
-
-# Components
-
-Put reusable pieces in `app/components`.
-
-## Create a Component
-
-```python
-# app/components/Button.hyper
-
-<button type="button" {...}>
-    {...}
-</button>
-```
-
-The `{...}` spreads attributes and content based on context.
-
-## Use a Component
-
-```python
-# app/pages/index.hyper
-
-from app.components import Button
-
-<{Button} hx-post="/settings/save" class="bg-white text-black rounded">
-    Save
-</{Button}>
-```
-
-Output:
 
 ```html
-<button type="button" hx-post="/settings/save" class="bg-white text-black rounded">
-  Save
-</button>
+<!doctype html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+    <h1>Welcome!</h1>
+    <p>This replaces the {...} in Layout.</p>
+</body>
+</html>
+```
+
+### Default Slot Content
+
+Provide fallback content when nothing is passed:
+
+```hyper
+title: str = "My Site"
+
+---
+
+<!doctype html>
+<html>
+<head>
+    <title>{title}</title>
+</head>
+<body>
+    <{...}>
+        <p>No content provided.</p>
+    </{...}>
+</body>
+</html>
 ```
 
 ---
 
-# Control Flow
+## Control Flow
 
-## For Loops
+### Conditionals
 
-```python
-# app/pages/users.hyper
+Create `components/Nav.hyper`:
 
-from app.models import User
-
-users: list[User]
-
-<div class="users">
-    for user in users:
-        <div class="user">{user.name}</div>
-    end
-</div>
-```
-
----
-
-## Conditionals
-
-```python
-# app/pages/nav.hyper
-
+```hyper
 is_admin: bool
+
+---
 
 <nav>
     if is_admin:
@@ -282,379 +215,972 @@ is_admin: bool
 </nav>
 ```
 
----
-
-## Match
-
-Pattern match against values.
-
 ```python
-# app/components/Status.hyper
+from components import Nav
 
-status: str
-
-<div>
-    match status:
-        case "loading":
-            <p>Loading...</p>
-        case "error":
-            <p>Error!</p>
-        case "success":
-            <p>Done!</p>
-    end
-</div>
+print(Nav(is_admin=True))   # <nav><a href="/admin">Admin</a></nav>
+print(Nav(is_admin=False))  # <nav><a href="/account">Account</a></nav>
 ```
 
-Match numeric values:
+### Loops
 
-```python
-# app/components/HttpStatus.hyper
+Create `components/List.hyper`:
 
-code: int
-
-<div>
-    match code:
-        case 200:
-            <span>OK</span>
-        case 404:
-            <span>Not Found</span>
-        case 500:
-            <span>Server Error</span>
-        case _:
-            <span>Unknown Status</span>
-    end
-</div>
-```
+```hyper
+items: list[str]
 
 ---
 
-# Advanced Attributes
-
-## Spread Attributes
-
-Spread attributes from a component to its root element.
-
-```python
-# app/components/Button.hyper
-
-<button class="text-black bg-white" {...}>
-    {...}
-</button>
+<ul>
+    for item in items:
+        <li>{item}</li>
+    end
+</ul>
 ```
 
-Attributes passed to the component merge with existing ones:
-
 ```python
-# app/pages/index.hyper
+from components import List
 
-from app.components import Button
-
-disabled = False
-
-<{Button} class="border border-neutral-900" type="button" {disabled}>
-    Click Me
-</{Button}>
+print(List(items=["Apple", "Banana", "Cherry"]))
 ```
-
-Output:
 
 ```html
-<button class="text-black bg-white border border-neutral-900" type="button">
-   Click Me
-</button>
+<ul>
+    <li>Apple</li>
+    <li>Banana</li>
+    <li>Cherry</li>
+</ul>
 ```
 
-Classes merge. Other attributes override.
+### Pattern Matching
+
+Create `components/Status.hyper`:
+
+```hyper
+status: str
 
 ---
 
-## Conditional Classes
-
-Combine class strings, arrays, and objects:
+match status:
+    case "loading":
+        <p>Loading...</p>
+    case "error":
+        <p>Error!</p>
+    case _:
+        <p>Ready</p>
+end
+```
 
 ```python
+from components import Status
+
+print(Status(status="loading"))  # <p>Loading...</p>
+print(Status(status="done"))     # <p>Ready</p>
+```
+
+---
+
+## Expressions
+
+Use Python expressions directly inside `{}` for inline logic.
+
+### List Comprehensions
+
+> **⚠️ Not Yet Implemented**: HTML inside comprehensions requires a Python expression parser to detect and transform elements into f-strings. Use `for` loops as a workaround.
+
+Generate elements inline without a `for` block:
+
+```hyper
+items: list[str]
+
+---
+
+<ul>
+    {[<li>{item}</li> for item in items]}
+</ul>
+```
+
+```python
+print(Template(items=["Apple", "Banana"]))
+```
+
+```html
+<ul>
+    <li>Apple</li>
+    <li>Banana</li>
+</ul>
+```
+
+Comprehensions work with any expression:
+
+```hyper
+users: list[User]
+
+---
+
+<select>
+    {[<option value={u.id}>{u.name}</option> for u in users]}
+</select>
+```
+
+### Conditional Expressions
+
+Use Python's ternary syntax for inline conditionals:
+
+```hyper
+count: int
+
+---
+
+<span>{count} {"item" if count == 1 else "items"}</span>
+```
+
+```python
+print(Template(count=1))  # <span>1 item</span>
+print(Template(count=5))  # <span>5 items</span>
+```
+
+Render different elements:
+
+```hyper
+is_admin: bool
+
+---
+
+<div>
+    {<span class="badge">Admin</span> if is_admin else <span>User</span>}
+</div>
+```
+
+**Shorthand for optional content**: Omit `else` when you want nothing:
+
+```hyper
+show_badge: bool
+
+---
+
+<div>
+    {<span class="badge">New</span> if show_badge}
+</div>
+```
+
+```python
+print(Template(show_badge=True))   # <div><span class="badge">New</span></div>
+print(Template(show_badge=False))  # <div></div>
+```
+
+The compiler transforms `{x if cond}` to `{x if cond else ''}`.
+
+### Short-Circuit Evaluation
+
+Use `and` to conditionally render content:
+
+```hyper
+show_warning: bool
+message: str
+
+---
+
+<div>
+    {show_warning and <p class="warning">{message}</p>}
+</div>
+```
+
+```python
+print(Template(show_warning=True, message="Error!"))
+# <div><p class="warning">Error!</p></div>
+
+print(Template(show_warning=False, message="Error!"))
+# <div></div>
+```
+
+Use `or` for fallback values:
+
+```hyper
+title: str | None
+
+---
+
+<h1>{title or "Untitled"}</h1>
+```
+
+```python
+print(Template(title="Hello"))  # <h1>Hello</h1>
+print(Template(title=None))     # <h1>Untitled</h1>
+```
+
+### When to Use What
+
+| Pattern | Use Case |
+|---------|----------|
+| `for...end` block | Multiple elements, complex logic |
+| `{[... for ...]}` | Simple inline iteration |
+| `if...end` block | Multiple elements, else/elif branches |
+| `{x if cond else y}` | Inline choice between two values |
+| `{cond and x}` | Conditionally show one thing |
+| `{x or fallback}` | Provide default for falsy values |
+
+---
+
+## Named Slots
+
+Templates can have multiple insertion points.
+
+Create `layouts/Layout.hyper`:
+
+```hyper
+<!doctype html>
+<html>
+<body>
+    <aside>
+        <{...sidebar}>
+            <p>Default sidebar</p>
+        </{...sidebar}>
+    </aside>
+    <main>
+        {...}
+    </main>
+</body>
+</html>
+```
+
+Create `pages/Dashboard.hyper`:
+
+```hyper
+from layouts import Layout
+
+---
+
+<{Layout}>
+    <{...sidebar}>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+        </nav>
+    </{...sidebar}>
+
+    <h1>Main Content</h1>
+    <p>This goes to the default slot.</p>
+</{Layout}>
+```
+
+```python
+from pages import Dashboard
+
+print(Dashboard())
+```
+
+```html
+<!doctype html>
+<html>
+<body>
+    <aside>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+        </nav>
+    </aside>
+    <main>
+        <h1>Main Content</h1>
+        <p>This goes to the default slot.</p>
+    </main>
+</body>
+</html>
+```
+
+### Single-Element Shorthand
+
+When a named slot contains one element, mark it directly:
+
+```hyper
+from layouts import Layout
+
+---
+
+<{Layout}>
+    <nav {...sidebar}>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+    </nav>
+
+    <h1>Main Content</h1>
+</{Layout}>
+```
+
+The `{...sidebar}` on the element marks it as sidebar content. Same output as above.
+
+---
+
+## Attributes
+
+### Dynamic Values
+
+Use expressions directly in attribute values:
+
+```hyper
+url: str
+
+---
+
+<a href="{url}">Visit</a>
+```
+
+```python
+print(Template(url="https://example.com"))
+```
+
+```html
+<a href="https://example.com">Visit</a>
+```
+
+Without quotes also works:
+
+```hyper
+element_id: str
+
+---
+
+<button id={element_id}>Click</button>
+```
+
+```html
+<button id="my-button">Click</button>
+```
+
+Multiple substitutions in one attribute:
+
+```hyper
+first: str
+last: str
+
+---
+
+<button data-name="{first} {last}">Click</button>
+```
+
+```html
+<button data-name="Alice Smith">Click</button>
+```
+
+### Boolean Attributes
+
+`True` renders the attribute. `False` omits it:
+
+```hyper
+<button disabled={True} hidden={False}>Submit</button>
+```
+
+```html
+<button disabled>Submit</button>
+```
+
+### Shorthand
+
+When variable name matches attribute name, use shorthand:
+
+```hyper
+disabled: bool = False
+title: str
+
+---
+
+<button {disabled} {title}>Click</button>
+```
+
+The `{disabled}` expands to `disabled={disabled}`.
+
+```python
+print(Template(title="Save", disabled=True))
+```
+
+```html
+<button disabled title="Save">Click</button>
+```
+
+**Reserved keywords**: Use `{class}` and `{type}` directly. The compiler handles them:
+
+```hyper
+class: list
+
+---
+
+<button {class}>Click</button>
+```
+
+Compiles to valid Python using `_class` internally.
+
+### The class Attribute
+
+The `class` attribute has special handling. Provide a list:
+
+```hyper
+class = ["btn", "btn-primary", "active"]
+
+---
+
+<button {class}>Click</button>
+```
+
+```html
+<button class="btn btn-primary active">Click</button>
+```
+
+Mix strings and conditional dicts:
+
+```hyper
+is_active: bool
+is_disabled: bool
+
+---
+
 class = [
-    "bg-neutral-950 text-neutral-100",
-    "border border-neutral-900",
-    {"active": False, "disabled": True}
+    "btn",
+    "btn-primary",
+    {"active": is_active, "disabled": is_disabled}
 ]
 
 <button {class}>Click</button>
 ```
 
-Output:
+```python
+print(Template(is_active=True, is_disabled=False))
+```
 
 ```html
-<button class="bg-neutral-950 text-neutral-100 border border-neutral-900 disabled">
-  Click
+<button class="btn btn-primary active">Click</button>
+```
+
+Falsy values are filtered out:
+
+```hyper
+class = ["btn", None, False and "hidden", {"active": True}]
+
+---
+
+<button {class}>Click</button>
+```
+
+```html
+<button class="btn active">Click</button>
+```
+
+### The style Attribute
+
+Provide a dictionary for inline styles:
+
+```hyper
+style = {"color": "red", "font-weight": "bold", "margin": "10px"}
+
+---
+
+<p {style}>Important text</p>
+```
+
+```html
+<p style="color: red; font-weight: bold; margin: 10px">Important text</p>
+```
+
+### The data and aria Attributes
+
+Dictionaries expand to prefixed attributes:
+
+```hyper
+data = {"user-id": 123, "role": "admin"}
+aria = {"label": "Close dialog", "hidden": True}
+
+---
+
+<div {data} {aria}>Content</div>
+```
+
+```html
+<div data-user-id="123" data-role="admin" aria-label="Close dialog" aria-hidden="true">Content</div>
+```
+
+Boolean values in `aria` become `"true"` or `"false"` per ARIA spec.
+
+### Spreading Attributes
+
+Pass a dictionary to spread all its keys as attributes:
+
+```hyper
+attrs = {"href": "https://example.com", "target": "_blank"}
+
+---
+
+<a {attrs}>External link</a>
+```
+
+```html
+<a href="https://example.com" target="_blank">External link</a>
+```
+
+Combine spreading with individual attributes:
+
+```hyper
+base_attrs = {"id": "my-link"}
+target: str = "_blank"
+
+---
+
+<a {base_attrs} {target}>Link</a>
+```
+
+```html
+<a id="my-link" target="_blank">Link</a>
+```
+
+Special attributes like `class` work when spread:
+
+```hyper
+class = ["btn", {"active": True}]
+attrs = {"class": class, "id": "act_now", "data": {"wow": "such-attr"}}
+
+---
+
+<button {attrs}>Click</button>
+```
+
+```html
+<button class="btn active" id="act_now" data-wow="such-attr">Click</button>
+```
+
+### Capturing Extra Attributes
+
+Accept arbitrary attributes with `**kwargs` syntax:
+
+```hyper
+label: str
+type: str = "button"
+**attrs: dict
+
+---
+
+<button {type} {attrs}>
+    {label}
 </button>
 ```
 
+```hyper
+from components import Button
+
 ---
 
-## Dynamic Styles
-
-Pass style object:
-
-```python
-style = {"color": "red", "font-weight": "bold"}
-
-<p {style}>Important</p>
+<{Button} label="Save" class="btn" disabled hx-post="/save" />
 ```
-
-Output:
 
 ```html
-<p style="color:red;font-weight:bold">Important</p>
+<button type="button" class="btn" disabled hx-post="/save">
+    Save
+</button>
 ```
+
+Use any name: `**attrs`, `**props`, `**extra` all work.
 
 ---
 
-## Data Attributes
+## Fragments
 
-Single data attribute:
+Fragments are named sections that render inline AND are importable standalone. Useful for partial updates (e.g., HTMX).
 
-```python
-state = "success"
+Create `pages/Profile.hyper`:
 
-<div data-state={state}>...</div>
-```
-
-Output:
-
-```html
-<div data-state="success">...</div>
-```
-
-Multiple data attributes:
-
-```python
-data = {
-    "user": {
-        "id": "Aaron",
-        "role": "admin",
-    },
-    "state": "success",
-}
-
-<div {data}>...</div>
-```
-
-Output:
-
-```html
-<div data-user='{"id":"Aaron","role":"admin"}' data-state="success">...</div>
-```
-
----
-
-## Spread Attributes
-
-Spread multiple attributes at once:
-
-```python
-attrs = {
-    "href": "https://example.com",
-    "target": "_blank",
-}
-
-<a {**attrs}>Link</a>
-```
-
-Output:
-
-```html
-<a href="https://example.com" target="_blank">Link</a>
-```
-
----
-
-## Boolean Attributes
-
-`True` renders the attribute. `False` omits it.
-
-```python
-<input disabled={True} readonly={False} />
-```
-
-Output:
-
-```html
-<input disabled>
-```
-
----
-
-# Comments
-
-Nothing special here.
-
-Write HTML comments for client-side comments.
-
-```python
-<!-- This appears in page source -->
-```
-
-Write Python comments for server-side comments.
-
-```python
-# This won't appear in page source
-<h1>Title</h1>
-```
-
----
-
-# Escaping & Trusted HTML
-
-Hyper escapes interpolated values by default.
-
-Render trusted HTML with `:safe`:
-
-```python
-{post.content:safe}
-```
-
----
-
-# Fragments
-
-Render a section in place AND make it callable independently.
-
-```python
-# app/pages/Layout.hyper
-
+```hyper
 user: User
+posts: list[Post]
 
-<html>
-    <body>
-        @fragment
-        def Sidebar(user: User):
-            <aside>{user.name}</aside>
+---
+
+<div class="page">
+    fragment Sidebar:
+        <aside>
+            <h3>{user.name}</h3>
+            <p>{user.bio}</p>
+        </aside>
+    end
+
+    <main>
+        for post in posts:
+            <article>{post.title}</article>
         end
-
-        <main>{...}</main>
-    </body>
-</html>
+    </main>
+</div>
 ```
 
-Call the fragment standalone:
+The compiler analyzes which variables each fragment uses.
+
+Render the full page:
 
 ```python
-from app.pages import Layout
+from pages import Profile
 
-Layout.Sidebar(user=current_user)
+user = User(name="Alice", bio="Developer")
+posts = [Post(title="Hello"), Post(title="World")]
+
+print(Profile(user=user, posts=posts))
 ```
 
-Or import directly:
+```html
+<div class="page">
+    <aside>
+        <h3>Alice</h3>
+        <p>Developer</p>
+    </aside>
+    <main>
+        <article>Hello</article>
+        <article>World</article>
+    </main>
+</div>
+```
+
+Render just the sidebar (without fetching posts):
 
 ```python
-from app.pages.Layout import Sidebar
+from pages.Profile import Sidebar  # Import fragment directly
 
-Sidebar(user=current_user)
+user = User(name="Alice", bio="Developer")
+
+print(Sidebar(user=user))
+```
+
+```html
+<aside>
+    <h3>Alice</h3>
+    <p>Developer</p>
+</aside>
 ```
 
 ---
 
-# Functions
+## Defining Components
 
-## Component Functions
+Define reusable components with `def` in the header zone.
 
-Functions that contain HTML produce markup. No `return` needed.
+Create `components/Cards.hyper`:
 
-```python
+```hyper
 def Card(title: str):
     <div class="card">
         <h2>{title}</h2>
         {...}
     </div>
-```
-
-## Python Functions
-
-Regular Python functions use `return`.
-
-```python
-def format_date(d: datetime) -> str:
-    return d.strftime("%B %d, %Y")
-
-<p>Last login: {format_date(user.last_login)}</p>
-```
+end
 
 ---
 
-# HTML Variables
+<{Card} title="Welcome">
+    <p>Card content here.</p>
+</{Card}>
 
-Store HTML in variables for reuse:
+<{Card} title="Another">
+    <p>More content.</p>
+</{Card}>
+```
+
+Use in templates with `<{Name}>` syntax:
 
 ```python
-title = <span>Welcome</span>
+from components import Cards
 
+print(Cards())
+```
+
+```html
 <div class="card">
-    {title}
+    <h2>Welcome</h2>
+    <p>Card content here.</p>
+</div>
+<div class="card">
+    <h2>Another</h2>
+    <p>More content.</p>
 </div>
 ```
 
-Multi-line with parentheses:
+Import components directly from Python:
 
 ```python
-header = (
-    <div class="header">
-        <h1>Title</h1>
-        <p>Subtitle</p>
-    </div>
-)
+from components.Cards import Card
+
+print(Card("Welcome", slot="<p>Card content.</p>"))
 ```
 
-## Inline Components with Lambda
-
-```python
-greet = lambda name: <span>Hello {name}</span>
-
-<div>
-    {greet("John")}
-    <{greet} name="Jane"/>
+```html
+<div class="card">
+    <h2>Welcome</h2>
+    <p>Card content.</p>
 </div>
 ```
 
-Multi-line lambda:
+Functions and classes in the header are also importable:
 
 ```python
-card = lambda title, subtitle: (
-    <div class="card">
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-    </div>
-)
+from components.Article import format_date
+from datetime import datetime
 
-<{card} title="Welcome" subtitle="Get started"/>
+print(format_date(datetime(2024, 12, 25)))
+```
+
+```
+December 25, 2024
 ```
 
 ---
 
-# Multiple Components Per File
+## Multiple Components Per File
 
-```python
-# app/components/forms.hyper
+Files without top-level HTML are component libraries.
 
+Create `components/forms.hyper`:
+
+```hyper
 def Form(action: str):
-    <form {action}>{...}</form>
+    <form {action}>
+        {...}
+    </form>
+end
 
 def Input(name: str, type: str = "text"):
-    <input {name} {type}/>
+    <input {name} {type} />
+end
 
 def Button(type: str = "submit"):
-    <button {type}>{...}</button>
+    <button {type}>
+        {...}
+    </button>
+end
 ```
 
-```python
-from app.components.forms import Form, Input, Button
+Create `pages/Login.hyper`:
+
+```hyper
+from components.forms import Form, Input, Button
+
+---
 
 <{Form} action="/login">
-    <{Input} name="email" type="email"/>
+    <{Input} name="email" type="email" />
+    <{Input} name="password" type="password" />
     <{Button}>Sign In</{Button}>
 </{Form}>
 ```
 
+```python
+from pages import Login
+
+print(Login())
+```
+
+```html
+<form action="/login">
+    <input name="email" type="email" />
+    <input name="password" type="password" />
+    <button type="submit">Sign In</button>
+</form>
+```
+
 ---
 
-**[← Previous: Routing](routing.md)** | **[Next: Fragments →](fragments.md)**
+## Imports and Helpers
+
+Import Python modules and define helpers above `---`.
+
+Create `components/Article.hyper`:
+
+```hyper
+from datetime import datetime
+
+def format_date(d: datetime) -> str:
+    return d.strftime("%B %d, %Y")
+
+title: str
+created_at: datetime
+
+---
+
+<article>
+    <h1>{title}</h1>
+    <p>Published: {format_date(created_at)}</p>
+</article>
+```
+
+```python
+from datetime import datetime
+from components import Article
+
+print(Article(title="Hello", created_at=datetime(2024, 12, 25)))
+```
+
+```html
+<article>
+    <h1>Hello</h1>
+    <p>Published: December 25, 2024</p>
+</article>
+```
+
+---
+
+## Comments
+
+Python comments for server-side (not in output):
+
+```hyper
+# This won't appear in HTML
+<h1>Title</h1>
+```
+
+HTML comments for client-side:
+
+```hyper
+<!-- This appears in page source -->
+<h1>Title</h1>
+```
+
+---
+
+## Escaping
+
+All values are HTML-escaped by default:
+
+```hyper
+user_input: str
+
+---
+
+<div>{user_input}</div>
+```
+
+If `user_input` is `<script>alert('xss')</script>`, output is:
+
+```html
+<div>&lt;script&gt;alert('xss')&lt;/script&gt;</div>
+```
+
+Render trusted HTML with `safe()`:
+
+```hyper
+html_content: str
+
+---
+
+<div>{safe(html_content)}</div>
+```
+
+Only use `safe()` for content you trust (e.g., sanitized HTML from your database).
+
+---
+
+## Streaming (Planned)
+
+> **Status**: 🔮 Exploring design
+
+Stream large responses incrementally.
+
+Templates automatically support streaming when used with async frameworks:
+
+```python
+from components import Feed
+from fastapi.responses import StreamingResponse
+
+@app.get("/feed")
+def feed():
+    return StreamingResponse(
+        Feed(posts=all_posts),
+        media_type="text/html"
+    )
+```
+
+The template stays the same. The framework detects streaming support:
+
+```hyper
+posts: list[Post]
+
+---
+
+<div class="feed">
+    for post in posts:
+        <article>{post.title}</article>
+    end
+</div>
+```
+
+Each iteration yields a chunk. No syntax changes needed.
+
+**Design TBD.**
+
+---
+
+## File Structure
+
+A `.hyper` file has two zones separated by `---`:
+
+```hyper
+# Header zone: imports, defs, props (runs once at import)
+
+from utils import helper
+
+def Badge(text: str):
+    <span class="badge">{text}</span>
+end
+
+name: str
+count: int = 0
+
+---
+
+# Body zone: template code (runs every render)
+
+greeting = f"Hello {name}"
+
+<div>
+    <{Badge} text={greeting} />
+    <span>{count}</span>
+</div>
+```
+
+**Header zone** (above `---`):
+- `import` statements
+- `def` functions and components
+- `class` definitions
+- Type-annotated variables become props
+- `**attrs: dict` captures extra attributes
+
+**Body zone** (below `---`):
+- Local variables
+- HTML template
+- Control flow
+
+### When `---` is Required
+
+| File type | Has header content? | Has top-level HTML? | Needs `---`? |
+|-----------|---------------------|---------------------|--------------|
+| Simple HTML | No | Yes | No |
+| Props + HTML | Yes | Yes | Yes |
+| Library (defs only) | Yes | No | No |
+
+Simple HTML needs no separator:
+
+```hyper
+<div>Hello World</div>
+```
+
+Props require the separator:
+
+```hyper
+name: str
+
+---
+
+<div>Hello {name}</div>
+```
+
+Library files (no top-level HTML) need no separator:
+
+```hyper
+def Header(title: str):
+    <header>{title}</header>
+end
+
+def Footer():
+    <footer>Copyright 2024</footer>
+end
+```

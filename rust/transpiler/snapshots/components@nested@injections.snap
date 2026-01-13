@@ -1,0 +1,17 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/components/nested.hyper
+---
+injections: []
+ranges:
+  - compiled_end: 47
+    compiled_start: 37
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 60
+    compiled_start: 49
+    range_type: Python
+    source_end: 22
+    source_start: 11

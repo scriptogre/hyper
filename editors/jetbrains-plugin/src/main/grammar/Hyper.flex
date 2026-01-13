@@ -32,7 +32,8 @@ HTML_LINE=[ \t]*"<"[^\r\n]*
 // Matches lines starting with control keywords followed by space/colon/paren
 // JFlex doesn't support \b, so we explicitly require a non-identifier char after keyword
 // Also handles async def/for/with and try/except/finally/with
-CONTROL_LINE=[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with)[ \t(:][^\r\n]*
+// Includes 'fragment' for Hyper template fragments
+CONTROL_LINE=[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with|fragment)[ \t(:][^\r\n]*
 
 // Matches 'end' on a line by itself (with optional whitespace)
 END_LINE=[ \t]*"end"[ \t]*

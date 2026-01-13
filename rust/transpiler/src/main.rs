@@ -1,8 +1,8 @@
 use clap::{Parser, Subcommand};
-use hyper_transpiler::{transpile_with, Options};
+use hyper_transpiler::{Pipeline, GenerateOptions};
+use std::io::{self, Read, IsTerminal};
 use std::fs;
-use std::io::{self, IsTerminal, Read};
-use std::path::PathBuf;
+use std::path::Path;
 use std::time::Instant;
 use walkdir::WalkDir;
 
@@ -18,9 +18,8 @@ struct Cli {
 enum Commands {
     /// Generate Python from .hyper files
     Generate {
-        /// Path to .hyper file or directory
-        #[arg(required_unless_present = "stdin")]
-        file: Option<PathBuf>,
+        /// .hyper files to transpile (if none specified, finds all in current directory)
+        files: Vec<String>,
 
         /// Read from stdin
         #[arg(long)]
@@ -33,6 +32,14 @@ enum Commands {
         /// Include injection pieces for IDE integration
         #[arg(long)]
         injection: bool,
+
+        /// Function name (defaults to "Template")
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Run as daemon: read length-prefixed messages from stdin
+        #[arg(long)]
+        daemon: bool,
     },
 }
 
@@ -40,133 +47,173 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Generate { file, stdin, json, injection } => {
-            if stdin {
-                generate_stdin(json, injection);
-            } else if let Some(path) = file {
-                generate_path(&path);
+        Commands::Generate { files, stdin, json, injection, name, daemon } => {
+            if daemon {
+                run_daemon();
+            } else if stdin {
+                generate_stdin(json, injection, name);
             } else {
-                eprintln!("Error: provide a file/directory or use --stdin");
-                std::process::exit(1);
+                generate_files(files, json, injection, name);
             }
         }
     }
 }
 
-fn generate_stdin(json_output: bool, include_injections: bool) {
+fn generate_stdin(json_output: bool, include_injections: bool, name: Option<String>) {
     let mut source = String::new();
     io::stdin().read_to_string(&mut source).expect("Failed to read stdin");
 
-    let options = Options {
-        include_injections,
-        ..Options::default()
+    let options = GenerateOptions {
+        function_name: name,
+        include_ranges: include_injections,
     };
-    let result = transpile_with(&source, options);
+
+    let mut pipeline = Pipeline::standard();
+    let result = match pipeline.compile(&source, &options) {
+        Ok(r) => r,
+        Err(e) => {
+            if json_output {
+                println!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\""));
+            } else {
+                if io::stderr().is_terminal() {
+                    eprint!("{}", e.render_color(&source, "stdin"));
+                } else {
+                    eprint!("{}", e.render(&source, "stdin"));
+                }
+            }
+            std::process::exit(1);
+        }
+    };
 
     if json_output {
-        println!("{}", serde_json::to_string(&result).unwrap());
+        let output = DaemonResponse {
+            compiled: result.code,
+            mappings: result.mappings.into_iter().map(|m| DaemonMapping {
+                gen_line: m.gen_line,
+                gen_col: m.gen_col,
+                src_line: m.src_line,
+                src_col: m.src_col,
+            }).collect(),
+            ranges: if include_injections {
+                Some(result.ranges.into_iter().map(|r| DaemonRange {
+                    range_type: format!("{:?}", r.range_type).to_lowercase(),
+                    source_start: r.source_start,
+                    source_end: r.source_end,
+                    compiled_start: r.compiled_start,
+                    compiled_end: r.compiled_end,
+                }).collect())
+            } else {
+                None
+            },
+            injections: if include_injections {
+                Some(result.injections.into_iter().map(|i| DaemonInjection {
+                    injection_type: i.injection_type,
+                    start: i.start,
+                    end: i.end,
+                    prefix: i.prefix,
+                    suffix: i.suffix,
+                }).collect())
+            } else {
+                None
+            },
+        };
+        println!("{}", serde_json::to_string(&output).unwrap());
     } else {
         print!("{}", result.code);
     }
 }
 
-fn generate_path(path: &PathBuf) {
-    if path.is_file() {
-        if path.extension().map_or(true, |ext| ext != "hyper") {
-            eprintln!("Error: {} is not a .hyper file", path.display());
-            std::process::exit(1);
-        }
-        let start = Instant::now();
-        generate_file(path);
-        let elapsed = start.elapsed();
-        print_summary(1, elapsed);
-    } else if path.is_dir() {
-        generate_directory(path);
+fn generate_files(files: Vec<String>, _json_output: bool, _include_injections: bool, _name: Option<String>) {
+    let start = Instant::now();
+
+    let files_to_process: Vec<String> = if files.is_empty() {
+        // Recursively discover all .hyper files starting from current directory
+        discover_hyper_files(".")
     } else {
-        eprintln!("Error: {} does not exist", path.display());
+        let mut result = Vec::new();
+        for arg in &files {
+            let path = Path::new(arg);
+            if path.is_dir() {
+                result.extend(discover_hyper_files(arg));
+            } else {
+                result.push(arg.clone());
+            }
+        }
+        result
+    };
+
+    if files_to_process.is_empty() {
+        eprintln!("No .hyper files found");
+        std::process::exit(1);
+    }
+
+    let mut has_errors = false;
+    let mut success_count = 0;
+
+    for file_path in files_to_process {
+        let source = match fs::read_to_string(&file_path) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Error reading {}: {}", file_path, e);
+                has_errors = true;
+                continue;
+            }
+        };
+
+        // Extract function name from filename
+        let function_name = Path::new(&file_path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_string());
+
+        let options = GenerateOptions {
+            function_name,
+            include_ranges: false,
+        };
+
+        let mut pipeline = Pipeline::standard();
+        let result = match pipeline.compile(&source, &options) {
+            Ok(r) => r,
+            Err(e) => {
+                if io::stderr().is_terminal() {
+                    eprint!("{}", e.render_color(&source, &file_path));
+                } else {
+                    eprint!("{}", e.render(&source, &file_path));
+                }
+                has_errors = true;
+                continue;
+            }
+        };
+
+        // Write to .py file
+        let output_path = Path::new(&file_path).with_extension("py");
+        if let Err(e) = fs::write(&output_path, &result.code) {
+            eprintln!("Error writing {}: {}", output_path.display(), e);
+            has_errors = true;
+            continue;
+        }
+
+        print_generated(&output_path.to_string_lossy());
+        success_count += 1;
+    }
+
+    if success_count > 0 {
+        let elapsed = start.elapsed();
+        print_summary(success_count, elapsed);
+    }
+
+    if has_errors {
         std::process::exit(1);
     }
 }
 
-fn generate_directory(dir: &PathBuf) {
-    use std::collections::HashMap;
-
-    let start = Instant::now();
-
-    // Map: directory -> list of component names generated in that directory
-    let mut components_by_dir: HashMap<PathBuf, Vec<String>> = HashMap::new();
-    let mut file_count = 0;
-
-    for entry in WalkDir::new(dir)
+fn discover_hyper_files(dir: &str) -> Vec<String> {
+    WalkDir::new(dir)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().map_or(false, |ext| ext == "hyper"))
-    {
-        let path = entry.path();
-        if let Some(component_name) = generate_file(path) {
-            file_count += 1;
-            if let Some(parent) = path.parent() {
-                components_by_dir
-                    .entry(parent.to_path_buf())
-                    .or_default()
-                    .push(component_name);
-            }
-        }
-    }
-
-    if file_count == 0 {
-        eprintln!("No .hyper files found in {}", dir.display());
-        std::process::exit(1);
-    }
-
-    // Generate __init__.py for each directory that has components
-    for (dir_path, mut components) in components_by_dir {
-        components.sort();
-        let init_path = dir_path.join("__init__.py");
-
-        let imports: Vec<String> = components
-            .iter()
-            .map(|name| format!("from .{name} import {name}"))
-            .collect();
-
-        let all_list: Vec<String> = components
-            .iter()
-            .map(|name| format!("\"{name}\""))
-            .collect();
-
-        let content = format!(
-            "{}\n\n__all__ = [{}]\n",
-            imports.join("\n"),
-            all_list.join(", ")
-        );
-
-        fs::write(&init_path, content).expect("Failed to write __init__.py");
-        print_generated(&init_path.display().to_string());
-    }
-
-    let elapsed = start.elapsed();
-    print_summary(file_count, elapsed);
-}
-
-fn generate_file(path: &std::path::Path) -> Option<String> {
-    let source = fs::read_to_string(path).expect("Failed to read file");
-
-    let name = path
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("Template");
-
-    let options = Options {
-        function_name: name.to_string(),
-        include_injections: false,
-    };
-    let result = transpile_with(&source, options);
-
-    let output = path.with_extension("py");
-    fs::write(&output, &result.code).expect("Failed to write file");
-    print_generated(&output.display().to_string());
-
-    Some(name.to_string())
+        .map(|e| e.path().to_string_lossy().to_string())
+        .collect()
 }
 
 fn print_generated(path: &str) {
@@ -199,4 +246,176 @@ fn format_duration(d: std::time::Duration) -> String {
     } else {
         format!("{:.2}s", d.as_secs_f64())
     }
+}
+
+/// Run daemon mode for IDE integration
+///
+/// Protocol:
+///   Request:  <4-byte big-endian length><JSON payload>
+///   Response: <4-byte big-endian length><JSON payload>
+///
+/// Request JSON: {"content": "...", "injection": bool, "name": "..."}
+/// Response JSON: Same as normal --json output
+fn run_daemon() {
+    use std::io::{stdin, stdout, Write};
+
+    let stdin = stdin();
+    let mut stdin = stdin.lock();
+    let stdout = stdout();
+    let mut stdout = stdout.lock();
+
+    // Signal ready
+    let ready = b"{\"ready\":true}\n";
+    let len = (ready.len() as u32).to_be_bytes();
+    if let Err(e) = stdout.write_all(&len) {
+        eprintln!("[DAEMON] Failed to write ready length: {}", e);
+        std::process::exit(1);
+    }
+    if let Err(e) = stdout.write_all(ready) {
+        eprintln!("[DAEMON] Failed to write ready message: {}", e);
+        std::process::exit(1);
+    }
+    if let Err(e) = stdout.flush() {
+        eprintln!("[DAEMON] Failed to flush stdout: {}", e);
+        std::process::exit(1);
+    }
+
+    eprintln!("[DAEMON] Ready message sent successfully, entering main loop");
+
+    loop {
+        // Read 4-byte length prefix
+        let mut len_buf = [0u8; 4];
+        match stdin.read_exact(&mut len_buf) {
+            Ok(_) => {},
+            Err(e) => {
+                eprintln!("Daemon exiting: failed to read length prefix: {}", e);
+                break; // EOF or error
+            }
+        }
+
+        let msg_len = u32::from_be_bytes(len_buf) as usize;
+        if msg_len == 0 || msg_len > 10_000_000 {
+            eprintln!("Daemon exiting: invalid message length: {}", msg_len);
+            break; // Invalid length
+        }
+
+        // Read JSON payload
+        let mut msg_buf = vec![0u8; msg_len];
+        if stdin.read_exact(&mut msg_buf).is_err() {
+            eprintln!("Daemon exiting: failed to read message payload");
+            break;
+        }
+
+        let response = match std::str::from_utf8(&msg_buf) {
+            Ok(json_str) => process_request(json_str),
+            Err(_) => r#"{"error":"Invalid UTF-8"}"#.to_string(),
+        };
+
+        // Write response with length prefix
+        let response_bytes = response.as_bytes();
+        let response_len = (response_bytes.len() as u32).to_be_bytes();
+        if stdout.write_all(&response_len).is_err() || stdout.write_all(response_bytes).is_err() || stdout.flush().is_err() {
+            eprintln!("Daemon exiting: failed to write response");
+            break;
+        }
+    }
+
+    eprintln!("Daemon shutdown cleanly");
+}
+
+#[derive(serde::Deserialize)]
+struct DaemonRequest {
+    content: String,
+    #[serde(default)]
+    injection: bool,
+    #[serde(default)]
+    name: Option<String>,
+}
+
+fn process_request(json: &str) -> String {
+    let req: DaemonRequest = match serde_json::from_str(json) {
+        Ok(r) => r,
+        Err(e) => return format!(r#"{{"error":"Invalid JSON: {}"}}"#, e),
+    };
+
+    let options = GenerateOptions {
+        function_name: req.name,
+        include_ranges: req.injection,
+    };
+
+    let mut pipeline = Pipeline::standard();
+    let result = match pipeline.compile(&req.content, &options) {
+        Ok(r) => r,
+        Err(e) => return format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\"")),
+    };
+
+    serde_json::to_string(&DaemonResponse {
+        compiled: result.code,
+        mappings: result.mappings.into_iter().map(|m| DaemonMapping {
+            gen_line: m.gen_line,
+            gen_col: m.gen_col,
+            src_line: m.src_line,
+            src_col: m.src_col,
+        }).collect(),
+        ranges: if req.injection {
+            Some(result.ranges.into_iter().map(|r| DaemonRange {
+                range_type: format!("{:?}", r.range_type).to_lowercase(),
+                source_start: r.source_start,
+                source_end: r.source_end,
+                compiled_start: r.compiled_start,
+                compiled_end: r.compiled_end,
+            }).collect())
+        } else {
+            None
+        },
+        injections: if req.injection {
+            Some(result.injections.into_iter().map(|i| DaemonInjection {
+                injection_type: i.injection_type,
+                start: i.start,
+                end: i.end,
+                prefix: i.prefix,
+                suffix: i.suffix,
+            }).collect())
+        } else {
+            None
+        },
+    }).unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
+}
+
+#[derive(serde::Serialize)]
+struct DaemonResponse {
+    compiled: String,
+    mappings: Vec<DaemonMapping>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ranges: Option<Vec<DaemonRange>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    injections: Option<Vec<DaemonInjection>>,
+}
+
+#[derive(serde::Serialize)]
+struct DaemonMapping {
+    gen_line: usize,
+    gen_col: usize,
+    src_line: usize,
+    src_col: usize,
+}
+
+#[derive(serde::Serialize)]
+struct DaemonRange {
+    #[serde(rename = "type")]
+    range_type: String,
+    source_start: usize,
+    source_end: usize,
+    compiled_start: usize,
+    compiled_end: usize,
+}
+
+#[derive(serde::Serialize)]
+struct DaemonInjection {
+    #[serde(rename = "type")]
+    injection_type: String,
+    start: usize,
+    end: usize,
+    prefix: String,
+    suffix: String,
 }

@@ -1,0 +1,40 @@
+title: str
+items: list
+
+---
+
+# Simple class
+class Card:
+    def __init__(self, title: str):
+        self.title = title
+    end
+
+    def render(self):
+        <div class="card">
+            <h3>{self.title}</h3>
+        </div>
+    end
+end
+
+# Class with multiple methods
+class List:
+    def __init__(self, items: list):
+        self.items = items
+    end
+
+    def render_item(self, item: str):
+        <li>{item}</li>
+    end
+
+    def render(self):
+        <ul>
+            for item in self.items:
+                self.render_item(item)
+            end
+        </ul>
+    end
+end
+
+# Instantiate and use
+card = Card(title)
+card.render()

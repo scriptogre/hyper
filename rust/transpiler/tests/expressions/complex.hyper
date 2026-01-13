@@ -1,0 +1,40 @@
+data: dict
+items: list
+count: int
+
+---
+
+# Dict access
+<span>{data['key']}</span>
+<span>{data['nested']['deep']}</span>
+<span>{data.get('key', 'default')}</span>
+
+# Method chaining
+<span>{data['name'].strip().upper()}</span>
+<span>{', '.join(items)}</span>
+
+# Ternary expressions
+<span>{'yes' if count > 0 else 'no'}</span>
+<span>{data['value'] if data.get('value') else 'N/A'}</span>
+
+# Arithmetic
+<span>{count * 2 + 1}</span>
+<span>{count / 2}</span>
+<span>{count ** 2}</span>
+<span>{count % 3}</span>
+
+# Comparisons
+<span>{count > 0 and count < 100}</span>
+<span>{count >= 10 or count <= 5}</span>
+
+# List operations
+<span>{items[0]}</span>
+<span>{items[-1]}</span>
+<span>{items[1:3]}</span>
+<span>{items[::-1]}</span>
+<span>{len(items)}</span>
+
+# Format specifiers
+<span>{count:03d}</span>
+<span>{3.14159:.2f}</span>
+<span>{data['name']:>20}</span>

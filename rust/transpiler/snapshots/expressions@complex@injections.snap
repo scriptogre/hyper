@@ -1,0 +1,232 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/expressions/complex.hyper
+---
+injections:
+  - end: 72
+    prefix: "from hyper import escape, replace_markers\n\ndef Complex(data: dict, items: list, count: int) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 61
+    suffix: ""
+    type: python
+  - end: 110
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 88
+    suffix: ""
+    type: python
+  - end: 152
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 126
+    suffix: ""
+    type: python
+  - end: 215
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 187
+    suffix: ""
+    type: python
+  - end: 247
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 231
+    suffix: ""
+    type: python
+  - end: 314
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 286
+    suffix: ""
+    type: python
+  - end: 375
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 330
+    suffix: ""
+    type: python
+  - end: 418
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 405
+    suffix: ""
+    type: python
+  - end: 443
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 434
+    suffix: ""
+    type: python
+  - end: 469
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 459
+    suffix: ""
+    type: python
+  - end: 494
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 485
+    suffix: ""
+    type: python
+  - end: 550
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 525
+    suffix: ""
+    type: python
+  - end: 591
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 566
+    suffix: ""
+    type: python
+  - end: 634
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 626
+    suffix: ""
+    type: python
+  - end: 659
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 650
+    suffix: ""
+    type: python
+  - end: 685
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 675
+    suffix: ""
+    type: python
+  - end: 712
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 701
+    suffix: ""
+    type: python
+  - end: 738
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 728
+    suffix: ""
+    type: python
+  - end: 784
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 775
+    suffix: ""
+    type: python
+  - end: 811
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 800
+    suffix: ""
+    type: python
+  - end: 843
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 827
+    suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 65
+    compiled_start: 55
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 78
+    compiled_start: 67
+    range_type: Python
+    source_end: 22
+    source_start: 11
+  - compiled_end: 90
+    compiled_start: 80
+    range_type: Python
+    source_end: 33
+    source_start: 23
+  - compiled_end: 164
+    compiled_start: 153
+    range_type: Python
+    source_end: 72
+    source_start: 61
+  - compiled_end: 210
+    compiled_start: 188
+    range_type: Python
+    source_end: 110
+    source_start: 88
+  - compiled_end: 260
+    compiled_start: 234
+    range_type: Python
+    source_end: 152
+    source_start: 126
+  - compiled_end: 312
+    compiled_start: 284
+    range_type: Python
+    source_end: 215
+    source_start: 187
+  - compiled_end: 352
+    compiled_start: 336
+    range_type: Python
+    source_end: 247
+    source_start: 231
+  - compiled_end: 404
+    compiled_start: 376
+    range_type: Python
+    source_end: 314
+    source_start: 286
+  - compiled_end: 473
+    compiled_start: 428
+    range_type: Python
+    source_end: 375
+    source_start: 330
+  - compiled_end: 510
+    compiled_start: 497
+    range_type: Python
+    source_end: 418
+    source_start: 405
+  - compiled_end: 543
+    compiled_start: 534
+    range_type: Python
+    source_end: 443
+    source_start: 434
+  - compiled_end: 577
+    compiled_start: 567
+    range_type: Python
+    source_end: 469
+    source_start: 459
+  - compiled_end: 610
+    compiled_start: 601
+    range_type: Python
+    source_end: 494
+    source_start: 485
+  - compiled_end: 659
+    compiled_start: 634
+    range_type: Python
+    source_end: 550
+    source_start: 525
+  - compiled_end: 708
+    compiled_start: 683
+    range_type: Python
+    source_end: 591
+    source_start: 566
+  - compiled_end: 740
+    compiled_start: 732
+    range_type: Python
+    source_end: 634
+    source_start: 626
+  - compiled_end: 773
+    compiled_start: 764
+    range_type: Python
+    source_end: 659
+    source_start: 650
+  - compiled_end: 807
+    compiled_start: 797
+    range_type: Python
+    source_end: 685
+    source_start: 675
+  - compiled_end: 842
+    compiled_start: 831
+    range_type: Python
+    source_end: 712
+    source_start: 701
+  - compiled_end: 876
+    compiled_start: 866
+    range_type: Python
+    source_end: 738
+    source_start: 728
+  - compiled_end: 909
+    compiled_start: 900
+    range_type: Python
+    source_end: 784
+    source_start: 775
+  - compiled_end: 944
+    compiled_start: 933
+    range_type: Python
+    source_end: 811
+    source_start: 800
+  - compiled_end: 984
+    compiled_start: 968
+    range_type: Python
+    source_end: 843
+    source_start: 827
