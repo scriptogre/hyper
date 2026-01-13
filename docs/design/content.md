@@ -1,5 +1,7 @@
 # Content
 
+> **Status**: Draft
+
 Load structured data from files.
 
 ***
@@ -427,6 +429,69 @@ config = load[dict]("config.json")
 ```
 
 Good for quick scripts. Use classes for validation.
+
+---
+
+# Pagination (Planned)
+
+> **Status**: 🔮 Exploring design
+
+Split large collections into pages for SSG.
+
+## Concept
+
+```python
+from hyper import Page, paginate
+
+posts = Post.load()
+
+# Create pages of 10 items each
+pages = paginate(posts, page_size=10)
+```
+
+Returns a `Page` type with navigation:
+
+```python
+@dataclass
+class Page(Generic[T]):
+    data: list[T]       # Items on this page
+    current_page: int   # 1, 2, 3...
+    last_page: int      # Total pages
+    total: int          # Total items
+    url: PageURL        # .previous, .next, .first, .last
+```
+
+Use with `generate()` for SSG:
+
+```hyper
+from content import posts
+from hyper import paginate
+
+def generate() -> list[Template]:
+    for page in paginate(posts, page_size=10):
+        yield Template(page=page)
+
+page: Page[Post]
+
+---
+
+<h1>Page {page.current_page} of {page.last_page}</h1>
+
+for post in page.data:
+    <article>{post.title}</article>
+end
+
+<nav>
+    if page.url.previous:
+        <a href="{page.url.previous}">← Previous</a>
+    end
+    if page.url.next:
+        <a href="{page.url.next}">Next →</a>
+    end
+</nav>
+```
+
+**Design TBD.**
 
 ---
 

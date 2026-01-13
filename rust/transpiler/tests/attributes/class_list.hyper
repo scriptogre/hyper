@@ -1,0 +1,7 @@
+is_active: bool
+
+---
+
+class = ["btn", "btn-primary", {"active": is_active}]
+
+<button {class}>Click</button>

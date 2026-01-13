@@ -1,0 +1,27 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/attributes/shorthand_spread.hyper
+---
+injections: []
+ranges:
+  - compiled_end: 64
+    compiled_start: 55
+    range_type: Python
+    source_end: 9
+    source_start: 0
+  - compiled_end: 76
+    compiled_start: 66
+    range_type: Python
+    source_end: 20
+    source_start: 10
+  - compiled_end: 92
+    compiled_start: 78
+    range_type: Python
+    source_end: 35
+    source_start: 21
+  - compiled_end: 105
+    compiled_start: 94
+    range_type: Python
+    source_end: 47
+    source_start: 36

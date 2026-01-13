@@ -1,0 +1,29 @@
+name: str
+
+---
+
+# Escaped braces for literal output
+<p>Use {{variable}} for templates</p>
+<p>JSON: {{"key": "value"}}</p>
+
+# Mixed escaped and dynamic
+<p>Static {{braces}} and dynamic {name}</p>
+
+# In style blocks (CSS needs escaped braces)
+<style>
+    .card {{ background: white; }}
+    .card:hover {{ transform: scale(1.05); }}
+</style>
+
+# In script blocks (JS needs escaped braces)
+<script>
+    const obj = {{ name: "{name}" }};
+</script>
+
+# Alpine.js x-data
+<div x-data="{{ open: false }}">
+    <button @click="open = !open">Toggle</button>
+</div>
+
+# Multiple consecutive
+<p>{{{{nested}}}}</p>

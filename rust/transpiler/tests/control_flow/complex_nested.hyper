@@ -1,0 +1,38 @@
+sections: list
+show_all: bool
+user: dict
+
+---
+
+<div class="container">
+    if show_all:
+        for section in sections:
+            <section id="section-{section['id']}">
+                if section.get('visible', True):
+                    match section['type']:
+                        case "header":
+                            <h1>{section['title']}</h1>
+                        case "list":
+                            <ul>
+                                for item in section['items']:
+                                    if item.get('active'):
+                                        <li class="active">{item['name']}</li>
+                                    else:
+                                        <li>{item['name']}</li>
+                                    end
+                                end
+                            </ul>
+                        case "text":
+                            <p>{section['content']}</p>
+                        case _:
+                            <div>Unknown type</div>
+                    end
+                else:
+                    <div class="hidden">Section hidden</div>
+                end
+            </section>
+        end
+    else:
+        <p>Content hidden</p>
+    end
+</div>

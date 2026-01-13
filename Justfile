@@ -1,96 +1,108 @@
-# Run format, lint, and security checks
-check: format lint security
+# Default: build transpiler, bundle it in plugin, and build plugin
+default: build
 
-# Format code with ruff
-format:
-    uvx ruff format hyper
-
-# Check code for lint errors
-lint:
-    uvx ruff check hyper
-
-# Check code for type errors
-type:
-    uvx ty check hyper
-
-# Check code for security issues
-security:
-    uvx bandit -r hyper
-
-# Run all tests
-test:
-    uv run pytest .
-
-# Run a playground template
-play file:
+# Build everything: transpiler + bundle + plugin
+build target="":
     #!/usr/bin/env bash
     set -e
-    PYTHONPATH="{{justfile_directory()}}" uv run python -c "from hyper import load_component; print(load_component('playground/{{file}}')())"
+    ROOT="{{justfile_directory()}}"
 
-# Transpiler commands
-transpiler command="build" file="":
+    if [ "{{target}}" = "transpiler" ] || [ "{{target}}" = "" ]; then
+        echo "Building transpiler..."
+        cd "$ROOT/rust" && cargo build --release
+    fi
+
+    if [ "{{target}}" = "plugin" ] || [ "{{target}}" = "" ]; then
+        if [ "{{target}}" = "" ]; then
+            echo "Bundling transpiler in plugin..."
+            just _bundle
+        fi
+        echo "Building JetBrains plugin..."
+        cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
+        cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
+        echo ""
+        echo "✅ Plugin built!"
+        echo "📦 Install: editors/jetbrains-plugin/hyper-plugin.zip"
+    fi
+
+# Run transpiler or plugin
+run target *args:
     #!/usr/bin/env bash
     set -e
-    case "{{command}}" in
-        build)
-            cd {{justfile_directory()}}/rust && cargo build --release -p hyper-transpiler
+    ROOT="{{justfile_directory()}}"
+
+    case "{{target}}" in
+        transpiler)
+            "$ROOT/rust/target/release/hyper" {{args}}
             ;;
-        run)
-            if [ -z "{{file}}" ]; then
-                echo "Usage: just transpiler run <file>"
-                exit 1
-            fi
-            {{justfile_directory()}}/rust/target/release/hyper generate {{file}}
+        plugin)
+            cd "$ROOT/editors/jetbrains-plugin" && ./gradlew runIde
             ;;
         *)
-            # If command looks like a file path, treat it as 'run <file>'
-            if [ -f "{{command}}" ]; then
-                {{justfile_directory()}}/rust/target/release/hyper generate {{command}}
-            else
-                echo "Unknown command: {{command}}"
-                echo "Usage: just transpiler [build|run <file>]"
-                exit 1
-            fi
-            ;;
-    esac
-
-# JetBrains plugin commands
-jetbrains command="run":
-    #!/usr/bin/env bash
-    set -e
-    case "{{command}}" in
-        run)
-            {{justfile_directory()}}/editors/jetbrains-plugin/gradlew -p {{justfile_directory()}}/editors/jetbrains-plugin runIde
-            ;;
-        build)
-            just transpiler build
-            just jetbrains bundle
-            {{justfile_directory()}}/editors/jetbrains-plugin/gradlew -p {{justfile_directory()}}/editors/jetbrains-plugin build
-            ;;
-        bundle)
-            # Detect platform
-            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-            ARCH=$(uname -m)
-            case "$OS" in
-                darwin) OS_NAME="darwin" ;;
-                linux)  OS_NAME="linux" ;;
-                *)      OS_NAME="$OS" ;;
-            esac
-            case "$ARCH" in
-                arm64|aarch64) ARCH_NAME="arm64" ;;
-                x86_64|amd64)  ARCH_NAME="x64" ;;
-                *)             ARCH_NAME="$ARCH" ;;
-            esac
-            BINARY_NAME="hyper-${OS_NAME}-${ARCH_NAME}"
-            SRC="{{justfile_directory()}}/rust/target/release/hyper"
-            DEST="{{justfile_directory()}}/editors/jetbrains-plugin/src/main/resources/bin/${BINARY_NAME}"
-            mkdir -p "$(dirname "$DEST")"
-            cp "$SRC" "$DEST"
-            echo "Bundled transpiler: $DEST"
-            ;;
-        *)
-            echo "Unknown command: {{command}}"
-            echo "Usage: just jetbrains [build|bundle|run]"
+            echo "Usage: just run [transpiler|plugin] [args...]"
             exit 1
             ;;
     esac
+
+# Test transpiler or plugin
+test target:
+    #!/usr/bin/env bash
+    set -e
+    ROOT="{{justfile_directory()}}"
+
+    case "{{target}}" in
+        transpiler)
+            cd "$ROOT/rust" && cargo test
+            ;;
+        plugin)
+            cd "$ROOT/editors/jetbrains-plugin" && ./gradlew test
+            ;;
+        *)
+            echo "Usage: just test [transpiler|plugin]"
+            exit 1
+            ;;
+    esac
+
+# Update transpiler snapshots (accept all pending changes)
+test-update:
+    cd {{justfile_directory()}}/rust && cargo insta test --accept
+
+# Review transpiler snapshots interactively
+test-review:
+    cd {{justfile_directory()}}/rust && cargo insta review
+
+# Bundle transpiler binary into plugin resources (internal helper)
+_bundle:
+    #!/usr/bin/env bash
+    set -e
+    ROOT="{{justfile_directory()}}"
+
+    # Detect platform
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    case "$OS" in
+        darwin) OS_NAME="darwin" ;;
+        linux)  OS_NAME="linux" ;;
+        *)      OS_NAME="$OS" ;;
+    esac
+    case "$ARCH" in
+        arm64|aarch64) ARCH_NAME="arm64" ;;
+        x86_64|amd64)  ARCH_NAME="x64" ;;
+        *)             ARCH_NAME="$ARCH" ;;
+    esac
+
+    BINARY_NAME="hyper-${OS_NAME}-${ARCH_NAME}"
+    SRC="$ROOT/rust/target/release/hyper"
+    DEST="$ROOT/editors/jetbrains-plugin/src/main/resources/bin/${BINARY_NAME}"
+
+    mkdir -p "$(dirname "$DEST")"
+    cp "$SRC" "$DEST"
+    echo "✓ Bundled: $DEST"
+
+# Generate Python from .hyper files
+generate *files:
+    {{justfile_directory()}}/rust/target/release/hyper generate {{files}}
+
+# Compile .hyper file(s) (build + run, for quick iteration)
+compile *files:
+    cd {{justfile_directory()}}/rust && RUSTFLAGS="-Awarnings" cargo run -q -- generate {{files}}

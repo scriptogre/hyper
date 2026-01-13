@@ -1,0 +1,12 @@
+status: str
+
+---
+
+match status:
+    case "loading":
+        <p>Loading...</p>
+    case "error":
+        <p>Error!</p>
+    case _:
+        <p>Ready</p>
+end

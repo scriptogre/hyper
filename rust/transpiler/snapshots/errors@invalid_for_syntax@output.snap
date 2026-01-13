@@ -1,0 +1,12 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: result.code.trim()
+input_file: transpiler/tests/errors/invalid_for_syntax.hyper
+---
+from hyper import escape, replace_markers
+
+def InvalidForSyntax() -> str:
+    _parts = []
+    for item items:
+    _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
+    return replace_markers("".join(_parts))

@@ -1,0 +1,9 @@
+count: int
+
+---
+
+<div>
+    while count > 0:
+        <p>Count: {count}</p>
+    end
+</div>

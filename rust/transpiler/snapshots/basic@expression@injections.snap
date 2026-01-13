@@ -1,0 +1,22 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/basic/expression.hyper
+---
+injections:
+  - end: 31
+    prefix: "from hyper import escape, replace_markers\n\ndef Expression(name: str) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<h1>Hello ‹ESCAPE:{"
+    start: 27
+    suffix: "}›</h1>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 67
+    compiled_start: 58
+    range_type: Python
+    source_end: 9
+    source_start: 0
+  - compiled_end: 138
+    compiled_start: 134
+    range_type: Python
+    source_end: 31
+    source_start: 27

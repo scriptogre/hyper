@@ -1,0 +1,32 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/expressions/ternary.hyper
+---
+injections:
+  - end: 29
+    prefix: "from hyper import escape, replace_markers\n\ndef Ternary(count: int) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 24
+    suffix: ""
+    type: python
+  - end: 65
+    prefix: "}› ‹ESCAPE:{"
+    start: 32
+    suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 65
+    compiled_start: 55
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 133
+    compiled_start: 128
+    range_type: Python
+    source_end: 29
+    source_start: 24
+  - compiled_end: 178
+    compiled_start: 145
+    range_type: Python
+    source_end: 65
+    source_start: 32

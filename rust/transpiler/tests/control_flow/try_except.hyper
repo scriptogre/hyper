@@ -1,0 +1,52 @@
+data: dict
+risky_func: object
+
+---
+
+# Simple try/except
+try:
+    <span>{data['missing']}</span>
+except KeyError:
+    <span>Key not found</span>
+end
+
+# Try with multiple except
+try:
+    <span>{risky_func()}</span>
+except ValueError as e:
+    <span>Value error: {e}</span>
+except TypeError as e:
+    <span>Type error: {e}</span>
+except Exception as e:
+    <span>Unknown error: {e}</span>
+end
+
+# Try/except/else
+try:
+    result = data['key']
+except KeyError:
+    <span>Missing</span>
+else:
+    <span>Found: {result}</span>
+end
+
+# Try/except/finally
+try:
+    <span>{data['value']}</span>
+except:
+    <span>Error</span>
+finally:
+    <span>Cleanup complete</span>
+end
+
+# Full try/except/else/finally
+try:
+    value = data['key']
+except KeyError:
+    <span>Not found</span>
+    value = 'default'
+else:
+    <span>Success</span>
+finally:
+    <span>Done: {value}</span>
+end

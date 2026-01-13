@@ -1,0 +1,62 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/complex_nested.hyper
+---
+injections:
+  - end: 352
+    prefix: "from hyper import escape, replace_markers\n\ndef ComplexNested(sections: list, show_all: bool, user: dict) -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"container\\\">\")\n    if show_all:\n        for section in sections:\n            _parts.append(\"<section id=\\\"section-{section['id']}\\\">\")\n            if section.get('visible', True):\n                match section['type']:\n                    case \"header\":\n                        _parts.append(f\"\"\"<h1>‹ESCAPE:{"
+    start: 336
+    suffix: ""
+    type: python
+  - end: 622
+    prefix: "}›</h1>\"\"\")\n                    case \"list\":\n                        _parts.append(\"<ul>\")\n                        for item in section['items']:\n                            if item.get('active'):\n                                _parts.append(f\"\"\"<li class=\"active\">‹ESCAPE:{"
+    start: 610
+    suffix: ""
+    type: python
+  - end: 728
+    prefix: "}›</li>\"\"\")\n                            else:\n                                _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 716
+    suffix: ""
+    type: python
+  - end: 932
+    prefix: "}›</li>\"\"\")\n                        _parts.append(\"</ul>\")\n                    case \"text\":\n                        _parts.append(f\"\"\"<p>‹ESCAPE:{"
+    start: 914
+    suffix: "}›</p>\"\"\")\n                    case _:\n                        _parts.append(\"\"\"<div>Unknown type</div>\"\"\")\n            else:\n                _parts.append(\"\"\"<div class=\"hidden\">Section hidden</div>\"\"\")\n            _parts.append(\"</section>\")\n    else:\n        _parts.append(\"\"\"<p>Content hidden</p>\"\"\")\n    _parts.append(\"</div>\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 75
+    compiled_start: 61
+    range_type: Python
+    source_end: 14
+    source_start: 0
+  - compiled_end: 91
+    compiled_start: 77
+    range_type: Python
+    source_end: 29
+    source_start: 15
+  - compiled_end: 103
+    compiled_start: 93
+    range_type: Python
+    source_end: 40
+    source_start: 30
+  - compiled_end: 486
+    compiled_start: 470
+    range_type: Python
+    source_end: 352
+    source_start: 336
+  - compiled_end: 772
+    compiled_start: 760
+    range_type: Python
+    source_end: 622
+    source_start: 610
+  - compiled_end: 893
+    compiled_start: 881
+    range_type: Python
+    source_end: 728
+    source_start: 716
+  - compiled_end: 1057
+    compiled_start: 1039
+    range_type: Python
+    source_end: 932
+    source_start: 914

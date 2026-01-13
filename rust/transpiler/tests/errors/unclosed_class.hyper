@@ -1,0 +1,4 @@
+class Card:
+    def render(self):
+        <div>Card</div>
+    end

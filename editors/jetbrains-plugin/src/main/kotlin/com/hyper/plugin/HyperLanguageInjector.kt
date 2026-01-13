@@ -34,41 +34,43 @@ class HyperLanguageInjector : MultiHostInjector {
             val service = HyperTranspilerService.getInstance(project)
             val text = context.text
             val textLength = text.length
-            val result = service.transpile(text, includeInjection = true)
+            // Use filename as function name for consistent naming
+            val fileName = context.containingFile?.virtualFile?.nameWithoutExtension
+            val result = service.transpile(text, includeInjection = true, functionName = fileName)
 
             // Inject Python
             val python = PYTHON_LANGUAGE
-            val pythonPieces = result.injections?.python
-            if (python != null && !pythonPieces.isNullOrEmpty()) {
-                val validPythonPieces = pythonPieces.filter { piece ->
-                    piece.start >= 0 && piece.end <= textLength && piece.start <= piece.end
+            val pythonInjections = result.pythonInjections
+            if (python != null && pythonInjections.isNotEmpty()) {
+                val validPythonInjections = pythonInjections.filter { inj ->
+                    inj.start >= 0 && inj.end <= textLength && inj.start <= inj.end
                 }
-                if (validPythonPieces.isNotEmpty()) {
+                if (validPythonInjections.isNotEmpty()) {
                     registrar.startInjecting(python)
-                    for (piece in validPythonPieces) {
-                        val range = TextRange(piece.start, piece.end)
-                        registrar.addPlace(piece.prefix, piece.suffix, context, range)
+                    for (inj in validPythonInjections) {
+                        val range = TextRange(inj.start, inj.end)
+                        registrar.addPlace(inj.prefix, inj.suffix, context, range)
                     }
                     registrar.doneInjecting()
-                    LOG.debug("Python injection: ${validPythonPieces.size} pieces")
+                    LOG.debug("Python injection: ${validPythonInjections.size} pieces")
                 }
             }
 
             // Inject HTML
             val html = HTML_LANGUAGE
-            val htmlPieces = result.injections?.html
-            if (html != null && !htmlPieces.isNullOrEmpty()) {
-                val validHtmlPieces = htmlPieces.filter { piece ->
-                    piece.start >= 0 && piece.end <= textLength && piece.start < piece.end
+            val htmlInjections = result.htmlInjections
+            if (html != null && htmlInjections.isNotEmpty()) {
+                val validHtmlInjections = htmlInjections.filter { inj ->
+                    inj.start >= 0 && inj.end <= textLength && inj.start < inj.end
                 }
-                if (validHtmlPieces.isNotEmpty()) {
+                if (validHtmlInjections.isNotEmpty()) {
                     registrar.startInjecting(html)
-                    for (piece in validHtmlPieces) {
-                        val range = TextRange(piece.start, piece.end)
-                        registrar.addPlace(null, null, context, range)
+                    for (inj in validHtmlInjections) {
+                        val range = TextRange(inj.start, inj.end)
+                        registrar.addPlace(inj.prefix, inj.suffix, context, range)
                     }
                     registrar.doneInjecting()
-                    LOG.debug("HTML injection: ${validHtmlPieces.size} pieces")
+                    LOG.debug("HTML injection: ${validHtmlInjections.size} pieces")
                 }
             } else if (html == null) {
                 LOG.info("HTML language not available in this IDE")

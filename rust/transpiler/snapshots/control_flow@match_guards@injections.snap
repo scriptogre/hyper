@@ -1,0 +1,57 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/match_guards.hyper
+---
+injections:
+  - end: 108
+    prefix: "from hyper import escape, replace_markers\n\ndef MatchGuards(value: int, data: dict) -> str:\n    _parts = []\n    match value:\n        case x if x < 0:\n            _parts.append(f\"\"\"<span>Negative: ‹ESCAPE:{"
+    start: 107
+    suffix: ""
+    type: python
+  - end: 211
+    prefix: "}›</span>\"\"\")\n        case x if x == 0:\n            _parts.append(\"\"\"<span>Zero</span>\"\"\")\n        case x if x > 100:\n            _parts.append(f\"\"\"<span>Large: ‹ESCAPE:{"
+    start: 210
+    suffix: ""
+    type: python
+  - end: 256
+    prefix: "}›</span>\"\"\")\n        case x:\n            _parts.append(f\"\"\"<span>Normal: ‹ESCAPE:{"
+    start: 255
+    suffix: ""
+    type: python
+  - end: 533
+    prefix: "}›</span>\"\"\")\n    match data:\n        case {\"type\": \"user\", \"admin\": True}:\n            _parts.append(\"\"\"<span>Admin user</span>\"\"\")\n        case {\"type\": \"user\", \"admin\": False}:\n            _parts.append(\"\"\"<span>Regular user</span>\"\"\")\n        case {\"type\": t} if t.startswith(\"system\"):\n            _parts.append(f\"\"\"<span>System: ‹ESCAPE:{"
+    start: 532
+    suffix: "}›</span>\"\"\")\n        case _:\n            _parts.append(\"\"\"<span>Unknown</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 69
+    compiled_start: 59
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 81
+    compiled_start: 71
+    range_type: Python
+    source_end: 21
+    source_start: 11
+  - compiled_end: 205
+    compiled_start: 204
+    range_type: Python
+    source_end: 108
+    source_start: 107
+  - compiled_end: 376
+    compiled_start: 375
+    range_type: Python
+    source_end: 211
+    source_start: 210
+  - compiled_end: 460
+    compiled_start: 459
+    range_type: Python
+    source_end: 256
+    source_start: 255
+  - compiled_end: 805
+    compiled_start: 804
+    range_type: Python
+    source_end: 533
+    source_start: 532

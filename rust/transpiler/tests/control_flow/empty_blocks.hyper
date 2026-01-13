@@ -1,0 +1,39 @@
+flag: bool
+items: list
+
+---
+
+# Empty if block (should generate pass)
+if flag:
+end
+
+# Empty else block
+if flag:
+    <span>Yes</span>
+else:
+end
+
+# Empty for block
+for item in items:
+end
+
+# Empty while block
+while flag:
+end
+
+# Empty match cases
+match flag:
+    case True:
+    case False:
+        <span>False</span>
+end
+
+# Empty try blocks
+try:
+except:
+    <span>Error</span>
+end
+
+# Empty function
+def empty():
+end

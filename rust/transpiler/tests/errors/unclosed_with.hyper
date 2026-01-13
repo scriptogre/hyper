@@ -1,0 +1,2 @@
+with open("file.txt") as f:
+    <pre>{f.read()}</pre>

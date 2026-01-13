@@ -1,0 +1,4 @@
+<div class="layout">
+    <aside>{...sidebar}</aside>
+    <main>{...}</main>
+</div>

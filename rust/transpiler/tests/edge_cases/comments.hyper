@@ -1,0 +1,51 @@
+name: str
+color: str
+
+---
+
+# Full-line comment (stripped)
+<div>Content</div>
+
+# Another full-line comment
+<span>Text</span>  # trailing comment after close tag
+
+# Hash in table header (not a comment)
+<th scope="col">#</th>
+
+# Hash in URLs (not a comment)
+<a href="#section">Jump</a>
+<a href="/page#anchor">Link</a>
+
+# Hash in CSS colors (not a comment)
+<div style="color: #ff0000">Red</div>
+<div style="background: #fff">White</div>
+
+# HTML entities with hash
+<span>&#35;</span>
+<span>&#x23;</span>
+
+# Multiple hashes as content
+<div>###</div>
+<th>##</th>
+
+# Trailing comment after expression
+<span>{name}</span>  # show name
+
+# Hash in expression (not a comment)
+<span>{name or '#'}</span>
+<span>{"#" + name}</span>
+
+# Hash inside paragraph content (not a comment)
+<p>Text # with hash # multiple # times</p>
+
+# No space before hash (not a comment)
+<span>Item</span># kept as content
+
+# Hash in attribute value (not a comment)
+<div data-info="use # for comments">Info</div>
+
+# Trailing comment after self-closing tag
+<br />  # self-closing
+
+# Hash in value attr + trailing comment
+<input value="#" />  # input comment

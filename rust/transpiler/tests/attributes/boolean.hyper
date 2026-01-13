@@ -1,0 +1,5 @@
+is_disabled: bool
+
+---
+
+<button disabled={is_disabled}>Submit</button>

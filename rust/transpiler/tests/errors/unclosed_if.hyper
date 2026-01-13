@@ -1,0 +1,4 @@
+if show:
+    <p>Hello</p>
+else:
+    <p>Goodbye</p>

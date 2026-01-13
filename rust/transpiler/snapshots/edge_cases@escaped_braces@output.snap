@@ -1,0 +1,11 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: r.code.trim()
+input_file: transpiler/tests/edge_cases/escaped_braces.hyper
+---
+from hyper import escape, replace_markers
+
+def EscapedBraces(name: str) -> str:
+    _parts = []
+    _parts.append(f"""<p>Use {variable} for templates</p><p>JSON: {"key": "value"}</p><p>Static {braces} and dynamic ‹ESCAPE:{name}›</p><style>.card { background: white; }.card:hover { transform: scale(1.05); }</style><script>const obj = { name: "{name}" };</script><div x-data="{{ open: false }}"><button @click="open = !open">Toggle</button></div><p>{{nested}}</p>""")
+    return replace_markers("".join(_parts))

@@ -1,0 +1,47 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/control_flow/async_loops.hyper
+---
+injections:
+  - end: 97
+    prefix: "from hyper import escape, replace_markers\n\ndef AsyncLoops(stream: object, connection: object) -> str:\n    _parts = []\n    async for item in stream:\n        _parts.append(f\"\"\"<div>‹ESCAPE:{"
+    start: 93
+    suffix: ""
+    type: python
+  - end: 193
+    prefix: "}›</div>\"\"\")\n    async with connection as conn:\n        _parts.append(f\"\"\"<span>Connected: ‹ESCAPE:{"
+    start: 186
+    suffix: ""
+    type: python
+  - end: 312
+    prefix: "}›</span>\"\"\")\n    async with connection as conn:\n        async for message in conn.messages:\n            _parts.append(f\"\"\"<p>‹ESCAPE:{"
+    start: 305
+    suffix: "}›</p>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 72
+    compiled_start: 58
+    range_type: Python
+    source_end: 14
+    source_start: 0
+  - compiled_end: 92
+    compiled_start: 74
+    range_type: Python
+    source_end: 33
+    source_start: 15
+  - compiled_end: 192
+    compiled_start: 188
+    range_type: Python
+    source_end: 97
+    source_start: 93
+  - compiled_end: 299
+    compiled_start: 292
+    range_type: Python
+    source_end: 193
+    source_start: 186
+  - compiled_end: 441
+    compiled_start: 434
+    range_type: Python
+    source_end: 312
+    source_start: 305

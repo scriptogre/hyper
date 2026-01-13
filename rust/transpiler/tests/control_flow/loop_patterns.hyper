@@ -1,0 +1,72 @@
+items: list
+pairs: list
+names: list
+scores: list
+matrix: list
+
+---
+
+# Enumerate
+<ul>
+    for i, item in enumerate(items):
+        <li data-index="{i}">{item}</li>
+    end
+</ul>
+
+# Enumerate with start
+<ol>
+    for num, item in enumerate(items, start=1):
+        <li value="{num}">{item}</li>
+    end
+</ol>
+
+# Tuple unpacking
+<dl>
+    for key, value in pairs:
+        <dt>{key}</dt>
+        <dd>{value}</dd>
+    end
+</dl>
+
+# Zip
+<table>
+    for name, score in zip(names, scores):
+        <tr>
+            <td>{name}</td>
+            <td>{score}</td>
+        </tr>
+    end
+</table>
+
+# Nested loops
+<table>
+    for row in matrix:
+        <tr>
+            for cell in row:
+                <td>{cell}</td>
+            end
+        </tr>
+    end
+</table>
+
+# Dict items
+<dl>
+    for k, v in items.items():
+        <dt>{k}</dt>
+        <dd>{v}</dd>
+    end
+</dl>
+
+# Range
+<ul>
+    for i in range(5):
+        <li>Item {i}</li>
+    end
+</ul>
+
+# Reversed
+<ul>
+    for item in reversed(items):
+        <li>{item}</li>
+    end
+</ul>

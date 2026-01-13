@@ -1,0 +1,29 @@
+module: object
+components: dict
+
+---
+
+# Component from module
+<{module.Button} label="Click" />
+
+# Component from dict
+<{components['Card']}>
+    <p>Content</p>
+</{components['Card']}>
+
+# Empty component (not self-closing)
+<{Wrapper}></{Wrapper}>
+
+# Component with only whitespace
+<{Container}>
+
+</{Container}>
+
+# Deeply nested components
+<{Outer}>
+    <{Middle}>
+        <{Inner}>
+            <span>Deep</span>
+        </{Inner}>
+    </{Middle}>
+</{Outer}>

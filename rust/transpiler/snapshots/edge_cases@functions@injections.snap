@@ -1,0 +1,62 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/edge_cases/functions.hyper
+---
+injections:
+  - end: 74
+    prefix: "from hyper import escape, replace_markers\n\ndef Functions(name: str) -> str:\n    _parts = []\n    def greet(who: str):\n        _parts.append(f\"\"\"<h1>Hello, ‹ESCAPE:{"
+    start: 71
+    suffix: ""
+    type: python
+  - end: 213
+    prefix: "}›!</h1>\"\"\")\n    def make_badge(text: str, color: str = \"blue\") -> str:\n        _parts.append(f\"\"\"<span class=\"badge badge-{color}\">‹ESCAPE:{"
+    start: 209
+    suffix: ""
+    type: python
+  - end: 320
+    prefix: "}›</span>\"\"\")\n    async def fetch_and_render(url: str):\n        _parts.append(f\"\"\"<div class=\"loading\">Fetching ‹ESCAPE:{"
+    start: 317
+    suffix: ""
+    type: python
+  - end: 573
+    prefix: "}›...</div>\"\"\")\n    def render_list(items: list, title: str = \"List\"):\n        _parts.append(\"<div class=\\\"list-container\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        if items:\n            _parts.append(\"<ul>\")\n            for item in items:\n                _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 569
+    suffix: ""
+    type: python
+  - end: 747
+    prefix: "}›</li>\"\"\")\n            _parts.append(\"</ul>\")\n        else:\n            _parts.append(\"\"\"<p>No items</p>\"\"\")\n        _parts.append(\"</div>\")\n    greet(name)\n    _parts.append(f\"\"\"‹ESCAPE:{"
+    start: 721
+    suffix: "}›\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 66
+    compiled_start: 57
+    range_type: Python
+    source_end: 9
+    source_start: 0
+  - compiled_end: 166
+    compiled_start: 163
+    range_type: Python
+    source_end: 74
+    source_start: 71
+  - compiled_end: 311
+    compiled_start: 307
+    range_type: Python
+    source_end: 213
+    source_start: 209
+  - compiled_end: 435
+    compiled_start: 432
+    range_type: Python
+    source_end: 320
+    source_start: 317
+  - compiled_end: 794
+    compiled_start: 790
+    range_type: Python
+    source_end: 573
+    source_start: 569
+  - compiled_end: 1009
+    compiled_start: 983
+    range_type: Python
+    source_end: 747
+    source_start: 721

@@ -1,0 +1,67 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/expressions/comprehensions.hyper
+---
+injections:
+  - end: 83
+    prefix: "from hyper import escape, replace_markers\n\ndef Comprehensions(items: list, data: dict) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 58
+    suffix: ""
+    type: python
+  - end: 139
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 99
+    suffix: ""
+    type: python
+  - end: 194
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 155
+    suffix: ""
+    type: python
+  - end: 494
+    prefix: "}›</span><span>{k: v.upper() for k, v in data.items()}</span><span>{k: v for k, v in data.items() if v}</span><span>{x for x in items}</span><span>‹ESCAPE:{"
+    start: 469
+    suffix: ""
+    type: python
+  - end: 541
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 510
+    suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 73
+    compiled_start: 62
+    range_type: Python
+    source_end: 11
+    source_start: 0
+  - compiled_end: 85
+    compiled_start: 75
+    range_type: Python
+    source_end: 22
+    source_start: 12
+  - compiled_end: 173
+    compiled_start: 148
+    range_type: Python
+    source_end: 83
+    source_start: 58
+  - compiled_end: 237
+    compiled_start: 197
+    range_type: Python
+    source_end: 139
+    source_start: 99
+  - compiled_end: 300
+    compiled_start: 261
+    range_type: Python
+    source_end: 194
+    source_start: 155
+  - compiled_end: 481
+    compiled_start: 456
+    range_type: Python
+    source_end: 494
+    source_start: 469
+  - compiled_end: 536
+    compiled_start: 505
+    range_type: Python
+    source_end: 541
+    source_start: 510

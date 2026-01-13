@@ -1,0 +1,28 @@
+value: int
+data: dict
+
+---
+
+# Match with guards
+match value:
+    case x if x < 0:
+        <span>Negative: {x}</span>
+    case x if x == 0:
+        <span>Zero</span>
+    case x if x > 100:
+        <span>Large: {x}</span>
+    case x:
+        <span>Normal: {x}</span>
+end
+
+# Match with pattern guards
+match data:
+    case {"type": "user", "admin": True}:
+        <span>Admin user</span>
+    case {"type": "user", "admin": False}:
+        <span>Regular user</span>
+    case {"type": t} if t.startswith("system"):
+        <span>System: {t}</span>
+    case _:
+        <span>Unknown</span>
+end

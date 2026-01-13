@@ -1,0 +1,5 @@
+name: str
+count: int = 0
+items: list
+
+---

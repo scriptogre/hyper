@@ -1,0 +1,67 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/expressions/multiline.hyper
+---
+injections:
+  - end: 145
+    prefix: "from hyper import escape, replace_markers\n\ndef Multiline(data: dict, items: list) -> str:\n    _parts = []\n    config = {\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 139
+    suffix: ""
+    type: python
+  - end: 244
+    prefix: "}›</span>\"\"\")\n    values = [\n    \"item1\",\n    \"item2\",\n    \"item3\"\n]\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 238
+    suffix: ""
+    type: python
+  - end: 375
+    prefix: "}›</span>\"\"\")\n    result = some_function(\n    arg1=\"value1\",\n    arg2=\"value2\",\n    arg3=\"value3\"\n)\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 369
+    suffix: ""
+    type: python
+  - end: 496
+    prefix: "}›</span>\"\"\")\n    squares = [\n    x ** 2\n    for x in range(10)\n    if x % 2 == 0\n]\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 489
+    suffix: ""
+    type: python
+  - end: 618
+    prefix: "}›</span>\"\"\")\n    processed = (data\n    .get('items', [])\n    .copy()\n)\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 609
+    suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 67
+    compiled_start: 57
+    range_type: Python
+    source_end: 10
+    source_start: 0
+  - compiled_end: 80
+    compiled_start: 69
+    range_type: Python
+    source_end: 22
+    source_start: 11
+  - compiled_end: 231
+    compiled_start: 225
+    range_type: Python
+    source_end: 145
+    source_start: 139
+  - compiled_end: 343
+    compiled_start: 337
+    range_type: Python
+    source_end: 244
+    source_start: 238
+  - compiled_end: 486
+    compiled_start: 480
+    range_type: Python
+    source_end: 375
+    source_start: 369
+  - compiled_end: 614
+    compiled_start: 607
+    range_type: Python
+    source_end: 496
+    source_start: 489
+  - compiled_end: 732
+    compiled_start: 723
+    range_type: Python
+    source_end: 618
+    source_start: 609

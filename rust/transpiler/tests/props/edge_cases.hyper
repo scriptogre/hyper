@@ -1,0 +1,23 @@
+# Docstring in header
+"""This is a component docstring."""
+
+# Various parameter patterns
+simple: str
+with_default: str = "default value"
+none_default: str | None = None
+empty_string: str = ""
+zero_default: int = 0
+false_default: bool = False
+empty_list: list = []
+empty_dict: dict = {}
+complex_default: dict = {"key": "value"}
+*args: tuple
+**kwargs: dict
+
+---
+
+<div>
+    <span>{simple}</span>
+    <span>{with_default}</span>
+    <span>{none_default or "none"}</span>
+</div>

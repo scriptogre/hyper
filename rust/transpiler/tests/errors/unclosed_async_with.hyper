@@ -1,0 +1,6 @@
+conn: object
+
+---
+
+async with conn as c:
+    <div>{c}</div>

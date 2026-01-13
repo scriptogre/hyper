@@ -1,0 +1,25 @@
+id: str
+theme: str
+is_active: bool
+count: int
+
+---
+
+# Static and dynamic mixed
+<div class="card {theme}" id="card-{id}">Content</div>
+
+# Multiple dynamic parts
+<div class="{theme} {'active' if is_active else 'inactive'} size-{count}">Content</div>
+
+# Quotes inside expressions
+<div class="base {'special' if is_active else 'normal'}">Content</div>
+
+# Data attributes
+<div data-id="{id}" data-count="{count}" data-active="{is_active}">Content</div>
+
+# Aria attributes
+<div aria-label="Item {id}" aria-hidden="{not is_active}">Content</div>
+
+# Event handlers (Alpine.js style)
+<button @click="handleClick({id})">Click</button>
+<button x-on:click="toggle()">Toggle</button>

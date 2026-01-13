@@ -1,0 +1,20 @@
+items: list
+data: dict
+
+---
+
+# List comprehensions
+<span>{[x * 2 for x in range(5)]}</span>
+<span>{[item.upper() for item in items if item]}</span>
+<span>{[x for x in items if x.startswith('a')]}</span>
+
+# Dict comprehensions (doubled braces for literal braces in f-string)
+<span>{{k: v.upper() for k, v in data.items()}}</span>
+<span>{{k: v for k, v in data.items() if v}}</span>
+
+# Set comprehensions
+<span>{{x for x in items}}</span>
+
+# Generator expressions
+<span>{sum(x for x in range(10))}</span>
+<span>{','.join(str(x) for x in items)}</span>

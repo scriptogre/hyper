@@ -1,0 +1,8 @@
+title: str
+
+---
+
+<{Card}>
+    <h2>{title}</h2>
+    <p>Card content goes here</p>
+</{Card}>

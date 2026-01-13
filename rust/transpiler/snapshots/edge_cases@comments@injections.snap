@@ -1,0 +1,47 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/edge_cases/comments.hyper
+---
+injections:
+  - end: 604
+    prefix: "from hyper import escape, replace_markers\n\ndef Comments(name: str, color: str) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div>Content</div><span>Text</span><th scope=\"col\">#</th><a href=\"#section\">Jump</a><a href=\"/page#anchor\">Link</a><div style=\"color: #ff0000\">Red</div><div style=\"background: #fff\">White</div><span>&#35;</span><span>&#x23;</span><div>###</div><th>##</th><span>‹ESCAPE:{"
+    start: 600
+    suffix: ""
+    type: python
+  - end: 682
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 671
+    suffix: ""
+    type: python
+  - end: 708
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 698
+    suffix: "}›</span><p>Text # with hash # multiple # times</p><span>Item</span># kept as content<div data-info=\"use # for comments\">Info</div><br /><input value=\"#\" />\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 65
+    compiled_start: 56
+    range_type: Python
+    source_end: 9
+    source_start: 0
+  - compiled_end: 77
+    compiled_start: 67
+    range_type: Python
+    source_end: 20
+    source_start: 10
+  - compiled_end: 399
+    compiled_start: 395
+    range_type: Python
+    source_end: 604
+    source_start: 600
+  - compiled_end: 434
+    compiled_start: 423
+    range_type: Python
+    source_end: 682
+    source_start: 671
+  - compiled_end: 468
+    compiled_start: 458
+    range_type: Python
+    source_end: 708
+    source_start: 698

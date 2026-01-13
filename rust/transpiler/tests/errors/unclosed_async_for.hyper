@@ -1,0 +1,6 @@
+stream: object
+
+---
+
+async for item in stream:
+    <div>{item}</div>

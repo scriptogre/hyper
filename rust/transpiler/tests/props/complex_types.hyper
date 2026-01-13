@@ -1,0 +1,19 @@
+simple: str
+with_default: str = "default"
+optional: str | None = None
+items: list[str]
+mapping: dict[str, int]
+nested: list[dict[str, Any]]
+callback: Callable[[int], str]
+*args: tuple
+**kwargs: dict
+
+---
+
+<div>
+    <span>{simple}</span>
+    <span>{with_default}</span>
+    <span>{optional or 'none'}</span>
+    <span>{len(items)}</span>
+    <span>{len(mapping)}</span>
+</div>

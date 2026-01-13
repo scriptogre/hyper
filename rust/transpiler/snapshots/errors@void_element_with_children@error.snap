@@ -1,0 +1,6 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "format!(\"{}\", e)"
+input_file: transpiler/tests/errors/void_element_with_children.hyper
+---
+<br> cannot have content or a closing tag.

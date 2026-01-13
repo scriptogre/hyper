@@ -1,0 +1,21 @@
+stream: object
+connection: object
+
+---
+
+# Async for loop
+async for item in stream:
+    <div>{item}</div>
+end
+
+# Async with statement
+async with connection as conn:
+    <span>Connected: {conn.id}</span>
+end
+
+# Nested async
+async with connection as conn:
+    async for message in conn.messages:
+        <p>{message}</p>
+    end
+end

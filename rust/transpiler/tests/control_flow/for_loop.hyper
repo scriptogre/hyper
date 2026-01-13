@@ -1,0 +1,9 @@
+items: list[str]
+
+---
+
+<ul>
+    for item in items:
+        <li>{item}</li>
+    end
+</ul>
