@@ -4,9 +4,14 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/expressions/comprehension.hyper
 ---
 injections:
-  - end: 68
-    prefix: "from hyper import escape, replace_markers\n\ndef Comprehension(items: list[str]) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<ul>‹ESCAPE:{"
-    start: 33
+  - end: 16
+    prefix: "from hyper import escape, replace_markers\n\ndef Comprehension("
+    start: 0
+    suffix: ""
+    type: python
+  - end: 69
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<ul>‹ESCAPE:{"
+    start: 32
     suffix: "}›</ul>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -18,5 +23,5 @@ ranges:
   - compiled_end: 173
     compiled_start: 138
     range_type: Python
-    source_end: 68
-    source_start: 33
+    source_end: 69
+    source_start: 32

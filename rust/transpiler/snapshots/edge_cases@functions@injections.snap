@@ -4,29 +4,44 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/edge_cases/functions.hyper
 ---
 injections:
-  - end: 74
-    prefix: "from hyper import escape, replace_markers\n\ndef Functions(name: str) -> str:\n    _parts = []\n    def greet(who: str):\n        _parts.append(f\"\"\"<h1>Hello, ‹ESCAPE:{"
-    start: 71
+  - end: 9
+    prefix: "from hyper import escape, replace_markers\n\ndef Functions("
+    start: 0
     suffix: ""
     type: python
-  - end: 213
+  - end: 75
+    prefix: ") -> str:\n    _parts = []\n    def greet(who: str):\n        _parts.append(f\"\"\"<h1>Hello, ‹ESCAPE:{"
+    start: 70
+    suffix: ""
+    type: python
+  - end: 214
     prefix: "}›!</h1>\"\"\")\n    def make_badge(text: str, color: str = \"blue\") -> str:\n        _parts.append(f\"\"\"<span class=\"badge badge-{color}\">‹ESCAPE:{"
-    start: 209
+    start: 208
     suffix: ""
     type: python
-  - end: 320
+  - end: 321
     prefix: "}›</span>\"\"\")\n    async def fetch_and_render(url: str):\n        _parts.append(f\"\"\"<div class=\"loading\">Fetching ‹ESCAPE:{"
-    start: 317
+    start: 316
     suffix: ""
     type: python
-  - end: 573
-    prefix: "}›...</div>\"\"\")\n    def render_list(items: list, title: str = \"List\"):\n        _parts.append(\"<div class=\\\"list-container\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        if items:\n            _parts.append(\"<ul>\")\n            for item in items:\n                _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 569
+  - end: 490
+    prefix: "}›...</div>\"\"\")\n    def render_list(items: list, title: str = \"List\"):\n        _parts.append(\"<div class=\\\"list-container\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        if "
+    start: 485
     suffix: ""
     type: python
-  - end: 747
+  - end: 542
+    prefix: ":\n            _parts.append(\"<ul>\")\n            for item in "
+    start: 537
+    suffix: ""
+    type: python
+  - end: 574
+    prefix: ":\n                _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 568
+    suffix: ""
+    type: python
+  - end: 748
     prefix: "}›</li>\"\"\")\n            _parts.append(\"</ul>\")\n        else:\n            _parts.append(\"\"\"<p>No items</p>\"\"\")\n        _parts.append(\"</div>\")\n    greet(name)\n    _parts.append(f\"\"\"‹ESCAPE:{"
-    start: 721
+    start: 720
     suffix: "}›\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -38,25 +53,35 @@ ranges:
   - compiled_end: 166
     compiled_start: 163
     range_type: Python
-    source_end: 74
-    source_start: 71
+    source_end: 75
+    source_start: 70
   - compiled_end: 311
     compiled_start: 307
     range_type: Python
-    source_end: 213
-    source_start: 209
+    source_end: 214
+    source_start: 208
   - compiled_end: 435
     compiled_start: 432
     range_type: Python
-    source_end: 320
-    source_start: 317
+    source_end: 321
+    source_start: 316
+  - compiled_end: 676
+    compiled_start: 671
+    range_type: Python
+    source_end: 490
+    source_start: 485
+  - compiled_end: 741
+    compiled_start: 736
+    range_type: Python
+    source_end: 542
+    source_start: 537
   - compiled_end: 794
     compiled_start: 790
     range_type: Python
-    source_end: 573
-    source_start: 569
+    source_end: 574
+    source_start: 568
   - compiled_end: 1009
     compiled_start: 983
     range_type: Python
-    source_end: 747
-    source_start: 721
+    source_end: 748
+    source_start: 720

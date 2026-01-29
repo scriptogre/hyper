@@ -4,29 +4,39 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/expressions/comprehensions.hyper
 ---
 injections:
-  - end: 83
-    prefix: "from hyper import escape, replace_markers\n\ndef Comprehensions(items: list, data: dict) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
-    start: 58
+  - end: 11
+    prefix: "from hyper import escape, replace_markers\n\ndef Comprehensions("
+    start: 0
     suffix: ""
     type: python
-  - end: 139
+  - end: 22
+    prefix: ", "
+    start: 12
+    suffix: ""
+    type: python
+  - end: 84
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 57
+    suffix: ""
+    type: python
+  - end: 140
     prefix: "}›</span><span>‹ESCAPE:{"
-    start: 99
+    start: 98
     suffix: ""
     type: python
-  - end: 194
+  - end: 195
     prefix: "}›</span><span>‹ESCAPE:{"
-    start: 155
+    start: 154
     suffix: ""
     type: python
-  - end: 494
+  - end: 495
     prefix: "}›</span><span>{k: v.upper() for k, v in data.items()}</span><span>{k: v for k, v in data.items() if v}</span><span>{x for x in items}</span><span>‹ESCAPE:{"
-    start: 469
+    start: 468
     suffix: ""
     type: python
-  - end: 541
+  - end: 542
     prefix: "}›</span><span>‹ESCAPE:{"
-    start: 510
+    start: 509
     suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -43,25 +53,25 @@ ranges:
   - compiled_end: 173
     compiled_start: 148
     range_type: Python
-    source_end: 83
-    source_start: 58
+    source_end: 84
+    source_start: 57
   - compiled_end: 237
     compiled_start: 197
     range_type: Python
-    source_end: 139
-    source_start: 99
+    source_end: 140
+    source_start: 98
   - compiled_end: 300
     compiled_start: 261
     range_type: Python
-    source_end: 194
-    source_start: 155
+    source_end: 195
+    source_start: 154
   - compiled_end: 481
     compiled_start: 456
     range_type: Python
-    source_end: 494
-    source_start: 469
+    source_end: 495
+    source_start: 468
   - compiled_end: 536
     compiled_start: 505
     range_type: Python
-    source_end: 541
-    source_start: 510
+    source_end: 542
+    source_start: 509

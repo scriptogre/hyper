@@ -4,24 +4,34 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/edge_cases/decorators.hyper
 ---
 injections:
-  - end: 98
-    prefix: "from hyper import escape, replace_markers\n\ndef Decorators(items: list, *, _children: str = \"\") -> str:\n    _parts = []\n    @fragment\n    def Badge(text: str):\n        _parts.append(f\"\"\"<span class=\"badge\">‹ESCAPE:{"
-    start: 94
+  - end: 11
+    prefix: "from hyper import escape, replace_markers\n\ndef Decorators("
+    start: 0
     suffix: ""
     type: python
-  - end: 237
-    prefix: "}›</span>\"\"\")\n    @cache\n    @fragment\n    def CachedList(items: list):\n        _parts.append(\"<ul>\")\n        for item in items:\n            _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 233
+  - end: 99
+    prefix: ", *, _children: str = \"\") -> str:\n    _parts = []\n    @fragment\n    def Badge(text: str):\n        _parts.append(f\"\"\"<span class=\"badge\">‹ESCAPE:{"
+    start: 93
     suffix: ""
     type: python
-  - end: 460
+  - end: 214
+    prefix: "}›</span>\"\"\")\n    @cache\n    @fragment\n    def CachedList(items: list):\n        _parts.append(\"<ul>\")\n        for item in "
+    start: 209
+    suffix: ""
+    type: python
+  - end: 238
+    prefix: ":\n            _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 232
+    suffix: ""
+    type: python
+  - end: 461
     prefix: "}›</li>\"\"\")\n        _parts.append(\"</ul>\")\n    @fragment(name=\"card\")\n    def Card(title: str):\n        _parts.append(\"<div class=\\\"card\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        _parts.append(_children)\n        _parts.append(\"</div>\")\n    _parts.append(f\"\"\"‹ESCAPE:{"
-    start: 448
+    start: 447
     suffix: ""
     type: python
-  - end: 480
+  - end: 481
     prefix: "}›‹ESCAPE:{"
-    start: 463
+    start: 462
     suffix: "}›\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -33,20 +43,25 @@ ranges:
   - compiled_end: 218
     compiled_start: 214
     range_type: Python
-    source_end: 98
-    source_start: 94
+    source_end: 99
+    source_start: 93
+  - compiled_end: 345
+    compiled_start: 340
+    range_type: Python
+    source_end: 214
+    source_start: 209
   - compiled_end: 394
     compiled_start: 390
     range_type: Python
-    source_end: 237
-    source_start: 233
+    source_end: 238
+    source_start: 232
   - compiled_end: 742
     compiled_start: 730
     range_type: Python
-    source_end: 460
-    source_start: 448
+    source_end: 461
+    source_start: 447
   - compiled_end: 770
     compiled_start: 753
     range_type: Python
-    source_end: 480
-    source_start: 463
+    source_end: 481
+    source_start: 462

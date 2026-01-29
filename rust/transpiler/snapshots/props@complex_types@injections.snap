@@ -4,29 +4,74 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/props/complex_types.hyper
 ---
 injections:
-  - end: 228
-    prefix: "from hyper import escape, replace_markers\n\ndef ComplexTypes(simple: str, with_default: str = \"default\", optional: str | None = None, items: list[str], mapping: dict[str, int], nested: list[dict[str, Any]], callback: Callable[[int], str], *args: tuple, **kwargs: dict) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div><span>‹ESCAPE:{"
-    start: 222
+  - end: 11
+    prefix: "from hyper import escape, replace_markers\n\ndef ComplexTypes("
+    start: 0
     suffix: ""
     type: python
-  - end: 260
-    prefix: "}›</span><span>‹ESCAPE:{"
-    start: 248
+  - end: 41
+    prefix: ", "
+    start: 12
     suffix: ""
     type: python
-  - end: 298
-    prefix: "}›</span><span>‹ESCAPE:{"
-    start: 280
+  - end: 69
+    prefix: ", "
+    start: 42
     suffix: ""
     type: python
-  - end: 328
-    prefix: "}›</span><span>‹ESCAPE:{"
-    start: 318
+  - end: 86
+    prefix: ", "
+    start: 70
     suffix: ""
     type: python
-  - end: 360
+  - end: 110
+    prefix: ", "
+    start: 87
+    suffix: ""
+    type: python
+  - end: 139
+    prefix: ", "
+    start: 111
+    suffix: ""
+    type: python
+  - end: 170
+    prefix: ", "
+    start: 140
+    suffix: ""
+    type: python
+  - end: 183
+    prefix: ", "
+    start: 171
+    suffix: ""
+    type: python
+  - end: 198
+    prefix: ", "
+    start: 184
+    suffix: ""
+    type: python
+  - end: 229
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div><span>‹ESCAPE:{"
+    start: 221
+    suffix: ""
+    type: python
+  - end: 261
     prefix: "}›</span><span>‹ESCAPE:{"
-    start: 348
+    start: 247
+    suffix: ""
+    type: python
+  - end: 299
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 279
+    suffix: ""
+    type: python
+  - end: 329
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 317
+    suffix: ""
+    type: python
+  - end: 361
+    prefix: "}›</span><span>‹ESCAPE:{"
+    start: 347
     suffix: "}›</span></div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -78,25 +123,25 @@ ranges:
   - compiled_end: 340
     compiled_start: 334
     range_type: Python
-    source_end: 228
-    source_start: 222
+    source_end: 229
+    source_start: 221
   - compiled_end: 376
     compiled_start: 364
     range_type: Python
-    source_end: 260
-    source_start: 248
+    source_end: 261
+    source_start: 247
   - compiled_end: 418
     compiled_start: 400
     range_type: Python
-    source_end: 298
-    source_start: 280
+    source_end: 299
+    source_start: 279
   - compiled_end: 452
     compiled_start: 442
     range_type: Python
-    source_end: 328
-    source_start: 318
+    source_end: 329
+    source_start: 317
   - compiled_end: 488
     compiled_start: 476
     range_type: Python
-    source_end: 360
-    source_start: 348
+    source_end: 361
+    source_start: 347

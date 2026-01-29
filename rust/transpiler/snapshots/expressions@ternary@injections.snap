@@ -4,14 +4,19 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/expressions/ternary.hyper
 ---
 injections:
-  - end: 29
-    prefix: "from hyper import escape, replace_markers\n\ndef Ternary(count: int) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
-    start: 24
+  - end: 10
+    prefix: "from hyper import escape, replace_markers\n\ndef Ternary("
+    start: 0
     suffix: ""
     type: python
-  - end: 65
+  - end: 30
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 23
+    suffix: ""
+    type: python
+  - end: 66
     prefix: "}› ‹ESCAPE:{"
-    start: 32
+    start: 31
     suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -23,10 +28,10 @@ ranges:
   - compiled_end: 133
     compiled_start: 128
     range_type: Python
-    source_end: 29
-    source_start: 24
+    source_end: 30
+    source_start: 23
   - compiled_end: 178
     compiled_start: 145
     range_type: Python
-    source_end: 65
-    source_start: 32
+    source_end: 66
+    source_start: 31

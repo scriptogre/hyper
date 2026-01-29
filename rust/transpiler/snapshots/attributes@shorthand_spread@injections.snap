@@ -3,7 +3,27 @@ source: transpiler/tests/golden_tests.rs
 expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
 input_file: transpiler/tests/attributes/shorthand_spread.hyper
 ---
-injections: []
+injections:
+  - end: 9
+    prefix: "from hyper import replace_markers\n\ndef ShorthandSpread("
+    start: 0
+    suffix: ""
+    type: python
+  - end: 20
+    prefix: ", "
+    start: 10
+    suffix: ""
+    type: python
+  - end: 35
+    prefix: ", "
+    start: 21
+    suffix: ""
+    type: python
+  - end: 47
+    prefix: ", "
+    start: 36
+    suffix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› /><div ‹SPREAD:{props}›>Content</div><button name=‹SPREAD:{name}› ‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button><input type=\"text\" ‹SPREAD:{props}› class=\"input\" />\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
 ranges:
   - compiled_end: 64
     compiled_start: 55

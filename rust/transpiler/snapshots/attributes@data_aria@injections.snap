@@ -3,7 +3,12 @@ source: transpiler/tests/golden_tests.rs
 expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
 input_file: transpiler/tests/attributes/data_aria.hyper
 ---
-injections: []
+injections:
+  - end: 15
+    prefix: "from hyper import replace_markers\n\ndef DataAria("
+    start: 0
+    suffix: ") -> str:\n    _parts = []\n    data = {\"user-id\": 123, \"role\": \"admin\"}\n    aria = {\"label\": \"Close\", \"hidden\": is_hidden}\n    _parts.append(f\"\"\"<div data=‹DATA:{data}› aria=‹ARIA:{aria}›>Content</div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
 ranges:
   - compiled_end: 63
     compiled_start: 48

@@ -47,6 +47,11 @@ class HyperInspectorToolWindowFactory : ToolWindowFactory {
         val rangesPanel = HyperRangesPanel(project, toolWindow)
         val rangesContent = contentFactory.createContent(rangesPanel, "Ranges", false)
         toolWindow.contentManager.addContent(rangesContent)
+
+        // Tab 3: Actual injections with prefix/suffix
+        val injectionsPanel = HyperInjectionsPanel(project, toolWindow)
+        val injectionsContent = contentFactory.createContent(injectionsPanel, "Injections", false)
+        toolWindow.contentManager.addContent(injectionsContent)
     }
 }
 
@@ -482,6 +487,213 @@ class HyperRangesPanel(
     }
 
     private fun updateRangesText(text: String) {
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+            com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction {
+                document.setText(text)
+            }
+        }
+    }
+
+    override fun dispose() {
+        listenerDisposable?.let { Disposer.dispose(it) }
+        listenerDisposable = null
+        updateAlarm.cancelAllRequests()
+        editorFactory.releaseEditor(editor)
+    }
+}
+
+class HyperInjectionsPanel(
+    private val project: Project,
+    toolWindow: ToolWindow
+) : JPanel(BorderLayout()), Disposable {
+
+    private val editorFactory = EditorFactory.getInstance()
+    private val document = editorFactory.createDocument("")
+    private val editor: EditorEx
+
+    private val backgroundColor = Color(0x19, 0x1a, 0x1c)
+
+    private var listenerDisposable: Disposable? = null
+    private val updateAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this)
+
+    init {
+        editor = editorFactory.createViewer(document, project) as EditorEx
+        editor.settings.apply {
+            isLineNumbersShown = false
+            isWhitespacesShown = false
+            isFoldingOutlineShown = false
+            additionalLinesCount = 0
+            additionalColumnsCount = 0
+            isCaretRowShown = false
+        }
+
+        editor.backgroundColor = backgroundColor
+        val scheme = EditorColorsManager.getInstance().globalScheme.clone() as com.intellij.openapi.editor.colors.EditorColorsScheme
+        scheme.setColor(com.intellij.openapi.editor.colors.EditorColors.GUTTER_BACKGROUND, backgroundColor)
+        editor.colorsScheme = scheme
+        editor.colorsScheme.editorFontName = "JetBrains Mono"
+        editor.colorsScheme.editorFontSize = 12
+
+        add(editor.component, BorderLayout.CENTER)
+
+        project.messageBus.connect(this).subscribe(
+            FileEditorManagerListener.FILE_EDITOR_MANAGER,
+            object : FileEditorManagerListener {
+                override fun selectionChanged(event: FileEditorManagerEvent) {
+                    updateContent()
+                }
+            }
+        )
+
+        Disposer.register(toolWindow.disposable, this)
+        updateContent()
+    }
+
+    private fun updateContent() {
+        val textEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+        val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
+
+        if (!file.name.endsWith(".hyper")) {
+            updateText("# Open a .hyper file to see injections")
+            return
+        }
+
+        val sourceText = textEditor.document.text
+        if (sourceText.isBlank()) {
+            updateText("# Empty file")
+            return
+        }
+
+        try {
+            val service = HyperTranspilerService.getInstance(project)
+            val functionName = file.nameWithoutExtension
+            val result = service.transpile(sourceText, includeInjection = true, functionName = functionName)
+
+            val formatted = formatInjections(sourceText, result)
+            updateText(formatted)
+
+            setupDocumentListener(textEditor)
+        } catch (e: Exception) {
+            updateText("# Error: ${e.message}\n\n${e.stackTraceToString()}")
+        }
+    }
+
+    private fun formatInjections(sourceText: String, result: HyperTranspilerService.TranspileResult): String {
+        val sb = StringBuilder()
+
+        sb.appendLine("INJECTIONS (what the IDE receives)")
+        sb.appendLine("━".repeat(80))
+        sb.appendLine()
+
+        val pythonInjections = result.pythonInjections
+        val htmlInjections = result.htmlInjections
+
+        sb.appendLine("Python injections: ${pythonInjections.size}")
+        sb.appendLine("HTML injections: ${htmlInjections.size}")
+        sb.appendLine()
+
+        if (pythonInjections.isEmpty() && htmlInjections.isEmpty()) {
+            sb.appendLine("No injections found!")
+            sb.appendLine()
+            sb.appendLine("This means the IDE won't apply any language highlighting.")
+            sb.appendLine("Check if the transpiler is producing injections with needs_injection=true")
+            return sb.toString()
+        }
+
+        // Show Python injections
+        if (pythonInjections.isNotEmpty()) {
+            sb.appendLine("─── PYTHON INJECTIONS ───")
+            sb.appendLine()
+
+            for ((index, inj) in pythonInjections.withIndex()) {
+                val sourceSnippet = safeSubstring(sourceText, inj.start, inj.end)
+
+                sb.appendLine("[${index + 1}] source[${inj.start}:${inj.end}] = ${formatSnippet(sourceSnippet, 40)}")
+                sb.appendLine()
+                sb.appendLine("    prefix (${inj.prefix.length} chars):")
+                sb.appendLine("    ┌─────────────────────────────────────")
+                for (line in inj.prefix.lines().take(8)) {
+                    sb.appendLine("    │ ${line.take(60)}")
+                }
+                if (inj.prefix.lines().size > 8) {
+                    sb.appendLine("    │ ... (${inj.prefix.lines().size - 8} more lines)")
+                }
+                sb.appendLine("    └─────────────────────────────────────")
+                sb.appendLine()
+                sb.appendLine("    suffix (${inj.suffix.length} chars):")
+                sb.appendLine("    ┌─────────────────────────────────────")
+                for (line in inj.suffix.lines().take(8)) {
+                    sb.appendLine("    │ ${line.take(60)}")
+                }
+                if (inj.suffix.lines().size > 8) {
+                    sb.appendLine("    │ ... (${inj.suffix.lines().size - 8} more lines)")
+                }
+                sb.appendLine("    └─────────────────────────────────────")
+                sb.appendLine()
+
+                // Show the concatenated result (what the IDE sees)
+                sb.appendLine("    Virtual Python file fragment:")
+                sb.appendLine("    ┌─────────────────────────────────────")
+                val virtualContent = inj.prefix + sourceSnippet + inj.suffix
+                for (line in virtualContent.lines().take(10)) {
+                    sb.appendLine("    │ ${line.take(60)}")
+                }
+                if (virtualContent.lines().size > 10) {
+                    sb.appendLine("    │ ... (${virtualContent.lines().size - 10} more lines)")
+                }
+                sb.appendLine("    └─────────────────────────────────────")
+                sb.appendLine()
+            }
+        }
+
+        // Show HTML injections
+        if (htmlInjections.isNotEmpty()) {
+            sb.appendLine("─── HTML INJECTIONS ───")
+            sb.appendLine()
+
+            for ((index, inj) in htmlInjections.withIndex()) {
+                val sourceSnippet = safeSubstring(sourceText, inj.start, inj.end)
+                sb.appendLine("[${index + 1}] source[${inj.start}:${inj.end}] = ${formatSnippet(sourceSnippet, 40)}")
+                sb.appendLine("    prefix: ${formatSnippet(inj.prefix, 60)}")
+                sb.appendLine("    suffix: ${formatSnippet(inj.suffix, 60)}")
+                sb.appendLine()
+            }
+        }
+
+        return sb.toString()
+    }
+
+    private fun safeSubstring(text: String, start: Int, end: Int): String {
+        return if (start >= 0 && end <= text.length && start <= end) {
+            text.substring(start, end)
+        } else {
+            "!!! OUT OF BOUNDS (${start}:${end} in ${text.length}) !!!"
+        }
+    }
+
+    private fun formatSnippet(text: String, maxLen: Int): String {
+        val escaped = text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+        return "\"${escaped.take(maxLen)}${if (escaped.length > maxLen) "..." else ""}\""
+    }
+
+    private fun setupDocumentListener(sourceEditor: com.intellij.openapi.editor.Editor) {
+        listenerDisposable?.let { Disposer.dispose(it) }
+        listenerDisposable = null
+
+        val newDisposable = Disposer.newDisposable(this, "HyperInjections document listener")
+
+        val documentListener = object : DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+                updateAlarm.cancelAllRequests()
+                updateAlarm.addRequest(::updateContent, 300)
+            }
+        }
+
+        sourceEditor.document.addDocumentListener(documentListener, newDisposable)
+        listenerDisposable = newDisposable
+    }
+
+    private fun updateText(text: String) {
         com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
             com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction {
                 document.setText(text)

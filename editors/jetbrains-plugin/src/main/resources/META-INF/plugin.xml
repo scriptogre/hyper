@@ -23,6 +23,10 @@
             language="Hyper"
             implementationClass="com.hyper.plugin.HyperSyntaxHighlighterFactory"/>
 
+        <lang.commenter
+            language="Hyper"
+            implementationClass="com.hyper.plugin.HyperCommenter"/>
+
         <multiHostInjector implementation="com.hyper.plugin.HyperLanguageInjector"/>
 
         <!-- Auto-generate .py on save -->

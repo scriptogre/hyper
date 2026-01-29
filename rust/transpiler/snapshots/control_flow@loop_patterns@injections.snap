@@ -4,59 +4,129 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/control_flow/loop_patterns.hyper
 ---
 injections:
-  - end: 156
-    prefix: "from hyper import escape, replace_markers\n\ndef LoopPatterns(items: list, pairs: list, names: list, scores: list, matrix: list) -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for i, item in enumerate(items):\n        _parts.append(f\"\"\"<li data-index=\"{i}\">‹ESCAPE:{"
-    start: 152
+  - end: 11
+    prefix: "from hyper import escape, replace_markers\n\ndef LoopPatterns("
+    start: 0
     suffix: ""
     type: python
-  - end: 285
-    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ol>\")\n    for num, item in enumerate(items, start=1):\n        _parts.append(f\"\"\"<li value=\"{num}\">‹ESCAPE:{"
-    start: 281
+  - end: 23
+    prefix: ", "
+    start: 12
     suffix: ""
     type: python
-  - end: 375
-    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ol>\")\n    _parts.append(\"<dl>\")\n    for key, value in pairs:\n        _parts.append(f\"\"\"<dt>‹ESCAPE:{"
-    start: 372
+  - end: 35
+    prefix: ", "
+    start: 24
     suffix: ""
     type: python
-  - end: 400
+  - end: 48
+    prefix: ", "
+    start: 36
+    suffix: ""
+    type: python
+  - end: 61
+    prefix: ", "
+    start: 49
+    suffix: ""
+    type: python
+  - end: 120
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for i, item in "
+    start: 104
+    suffix: ""
+    type: python
+  - end: 157
+    prefix: ":\n        _parts.append(f\"\"\"<li data-index=\"{i}\">‹ESCAPE:{"
+    start: 151
+    suffix: ""
+    type: python
+  - end: 252
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ol>\")\n    for num, item in "
+    start: 227
+    suffix: ""
+    type: python
+  - end: 286
+    prefix: ":\n        _parts.append(f\"\"\"<li value=\"{num}\">‹ESCAPE:{"
+    start: 280
+    suffix: ""
+    type: python
+  - end: 357
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ol>\")\n    _parts.append(\"<dl>\")\n    for key, value in "
+    start: 352
+    suffix: ""
+    type: python
+  - end: 376
+    prefix: ":\n        _parts.append(f\"\"\"<dt>‹ESCAPE:{"
+    start: 371
+    suffix: ""
+    type: python
+  - end: 401
     prefix: "}›</dt><dd>‹ESCAPE:{"
-    start: 395
+    start: 394
     suffix: ""
     type: python
-  - end: 513
-    prefix: "}›</dd>\"\"\")\n    _parts.append(\"</dl>\")\n    _parts.append(\"<table>\")\n    for name, score in zip(names, scores):\n        _parts.append(f\"\"\"<tr><td>‹ESCAPE:{"
-    start: 509
+  - end: 477
+    prefix: "}›</dd>\"\"\")\n    _parts.append(\"</dl>\")\n    _parts.append(\"<table>\")\n    for name, score in "
+    start: 459
     suffix: ""
     type: python
-  - end: 542
+  - end: 514
+    prefix: ":\n        _parts.append(f\"\"\"<tr><td>‹ESCAPE:{"
+    start: 508
+    suffix: ""
+    type: python
+  - end: 543
     prefix: "}›</td><td>‹ESCAPE:{"
-    start: 537
+    start: 536
     suffix: ""
     type: python
-  - end: 694
-    prefix: "}›</td></tr>\"\"\")\n    _parts.append(\"</table>\")\n    _parts.append(\"<table>\")\n    for row in matrix:\n        _parts.append(\"<tr>\")\n        for cell in row:\n            _parts.append(f\"\"\"<td>‹ESCAPE:{"
-    start: 690
+  - end: 625
+    prefix: "}›</td></tr>\"\"\")\n    _parts.append(\"</table>\")\n    _parts.append(\"<table>\")\n    for row in "
+    start: 619
     suffix: ""
     type: python
-  - end: 812
-    prefix: "}›</td>\"\"\")\n        _parts.append(\"</tr>\")\n    _parts.append(\"</table>\")\n    _parts.append(\"<dl>\")\n    for k, v in items.items():\n        _parts.append(f\"\"\"<dt>‹ESCAPE:{"
-    start: 811
+  - end: 667
+    prefix: ":\n        _parts.append(\"<tr>\")\n        for cell in "
+    start: 664
     suffix: ""
     type: python
-  - end: 833
+  - end: 695
+    prefix: ":\n            _parts.append(f\"\"\"<td>‹ESCAPE:{"
+    start: 689
+    suffix: ""
+    type: python
+  - end: 796
+    prefix: "}›</td>\"\"\")\n        _parts.append(\"</tr>\")\n    _parts.append(\"</table>\")\n    _parts.append(\"<dl>\")\n    for k, v in "
+    start: 783
+    suffix: ""
+    type: python
+  - end: 813
+    prefix: ":\n        _parts.append(f\"\"\"<dt>‹ESCAPE:{"
+    start: 810
+    suffix: ""
+    type: python
+  - end: 834
     prefix: "}›</dt><dd>‹ESCAPE:{"
-    start: 832
+    start: 831
     suffix: ""
     type: python
-  - end: 910
-    prefix: "}›</dd>\"\"\")\n    _parts.append(\"</dl>\")\n    _parts.append(\"<ul>\")\n    for i in range(5):\n        _parts.append(f\"\"\"<li>Item ‹ESCAPE:{"
-    start: 909
+  - end: 889
+    prefix: "}›</dd>\"\"\")\n    _parts.append(\"</dl>\")\n    _parts.append(\"<ul>\")\n    for i in "
+    start: 881
     suffix: ""
     type: python
-  - end: 998
-    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ul>\")\n    for item in reversed(items):\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 994
+  - end: 911
+    prefix: ":\n        _parts.append(f\"\"\"<li>Item ‹ESCAPE:{"
+    start: 908
+    suffix: ""
+    type: python
+  - end: 979
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ul>\")\n    for item in "
+    start: 964
+    suffix: ""
+    type: python
+  - end: 999
+    prefix: ":\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 993
     suffix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -85,58 +155,103 @@ ranges:
     range_type: Python
     source_end: 61
     source_start: 49
+  - compiled_end: 212
+    compiled_start: 196
+    range_type: Python
+    source_end: 120
+    source_start: 104
   - compiled_end: 274
     compiled_start: 270
     range_type: Python
-    source_end: 156
-    source_start: 152
+    source_end: 157
+    source_start: 151
+  - compiled_end: 385
+    compiled_start: 360
+    range_type: Python
+    source_end: 252
+    source_start: 227
   - compiled_end: 444
     compiled_start: 440
     range_type: Python
-    source_end: 285
-    source_start: 281
+    source_end: 286
+    source_start: 280
+  - compiled_end: 536
+    compiled_start: 531
+    range_type: Python
+    source_end: 357
+    source_start: 352
   - compiled_end: 580
     compiled_start: 577
     range_type: Python
-    source_end: 375
-    source_start: 372
+    source_end: 376
+    source_start: 371
   - compiled_end: 605
     compiled_start: 600
     range_type: Python
-    source_end: 400
-    source_start: 395
+    source_end: 401
+    source_start: 394
+  - compiled_end: 714
+    compiled_start: 696
+    range_type: Python
+    source_end: 477
+    source_start: 459
   - compiled_end: 763
     compiled_start: 759
     range_type: Python
-    source_end: 513
-    source_start: 509
+    source_end: 514
+    source_start: 508
   - compiled_end: 788
     compiled_start: 783
     range_type: Python
-    source_end: 542
-    source_start: 537
+    source_end: 543
+    source_start: 536
+  - compiled_end: 885
+    compiled_start: 879
+    range_type: Python
+    source_end: 625
+    source_start: 619
+  - compiled_end: 940
+    compiled_start: 937
+    range_type: Python
+    source_end: 667
+    source_start: 664
   - compiled_end: 989
     compiled_start: 985
     range_type: Python
-    source_end: 694
-    source_start: 690
+    source_end: 695
+    source_start: 689
+  - compiled_end: 1117
+    compiled_start: 1104
+    range_type: Python
+    source_end: 796
+    source_start: 783
   - compiled_end: 1159
     compiled_start: 1158
     range_type: Python
-    source_end: 812
-    source_start: 811
+    source_end: 813
+    source_start: 810
   - compiled_end: 1180
     compiled_start: 1179
     range_type: Python
-    source_end: 833
-    source_start: 832
+    source_end: 834
+    source_start: 831
+  - compiled_end: 1266
+    compiled_start: 1258
+    range_type: Python
+    source_end: 889
+    source_start: 881
   - compiled_end: 1313
     compiled_start: 1312
     range_type: Python
-    source_end: 910
-    source_start: 909
+    source_end: 911
+    source_start: 908
+  - compiled_end: 1409
+    compiled_start: 1394
+    range_type: Python
+    source_end: 979
+    source_start: 964
   - compiled_end: 1454
     compiled_start: 1450
     range_type: Python
-    source_end: 998
-    source_start: 994
+    source_end: 999
+    source_start: 993

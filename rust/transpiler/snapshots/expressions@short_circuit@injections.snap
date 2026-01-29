@@ -4,9 +4,19 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/expressions/short_circuit.hyper
 ---
 injections:
-  - end: 98
-    prefix: "from hyper import escape, replace_markers\n\ndef ShortCircuit(show_warning: bool, message: str) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div>‹ESCAPE:{"
-    start: 49
+  - end: 18
+    prefix: "from hyper import escape, replace_markers\n\ndef ShortCircuit("
+    start: 0
+    suffix: ""
+    type: python
+  - end: 31
+    prefix: ", "
+    start: 19
+    suffix: ""
+    type: python
+  - end: 99
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div>‹ESCAPE:{"
+    start: 48
     suffix: "}›</div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -23,5 +33,5 @@ ranges:
   - compiled_end: 203
     compiled_start: 154
     range_type: Python
-    source_end: 98
-    source_start: 49
+    source_end: 99
+    source_start: 48
