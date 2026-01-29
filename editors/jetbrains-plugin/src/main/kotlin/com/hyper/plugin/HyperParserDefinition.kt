@@ -27,7 +27,7 @@ class HyperParserDefinition : ParserDefinition {
 
     override fun getFileNodeType(): IFileElementType = FILE
 
-    override fun getCommentTokens(): TokenSet = TokenSet.EMPTY
+    override fun getCommentTokens(): TokenSet = TokenSet.create(HyperTypes.COMMENT_TOKEN)
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
 

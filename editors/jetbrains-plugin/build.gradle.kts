@@ -30,7 +30,10 @@ dependencies {
     intellijPlatform {
         pycharmCommunity("2025.1")
         bundledPlugin("PythonCore")
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
     }
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 grammarKit {

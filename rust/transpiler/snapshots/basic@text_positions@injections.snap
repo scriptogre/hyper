@@ -3,7 +3,12 @@ source: transpiler/tests/golden_tests.rs
 expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
 input_file: transpiler/tests/basic/text_positions.hyper
 ---
-injections: []
+injections:
+  - end: 9
+    prefix: def TextPositions(
+    start: 0
+    suffix: ") -> str:\n    _parts = []\n    _parts.append(\"\"\"Text before any element<div>Inside div</div>Text between elements<span>Inside span</span>Text after elementsMore text<p>Multilinetext insideparagraph</p>Final text\"\"\")\n    return \"\".join(_parts)\n"
+    type: python
 ranges:
   - compiled_end: 27
     compiled_start: 18

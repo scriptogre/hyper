@@ -60,9 +60,9 @@ pub enum Token {
 
     // === Python Domain ===
     /// Control flow start: if, for, while, match, with, try, def, class, async for, async with, async def
-    ControlStart { keyword: String, rest: String, span: Span },
+    ControlStart { keyword: String, rest: String, span: Span, rest_span: Span },
     /// Control flow continuation: else, elif, case, except, finally
-    ControlContinuation { keyword: String, rest: Option<String>, span: Span },
+    ControlContinuation { keyword: String, rest: Option<String>, span: Span, rest_span: Option<Span> },
     /// Block terminator: end
     End { span: Span },
     /// Python statement (assignment, call, import, etc.)
@@ -732,29 +732,44 @@ impl<'a> Tokenizer<'a> {
         let start = self.position;
         let code = self.consume_to_eol();
         let trimmed = code.trim();
+        let leading_ws = code.len() - code.trim_start().len();
 
         // Strip trailing comment before parsing the control flow statement
         let effective = self.strip_trailing_comment(trimmed);
 
         // Handle compound keywords (async for, async with, async def)
-        let (keyword, rest) = if effective.starts_with("async for ") {
-            ("async for".to_string(), effective[10..].trim_start().to_string())
+        let (keyword, rest, rest_offset_in_effective) = if effective.starts_with("async for ") {
+            let rest_start = 10 + effective[10..].len() - effective[10..].trim_start().len();
+            ("async for".to_string(), effective[10..].trim_start().to_string(), rest_start)
         } else if effective.starts_with("async with ") {
-            ("async with".to_string(), effective[11..].trim_start().to_string())
+            let rest_start = 11 + effective[11..].len() - effective[11..].trim_start().len();
+            ("async with".to_string(), effective[11..].trim_start().to_string(), rest_start)
         } else if effective.starts_with("async def ") {
-            ("async def".to_string(), effective[10..].trim_start().to_string())
+            let rest_start = 10 + effective[10..].len() - effective[10..].trim_start().len();
+            ("async def".to_string(), effective[10..].trim_start().to_string(), rest_start)
         } else if let Some(idx) = effective.find(|c: char| c.is_whitespace() || c == ':') {
+            let after_kw = &effective[idx..];
+            let rest_start = idx + after_kw.len() - after_kw.trim_start().len();
             let kw = &effective[..idx];
-            let r = effective[idx..].trim_start();
-            (kw.to_string(), r.to_string())
+            let r = after_kw.trim_start();
+            (kw.to_string(), r.to_string(), rest_start)
         } else {
-            (effective.to_string(), String::new())
+            (effective.to_string(), String::new(), effective.len())
+        };
+
+        // Calculate rest_span in source coordinates
+        let rest_start_byte = start.byte + leading_ws + rest_offset_in_effective;
+        let rest_end_byte = rest_start_byte + rest.len();
+        let rest_span = Span {
+            start: Position { line: start.line, col: start.col + leading_ws + rest_offset_in_effective, byte: rest_start_byte },
+            end: Position { line: start.line, col: start.col + leading_ws + rest_offset_in_effective + rest.len(), byte: rest_end_byte },
         };
 
         tokens.push(Token::ControlStart {
             keyword,
             rest,
             span: Span { start, end: self.position },
+            rest_span,
         });
     }
 
@@ -762,24 +777,34 @@ impl<'a> Tokenizer<'a> {
         let start = self.position;
         let code = self.consume_to_eol();
         let trimmed = code.trim();
+        let leading_ws = code.len() - code.trim_start().len();
 
         // Extract keyword and optional rest
-        let (keyword, rest) = if let Some(idx) = trimmed.find(|c: char| c.is_whitespace() || c == ':') {
+        let (keyword, rest, rest_span) = if let Some(idx) = trimmed.find(|c: char| c.is_whitespace() || c == ':') {
             let kw = &trimmed[..idx];
-            let r = trimmed[idx..].trim_start();
+            let after_kw = &trimmed[idx..];
+            let r = after_kw.trim_start();
             if r.is_empty() || r == ":" {
-                (kw.to_string(), None)
+                (kw.to_string(), None, None)
             } else {
-                (kw.to_string(), Some(r.to_string()))
+                let rest_offset = idx + after_kw.len() - after_kw.trim_start().len();
+                let rest_start_byte = start.byte + leading_ws + rest_offset;
+                let rest_end_byte = rest_start_byte + r.len();
+                let span = Span {
+                    start: Position { line: start.line, col: start.col + leading_ws + rest_offset, byte: rest_start_byte },
+                    end: Position { line: start.line, col: start.col + leading_ws + rest_offset + r.len(), byte: rest_end_byte },
+                };
+                (kw.to_string(), Some(r.to_string()), Some(span))
             }
         } else {
-            (trimmed.to_string(), None)
+            (trimmed.to_string(), None, None)
         };
 
         tokens.push(Token::ControlContinuation {
             keyword,
             rest,
             span: Span { start, end: self.position },
+            rest_span,
         });
     }
 
@@ -2336,5 +2361,27 @@ mod tests {
         // HTML content should come after separator
         let html_pos = tokens.iter().position(|t| matches!(t, Token::HtmlElementOpen { .. })).unwrap();
         assert!(html_pos > sep_pos, "HTML content should come after separator");
+    }
+}
+
+#[cfg(test)]
+mod rest_span_tests {
+    use super::*;
+
+    #[test]
+    fn test_rest_span_points_to_condition_only() {
+        // rest_span should point to just the condition part, not the keyword or colon
+        let source = "if is_active:\n";
+        let tokens = tokenize(source);
+
+        if let Token::ControlStart { keyword, rest, span: _, rest_span } = &tokens[0] {
+            assert_eq!(keyword, "if");
+            assert_eq!(rest, "is_active:");
+            // rest_span should start after "if " (3 bytes)
+            assert_eq!(rest_span.start.byte, 3);
+            assert_eq!(&source[rest_span.start.byte..rest_span.end.byte], "is_active:");
+        } else {
+            panic!("Expected ControlStart token");
+        }
     }
 }

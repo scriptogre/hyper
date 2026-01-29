@@ -4,14 +4,24 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/props/simple.hyper
 ---
 injections:
-  - end: 48
-    prefix: "from hyper import escape, replace_markers\n\ndef Simple(title: str, count: int) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div><h1>‹ESCAPE:{"
-    start: 43
+  - end: 10
+    prefix: "from hyper import escape, replace_markers\n\ndef Simple("
+    start: 0
     suffix: ""
     type: python
-  - end: 75
+  - end: 21
+    prefix: ", "
+    start: 11
+    suffix: ""
+    type: python
+  - end: 49
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div><h1>‹ESCAPE:{"
+    start: 42
+    suffix: ""
+    type: python
+  - end: 76
     prefix: "}›</h1><p>Count: ‹ESCAPE:{"
-    start: 70
+    start: 69
     suffix: "}›</p></div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -28,10 +38,10 @@ ranges:
   - compiled_end: 147
     compiled_start: 142
     range_type: Python
-    source_end: 48
-    source_start: 43
+    source_end: 49
+    source_start: 42
   - compiled_end: 178
     compiled_start: 173
     range_type: Python
-    source_end: 75
-    source_start: 70
+    source_end: 76
+    source_start: 69

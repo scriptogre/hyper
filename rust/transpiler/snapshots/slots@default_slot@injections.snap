@@ -3,7 +3,12 @@ source: transpiler/tests/golden_tests.rs
 expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
 input_file: transpiler/tests/slots/default_slot.hyper
 ---
-injections: []
+injections:
+  - end: 10
+    prefix: "from hyper import escape\n\ndef DefaultSlot("
+    start: 0
+    suffix: ", *, _children: str = \"\") -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"card\\\">\")\n    _parts.append(\"<h2>\")\n    _parts.append(escape(title))\n    _parts.append(\"</h2>\")\n    _parts.append(_children)\n    _parts.append(\"</div>\")\n    return \"\".join(_parts)\n"
+    type: python
 ranges:
   - compiled_end: 52
     compiled_start: 42

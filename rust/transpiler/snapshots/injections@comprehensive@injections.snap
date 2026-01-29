@@ -1,0 +1,77 @@
+---
+source: transpiler/tests/golden_tests.rs
+expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
+input_file: transpiler/tests/injections/comprehensive.hyper
+---
+injections:
+  - end: 31
+    prefix: "from hyper import escape, replace_markers\n\ndef Comprehensive("
+    start: 22
+    suffix: ""
+    type: python
+  - end: 46
+    prefix: ", "
+    start: 32
+    suffix: ""
+    type: python
+  - end: 69
+    prefix: ", "
+    start: 47
+    suffix: ""
+    type: python
+  - end: 228
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"container\\\">\")\n    _parts.append(\"<span>\")\n    _parts.append(\"Plain text\")\n    _parts.append(\"</span>\")\n    _parts.append(\"<p>\")\n    _parts.append(escape(name))\n    _parts.append(\"</p>\")\n    _parts.append(\"<p>\")\n    _parts.append(\"Count: \")\n    _parts.append(escape(count + 1))\n    _parts.append(\"</p>\")\n    if "
+    start: 219
+    suffix: ""
+    type: python
+  - end: 296
+    prefix: ":\n        _parts.append(\"\"\"<span>Active</span>\"\"\")\n    elif "
+    start: 287
+    suffix: ""
+    type: python
+  - end: 398
+    prefix: ":\n        _parts.append(\"\"\"<span>Has count</span>\"\"\")\n    else:\n        _parts.append(\"\"\"<span>Inactive</span>\"\"\")\n    for item in "
+    start: 393
+    suffix: ""
+    type: python
+  - end: 418
+    prefix: ":\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 412
+    suffix: "}›</li>\"\"\")\n    _parts.append(\"</div>\")\n    return replace_markers(\"\".join(_parts))\n"
+    type: python
+ranges:
+  - compiled_end: 70
+    compiled_start: 61
+    range_type: Python
+    source_end: 31
+    source_start: 22
+  - compiled_end: 86
+    compiled_start: 72
+    range_type: Python
+    source_end: 46
+    source_start: 32
+  - compiled_end: 110
+    compiled_start: 88
+    range_type: Python
+    source_end: 69
+    source_start: 47
+  - compiled_end: 488
+    compiled_start: 479
+    range_type: Python
+    source_end: 228
+    source_start: 219
+  - compiled_end: 557
+    compiled_start: 548
+    range_type: Python
+    source_end: 296
+    source_start: 287
+  - compiled_end: 693
+    compiled_start: 688
+    range_type: Python
+    source_end: 398
+    source_start: 393
+  - compiled_end: 738
+    compiled_start: 734
+    range_type: Python
+    source_end: 418
+    source_start: 412

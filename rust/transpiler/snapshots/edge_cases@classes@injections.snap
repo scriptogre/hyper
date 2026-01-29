@@ -4,15 +4,30 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/edge_cases/classes.hyper
 ---
 injections:
-  - end: 204
-    prefix: "from hyper import escape, replace_markers\n\ndef Classes(title: str, items: list) -> str:\n    _parts = []\n    class Card:\n        def __init__(self, title: str):\n            self.title = title\n        def render(self):\n            _parts.append(f\"\"\"<div class=\"card\"><h3>‹ESCAPE:{"
-    start: 194
+  - end: 10
+    prefix: "from hyper import escape, replace_markers\n\ndef Classes("
+    start: 0
     suffix: ""
     type: python
-  - end: 409
+  - end: 22
+    prefix: ", "
+    start: 11
+    suffix: ""
+    type: python
+  - end: 205
+    prefix: ") -> str:\n    _parts = []\n    class Card:\n        def __init__(self, title: str):\n            self.title = title\n        def render(self):\n            _parts.append(f\"\"\"<div class=\"card\"><h3>‹ESCAPE:{"
+    start: 193
+    suffix: ""
+    type: python
+  - end: 410
     prefix: "}›</h3></div>\"\"\")\n    class List:\n        def __init__(self, items: list):\n            self.items = items\n        def render_item(self, item: str):\n            _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 405
-    suffix: "}›</li>\"\"\")\n        def render(self):\n            _parts.append(\"<ul>\")\n            for item in self.items:\n                self.render_item(item)\n            _parts.append(\"</ul>\")\n    card = Card(title)\n    card.render()\n    return replace_markers(\"\".join(_parts))\n"
+    start: 404
+    suffix: ""
+    type: python
+  - end: 494
+    prefix: "}›</li>\"\"\")\n        def render(self):\n            _parts.append(\"<ul>\")\n            for item in "
+    start: 484
+    suffix: ":\n                self.render_item(item)\n            _parts.append(\"</ul>\")\n    card = Card(title)\n    card.render()\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
   - compiled_end: 65
@@ -28,10 +43,15 @@ ranges:
   - compiled_end: 288
     compiled_start: 278
     range_type: Python
-    source_end: 204
-    source_start: 194
+    source_end: 205
+    source_start: 193
   - compiled_end: 483
     compiled_start: 479
     range_type: Python
-    source_end: 409
-    source_start: 405
+    source_end: 410
+    source_start: 404
+  - compiled_end: 589
+    compiled_start: 579
+    range_type: Python
+    source_end: 494
+    source_start: 484

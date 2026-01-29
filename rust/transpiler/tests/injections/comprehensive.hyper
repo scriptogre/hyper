@@ -1,0 +1,22 @@
+# Frontmatter comment
+name: str
+count: int = 0
+is_active: bool = True
+---
+# Body comment
+<div class="container">
+    # Indented comment
+    <span>Plain text</span>
+    <p>{name}</p>
+    <p>Count: {count + 1}</p>
+    if is_active:
+        <span>Active</span>  # Trailing comment
+    elif count > 0:
+        <span>Has count</span>
+    else:
+        <span>Inactive</span>
+    end
+    for item in items:
+        <li>{item}</li>
+    end
+</div>

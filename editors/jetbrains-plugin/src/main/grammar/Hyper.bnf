@@ -13,6 +13,8 @@
   tokenTypeClass="com.hyper.plugin.psi.HyperTokenType"
 
   tokens = [
+    SEPARATOR_TOKEN = "regexp:[ \t]*---[ \t]*"
+    COMMENT_TOKEN = "regexp:[ \t]*#[^\r\n]*"
     HTML_LINE_TOKEN = "regexp:[ \t]*<[^\r\n]*"
     CONTROL_LINE_TOKEN = "regexp:[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with|fragment)[ \t(:][^\r\n]*"
     END_LINE_TOKEN = "regexp:[ \t]*end[ \t]*"
@@ -27,8 +29,10 @@ root_element ::= element* {
   mixin="com.hyper.plugin.psi.impl.HyperRootMixin"
 }
 
-private element ::= html_line | control_line | end_line | python_line
+private element ::= separator | comment_line | html_line | control_line | end_line | python_line
 
+separator ::= SEPARATOR_TOKEN
+comment_line ::= COMMENT_TOKEN
 html_line ::= HTML_LINE_TOKEN {
   implements="com.intellij.psi.PsiLanguageInjectionHost"
   mixin="com.hyper.plugin.psi.impl.HyperHtmlLineMixin"

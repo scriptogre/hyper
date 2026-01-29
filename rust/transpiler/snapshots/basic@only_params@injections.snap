@@ -3,7 +3,22 @@ source: transpiler/tests/golden_tests.rs
 expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
 input_file: transpiler/tests/basic/only_params.hyper
 ---
-injections: []
+injections:
+  - end: 9
+    prefix: def OnlyParams(
+    start: 0
+    suffix: ""
+    type: python
+  - end: 24
+    prefix: ", "
+    start: 10
+    suffix: ""
+    type: python
+  - end: 36
+    prefix: ", "
+    start: 25
+    suffix: ") -> str:\n    _parts = []\n    return \"\".join(_parts)\n"
+    type: python
 ranges:
   - compiled_end: 24
     compiled_start: 15

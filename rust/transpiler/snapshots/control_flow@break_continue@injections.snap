@@ -4,29 +4,84 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/control_flow/break_continue.hyper
 ---
 injections:
-  - end: 151
-    prefix: "from hyper import escape, replace_markers\n\ndef BreakContinue(items: list, limit: int) -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in items:\n        if item == \"stop\":\n            break\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 147
+  - end: 11
+    prefix: "from hyper import escape, replace_markers\n\ndef BreakContinue("
+    start: 0
     suffix: ""
     type: python
-  - end: 307
-    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ul>\")\n    for item in items:\n        if item.startswith(\"_\"):\n            continue\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 303
+  - end: 22
+    prefix: ", "
+    start: 12
     suffix: ""
     type: python
-  - end: 434
-    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    count = 0\n    while True:\n        if count >= limit:\n            break\n        _parts.append(f\"\"\"<span>‹ESCAPE:{"
-    start: 429
+  - end: 75
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in "
+    start: 70
     suffix: ""
     type: python
-  - end: 606
-    prefix: "}›</span>\"\"\")\n        count = count + 1\n    for outer in items:\n        for inner in items:\n            if inner == outer:\n                break\n            _parts.append(f\"\"\"<span>‹ESCAPE:{"
-    start: 601
+  - end: 102
+    prefix: ":\n        if "
+    start: 88
     suffix: ""
     type: python
-  - end: 614
+  - end: 152
+    prefix: ":\n            break\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 146
+    suffix: ""
+    type: python
+  - end: 222
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    _parts.append(\"<ul>\")\n    for item in "
+    start: 217
+    suffix: ""
+    type: python
+  - end: 255
+    prefix: ":\n        if "
+    start: 235
+    suffix: ""
+    type: python
+  - end: 308
+    prefix: ":\n            continue\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 302
+    suffix: ""
+    type: python
+  - end: 371
+    prefix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    count = 0\n    while "
+    start: 367
+    suffix: ""
+    type: python
+  - end: 394
+    prefix: ":\n        if "
+    start: 380
+    suffix: ""
+    type: python
+  - end: 435
+    prefix: ":\n            break\n        _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 428
+    suffix: ""
+    type: python
+  - end: 503
+    prefix: "}›</span>\"\"\")\n        count = count + 1\n    for outer in "
+    start: 498
+    suffix: ""
+    type: python
+  - end: 527
+    prefix: ":\n        for inner in "
+    start: 522
+    suffix: ""
+    type: python
+  - end: 554
+    prefix: ":\n            if "
+    start: 540
+    suffix: ""
+    type: python
+  - end: 607
+    prefix: ":\n                break\n            _parts.append(f\"\"\"<span>‹ESCAPE:{"
+    start: 600
+    suffix: ""
+    type: python
+  - end: 615
     prefix: "}›-‹ESCAPE:{"
-    start: 609
+    start: 608
     suffix: "}›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -40,28 +95,73 @@ ranges:
     range_type: Python
     source_end: 22
     source_start: 12
+  - compiled_end: 157
+    compiled_start: 152
+    range_type: Python
+    source_end: 75
+    source_start: 70
+  - compiled_end: 184
+    compiled_start: 170
+    range_type: Python
+    source_end: 102
+    source_start: 88
   - compiled_end: 247
     compiled_start: 243
     range_type: Python
-    source_end: 151
-    source_start: 147
+    source_end: 152
+    source_start: 146
+  - compiled_end: 333
+    compiled_start: 328
+    range_type: Python
+    source_end: 222
+    source_start: 217
+  - compiled_end: 366
+    compiled_start: 346
+    range_type: Python
+    source_end: 255
+    source_start: 235
   - compiled_end: 432
     compiled_start: 428
     range_type: Python
-    source_end: 307
-    source_start: 303
+    source_end: 308
+    source_start: 302
+  - compiled_end: 499
+    compiled_start: 495
+    range_type: Python
+    source_end: 371
+    source_start: 367
+  - compiled_end: 526
+    compiled_start: 512
+    range_type: Python
+    source_end: 394
+    source_start: 380
   - compiled_end: 592
     compiled_start: 587
     range_type: Python
-    source_end: 434
-    source_start: 429
+    source_end: 435
+    source_start: 428
+  - compiled_end: 654
+    compiled_start: 649
+    range_type: Python
+    source_end: 503
+    source_start: 498
+  - compiled_end: 682
+    compiled_start: 677
+    range_type: Python
+    source_end: 527
+    source_start: 522
+  - compiled_end: 713
+    compiled_start: 699
+    range_type: Python
+    source_end: 554
+    source_start: 540
   - compiled_end: 787
     compiled_start: 782
     range_type: Python
-    source_end: 606
-    source_start: 601
+    source_end: 607
+    source_start: 600
   - compiled_end: 804
     compiled_start: 799
     range_type: Python
-    source_end: 614
-    source_start: 609
+    source_end: 615
+    source_start: 608

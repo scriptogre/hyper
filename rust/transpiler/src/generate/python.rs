@@ -102,12 +102,14 @@ impl PythonGenerator {
                 if in_fstring {
                     let (start, end) = if expr.escape {
                         // Use ‹ESCAPE:{expr}› marker, handled by runtime replace_markers()
-                        // The marker includes the braces, so we just push the expression
-                        output.push("‹ESCAPE:{");
+                        // Track {expr} including braces for IDE highlighting
+                        output.push("‹ESCAPE:");
                         let start = output.position();
+                        output.push("{");
                         output.push(&expr.expr);
+                        output.push("}");
                         let end = output.position();
-                        output.push("}›");
+                        output.push("›");
                         (start, end)
                     } else {
                         let start = output.position();
@@ -118,10 +120,9 @@ impl PythonGenerator {
                         (start, end)
                     };
 
-                    // For IDE injection, we want just the expression content (skip the braces)
-                    // expr.span includes {x}, so we add 1 to skip { and subtract 1 to skip }
-                    let content_start = expr.span.start.byte + 1;
-                    let content_end = expr.span.end.byte - 1;
+                    // For IDE injection, include the braces so they get f-string highlighting
+                    let content_start = expr.span.start.byte;
+                    let content_end = expr.span.end.byte;
 
                     output.add_range(Range {
                         range_type: RangeType::Python,
@@ -672,7 +673,20 @@ impl PythonGenerator {
         output.push("if ");
         // Remove trailing colon from condition if present (parsing includes it)
         let condition = if_node.condition.trim_end_matches(':').trim();
+        let cond_start = output.position();
         output.push(condition);
+        let cond_end = output.position();
+        // Track condition for Python injection
+        // Adjust source_end to match actual content (trim trailing : and whitespace)
+        let source_end = if_node.condition_span.start.byte + condition.len();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: if_node.condition_span.start.byte,
+            source_end,
+            compiled_start: cond_start,
+            compiled_end: cond_end,
+            needs_injection: true,
+        });
         output.push(":");
         output.newline();
 
@@ -685,11 +699,22 @@ impl PythonGenerator {
             self.emit_nodes(&refs, output, indent + 1);
         }
 
-        for (condition, _, body) in &if_node.elif_branches {
+        for (condition, condition_span, body) in &if_node.elif_branches {
             self.indent(output, indent);
             output.push("elif ");
             let condition = condition.trim_end_matches(':').trim();
+            let cond_start = output.position();
             output.push(condition);
+            let cond_end = output.position();
+            let source_end = condition_span.start.byte + condition.len();
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: condition_span.start.byte,
+                source_end,
+                compiled_start: cond_start,
+                compiled_end: cond_end,
+                needs_injection: true,
+            });
             output.push(":");
             output.newline();
 
@@ -731,7 +756,18 @@ impl PythonGenerator {
 
         // Remove trailing colon from iterable if present (parsing includes it)
         let iterable = for_node.iterable.trim_end_matches(':').trim();
+        let iter_start = output.position();
         output.push(iterable);
+        let iter_end = output.position();
+        let source_end = for_node.iterable_span.start.byte + iterable.len();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: for_node.iterable_span.start.byte,
+            source_end,
+            compiled_start: iter_start,
+            compiled_end: iter_end,
+            needs_injection: true,
+        });
         output.push(":");
         output.newline();
 
@@ -750,7 +786,18 @@ impl PythonGenerator {
         output.push("match ");
         // Remove trailing colon from expr if present (parsing includes it)
         let expr = match_node.expr.trim_end_matches(':').trim();
+        let expr_start = output.position();
         output.push(expr);
+        let expr_end = output.position();
+        let source_end = match_node.expr_span.start.byte + expr.len();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: match_node.expr_span.start.byte,
+            source_end,
+            compiled_start: expr_start,
+            compiled_end: expr_end,
+            needs_injection: true,
+        });
         output.push(":");
         output.newline();
 
@@ -759,7 +806,18 @@ impl PythonGenerator {
             output.push("case ");
             // Remove trailing colon from pattern if present
             let pattern = case.pattern.trim_end_matches(':').trim();
+            let pat_start = output.position();
             output.push(pattern);
+            let pat_end = output.position();
+            let source_end = case.pattern_span.start.byte + pattern.len();
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: case.pattern_span.start.byte,
+                source_end,
+                compiled_start: pat_start,
+                compiled_end: pat_end,
+                needs_injection: true,
+            });
             output.push(":");
             output.newline();
 
@@ -779,7 +837,18 @@ impl PythonGenerator {
         output.push("while ");
         // Remove trailing colon from condition if present (parsing includes it)
         let condition = while_node.condition.trim_end_matches(':').trim();
+        let cond_start = output.position();
         output.push(condition);
+        let cond_end = output.position();
+        let source_end = while_node.condition_span.start.byte + condition.len();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: while_node.condition_span.start.byte,
+            source_end,
+            compiled_start: cond_start,
+            compiled_end: cond_end,
+            needs_injection: true,
+        });
         output.push(":");
         output.newline();
 
@@ -802,7 +871,19 @@ impl PythonGenerator {
         }
         // Remove trailing colon from items if present (parsing includes it)
         let items = with_node.items.trim_end_matches(':').trim();
+        let items_start = output.position();
         output.push(items);
+        let items_end = output.position();
+        // Calculate source_end based on trimmed content length to avoid including the colon
+        let source_end = with_node.items_span.start.byte + items.len();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: with_node.items_span.start.byte,
+            source_end,
+            compiled_start: items_start,
+            compiled_end: items_end,
+            needs_injection: true,
+        });
         output.push(":");
         output.newline();
 
@@ -991,14 +1072,13 @@ impl Generator for PythonGenerator {
             let param_end = output.position();
 
             // Add range for parameter (maps source parameter to compiled signature)
-            // Parameters in frontmatter don't need IDE injection (they're already Python)
             output.add_range(Range {
                 range_type: RangeType::Python,
                 source_start: param.span.start.byte,
                 source_end: param.span.end.byte,
                 compiled_start: param_start,
                 compiled_end: param_end,
-                needs_injection: false,
+                needs_injection: true,
             });
 
             param_count += 1;

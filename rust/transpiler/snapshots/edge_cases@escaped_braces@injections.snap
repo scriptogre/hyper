@@ -4,9 +4,14 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/edge_cases/escaped_braces.hyper
 ---
 injections:
-  - end: 189
-    prefix: "from hyper import escape, replace_markers\n\ndef EscapedBraces(name: str) -> str:\n    _parts = []\n    _parts.append(f\"\"\"<p>Use {variable} for templates</p><p>JSON: {\"key\": \"value\"}</p><p>Static {braces} and dynamic ‹ESCAPE:{"
-    start: 185
+  - end: 9
+    prefix: "from hyper import escape, replace_markers\n\ndef EscapedBraces("
+    start: 0
+    suffix: ""
+    type: python
+  - end: 190
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<p>Use {variable} for templates</p><p>JSON: {\"key\": \"value\"}</p><p>Static {braces} and dynamic ‹ESCAPE:{"
+    start: 184
     suffix: "}›</p><style>.card { background: white; }.card:hover { transform: scale(1.05); }</style><script>const obj = { name: \"{name}\" };</script><div x-data=\"{{ open: false }}\"><button @click=\"open = !open\">Toggle</button></div><p>{{nested}}</p>\"\"\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -18,5 +23,5 @@ ranges:
   - compiled_end: 226
     compiled_start: 222
     range_type: Python
-    source_end: 189
-    source_start: 185
+    source_end: 190
+    source_start: 184

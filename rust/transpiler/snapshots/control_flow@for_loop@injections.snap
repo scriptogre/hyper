@@ -4,9 +4,19 @@ expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\":
 input_file: transpiler/tests/control_flow/for_loop.hyper
 ---
 injections:
-  - end: 68
-    prefix: "from hyper import escape, replace_markers\n\ndef ForLoop(items: list[str]) -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in items:\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
-    start: 64
+  - end: 16
+    prefix: "from hyper import escape, replace_markers\n\ndef ForLoop("
+    start: 0
+    suffix: ""
+    type: python
+  - end: 49
+    prefix: ") -> str:\n    _parts = []\n    _parts.append(\"<ul>\")\n    for item in "
+    start: 44
+    suffix: ""
+    type: python
+  - end: 69
+    prefix: ":\n        _parts.append(f\"\"\"<li>‹ESCAPE:{"
+    start: 63
     suffix: "}›</li>\"\"\")\n    _parts.append(\"</ul>\")\n    return replace_markers(\"\".join(_parts))\n"
     type: python
 ranges:
@@ -15,8 +25,13 @@ ranges:
     range_type: Python
     source_end: 16
     source_start: 0
+  - compiled_end: 144
+    compiled_start: 139
+    range_type: Python
+    source_end: 49
+    source_start: 44
   - compiled_end: 189
     compiled_start: 185
     range_type: Python
-    source_end: 68
-    source_start: 64
+    source_end: 69
+    source_start: 63
