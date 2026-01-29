@@ -65,7 +65,7 @@ impl TreeBuilder {
                 self.current_span(),
             )
             .with_related(*open_span)
-            .with_help("Add 'end' on its own line to close this block."))
+            .with_help("Close with 'end'"))
         }
     }
 
@@ -226,11 +226,12 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::ControlStart { keyword, rest, span } => {
+            Token::ControlStart { keyword, rest, span, rest_span } => {
                 let keyword = keyword.clone();
                 let rest = rest.clone();
                 let span = *span;
-                self.parse_control_flow(&keyword, &rest, &span)
+                let rest_span = *rest_span;
+                self.parse_control_flow(&keyword, &rest, &span, &rest_span)
             }
 
             Token::PythonStatement { code, span } => {
@@ -334,15 +335,16 @@ impl TreeBuilder {
         keyword: &str,
         rest: &str,
         span: &Span,
+        rest_span: &Span,
     ) -> Result<Option<Node>, ParseError> {
         match keyword {
-            "if" => self.parse_if(rest, span),
-            "for" => self.parse_for(rest, span, false),
-            "async for" => self.parse_for(rest, span, true),
-            "while" => self.parse_while(rest, span),
-            "match" => self.parse_match(rest, span),
-            "with" => self.parse_with(rest, span, false),
-            "async with" => self.parse_with(rest, span, true),
+            "if" => self.parse_if(rest, span, rest_span),
+            "for" => self.parse_for(rest, span, rest_span, false),
+            "async for" => self.parse_for(rest, span, rest_span, true),
+            "while" => self.parse_while(rest, span, rest_span),
+            "match" => self.parse_match(rest, span, rest_span),
+            "with" => self.parse_with(rest, span, rest_span, false),
+            "async with" => self.parse_with(rest, span, rest_span, true),
             "try" => self.parse_try(span),
             "def" | "async def" => self.parse_function(keyword, rest, span),
             "class" => self.parse_class(rest, span),
@@ -354,8 +356,8 @@ impl TreeBuilder {
         }
     }
 
-    fn parse_if(&mut self, condition: &str, span: &Span) -> Result<Option<Node>, ParseError> {
-        let condition_span = *span;
+    fn parse_if(&mut self, condition: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+        let condition_span = *rest_span;
         let if_span = *span;
 
         self.advance();
@@ -364,13 +366,14 @@ impl TreeBuilder {
         let mut elif_branches = Vec::new();
         let mut else_branch = None;
 
-        while let Some(Token::ControlContinuation { keyword, rest, span }) =
+        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) =
             self.peek()
         {
             match keyword.as_str() {
                 "elif" => {
                     let elif_cond = rest.clone().unwrap_or_default();
-                    let elif_span = *span;
+                    // Use rest_span if available, fall back to full span
+                    let elif_span = rest_span.unwrap_or(*span);
                     self.advance();
                     let elif_body = self.parse_until_block_end()?;
                     elif_branches.push((elif_cond, elif_span, elif_body));
@@ -397,7 +400,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_for(&mut self, rest: &str, span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
+    fn parse_for(&mut self, rest: &str, span: &Span, rest_span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
         // Parse "binding in iterable"
         let parts: Vec<&str> = rest.splitn(2, " in ").collect();
         if parts.len() != 2 {
@@ -408,14 +411,23 @@ impl TreeBuilder {
                 *span,
             )
             .with_help(format!(
-                "Expected: {} <variable> in <iterable>:\nExample:  {} item in items:",
-                keyword, keyword
+                "Syntax: {} x in items:",
+                keyword
             )));
         }
 
         let binding = parts[0].trim().to_string();
         let iterable = parts[1].trim().to_string();
-        let iterable_span = *span; // TODO: more precise span
+        // Calculate iterable span: rest_span start + offset to "in " + "in ".len()
+        let binding_and_in_len = parts[0].len() + " in ".len();
+        let iterable_span = Span {
+            start: Position {
+                line: rest_span.start.line,
+                col: rest_span.start.col + binding_and_in_len,
+                byte: rest_span.start.byte + binding_and_in_len,
+            },
+            end: rest_span.end,
+        };
         let for_span = *span;
 
         self.advance();
@@ -435,8 +447,8 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_while(&mut self, condition: &str, span: &Span) -> Result<Option<Node>, ParseError> {
-        let condition_span = *span;
+    fn parse_while(&mut self, condition: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+        let condition_span = *rest_span;
         let while_span = *span;
 
         self.advance();
@@ -453,8 +465,8 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_match(&mut self, expr: &str, span: &Span) -> Result<Option<Node>, ParseError> {
-        let expr_span = *span;
+    fn parse_match(&mut self, expr: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+        let expr_span = *rest_span;
         let match_span = *span;
 
         self.advance();
@@ -463,16 +475,17 @@ impl TreeBuilder {
         // Skip newlines and indents before looking for case statements
         self.skip_structural_tokens();
 
-        while let Some(Token::ControlContinuation { keyword, rest, span }) = self.peek()
+        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) = self.peek()
         {
             if keyword == "case" {
                 let pattern = rest.clone().unwrap_or_default();
+                let pattern_span = rest_span.unwrap_or(*span);
                 let case_span = *span;
                 self.advance();
                 let body = self.parse_until_case_end()?;
                 cases.push(CaseNode {
                     pattern,
-                    pattern_span: case_span,
+                    pattern_span,
                     body,
                     span: case_span,
                 });
@@ -495,8 +508,8 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_with(&mut self, items: &str, span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
-        let items_span = *span;
+    fn parse_with(&mut self, items: &str, span: &Span, rest_span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
+        let items_span = *rest_span;
         let with_span = *span;
 
         self.advance();
@@ -525,13 +538,13 @@ impl TreeBuilder {
         let mut else_clause = None;
         let mut finally_clause = None;
 
-        while let Some(Token::ControlContinuation { keyword, rest, span }) =
+        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) =
             self.peek()
         {
             match keyword.as_str() {
                 "except" => {
                     let exception = rest.clone();
-                    let exception_span = rest.as_ref().map(|_| *span);
+                    let exception_span = rest_span.or_else(|| rest.as_ref().map(|_| *span));
                     let except_span = *span;
                     self.advance();
                     let except_body = self.parse_until_block_end()?;
@@ -686,7 +699,7 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Add </{}> to close this element, or use <{} /> if it has no children.", tag, tag)))
+        .with_help(format!("Close with </{}> or <{} />", tag, tag)))
     }
 
     fn parse_until_component_close(
@@ -719,7 +732,7 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Add </{{{}}}> to close this component, or use <{{{}}} /> if it has no children.", name, name)))
+        .with_help(format!("Close with </{{{}}}> or <{{{}}} />", name, name)))
     }
 
     fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> Result<Vec<Node>, ParseError> {
@@ -748,7 +761,7 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Add </{{{}}}>  to close this slot.", slot_name)))
+        .with_help(format!("Close with </{{{}}}>", slot_name)))
     }
 
     fn convert_attributes(&self, token_attrs: &[super::tokenizer::Attribute]) -> Vec<Attribute> {

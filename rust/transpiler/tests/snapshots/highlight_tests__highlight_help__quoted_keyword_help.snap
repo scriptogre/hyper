@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: visible_ansi(help_line)
+---
+ ‹1;38;5;73›help:‹0› Close with ‹38;5;173›`end`‹0›
