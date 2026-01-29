@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: "visible_ansi(lines [3])"
+---
+‹2› 1 |‹0› ‹38;5;180›<div‹0› ‹38;5;250›class‹0›‹38;5;72›=‹0›‹38;5;72›"container"‹0› ‹38;5;250›id‹0›‹38;5;72›=‹0›‹38;5;72›{‹0›item.id‹38;5;72›}‹0›‹38;5;180›>‹0›

@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: "visible_ansi(lines [3])"
+---
+‹2› 1 |‹0› ‹38;5;173›async‹0› ‹38;5;173›with‹0› conn ‹38;5;173›as‹0› c:

@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: visible_ansi(error_line)
+---
+‹1;31›error:‹0› This ‹38;5;173›`async with`‹0› block is never closed

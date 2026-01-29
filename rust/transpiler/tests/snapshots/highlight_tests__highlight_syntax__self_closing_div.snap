@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: "visible_ansi(lines [3])"
+---
+‹2› 1 |‹0› ‹38;5;180›<div‹0› ‹38;5;180›/‹0›‹38;5;180›>‹0›

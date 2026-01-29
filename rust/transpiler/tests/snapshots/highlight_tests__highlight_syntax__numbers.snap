@@ -1,0 +1,5 @@
+---
+source: transpiler/tests/highlight_tests.rs
+expression: "visible_ansi(lines [3])"
+---
+‹2› 1 |‹0› ‹38;5;173›while‹0› count < ‹38;5;73›10‹0›:
