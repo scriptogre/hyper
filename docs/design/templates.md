@@ -1069,13 +1069,9 @@ Only use `safe()` for content you trust (e.g., sanitized HTML from your database
 
 ---
 
-## Streaming (Planned)
+## Streaming
 
-> **Status**: 🔮 Exploring design
-
-Stream large responses incrementally.
-
-Templates automatically support streaming when used with async frameworks:
+Templates compile to generator functions using `yield`, enabling HTTP streaming.
 
 ```python
 from components import Feed
@@ -1089,7 +1085,7 @@ def feed():
     )
 ```
 
-The template stays the same. The framework detects streaming support:
+The template stays the same:
 
 ```hyper
 posts: list[Post]
@@ -1103,9 +1099,7 @@ posts: list[Post]
 </div>
 ```
 
-Each iteration yields a chunk. No syntax changes needed.
-
-**Design TBD.**
+Each iteration yields a chunk. Use `str(Template())` for buffered output, or iterate for streaming.
 
 ---
 
@@ -1139,23 +1133,28 @@ greeting = f"Hello {name}"
 
 **Header zone** (above `---`):
 - `import` statements
-- `def` functions and components
-- `class` definitions
-- Type-annotated variables become props
+- `def` functions — with HTML becomes `@component`, without HTML becomes regular function
+- `class` definitions (including `@dataclass`, `Enum`, `Protocol`)
+- `NAME: Final[type] = expr` — module-level constants
+- `type Name = type_expr` — type aliases (Python 3.12+)
+- Type-annotated variables become props: `name: str`, `count: int = 0`
 - `**attrs: dict` captures extra attributes
 
 **Body zone** (below `---`):
-- Local variables
+- Local variables (can reference props)
 - HTML template
 - Control flow
+- `def` functions — closures that can reference props, NOT exported
 
 ### When `---` is Required
 
-| File type | Has header content? | Has top-level HTML? | Needs `---`? |
-|-----------|---------------------|---------------------|--------------|
-| Simple HTML | No | Yes | No |
-| Props + HTML | Yes | Yes | Yes |
-| Library (defs only) | Yes | No | No |
+`---` is required when the header contains **parameters** (props).
+
+| File type | Has parameters? | Needs `---`? |
+|-----------|-----------------|--------------|
+| HTML only | No | No |
+| Parameters + HTML | Yes | **Yes** |
+| Library (imports, defs, constants) | No | No |
 
 Simple HTML needs no separator:
 
