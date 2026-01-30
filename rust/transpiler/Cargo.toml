@@ -27,3 +27,8 @@ walkdir = "2"
 
 [dev-dependencies]
 glob = "0.3"
+libtest-mimic = "0.8"
+
+[[test]]
+name = "expected_tests"
+harness = false
