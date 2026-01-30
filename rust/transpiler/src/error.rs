@@ -88,7 +88,7 @@ impl ParseError {
     fn render_inner(&self, source: &str, filename: &str, color: bool) -> String {
         // Visual hierarchy: red for errors only, dim for structural chrome, bold for emphasis
         let red = if color { "\x1b[1;31m" } else { "" };
-        let bold = if color { "\x1b[1m" } else { "" };
+        let _bold = if color { "\x1b[1m" } else { "" };
         let dim = if color { "\x1b[2m" } else { "" };
         let underline = if color { "\x1b[4m" } else { "" };
         let cyan = if color { "\x1b[1;38;5;73m" } else { "" }; // bold #2cabb8 for help label

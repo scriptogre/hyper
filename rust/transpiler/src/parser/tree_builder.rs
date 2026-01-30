@@ -319,7 +319,7 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::FragmentStart { name, span } => {
+            Token::FragmentStart { name: _, span } => {
                 let node = Node::Fragment(FragmentNode {
                     children: Vec::new(), // TODO: parse fragment children
                     span: *span,
