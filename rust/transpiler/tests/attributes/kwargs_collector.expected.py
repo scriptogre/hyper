@@ -1,9 +1,9 @@
+from typing import Any
 from hyper import escape, replace_markers
 
-def Simple(title: str, count: int) -> str:
+def KwargsCollector(title: str, **attrs: Any) -> str:
     _parts = []
-    _parts.append(f"""<div>
+    _parts.append(f"""<div class="card" ‹SPREAD:{attrs}›>
     <h1>‹ESCAPE:{title}›</h1>
-    <p>Count: ‹ESCAPE:{count}›</p>
 </div>""")
     return replace_markers("".join(_parts))

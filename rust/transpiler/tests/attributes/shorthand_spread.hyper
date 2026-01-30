@@ -9,10 +9,10 @@ props: dict
 <input {name} {value} {disabled} />
 
 # Spread attributes
-<div {**props}>Content</div>
+<div {props}>Content</div>
 
 # Mixed shorthand and spread
-<button {name} {**props} {disabled}>Click</button>
+<button {name} {props} {disabled}>Click</button>
 
 # Spread with other attributes
-<input type="text" {**props} class="input" />
+<input type="text" {props} class="input" />

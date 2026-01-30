@@ -14,7 +14,7 @@ props: dict
 <{Button} label={name} onClick={onClick} />
 
 # With spread
-<{Button} {**props} />
+<{Button} {props} />
 
 # Mixed
-<{Icon} name="star" size={24} {**props} />
+<{Icon} name="star" size={24} {props} />

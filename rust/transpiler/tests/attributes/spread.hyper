@@ -1,4 +1,4 @@
-attrs = {"href": "https://example.com", "target": "_blank"}
+attrs: dict = {"href": "https://example.com", "target": "_blank"}
 
 ---
 
