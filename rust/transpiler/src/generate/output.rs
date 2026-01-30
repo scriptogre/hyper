@@ -127,7 +127,6 @@ pub struct Output {
     line_number: usize,
     mappings: Vec<Mapping>,
     ranges: Vec<Range>,
-    source: Option<String>,
 }
 
 impl Output {
@@ -138,14 +137,6 @@ impl Output {
             line_number: 0,
             mappings: Vec::new(),
             ranges: Vec::new(),
-            source: None,
-        }
-    }
-
-    pub fn with_source(source: String) -> Self {
-        Self {
-            source: Some(source),
-            ..Self::new()
         }
     }
 
