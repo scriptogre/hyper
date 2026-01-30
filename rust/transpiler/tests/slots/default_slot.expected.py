@@ -1,11 +1,11 @@
-from hyper import escape
+from hyper import escape, replace_markers
 
 def DefaultSlot(title: str, *, _children: str = "") -> str:
     _parts = []
-    _parts.append("<div class=\"card\">")
-    _parts.append("<h2>")
-    _parts.append(escape(title))
-    _parts.append("</h2>")
+    _parts.append(f"""<div class="card">
+    <h2>‹ESCAPE:{title}›</h2>
+    """)
     _parts.append(_children)
-    _parts.append("</div>")
-    return "".join(_parts)
+    _parts.append("""
+</div>""")
+    return replace_markers("".join(_parts))

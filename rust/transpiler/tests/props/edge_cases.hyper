@@ -12,7 +12,7 @@ empty_list: list = []
 empty_dict: dict = {}
 complex_default: dict = {"key": "value"}
 *args: tuple
-**kwargs: dict
+**kwargs: Any
 
 ---
 

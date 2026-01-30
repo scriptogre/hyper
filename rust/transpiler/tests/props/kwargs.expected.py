@@ -1,6 +1,7 @@
+from typing import Any
 from hyper import escape, replace_markers
 
-def Kwargs(label: str, **attrs: dict) -> str:
+def Kwargs(label: str, **attrs: Any) -> str:
     _parts = []
-    _parts.append(f"""<button attrs=‹SPREAD:{attrs}›>‹ESCAPE:{label}›</button>""")
+    _parts.append(f"""<button ‹SPREAD:{attrs}›>‹ESCAPE:{label}›</button>""")
     return replace_markers("".join(_parts))

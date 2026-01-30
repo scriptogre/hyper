@@ -6,7 +6,7 @@ mapping: dict[str, int]
 nested: list[dict[str, Any]]
 callback: Callable[[int], str]
 *args: tuple
-**kwargs: dict
+**kwargs: Any
 
 ---
 
