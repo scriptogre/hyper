@@ -1,0 +1,9 @@
+
+ file: nested_interactive.hyper:2:5
+error: <button> cannot appear inside <a>.
+   |
+ 2 |     <button>Click me</button>
+   |     ^^^^^^^^
+
+ help: Nesting clickable elements is invalid HTML and causes unpredictable behavior across browsers.
+

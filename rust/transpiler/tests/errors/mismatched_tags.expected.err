@@ -1,0 +1,8 @@
+
+ file: mismatched_tags.hyper:3:1
+error: <div> is never closed.
+ 3 | <div>
+   | ^^^^^ opened here
+
+ help: Close with </div> or <div />
+

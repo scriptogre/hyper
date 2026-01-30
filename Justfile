@@ -63,13 +63,18 @@ test target:
             ;;
     esac
 
-# Update transpiler snapshots (accept all pending changes)
-test-update:
-    cd {{justfile_directory()}}/rust && cargo insta test --accept
+# Update all expected test files from current transpiler output
+test-accept *filter:
+    cd {{justfile_directory()}}/rust && cargo run --bin accept_expected -- {{filter}}
 
-# Review transpiler snapshots interactively
-test-review:
-    cd {{justfile_directory()}}/rust && cargo insta review
+# Show diff between expected and actual transpiler output
+test-diff *filter:
+    #!/usr/bin/env bash
+    cd "{{justfile_directory()}}/rust" && cargo test --test expected_tests 2>&1 | head -100
+
+# Run expected tests only (faster than full test suite)
+test-expected:
+    cd {{justfile_directory()}}/rust && cargo test --test expected_tests
 
 # Bundle transpiler binary into plugin resources (internal helper)
 _bundle:

@@ -1,7 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "serde_json::json!({\n    \"ranges\": result.ranges, \"injections\": result.injections,\n})"
-input_file: transpiler/tests/basic/deeply_nested.hyper
----
-injections: []
-ranges: []

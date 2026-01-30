@@ -1,0 +1,216 @@
+{
+  "injections": [
+    {
+      "end": 11,
+      "prefix": "from hyper import escape, replace_markers\n\ndef PythonFeatures(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 22,
+      "prefix": ", ",
+      "start": 12,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 33,
+      "prefix": ", ",
+      "start": 23,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 82,
+      "prefix": ") -> str:\n    _parts = []\n    if ",
+      "start": 61,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 103,
+      "prefix": ":\n        _parts.append(f\"\"\"<span>Found ‹ESCAPE:",
+      "start": 100,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 250,
+      "prefix": "› items</span>\"\"\")\n    sorter = lambda x: x.lower()\n    sorted_items = sorted(items, key=sorter)\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "start": 236,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 326,
+      "prefix": "›</span>\"\"\")\n    first, *rest = items\n    _parts.append(f\"\"\"<span>First: ‹ESCAPE:",
+      "start": 319,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 340,
+      "prefix": "›, Rest: ‹ESCAPE:",
+      "start": 334,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 432,
+      "prefix": "›</span>\"\"\")\n    merged = {**data, \"extra\": \"value\"}\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "start": 424,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 514,
+      "prefix": "›</span><span>‹ESCAPE:",
+      "start": 482,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 613,
+      "prefix": "›</span><span>‹ESCAPE:",
+      "start": 546,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 665,
+      "prefix": "›</span><span>‹ESCAPE:",
+      "start": 657,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 688,
+      "prefix": "›</span><span>‹ESCAPE:",
+      "start": 679,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 766,
+      "prefix": "›</span>\"\"\")\n    args = [1, 2, 3]\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "start": 754,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 861,
+      "prefix": "›</span>\"\"\")\n    kwargs = {\"sep\": \", \", \"end\": \"!\"}\n    result = \"hello\"\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "start": 853,
+      "suffix": "›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 73,
+      "compiled_start": 62,
+      "range_type": "Python",
+      "source_end": 11,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 85,
+      "compiled_start": 75,
+      "range_type": "Python",
+      "source_end": 22,
+      "source_start": 12
+    },
+    {
+      "compiled_end": 97,
+      "compiled_start": 87,
+      "range_type": "Python",
+      "source_end": 33,
+      "source_start": 23
+    },
+    {
+      "compiled_end": 151,
+      "compiled_start": 130,
+      "range_type": "Python",
+      "source_end": 82,
+      "source_start": 61
+    },
+    {
+      "compiled_end": 202,
+      "compiled_start": 199,
+      "range_type": "Python",
+      "source_end": 103,
+      "source_start": 100
+    },
+    {
+      "compiled_end": 349,
+      "compiled_start": 335,
+      "range_type": "Python",
+      "source_end": 250,
+      "source_start": 236
+    },
+    {
+      "compiled_end": 437,
+      "compiled_start": 430,
+      "range_type": "Python",
+      "source_end": 326,
+      "source_start": 319
+    },
+    {
+      "compiled_end": 460,
+      "compiled_start": 454,
+      "range_type": "Python",
+      "source_end": 340,
+      "source_start": 334
+    },
+    {
+      "compiled_end": 557,
+      "compiled_start": 549,
+      "range_type": "Python",
+      "source_end": 432,
+      "source_start": 424
+    },
+    {
+      "compiled_end": 611,
+      "compiled_start": 579,
+      "range_type": "Python",
+      "source_end": 514,
+      "source_start": 482
+    },
+    {
+      "compiled_end": 700,
+      "compiled_start": 633,
+      "range_type": "Python",
+      "source_end": 613,
+      "source_start": 546
+    },
+    {
+      "compiled_end": 730,
+      "compiled_start": 722,
+      "range_type": "Python",
+      "source_end": 665,
+      "source_start": 657
+    },
+    {
+      "compiled_end": 761,
+      "compiled_start": 752,
+      "range_type": "Python",
+      "source_end": 688,
+      "source_start": 679
+    },
+    {
+      "compiled_end": 843,
+      "compiled_start": 831,
+      "range_type": "Python",
+      "source_end": 766,
+      "source_start": 754
+    },
+    {
+      "compiled_end": 960,
+      "compiled_start": 952,
+      "range_type": "Python",
+      "source_end": 861,
+      "source_start": 853
+    }
+  ]
+}

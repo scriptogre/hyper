@@ -1,0 +1,8 @@
+
+ file: unclosed_try.hyper:1:1
+error: This 'try' block is never closed.
+ 1 | try:
+   | ^^^^ opened here
+
+ help: Close with 'end'
+

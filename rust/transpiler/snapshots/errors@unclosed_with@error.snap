@@ -1,6 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "format!(\"{}\", e)"
-input_file: transpiler/tests/errors/unclosed_with.hyper
----
-This 'with' block is never closed.

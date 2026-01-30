@@ -1,0 +1,8 @@
+
+ file: unclosed_def.hyper:1:1
+error: This 'def' block is never closed.
+ 1 | def greet(name: str):
+   | ^^^^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

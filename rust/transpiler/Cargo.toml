@@ -13,6 +13,10 @@ path = "src/lib.rs"
 name = "hyper"
 path = "src/main.rs"
 
+[[bin]]
+name = "accept_expected"
+path = "src/bin/accept_expected.rs"
+
 [dependencies]
 tree-sitter = "0.24"
 tree-sitter-python = "0.23"
@@ -22,9 +26,4 @@ clap = { version = "4.0", features = ["derive"] }
 walkdir = "2"
 
 [dev-dependencies]
-insta = { version = "1.42", features = ["glob", "yaml"] }
 glob = "0.3"
-
-[profile.dev.package]
-insta.opt-level = 3
-similar.opt-level = 3

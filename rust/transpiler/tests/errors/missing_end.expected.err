@@ -1,0 +1,8 @@
+
+ file: missing_end.hyper:2:5
+error: This 'if' block is never closed.
+ 2 |     if show:
+   |     ^^^^^^^^ opened here
+
+ help: Close with 'end'
+

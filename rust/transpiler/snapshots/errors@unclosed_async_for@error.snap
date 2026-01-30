@@ -1,6 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "format!(\"{}\", e)"
-input_file: transpiler/tests/errors/unclosed_async_for.hyper
----
-This 'async for' block is never closed.

@@ -1,6 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "format!(\"{}\", e)"
-input_file: transpiler/tests/errors/nested_interactive.hyper
----
-<button> cannot appear inside <a>.

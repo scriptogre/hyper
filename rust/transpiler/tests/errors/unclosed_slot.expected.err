@@ -1,0 +1,8 @@
+
+ file: unclosed_slot.hyper:2:5
+error: <{...header}> is never closed.
+ 2 |     <{...header}>
+   |     ^^^^^^^^^^^^^ opened here
+
+ help: Close with </{...header}>
+

@@ -1,0 +1,34 @@
+{
+  "injections": [
+    {
+      "end": 14,
+      "prefix": "def IfElse(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 42,
+      "prefix": ") -> str:\n    _parts = []\n    _parts.append(\"<nav>\")\n    if ",
+      "start": 34,
+      "suffix": ":\n        _parts.append(\"\"\"<a href=\"/admin\">Admin</a>\"\"\")\n    else:\n        _parts.append(\"\"\"<a href=\"/account\">Account</a>\"\"\")\n    _parts.append(\"</nav>\")\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 25,
+      "compiled_start": 11,
+      "range_type": "Python",
+      "source_end": 14,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 93,
+      "compiled_start": 85,
+      "range_type": "Python",
+      "source_end": 42,
+      "source_start": 34
+    }
+  ]
+}

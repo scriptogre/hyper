@@ -1,0 +1,76 @@
+{
+  "injections": [
+    {
+      "end": 11,
+      "prefix": "def Match(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 30,
+      "prefix": ") -> str:\n    _parts = []\n    match ",
+      "start": 24,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 50,
+      "prefix": ":\n        case ",
+      "start": 41,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 94,
+      "prefix": ":\n            _parts.append(\"\"\"<p>Loading...</p>\"\"\")\n        case ",
+      "start": 87,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 128,
+      "prefix": ":\n            _parts.append(\"\"\"<p>Error!</p>\"\"\")\n        case ",
+      "start": 127,
+      "suffix": ":\n            _parts.append(\"\"\"<p>Ready</p>\"\"\")\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 21,
+      "compiled_start": 10,
+      "range_type": "Python",
+      "source_end": 11,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 57,
+      "range_type": "Python",
+      "source_end": 30,
+      "source_start": 24
+    },
+    {
+      "compiled_end": 87,
+      "compiled_start": 78,
+      "range_type": "Python",
+      "source_end": 50,
+      "source_start": 41
+    },
+    {
+      "compiled_end": 160,
+      "compiled_start": 153,
+      "range_type": "Python",
+      "source_end": 94,
+      "source_start": 87
+    },
+    {
+      "compiled_end": 223,
+      "compiled_start": 222,
+      "range_type": "Python",
+      "source_end": 128,
+      "source_start": 127
+    }
+  ]
+}

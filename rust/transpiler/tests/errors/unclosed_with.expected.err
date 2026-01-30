@@ -1,0 +1,8 @@
+
+ file: unclosed_with.hyper:1:1
+error: This 'with' block is never closed.
+ 1 | with open("file.txt") as f:
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

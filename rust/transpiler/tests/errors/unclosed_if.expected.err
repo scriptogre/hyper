@@ -1,0 +1,8 @@
+
+ file: unclosed_if.hyper:1:1
+error: This 'if' block is never closed.
+ 1 | if show:
+   | ^^^^^^^^ opened here
+
+ help: Close with 'end'
+

@@ -1,0 +1,9 @@
+
+ file: void_element_with_children.hyper:1:1
+error: <br> cannot have content or a closing tag.
+   |
+ 1 | <br>content inside void</br>
+   | ^^^^
+
+ help: <br> is a void element (like <img>, <input>, <hr>). Write it as <br /> instead.
+

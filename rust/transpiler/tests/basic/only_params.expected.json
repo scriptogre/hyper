@@ -1,0 +1,48 @@
+{
+  "injections": [
+    {
+      "end": 9,
+      "prefix": "def OnlyParams(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 24,
+      "prefix": ", ",
+      "start": 10,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 36,
+      "prefix": ", ",
+      "start": 25,
+      "suffix": ") -> str:\n    _parts = []\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 24,
+      "compiled_start": 15,
+      "range_type": "Python",
+      "source_end": 9,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 40,
+      "compiled_start": 26,
+      "range_type": "Python",
+      "source_end": 24,
+      "source_start": 10
+    },
+    {
+      "compiled_end": 53,
+      "compiled_start": 42,
+      "range_type": "Python",
+      "source_end": 36,
+      "source_start": 25
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+
+ file: unclosed_component.hyper:1:1
+error: <{Button}> is never closed.
+ 1 | <{Button} type="submit">
+   | ^^^^^^^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with </{Button}> or <{Button} />
+

@@ -1,0 +1,132 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "def EmptyBlocks(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 22,
+      "prefix": ", ",
+      "start": 11,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 76,
+      "prefix": ") -> str:\n    _parts = []\n    if ",
+      "start": 72,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 109,
+      "prefix": ":\n        pass\n    if ",
+      "start": 105,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 178,
+      "prefix": ":\n        _parts.append(\"\"\"<span>Yes</span>\"\"\")\n    else:\n        pass\n    for item in ",
+      "start": 173,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 215,
+      "prefix": ":\n        pass\n    while ",
+      "start": 211,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 252,
+      "prefix": ":\n        pass\n    match ",
+      "start": 248,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 267,
+      "prefix": ":\n        case ",
+      "start": 263,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 283,
+      "prefix": ":\n            pass\n        case ",
+      "start": 278,
+      "suffix": ":\n            _parts.append(\"\"\"<span>False</span>\"\"\")\n    try:\n        pass\n    except:\n        _parts.append(\"\"\"<span>Error</span>\"\"\")\n    def empty():\n        pass\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 26,
+      "compiled_start": 16,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 28,
+      "range_type": "Python",
+      "source_end": 22,
+      "source_start": 11
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 72,
+      "range_type": "Python",
+      "source_end": 76,
+      "source_start": 72
+    },
+    {
+      "compiled_end": 102,
+      "compiled_start": 98,
+      "range_type": "Python",
+      "source_end": 109,
+      "source_start": 105
+    },
+    {
+      "compiled_end": 194,
+      "compiled_start": 189,
+      "range_type": "Python",
+      "source_end": 178,
+      "source_start": 173
+    },
+    {
+      "compiled_end": 223,
+      "compiled_start": 219,
+      "range_type": "Python",
+      "source_end": 215,
+      "source_start": 211
+    },
+    {
+      "compiled_end": 252,
+      "compiled_start": 248,
+      "range_type": "Python",
+      "source_end": 252,
+      "source_start": 248
+    },
+    {
+      "compiled_end": 271,
+      "compiled_start": 267,
+      "range_type": "Python",
+      "source_end": 267,
+      "source_start": 263
+    },
+    {
+      "compiled_end": 308,
+      "compiled_start": 303,
+      "range_type": "Python",
+      "source_end": 283,
+      "source_start": 278
+    }
+  ]
+}

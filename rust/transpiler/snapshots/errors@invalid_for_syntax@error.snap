@@ -1,6 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "format!(\"{}\", e)"
-input_file: transpiler/tests/errors/invalid_for_syntax.hyper
----
-This doesn't look like a valid for loop.

@@ -1,8 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/basic/empty_minimal.hyper
----
-def EmptyMinimal() -> str:
-    _parts = []
-    return "".join(_parts)

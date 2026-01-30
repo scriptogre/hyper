@@ -1,0 +1,8 @@
+
+ file: unclosed_element.hyper:2:5
+error: <span> is never closed.
+ 2 |     <span>Hello
+   |     ^^^^^^ opened here
+
+ help: Close with </span> or <span />
+

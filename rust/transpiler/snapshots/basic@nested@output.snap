@@ -1,9 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/basic/nested.hyper
----
-def Nested() -> str:
-    _parts = []
-    _parts.append("""<div><h1>Title</h1><p>Paragraph</p></div>""")
-    return "".join(_parts)
