@@ -1,0 +1,17 @@
+def NamedWithFallback(title: str, *, _children: str = "", _footer_children: str = "", _header_children: str = "", _sidebar_children: str = "") -> str:
+    _parts = []
+    _parts.append("<div class=\"layout\">")
+    _parts.append("<header>")
+    _parts.append(_header_children)
+    _parts.append("</header>")
+    _parts.append("<nav>")
+    _parts.append(_sidebar_children)
+    _parts.append("</nav>")
+    _parts.append("<main>")
+    _parts.append(_children)
+    _parts.append("</main>")
+    _parts.append("<footer>")
+    _parts.append(_footer_children)
+    _parts.append("</footer>")
+    _parts.append("</div>")
+    return "".join(_parts)

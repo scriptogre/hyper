@@ -1,0 +1,9 @@
+
+ file: invalid_for_syntax.hyper:1:1
+error: This doesn't look like a valid for loop.
+   |
+ 1 | for item items:
+   | ^^^^^^^^^^^^^^^
+
+ help: Syntax: for x in items:
+

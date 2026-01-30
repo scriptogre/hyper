@@ -1,0 +1,20 @@
+{
+  "injections": [
+    {
+      "end": 9,
+      "prefix": "def TextPositions(",
+      "start": 0,
+      "suffix": ") -> str:\n    _parts = []\n    _parts.append(\"\"\"Text before any element<div>Inside div</div>Text between elements<span>Inside span</span>Text after elementsMore text<p>Multilinetext insideparagraph</p>Final text\"\"\")\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 27,
+      "compiled_start": 18,
+      "range_type": "Python",
+      "source_end": 9,
+      "source_start": 0
+    }
+  ]
+}

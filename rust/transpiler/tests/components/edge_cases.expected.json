@@ -1,0 +1,34 @@
+{
+  "injections": [
+    {
+      "end": 14,
+      "prefix": "def EdgeCases(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 31,
+      "prefix": ", ",
+      "start": 15,
+      "suffix": ") -> str:\n    _parts = []\n    _parts.append(module.Button(label=\"Click\"))\n    _child_parts = []\n    _child_parts.append(\"<p>\")\n    _child_parts.append(\"Content\")\n    _child_parts.append(\"</p>\")\n    _parts.append(components['Card'](_children=\"\".join(_child_parts)))\n    _parts.append(Wrapper())\n    _parts.append(Container())\n    _child_parts = []\n    _parts.append(Outer(_children=\"\".join(_child_parts)))\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 28,
+      "compiled_start": 14,
+      "range_type": "Python",
+      "source_end": 14,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 46,
+      "compiled_start": 30,
+      "range_type": "Python",
+      "source_end": 31,
+      "source_start": 15
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "from hyper import escape\n\ndef Nested(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 22,
+      "prefix": ", ",
+      "start": 11,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 372,
+      "prefix": ") -> str:\n    _parts = []\n    _child_parts = []\n    _parts.append(Card(_children=\"\".join(_child_parts)))\n    if ",
+      "start": 367,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 487,
+      "prefix": ":\n        _child_parts = []\n        _child_parts.append(\"<span>\")\n        _child_parts.append(escape(title))\n        _child_parts.append(\"</span>\")\n        _parts.append(Alert(type=\"info\", _children=\"\".join(_child_parts)))\n    for item in ",
+      "start": 482,
+      "suffix": ":\n        _child_parts = []\n        _child_parts.append(escape(item))\n        _parts.append(Badge(color=\"blue\", _children=\"\".join(_child_parts)))\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 47,
+      "compiled_start": 37,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 60,
+      "compiled_start": 49,
+      "range_type": "Python",
+      "source_end": 22,
+      "source_start": 11
+    },
+    {
+      "compiled_end": 177,
+      "compiled_start": 172,
+      "range_type": "Python",
+      "source_end": 372,
+      "source_start": 367
+    },
+    {
+      "compiled_end": 421,
+      "compiled_start": 416,
+      "range_type": "Python",
+      "source_end": 487,
+      "source_start": 482
+    }
+  ]
+}

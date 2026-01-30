@@ -1,9 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: result.code.trim()
-input_file: transpiler/tests/errors/unexpected_end.hyper
----
-def UnexpectedEnd() -> str:
-    _parts = []
-    _parts.append("""<div>Content</div>""")
-    return "".join(_parts)

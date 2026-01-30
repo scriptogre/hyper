@@ -1,0 +1,8 @@
+
+ file: nested_unclosed_element.hyper:3:9
+error: <span> is never closed.
+ 3 |         <span>Content
+   |         ^^^^^^ opened here
+
+ help: Close with </span> or <span />
+

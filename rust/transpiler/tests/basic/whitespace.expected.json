@@ -1,0 +1,20 @@
+{
+  "injections": [
+    {
+      "end": 9,
+      "prefix": "def Whitespace(",
+      "start": 0,
+      "suffix": ") -> str:\n    _parts = []\n    _parts.append(\"\"\"<div>After blank lines</div><span>Between blank lines</span><p>More content</p>\"\"\")\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 24,
+      "compiled_start": 15,
+      "range_type": "Python",
+      "source_end": 9,
+      "source_start": 0
+    }
+  ]
+}

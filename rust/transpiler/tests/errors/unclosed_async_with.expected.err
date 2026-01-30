@@ -1,0 +1,8 @@
+
+ file: unclosed_async_with.hyper:5:1
+error: This 'async with' block is never closed.
+ 5 | async with conn as c:
+   | ^^^^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

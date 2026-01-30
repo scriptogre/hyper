@@ -1,0 +1,34 @@
+{
+  "injections": [
+    {
+      "end": 16,
+      "prefix": "from hyper import escape, replace_markers\n\ndef Comprehension(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 69,
+      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<ul>‹ESCAPE:",
+      "start": 32,
+      "suffix": "›</ul>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 77,
+      "compiled_start": 61,
+      "range_type": "Python",
+      "source_end": 16,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 174,
+      "compiled_start": 137,
+      "range_type": "Python",
+      "source_end": 69,
+      "source_start": 32
+    }
+  ]
+}

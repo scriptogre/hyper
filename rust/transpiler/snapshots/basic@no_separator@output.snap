@@ -1,9 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/basic/no_separator.hyper
----
-def NoSeparator() -> str:
-    _parts = []
-    _parts.append("""<div>No separator, just content</div><span>More content</span>""")
-    return "".join(_parts)

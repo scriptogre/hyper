@@ -1,0 +1,48 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "from hyper import escape, replace_markers\n\ndef WhileLoop(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 42,
+      "prefix": ") -> str:\n    _parts = []\n    _parts.append(\"<div>\")\n    while ",
+      "start": 33,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 69,
+      "prefix": ":\n        _parts.append(f\"\"\"<p>Count: ‹ESCAPE:",
+      "start": 62,
+      "suffix": "›</p>\"\"\")\n    _parts.append(\"</div>\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 67,
+      "compiled_start": 57,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 139,
+      "compiled_start": 130,
+      "range_type": "Python",
+      "source_end": 42,
+      "source_start": 33
+    },
+    {
+      "compiled_end": 192,
+      "compiled_start": 185,
+      "range_type": "Python",
+      "source_end": 69,
+      "source_start": 62
+    }
+  ]
+}

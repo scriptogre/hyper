@@ -1,0 +1,20 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "def NamedWithFallback(",
+      "start": 0,
+      "suffix": ", *, _children: str = \"\", _footer_children: str = \"\", _header_children: str = \"\", _sidebar_children: str = \"\") -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"layout\\\">\")\n    _parts.append(\"<header>\")\n    _parts.append(_header_children)\n    _parts.append(\"</header>\")\n    _parts.append(\"<nav>\")\n    _parts.append(_sidebar_children)\n    _parts.append(\"</nav>\")\n    _parts.append(\"<main>\")\n    _parts.append(_children)\n    _parts.append(\"</main>\")\n    _parts.append(\"<footer>\")\n    _parts.append(_footer_children)\n    _parts.append(\"</footer>\")\n    _parts.append(\"</div>\")\n    return \"\".join(_parts)\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 32,
+      "compiled_start": 22,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    }
+  ]
+}

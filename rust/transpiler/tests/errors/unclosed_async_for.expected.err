@@ -1,0 +1,8 @@
+
+ file: unclosed_async_for.hyper:5:1
+error: This 'async for' block is never closed.
+ 5 | async for item in stream:
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

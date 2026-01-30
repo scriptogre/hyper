@@ -1,0 +1,10 @@
+
+ file: block_in_paragraph.hyper:2:5
+error: <div> cannot appear inside <p>.
+   |
+ 2 |     <div>This is invalid HTML</div>
+   |     ^^^^^
+
+ help: Browsers silently close <p> when they encounter <div>, so this renders
+       as <p></p><div>...</div> — probably not what you want.
+

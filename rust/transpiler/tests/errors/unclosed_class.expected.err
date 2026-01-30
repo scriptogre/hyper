@@ -1,0 +1,8 @@
+
+ file: unclosed_class.hyper:1:1
+error: This 'class' block is never closed.
+ 1 | class Card:
+   | ^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

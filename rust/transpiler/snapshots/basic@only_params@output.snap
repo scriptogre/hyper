@@ -1,8 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/basic/only_params.hyper
----
-def OnlyParams(name: str, count: int = 0, items: list) -> str:
-    _parts = []
-    return "".join(_parts)

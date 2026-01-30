@@ -1,9 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/basic/self_closing.hyper
----
-def SelfClosing() -> str:
-    _parts = []
-    _parts.append("""<br /><hr /><img src="photo.jpg" alt="Photo" /><input type="text" name="field" /><div /><span />""")
-    return "".join(_parts)

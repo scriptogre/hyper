@@ -1,0 +1,8 @@
+
+ file: unclosed_for.hyper:1:1
+error: This 'for' block is never closed.
+ 1 | for item in items:
+   | ^^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

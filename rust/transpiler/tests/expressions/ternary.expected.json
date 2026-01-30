@@ -1,0 +1,48 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "from hyper import escape, replace_markers\n\ndef Ternary(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 30,
+      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "start": 23,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 66,
+      "prefix": "› ‹ESCAPE:",
+      "start": 31,
+      "suffix": "›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 65,
+      "compiled_start": 55,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 134,
+      "compiled_start": 127,
+      "range_type": "Python",
+      "source_end": 30,
+      "source_start": 23
+    },
+    {
+      "compiled_end": 179,
+      "compiled_start": 144,
+      "range_type": "Python",
+      "source_end": 66,
+      "source_start": 31
+    }
+  ]
+}

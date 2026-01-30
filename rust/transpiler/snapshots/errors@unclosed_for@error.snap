@@ -1,6 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: "format!(\"{}\", e)"
-input_file: transpiler/tests/errors/unclosed_for.hyper
----
-This 'for' block is never closed.

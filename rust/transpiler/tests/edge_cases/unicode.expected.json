@@ -1,0 +1,76 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "from hyper import escape, replace_markers\n\ndef Unicode(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 20,
+      "prefix": ", ",
+      "start": 11,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 137,
+      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>Hello 👋</span><span>Stars: ⭐⭐⭐</span><span>‹ESCAPE:",
+      "start": 130,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 162,
+      "prefix": "›</span><span>‹ESCAPE:",
+      "start": 151,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 420,
+      "prefix": "›</span><p lang=\"zh\">你好世界</p><p lang=\"ja\">こんにちは</p><p lang=\"ko\">안녕하세요</p><p dir=\"rtl\" lang=\"ar\">مرحبا بالعالم</p><p dir=\"rtl\" lang=\"he\">שלום עולם</p><p>‹ESCAPE:",
+      "start": 414,
+      "suffix": "›: 你好, مرحبا, שלום</p><span>En dash: –</span><span>Em dash: —</span><span>Ellipsis: …</span><span>Quotes: \"quoted\"</span><span>Arrows: ← → ↑ ↓</span><span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 65,
+      "compiled_start": 55,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 67,
+      "range_type": "Python",
+      "source_end": 20,
+      "source_start": 11
+    },
+    {
+      "compiled_end": 189,
+      "compiled_start": 182,
+      "range_type": "Python",
+      "source_end": 137,
+      "source_start": 130
+    },
+    {
+      "compiled_end": 220,
+      "compiled_start": 211,
+      "range_type": "Python",
+      "source_end": 162,
+      "source_start": 151
+    },
+    {
+      "compiled_end": 386,
+      "compiled_start": 380,
+      "range_type": "Python",
+      "source_end": 420,
+      "source_start": 414
+    }
+  ]
+}

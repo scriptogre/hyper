@@ -1,9 +1,0 @@
----
-source: transpiler/tests/golden_tests.rs
-expression: r.code.trim()
-input_file: transpiler/tests/attributes/mixed.hyper
----
-def Mixed(id: str, theme: str, is_active: bool, count: int) -> str:
-    _parts = []
-    _parts.append("""<div class="card {theme}" id="card-{id}">Content</div><div class="{theme} {'active' if is_active else 'inactive'} size-{count}">Content</div><div class="base {'special' if is_active else 'normal'}">Content</div><div data-id="{id}" data-count="{count}" data-active="{is_active}">Content</div><div aria-label="Item {id}" aria-hidden="{not is_active}">Content</div><button @click="handleClick({id})">Click</button><button x-on:click="toggle()">Toggle</button>""")
-    return "".join(_parts)

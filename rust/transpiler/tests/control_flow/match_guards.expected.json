@@ -1,0 +1,230 @@
+{
+  "injections": [
+    {
+      "end": 10,
+      "prefix": "from hyper import escape, replace_markers\n\ndef MatchGuards(",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 21,
+      "prefix": ", ",
+      "start": 11,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 59,
+      "prefix": ") -> str:\n    _parts = []\n    match ",
+      "start": 54,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 80,
+      "prefix": ":\n        case ",
+      "start": 70,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 109,
+      "prefix": ":\n            _parts.append(f\"\"\"<span>Negative: ‹ESCAPE:",
+      "start": 106,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 137,
+      "prefix": "›</span>\"\"\")\n        case ",
+      "start": 126,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 186,
+      "prefix": ":\n            _parts.append(\"\"\"<span>Zero</span>\"\"\")\n        case ",
+      "start": 174,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 212,
+      "prefix": ":\n            _parts.append(f\"\"\"<span>Large: ‹ESCAPE:",
+      "start": 209,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 230,
+      "prefix": "›</span>\"\"\")\n        case ",
+      "start": 229,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 257,
+      "prefix": ":\n            _parts.append(f\"\"\"<span>Normal: ‹ESCAPE:",
+      "start": 254,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 308,
+      "prefix": "›</span>\"\"\")\n    match ",
+      "start": 304,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 350,
+      "prefix": ":\n        case ",
+      "start": 319,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 425,
+      "prefix": ":\n            _parts.append(\"\"\"<span>Admin user</span>\"\"\")\n        case ",
+      "start": 393,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 507,
+      "prefix": ":\n            _parts.append(\"\"\"<span>Regular user</span>\"\"\")\n        case ",
+      "start": 470,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 534,
+      "prefix": ":\n            _parts.append(f\"\"\"<span>System: ‹ESCAPE:",
+      "start": 531,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 552,
+      "prefix": "›</span>\"\"\")\n        case ",
+      "start": 551,
+      "suffix": ":\n            _parts.append(\"\"\"<span>Unknown</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 69,
+      "compiled_start": 59,
+      "range_type": "Python",
+      "source_end": 10,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 81,
+      "compiled_start": 71,
+      "range_type": "Python",
+      "source_end": 21,
+      "source_start": 11
+    },
+    {
+      "compiled_end": 122,
+      "compiled_start": 117,
+      "range_type": "Python",
+      "source_end": 59,
+      "source_start": 54
+    },
+    {
+      "compiled_end": 147,
+      "compiled_start": 137,
+      "range_type": "Python",
+      "source_end": 80,
+      "source_start": 70
+    },
+    {
+      "compiled_end": 206,
+      "compiled_start": 203,
+      "range_type": "Python",
+      "source_end": 109,
+      "source_start": 106
+    },
+    {
+      "compiled_end": 243,
+      "compiled_start": 232,
+      "range_type": "Python",
+      "source_end": 137,
+      "source_start": 126
+    },
+    {
+      "compiled_end": 321,
+      "compiled_start": 309,
+      "range_type": "Python",
+      "source_end": 186,
+      "source_start": 174
+    },
+    {
+      "compiled_end": 377,
+      "compiled_start": 374,
+      "range_type": "Python",
+      "source_end": 212,
+      "source_start": 209
+    },
+    {
+      "compiled_end": 404,
+      "compiled_start": 403,
+      "range_type": "Python",
+      "source_end": 230,
+      "source_start": 229
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 458,
+      "range_type": "Python",
+      "source_end": 257,
+      "source_start": 254
+    },
+    {
+      "compiled_end": 488,
+      "compiled_start": 484,
+      "range_type": "Python",
+      "source_end": 308,
+      "source_start": 304
+    },
+    {
+      "compiled_end": 534,
+      "compiled_start": 503,
+      "range_type": "Python",
+      "source_end": 350,
+      "source_start": 319
+    },
+    {
+      "compiled_end": 638,
+      "compiled_start": 606,
+      "range_type": "Python",
+      "source_end": 425,
+      "source_start": 393
+    },
+    {
+      "compiled_end": 749,
+      "compiled_start": 712,
+      "range_type": "Python",
+      "source_end": 507,
+      "source_start": 470
+    },
+    {
+      "compiled_end": 806,
+      "compiled_start": 803,
+      "range_type": "Python",
+      "source_end": 534,
+      "source_start": 531
+    },
+    {
+      "compiled_end": 833,
+      "compiled_start": 832,
+      "range_type": "Python",
+      "source_end": 552,
+      "source_start": 551
+    }
+  ]
+}

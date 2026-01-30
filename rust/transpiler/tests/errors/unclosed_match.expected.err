@@ -1,0 +1,8 @@
+
+ file: unclosed_match.hyper:1:1
+error: This 'match' block is never closed.
+ 1 | match status:
+   | ^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+

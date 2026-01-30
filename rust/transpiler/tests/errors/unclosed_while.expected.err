@@ -1,0 +1,8 @@
+
+ file: unclosed_while.hyper:1:1
+error: This 'while' block is never closed.
+ 1 | while count < 10:
+   | ^^^^^^^^^^^^^^^^^ opened here
+
+ help: Close with 'end'
+
