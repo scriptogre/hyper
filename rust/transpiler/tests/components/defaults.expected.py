@@ -1,6 +1,8 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def Defaults(name: str = "World", count: int = 0) -> str:
-    _parts = []
-    _parts.append(f"""<h1>Hello ‹ESCAPE:{name}›</h1><p>Count: ‹ESCAPE:{count}›</p>""")
-    return replace_markers("".join(_parts))
+
+@component
+def Defaults(*, name: str = "World", count: int = 0):
+    yield replace_markers(f"""\
+<h1>Hello ‹ESCAPE:{name}›</h1>
+<p>Count: ‹ESCAPE:{count}›</p>""")

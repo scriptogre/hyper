@@ -1,25 +1,22 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def Comprehensive(name: str, count: int = 0, is_active: bool = True) -> str:
-    _parts = []
-    _parts.append("<div class=\"container\">")
-    _parts.append("<span>")
-    _parts.append("Plain text")
-    _parts.append("</span>")
-    _parts.append("<p>")
-    _parts.append(escape(name))
-    _parts.append("</p>")
-    _parts.append("<p>")
-    _parts.append("Count: ")
-    _parts.append(escape(count + 1))
-    _parts.append("</p>")
+
+@component
+def Comprehensive(*, name: str, count: int = 0, is_active: bool = True):
+    # Body comment
+    yield """<div class="container">"""
+    # Indented comment
+    yield """\
+    <span>Plain text</span>"""
+    yield replace_markers(f"""\
+    <p>‹ESCAPE:{name}›</p>
+    <p>Count: ‹ESCAPE:{count + 1}›</p>""")
     if is_active:
-        _parts.append("""<span>Active</span>""")
+        yield """<span>Active</span>"""  # Trailing comment
     elif count > 0:
-        _parts.append("""<span>Has count</span>""")
+        yield """<span>Has count</span>"""
     else:
-        _parts.append("""<span>Inactive</span>""")
+        yield """<span>Inactive</span>"""
     for item in items:
-        _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
-    _parts.append("</div>")
-    return replace_markers("".join(_parts))
+        yield replace_markers(f"""<li>‹ESCAPE:{item}›</li>""")
+    yield """</div>"""

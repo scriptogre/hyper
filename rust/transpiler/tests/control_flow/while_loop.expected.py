@@ -1,9 +1,9 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def WhileLoop(count: int) -> str:
-    _parts = []
-    _parts.append("<div>")
+
+@component
+def WhileLoop(*, count: int):
+    yield """<div>"""
     while count > 0:
-        _parts.append(f"""<p>Count: ‹ESCAPE:{count}›</p>""")
-    _parts.append("</div>")
-    return replace_markers("".join(_parts))
+        yield replace_markers(f"""<p>Count: ‹ESCAPE:{count}›</p>""")
+    yield """</div>"""

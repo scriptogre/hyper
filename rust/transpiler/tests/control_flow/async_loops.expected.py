@@ -1,12 +1,17 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def AsyncLoops(stream: object, connection: object) -> str:
-    _parts = []
+
+@component
+async def AsyncLoops(*, stream: object, connection: object):
+    # Async for loop
     async for item in stream:
-        _parts.append(f"""<div>‹ESCAPE:{item}›</div>""")
+        yield replace_markers(f"""<div>‹ESCAPE:{item}›</div>""")
+
+    # Async with statement
     async with connection as conn:
-        _parts.append(f"""<span>Connected: ‹ESCAPE:{conn.id}›</span>""")
+        yield replace_markers(f"""<span>Connected: ‹ESCAPE:{conn.id}›</span>""")
+
+    # Nested async
     async with connection as conn:
         async for message in conn.messages:
-            _parts.append(f"""<p>‹ESCAPE:{message}›</p>""")
-    return replace_markers("".join(_parts))
+            yield replace_markers(f"""<p>‹ESCAPE:{message}›</p>""")

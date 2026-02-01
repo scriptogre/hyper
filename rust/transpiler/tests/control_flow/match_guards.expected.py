@@ -1,23 +1,26 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def MatchGuards(value: int, data: dict) -> str:
-    _parts = []
+
+@component
+def MatchGuards(*, value: int, data: dict):
+    # Match with guards
     match value:
         case x if x < 0:
-            _parts.append(f"""<span>Negative: ‹ESCAPE:{x}›</span>""")
+            yield replace_markers(f"""<span>Negative: ‹ESCAPE:{x}›</span>""")
         case x if x == 0:
-            _parts.append("""<span>Zero</span>""")
+            yield """<span>Zero</span>"""
         case x if x > 100:
-            _parts.append(f"""<span>Large: ‹ESCAPE:{x}›</span>""")
+            yield replace_markers(f"""<span>Large: ‹ESCAPE:{x}›</span>""")
         case x:
-            _parts.append(f"""<span>Normal: ‹ESCAPE:{x}›</span>""")
+            yield replace_markers(f"""<span>Normal: ‹ESCAPE:{x}›</span>""")
+
+    # Match with pattern guards
     match data:
         case {"type": "user", "admin": True}:
-            _parts.append("""<span>Admin user</span>""")
+            yield """<span>Admin user</span>"""
         case {"type": "user", "admin": False}:
-            _parts.append("""<span>Regular user</span>""")
+            yield """<span>Regular user</span>"""
         case {"type": t} if t.startswith("system"):
-            _parts.append(f"""<span>System: ‹ESCAPE:{t}›</span>""")
+            yield replace_markers(f"""<span>System: ‹ESCAPE:{t}›</span>""")
         case _:
-            _parts.append("""<span>Unknown</span>""")
-    return replace_markers("".join(_parts))
+            yield """<span>Unknown</span>"""

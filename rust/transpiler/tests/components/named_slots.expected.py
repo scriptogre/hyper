@@ -1,11 +1,22 @@
-def NamedSlots(*, _children: str = "", _sidebar_children: str = "") -> str:
-    _parts = []
-    _parts.append("<div class=\"layout\">")
-    _parts.append("<aside>")
-    _parts.append(_sidebar_children)
-    _parts.append("</aside>")
-    _parts.append("<main>")
-    _parts.append(_children)
-    _parts.append("</main>")
-    _parts.append("</div>")
-    return "".join(_parts)
+from collections.abc import Iterable
+from hyper import component
+
+
+@component
+def NamedSlots(
+    _content: Iterable[str] | None = None,
+    _sidebar: Iterable[str] | None = None
+):
+    yield """\
+<div class="layout">
+    <aside>"""
+    if _sidebar is not None:
+        yield from _sidebar
+    yield """\
+</aside>
+    <main>"""
+    if _content is not None:
+        yield from _content
+    yield """\
+</main>
+</div>"""

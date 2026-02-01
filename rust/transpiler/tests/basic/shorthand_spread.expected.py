@@ -1,6 +1,16 @@
-from hyper import replace_markers
+from hyper import component, replace_markers
 
-def ShorthandSpread(name: str, value: str, disabled: bool, props: dict) -> str:
-    _parts = []
-    _parts.append(f"""<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› /><div props=‹SPREAD:{props}›>Content</div><button name=‹SPREAD:{name}› props=‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button><input type="text" props=‹SPREAD:{props}› class="input" />""")
-    return replace_markers("".join(_parts))
+
+@component
+def ShorthandSpread(*, name: str, value: str, disabled: bool, props: dict):
+    # Shorthand attributes
+    yield replace_markers(f"""<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› />""")
+
+    # Spread attributes
+    yield replace_markers(f"""<div props=‹SPREAD:{props}›>Content</div>""")
+
+    # Mixed shorthand and spread
+    yield replace_markers(f"""<button name=‹SPREAD:{name}› props=‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button>""")
+
+    # Spread with other attributes
+    yield replace_markers(f"""<input type="text" props=‹SPREAD:{props}› class="input" />""")

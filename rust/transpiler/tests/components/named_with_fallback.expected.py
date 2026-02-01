@@ -1,17 +1,45 @@
-def NamedWithFallback(title: str, *, _children: str = "", _footer_children: str = "", _header_children: str = "", _sidebar_children: str = "") -> str:
-    _parts = []
-    _parts.append("<div class=\"layout\">")
-    _parts.append("<header>")
-    _parts.append(_header_children)
-    _parts.append("</header>")
-    _parts.append("<nav>")
-    _parts.append(_sidebar_children)
-    _parts.append("</nav>")
-    _parts.append("<main>")
-    _parts.append(_children)
-    _parts.append("</main>")
-    _parts.append("<footer>")
-    _parts.append(_footer_children)
-    _parts.append("</footer>")
-    _parts.append("</div>")
-    return "".join(_parts)
+from collections.abc import Iterable
+from hyper import component
+
+
+@component
+def NamedWithFallback(
+    _content: Iterable[str] | None = None,
+    _header: Iterable[str] | None = None,
+    _sidebar: Iterable[str] | None = None,
+    _footer: Iterable[str] | None = None,
+    *,
+    title: str
+):
+    yield """\
+<div class="layout">
+    <header>"""
+    if _header is not None:
+        yield from _header
+    else:
+        yield """<h1>Default Header</h1>"""
+    yield """\
+</header>
+
+    <nav>"""
+    if _sidebar is not None:
+        yield from _sidebar
+    else:
+        yield """<p>Default sidebar content</p>"""
+    yield """\
+</nav>
+
+    <main>"""
+    if _content is not None:
+        yield from _content
+    yield """\
+</main>
+
+    <footer>"""
+    if _footer is not None:
+        yield from _footer
+    else:
+        yield """<p>Default footer</p>"""
+    yield """\
+</footer>
+</div>"""

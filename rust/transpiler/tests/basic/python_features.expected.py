@@ -1,19 +1,41 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def PythonFeatures(items: list, data: dict, value: int) -> str:
-    _parts = []
+
+@component
+def PythonFeatures(*, items: list, data: dict, value: int):
+    # Walrus operator
     if (n := len(items)) > 0:
-        _parts.append(f"""<span>Found ‹ESCAPE:{n}› items</span>""")
+        yield replace_markers(f"""<span>Found ‹ESCAPE:{n}› items</span>""")
+
+    # Lambda (assigned to variable first)
     sorter = lambda x: x.lower()
     sorted_items = sorted(items, key=sorter)
-    _parts.append(f"""<span>‹ESCAPE:{sorted_items}›</span>""")
+    yield replace_markers(f"""<span>‹ESCAPE:{sorted_items}›</span>""")
+
+    # Unpacking in expression
     first, *rest = items
-    _parts.append(f"""<span>First: ‹ESCAPE:{first}›, Rest: ‹ESCAPE:{rest}›</span>""")
+    yield replace_markers(f"""<span>First: ‹ESCAPE:{first}›, Rest: ‹ESCAPE:{rest}›</span>""")
+
+    # Dictionary merge (Python 3.9+)
     merged = {**data, "extra": "value"}
-    _parts.append(f"""<span>‹ESCAPE:{merged}›</span><span>‹ESCAPE:{value if value > 0 else -value}›</span><span>‹ESCAPE:{"positive" if value > 0 else "zero" if value == 0 else "negative"}›</span><span>‹ESCAPE:{value=}›</span><span>‹ESCAPE:{items!r}›</span>""")
+    yield replace_markers(f"""<span>‹ESCAPE:{merged}›</span>""")
+
+    # Conditional expression (ternary)
+    yield replace_markers(f"""<span>‹ESCAPE:{value if value > 0 else -value}›</span>""")
+
+    # Nested ternary
+    yield replace_markers(f"""<span>‹ESCAPE:{"positive" if value > 0 else "zero" if value == 0 else "negative"}›</span>""")
+
+    # F-string style expressions
+    yield replace_markers(f"""\
+<span>‹ESCAPE:{value=}›</span>
+<span>‹ESCAPE:{items!r}›</span>""")
+
+    # Star unpacking in function call
     args = [1, 2, 3]
-    _parts.append(f"""<span>‹ESCAPE:{max(*args)}›</span>""")
+    yield replace_markers(f"""<span>‹ESCAPE:{max(*args)}›</span>""")
+
+    # Keyword unpacking
     kwargs = {"sep": ", ", "end": "!"}
     result = "hello"
-    _parts.append(f"""<span>‹ESCAPE:{result}›</span>""")
-    return replace_markers("".join(_parts))
+    yield replace_markers(f"""<span>‹ESCAPE:{result}›</span>""")

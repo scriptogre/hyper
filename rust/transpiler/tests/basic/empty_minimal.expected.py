@@ -1,3 +1,6 @@
-def EmptyMinimal() -> str:
-    _parts = []
-    return "".join(_parts)
+from hyper import component
+
+
+@component
+def EmptyMinimal():
+    pass

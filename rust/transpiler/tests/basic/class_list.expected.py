@@ -1,7 +1,7 @@
-from hyper import replace_markers
+from hyper import component, replace_markers
 
-def ClassList(is_active: bool) -> str:
-    _parts = []
+
+@component
+def ClassList(*, is_active: bool):
     _class = ["btn", "btn-primary", {"active": is_active}]
-    _parts.append(f"""<button class=‹CLASS:{_class}›>Click</button>""")
-    return replace_markers("".join(_parts))
+    yield replace_markers(f"""<button class=‹CLASS:{_class}›>Click</button>""")

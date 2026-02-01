@@ -1,6 +1,6 @@
-from hyper import replace_markers
+from hyper import component, replace_markers
 
-def Boolean(is_disabled: bool) -> str:
-    _parts = []
-    _parts.append(f"""<button disabled=‹BOOL:{is_disabled}›>Submit</button>""")
-    return replace_markers("".join(_parts))
+
+@component
+def Boolean(*, is_disabled: bool):
+    yield replace_markers(f"""<button disabled=‹BOOL:{is_disabled}›>Submit</button>""")

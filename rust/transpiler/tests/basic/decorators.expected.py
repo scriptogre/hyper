@@ -1,24 +1,32 @@
-from hyper import escape, replace_markers
+from collections.abc import Iterable
+from hyper import component, replace_markers
 
-def Decorators(items: list, *, _children: str = "") -> str:
-    _parts = []
+
+@component
+def Decorators(_content: Iterable[str] | None = None, *, items: list):
+    # Simple decorator
     @fragment
     def Badge(text: str):
-        _parts.append(f"""<span class="badge">‹ESCAPE:{text}›</span>""")
+        yield replace_markers(f"""<span class="badge">‹ESCAPE:{text}›</span>""")
+
+    # Multiple decorators
     @cache
     @fragment
     def CachedList(items: list):
-        _parts.append("<ul>")
+        yield """<ul>"""
         for item in items:
-            _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
-        _parts.append("</ul>")
+            yield replace_markers(f"""<li>‹ESCAPE:{item}›</li>""")
+        yield """</ul>"""
+
+    # Decorator with arguments
     @fragment(name="card")
-    def Card(title: str):
-        _parts.append("<div class=\"card\">")
-        _parts.append("<h2>")
-        _parts.append(escape(title))
-        _parts.append("</h2>")
-        _parts.append(_children)
-        _parts.append("</div>")
-    _parts.append(f"""‹ESCAPE:{Badge("New")}›‹ESCAPE:{CachedList(items)}›""")
-    return replace_markers("".join(_parts))
+    def Card(_content: Iterable[str] | None = None, *, title: str):
+        yield replace_markers(f"""\
+<div class="card">
+    <h2>‹ESCAPE:{title}›</h2>""")
+        if _content is not None:
+            yield from _content
+        yield """</div>"""
+
+    # Use decorated functions
+    yield replace_markers(f"""‹ESCAPE:{"".join(Badge("New"))}›‹ESCAPE:{"".join(CachedList(items))}›""")
