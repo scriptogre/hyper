@@ -1,6 +1,0 @@
-from hyper import escape, replace_markers
-
-def Comprehension(items: list[str]) -> str:
-    _parts = []
-    _parts.append(f"""<ul>‹ESCAPE:{[<li>{item}</li> for item in items]}›</ul>""")
-    return replace_markers("".join(_parts))

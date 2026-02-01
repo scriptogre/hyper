@@ -1,7 +1,0 @@
-from hyper import replace_markers
-
-def StyleDict() -> str:
-    _parts = []
-    style = {"color": "red", "font-weight": "bold"}
-    _parts.append(f"""<p style=‹STYLE:{style}›>Important</p>""")
-    return replace_markers("".join(_parts))
