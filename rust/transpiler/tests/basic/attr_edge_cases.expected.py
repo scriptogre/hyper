@@ -1,0 +1,4 @@
+def AttrEdgeCases(value: str) -> str:
+    _parts = []
+    _parts.append("""<input value="" /><div class="">Empty class</div><div class="one two three four">Multiple classes</div><div data-value="a&lt;b">Encoded</div><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><use xlink:href="#icon" /></svg><input type="checkbox" checked /><input type="checkbox" disabled /><button disabled>Disabled</button><div data-config="this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output">Long</div><div title="{value} said 'hello'">Quotes</div><div data-msg="{value} said "hi"">Double quotes</div><div class="single-quoted">Single</div><div class="double-quoted">Double</div>""")
+    return "".join(_parts)

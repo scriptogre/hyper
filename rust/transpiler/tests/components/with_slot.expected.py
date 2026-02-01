@@ -1,8 +1,13 @@
-from hyper import escape, replace_markers
+from hyper import escape
 
 def WithSlot(title: str) -> str:
     _parts = []
-    _child_parts = f"""<h2>‹ESCAPE:{title}›</h2>
-    <p>Card content goes here</p>"""
-    _parts.append(Card(_children=_child_parts))
-    return replace_markers("".join(_parts))
+    _child_parts = []
+    _child_parts.append("<h2>")
+    _child_parts.append(escape(title))
+    _child_parts.append("</h2>")
+    _child_parts.append("<p>")
+    _child_parts.append("Card content goes here")
+    _child_parts.append("</p>")
+    _parts.append(Card(_children="".join(_child_parts)))
+    return "".join(_parts)
