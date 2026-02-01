@@ -1,26 +1,34 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def Functions(name: str) -> str:
-    _parts = []
+
+@component
+def Functions(*, name: str):
+    # Simple function
     def greet(who: str):
-        _parts.append(f"""<h1>Hello, ‹ESCAPE:{who}›!</h1>""")
-    def make_badge(text: str, color: str = "blue") -> str:
-        _parts.append(f"""<span class="badge badge-{color}">‹ESCAPE:{text}›</span>""")
+        yield replace_markers(f"""<h1>Hello, ‹ESCAPE:{who}›!</h1>""")
+
+    # Function with return type
+    def make_badge(text: str, color: str = "blue"):
+        yield replace_markers(f"""<span class="badge badge-‹ESCAPE:{color}›">‹ESCAPE:{text}›</span>""")
+
+    # Async function
     async def fetch_and_render(url: str):
-        _parts.append(f"""<div class="loading">Fetching ‹ESCAPE:{url}›...</div>""")
+        yield replace_markers(f"""<div class="loading">Fetching ‹ESCAPE:{url}›...</div>""")
+
+    # Function with complex body
     def render_list(items: list, title: str = "List"):
-        _parts.append("<div class=\"list-container\">")
-        _parts.append("<h2>")
-        _parts.append(escape(title))
-        _parts.append("</h2>")
+        yield replace_markers(f"""\
+<div class="list-container">
+    <h2>‹ESCAPE:{title}›</h2>""")
         if items:
-            _parts.append("<ul>")
+            yield """<ul>"""
             for item in items:
-                _parts.append(f"""<li>‹ESCAPE:{item}›</li>""")
-            _parts.append("</ul>")
+                yield replace_markers(f"""<li>‹ESCAPE:{item}›</li>""")
+            yield """</ul>"""
         else:
-            _parts.append("""<p>No items</p>""")
-        _parts.append("</div>")
-    greet(name)
-    _parts.append(f"""‹ESCAPE:{make_badge("Admin", "red")}›""")
-    return replace_markers("".join(_parts))
+            yield """<p>No items</p>"""
+        yield """</div>"""
+
+    # Call the function
+    yield from greet(name)
+    yield replace_markers(f"""‹ESCAPE:{"".join(make_badge("Admin", "red"))}›""")

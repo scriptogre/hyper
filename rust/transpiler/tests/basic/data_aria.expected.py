@@ -1,8 +1,8 @@
-from hyper import replace_markers
+from hyper import component, replace_markers
 
-def DataAria(is_hidden: bool) -> str:
-    _parts = []
+
+@component
+def DataAria(*, is_hidden: bool):
     data = {"user-id": 123, "role": "admin"}
     aria = {"label": "Close", "hidden": is_hidden}
-    _parts.append(f"""<div data=‹DATA:{data}› aria=‹ARIA:{aria}›>Content</div>""")
-    return replace_markers("".join(_parts))
+    yield replace_markers(f"""<div data=‹DATA:{data}› aria=‹ARIA:{aria}›>Content</div>""")

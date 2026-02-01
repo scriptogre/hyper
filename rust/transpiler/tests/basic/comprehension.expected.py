@@ -1,6 +1,9 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def Comprehension(items: list[str]) -> str:
-    _parts = []
-    _parts.append(f"""<ul>‹ESCAPE:{[<li>{item}</li> for item in items]}›</ul>""")
-    return replace_markers("".join(_parts))
+
+@component
+def Comprehension(*, items: list[str]):
+    yield replace_markers(f"""\
+<ul>
+    ‹ESCAPE:{[f"<li>{item}</li>" for item in items]}›
+</ul>""")

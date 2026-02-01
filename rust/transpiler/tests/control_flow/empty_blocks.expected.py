@@ -1,24 +1,39 @@
-def EmptyBlocks(flag: bool, items: list) -> str:
-    _parts = []
+from hyper import component
+
+
+@component
+def EmptyBlocks(*, flag: bool, items: list):
+    # Empty if block (should generate pass)
     if flag:
         pass
+
+    # Empty else block
     if flag:
-        _parts.append("""<span>Yes</span>""")
+        yield """<span>Yes</span>"""
     else:
         pass
+
+    # Empty for block
     for item in items:
         pass
+
+    # Empty while block
     while flag:
         pass
+
+    # Empty match cases
     match flag:
         case True:
             pass
         case False:
-            _parts.append("""<span>False</span>""")
+            yield """<span>False</span>"""
+
+    # Empty try blocks
     try:
         pass
     except:
-        _parts.append("""<span>Error</span>""")
+        yield """<span>Error</span>"""
+
+    # Empty function
     def empty():
         pass
-    return "".join(_parts)

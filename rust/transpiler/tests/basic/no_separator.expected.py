@@ -1,4 +1,8 @@
-def NoSeparator() -> str:
-    _parts = []
-    _parts.append("""<div>No separator, just content</div><span>More content</span>""")
-    return "".join(_parts)
+from hyper import component
+
+
+@component
+def NoSeparator():
+    yield """\
+<div>No separator, just content</div>
+<span>More content</span>"""

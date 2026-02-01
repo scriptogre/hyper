@@ -1,9 +1,11 @@
-def IfElse(is_admin: bool) -> str:
-    _parts = []
-    _parts.append("<nav>")
+from hyper import component
+
+
+@component
+def IfElse(*, is_admin: bool):
+    yield """<nav>"""
     if is_admin:
-        _parts.append("""<a href="/admin">Admin</a>""")
+        yield """<a href="/admin">Admin</a>"""
     else:
-        _parts.append("""<a href="/account">Account</a>""")
-    _parts.append("</nav>")
-    return "".join(_parts)
+        yield """<a href="/account">Account</a>"""
+    yield """</nav>"""

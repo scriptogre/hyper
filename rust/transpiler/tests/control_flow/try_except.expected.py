@@ -1,38 +1,47 @@
-from hyper import escape, replace_markers
+from hyper import component, replace_markers
 
-def TryExcept(data: dict, risky_func: object) -> str:
-    _parts = []
+
+@component
+def TryExcept(*, data: dict, risky_func: object):
+    # Simple try/except
     try:
-        _parts.append(f"""<span>‹ESCAPE:{data['missing']}›</span>""")
-    except KeyError::
-        _parts.append("""<span>Key not found</span>""")
+        yield replace_markers(f"""<span>‹ESCAPE:{data['missing']}›</span>""")
+    except KeyError:
+        yield """<span>Key not found</span>"""
+
+    # Try with multiple except
     try:
-        _parts.append(f"""<span>‹ESCAPE:{risky_func()}›</span>""")
-    except ValueError as e::
-        _parts.append(f"""<span>Value error: ‹ESCAPE:{e}›</span>""")
-    except TypeError as e::
-        _parts.append(f"""<span>Type error: ‹ESCAPE:{e}›</span>""")
-    except Exception as e::
-        _parts.append(f"""<span>Unknown error: ‹ESCAPE:{e}›</span>""")
+        yield replace_markers(f"""<span>‹ESCAPE:{risky_func()}›</span>""")
+    except ValueError as e:
+        yield replace_markers(f"""<span>Value error: ‹ESCAPE:{e}›</span>""")
+    except TypeError as e:
+        yield replace_markers(f"""<span>Type error: ‹ESCAPE:{e}›</span>""")
+    except Exception as e:
+        yield replace_markers(f"""<span>Unknown error: ‹ESCAPE:{e}›</span>""")
+
+    # Try/except/else
     try:
         result = data['key']
-    except KeyError::
-        _parts.append("""<span>Missing</span>""")
+    except KeyError:
+        yield """<span>Missing</span>"""
     else:
-        _parts.append(f"""<span>Found: ‹ESCAPE:{result}›</span>""")
+        yield replace_markers(f"""<span>Found: ‹ESCAPE:{result}›</span>""")
+
+    # Try/except/finally
     try:
-        _parts.append(f"""<span>‹ESCAPE:{data['value']}›</span>""")
+        yield replace_markers(f"""<span>‹ESCAPE:{data['value']}›</span>""")
     except:
-        _parts.append("""<span>Error</span>""")
+        yield """<span>Error</span>"""
     finally:
-        _parts.append("""<span>Cleanup complete</span>""")
+        yield """<span>Cleanup complete</span>"""
+
+    # Full try/except/else/finally
     try:
         value = data['key']
-    except KeyError::
-        _parts.append("""<span>Not found</span>""")
+    except KeyError:
+        yield """<span>Not found</span>"""
         value = 'default'
     else:
-        _parts.append("""<span>Success</span>""")
+        yield """<span>Success</span>"""
     finally:
-        _parts.append(f"""<span>Done: ‹ESCAPE:{value}›</span>""")
-    return replace_markers("".join(_parts))
+        yield replace_markers(f"""<span>Done: ‹ESCAPE:{value}›</span>""")

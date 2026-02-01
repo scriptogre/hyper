@@ -6,8 +6,10 @@
 
 **Transpiler outputs yield-style code:**
 ```python
+from collections.abc import Iterable
+
 @component
-def MyTemplate(_content=None, *, title="", items=None):
+def MyTemplate(_content: Iterable[str] | None = None, *, title="", items=None):
     # <{Card}>
     def _card():
         # <{CardHeader}>
@@ -58,8 +60,10 @@ def Badge(*, text: str = "", color: str = "blue"):
 
 Components **with slots** have `_content` as first positional arg:
 ```python
+from collections.abc import Iterable
+
 @component
-def Card(_content=None, *, title: str = ""):
+def Card(_content: Iterable[str] | None = None, *, title: str = ""):
     yield f'<div class="card"><h1>{title}</h1>'
     if _content is not None:
         yield from _content
@@ -92,11 +96,11 @@ The `@component` decorator introspects the function signature and handles both c
 
 This removes all ambiguity about what's a parameter vs what's body code.
 
-| File has... | `---` required? |
-|-------------|-----------------|
-| Parameters | **Yes** |
-| Only imports/constants/defs (module mode) | No |
-| Only HTML (no header content) | No |
+| File has...                               | `---` required? |
+|-------------------------------------------|-----------------|
+| Parameters                                | **Yes**         |
+| Only imports/constants/defs (module mode) | No              |
+| Only HTML (no header content)             | No              |
 
 ---
 
@@ -184,24 +188,24 @@ status: Status = Status.DRAFT
 
 Everything is allowed. HTML, logic, local definitions, etc.
 
-| Syntax | What it becomes |
-|--------|-----------------|
-| `<tag>...</tag>` | `yield "..."` |
-| `<{Component}>` | `yield from Component(...)` |
-| `{expr}` | `‹ESCAPE:{expr}›` in f-string |
-| `if`/`for`/`while`/`match`/`try`/`with` | Python control flow + yields |
-| `name = expr` | Local variable |
-| `name: type = expr` | Typed local variable |
-| `def name(...):` with HTML | Local generator (NOT exported) |
-| `def name(...):` without HTML | Local helper function |
-| `class Name:` | Local class |
+| Syntax                                  | What it becomes                |
+|-----------------------------------------|--------------------------------|
+| `<tag>...</tag>`                        | `yield "..."`                  |
+| `<{Component}>`                         | `yield from Component(...)`    |
+| `{expr}`                                | `‹ESCAPE:{expr}›` in f-string  |
+| `if`/`for`/`while`/`match`/`try`/`with` | Python control flow + yields   |
+| `name = expr`                           | Local variable                 |
+| `name: type = expr`                     | Typed local variable           |
+| `def name(...):` with HTML              | Local generator (NOT exported) |
+| `def name(...):` without HTML           | Local helper function          |
+| `class Name:`                           | Local class                    |
 
 ### Key Difference: Header vs Body `def`
 
-| Location | `def` with HTML | Can reference params? | Exported? |
-|----------|-----------------|----------------------|-----------|
-| Header | `@component` at module level | No | Yes |
-| Body | Generator (inner function) | Yes (closure) | No |
+| Location | `def` with HTML              | Can reference params? | Exported? |
+|----------|------------------------------|-----------------------|-----------|
+| Header   | `@component` at module level | No                    | Yes       |
+| Body     | Generator (inner function)   | Yes (closure)         | No        |
 
 **Header `def`s are self-contained** — they can't see the template's parameters.
 **Body `def`s are closures** — they can reference params and local variables.
@@ -280,12 +284,12 @@ If a function body contains HTML nodes, those nodes compile to `yield`.
 
 ### Statement calls vs expression calls
 
-| Inner def has HTML? | Called as | Compiled call site | Escape? |
-|---------------------|-----------|-------------------|---------|
-| Yes | Statement | `yield from fn(args)` | N/A |
-| Yes | Expression `{fn()}` | `‹ESCAPE:{"".join(fn(args))}›` | Yes |
-| No | Statement | `fn(args)` | N/A |
-| No | Expression `{fn()}` | `‹ESCAPE:{fn(args)}›` | Yes |
+| Inner def has HTML? | Called as           | Compiled call site             | Escape? |
+|---------------------|---------------------|--------------------------------|---------|
+| Yes                 | Statement           | `yield from fn(args)`          | N/A     |
+| Yes                 | Expression `{fn()}` | `‹ESCAPE:{"".join(fn(args))}›` | Yes     |
+| No                  | Statement           | `fn(args)`                     | N/A     |
+| No                  | Expression `{fn()}` | `‹ESCAPE:{fn(args)}›`          | Yes     |
 
 **`{expr}` ALWAYS escapes.** If you want HTML output from a function, use a
 statement call — not an expression.
