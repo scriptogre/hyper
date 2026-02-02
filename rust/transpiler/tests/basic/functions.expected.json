@@ -2,114 +2,114 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Functions(",
+      "prefix": "def Functions(*, name: str):\n    def greet(who: str):\n        yield replace_markers",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 75,
-      "prefix": ") -> str:\n    _parts = []\n    def greet(who: str):\n        _parts.append(f\"\"\"<h1>Hello, ‹ESCAPE:",
+      "prefix": "Hello, ‹ESCAPE:{who}›!</h1>\"\"\")\n    def make_badge(text: str, color: str = \"blue\"",
       "start": 70,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 214,
-      "prefix": "›!</h1>\"\"\")\n    def make_badge(text: str, color: str = \"blue\") -> str:\n        _parts.append(f\"\"\"<span class=\"badge badge-{color}\">‹ESCAPE:",
+      "prefix": "str:\n        yield replace_markers(f\"\"\"<span class=\"badge badge-{color}\">‹ESCAPE:{text}›</span>\"\"\")\n    from hyper import component, replace_marker",
       "start": 208,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 321,
-      "prefix": "›</span>\"\"\")\n    async def fetch_and_render(url: str):\n        _parts.append(f\"\"\"<div class=\"loading\">Fetching ‹ESCAPE:",
+      "prefix": "ape\n\n\n@component\nasync def fetch_and_render(url: str):\n        yield replace_markers(f\"\"\"<div class=\"loading\">Fetching ‹ESCAPE:",
       "start": 316,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 490,
-      "prefix": "›...</div>\"\"\")\n    def render_list(items: list, title: str = \"List\"):\n        _parts.append(\"<div class=\\\"list-container\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        if ",
+      "prefix": "›...</div>\"\"\")\n    def render_list(items: list, title: str = \"List\"):\n        yield \"<div class=\\\"list-container\\\">\"\n        yield \"<h2>\"\n        yield escape(title)\n        yield \"</h2>\"\n        if ",
       "start": 485,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 542,
-      "prefix": ":\n            _parts.append(\"<ul>\")\n            for item in ",
+      "prefix": ":\n            yield \"<ul>\"\n            for item in ",
       "start": 537,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 574,
-      "prefix": ":\n                _parts.append(f\"\"\"<li>‹ESCAPE:",
+      "prefix": ":\n                yield replace_markers(f\"\"\"<li>‹ESCAPE:",
       "start": 568,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 748,
-      "prefix": "›</li>\"\"\")\n            _parts.append(\"</ul>\")\n        else:\n            _parts.append(\"\"\"<p>No items</p>\"\"\")\n        _parts.append(\"</div>\")\n    greet(name)\n    _parts.append(f\"\"\"‹ESCAPE:",
+      "prefix": "›</li>\"\"\")\n            yield \"</ul>\"\n        else:\n            yield \"\"\"<p>No items</p>\"\"\"\n        yield \"</div>\"\n    greet(name)\n    yield replace_markers(f\"\"\"‹ESCAPE:",
       "start": 720,
-      "suffix": "›\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 66,
-      "compiled_start": 57,
+      "compiled_end": 92,
+      "compiled_start": 83,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 167,
-      "compiled_start": 162,
+      "compiled_end": 178,
+      "compiled_start": 173,
       "range_type": "Python",
       "source_end": 75,
       "source_start": 70
     },
     {
-      "compiled_end": 312,
-      "compiled_start": 306,
+      "compiled_end": 331,
+      "compiled_start": 325,
       "range_type": "Python",
       "source_end": 214,
       "source_start": 208
     },
     {
-      "compiled_end": 436,
-      "compiled_start": 431,
+      "compiled_end": 463,
+      "compiled_start": 458,
       "range_type": "Python",
       "source_end": 321,
       "source_start": 316
     },
     {
-      "compiled_end": 676,
-      "compiled_start": 671,
+      "compiled_end": 667,
+      "compiled_start": 662,
       "range_type": "Python",
       "source_end": 490,
       "source_start": 485
     },
     {
-      "compiled_end": 741,
-      "compiled_start": 736,
+      "compiled_end": 723,
+      "compiled_start": 718,
       "range_type": "Python",
       "source_end": 542,
       "source_start": 537
     },
     {
-      "compiled_end": 795,
-      "compiled_start": 789,
+      "compiled_end": 785,
+      "compiled_start": 779,
       "range_type": "Python",
       "source_end": 574,
       "source_start": 568
     },
     {
-      "compiled_end": 1010,
-      "compiled_start": 982,
+      "compiled_end": 981,
+      "compiled_start": 953,
       "range_type": "Python",
       "source_end": 748,
       "source_start": 720

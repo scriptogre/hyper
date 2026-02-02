@@ -2,14 +2,14 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "def Match(",
+      "prefix": "from hyper import component\n\n\n@component\ndef Match(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 30,
-      "prefix": ") -> str:\n    _parts = []\n    match ",
+      "prefix": "):\n    match ",
       "start": 24,
       "suffix": "",
       "type": "python"
@@ -23,51 +23,51 @@
     },
     {
       "end": 94,
-      "prefix": ":\n            _parts.append(\"\"\"<p>Loading...</p>\"\"\")\n        case ",
+      "prefix": ":\n            yield \"\"\"<p>Loading...</p>\"\"\"\n        case ",
       "start": 87,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 128,
-      "prefix": ":\n            _parts.append(\"\"\"<p>Error!</p>\"\"\")\n        case ",
+      "prefix": ":\n            yield \"\"\"<p>Error!</p>\"\"\"\n        case ",
       "start": 127,
-      "suffix": ":\n            _parts.append(\"\"\"<p>Ready</p>\"\"\")\n    return \"\".join(_parts)\n",
+      "suffix": ":\n            yield \"\"\"<p>Ready</p>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 21,
-      "compiled_start": 10,
+      "compiled_end": 65,
+      "compiled_start": 54,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 63,
-      "compiled_start": 57,
+      "compiled_end": 84,
+      "compiled_start": 78,
       "range_type": "Python",
       "source_end": 30,
       "source_start": 24
     },
     {
-      "compiled_end": 87,
-      "compiled_start": 78,
+      "compiled_end": 108,
+      "compiled_start": 99,
       "range_type": "Python",
       "source_end": 50,
       "source_start": 41
     },
     {
-      "compiled_end": 160,
-      "compiled_start": 153,
+      "compiled_end": 172,
+      "compiled_start": 165,
       "range_type": "Python",
       "source_end": 94,
       "source_start": 87
     },
     {
-      "compiled_end": 223,
-      "compiled_start": 222,
+      "compiled_end": 226,
+      "compiled_start": 225,
       "range_type": "Python",
       "source_end": 128,
       "source_start": 127

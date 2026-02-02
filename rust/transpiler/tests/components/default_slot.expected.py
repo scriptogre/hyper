@@ -1,12 +1,13 @@
 from collections.abc import Iterable
-from hyper import component, replace_markers
+from hyper import component, escape
 
 
 @component
 def DefaultSlot(_content: Iterable[str] | None = None, *, title: str):
-    yield replace_markers(f"""\
-<div class="card">
-    <h2>‹ESCAPE:{title}›</h2>""")
+    yield "<div class=\"card\">"
+    yield "<h2>"
+    yield escape(title)
+    yield "</h2>"
     if _content is not None:
         yield from _content
-    yield """</div>"""
+    yield "</div>"

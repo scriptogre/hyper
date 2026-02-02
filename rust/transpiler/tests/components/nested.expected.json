@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import escape\n\ndef Nested(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Nested(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -15,48 +15,118 @@
       "type": "python"
     },
     {
+      "end": 96,
+      "prefix": "):\n    # <{Card}>\n    def _card():\n        # <{CardHeader}>\n        def _card_header():\n            yield replace_markers(f\"\"\"<h2>‹ESCAPE:",
+      "start": 89,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 185,
+      "prefix": "›</h2>\"\"\")\n        yield from CardHeader(_card_header())\n        # </{CardHeader}>\n        # <{CardBody}>\n        def _card_body():\n            # <{List}>\n            def _list():\n                for item in ",
+      "start": 180,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 242,
+      "prefix": ":\n                    # <{ListItem}>\n                    def _list_item():\n                        yield replace_markers(f\"\"\"‹ESCAPE:",
+      "start": 236,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 372,
-      "prefix": ") -> str:\n    _parts = []\n    _child_parts = []\n    _parts.append(Card(_children=\"\".join(_child_parts)))\n    if ",
+      "prefix": "›\"\"\")\n                    yield from ListItem(_list_item())\n                    # </{ListItem}>\n            yield from List(_list())\n            # </{List}>\n        yield from CardBody(_card_body())\n        # </{CardBody}>\n    yield from Card(_card())\n    # </{Card}>\n    if ",
       "start": 367,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 421,
+      "prefix": ":\n        # <{Alert}>\n        def _alert():\n            yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "start": 414,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 487,
-      "prefix": ":\n        _child_parts = []\n        _child_parts.append(\"<span>\")\n        _child_parts.append(escape(title))\n        _child_parts.append(\"</span>\")\n        _parts.append(Alert(type=\"info\", _children=\"\".join(_child_parts)))\n    for item in ",
+      "prefix": "›</span>\"\"\")\n        yield from Alert(_alert(), type=\"info\")\n        # </{Alert}>\n    for item in ",
       "start": 482,
-      "suffix": ":\n        _child_parts = []\n        _child_parts.append(escape(item))\n        _parts.append(Badge(color=\"blue\", _children=\"\".join(_child_parts)))\n    return \"\".join(_parts)\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 530,
+      "prefix": ":\n        # <{Badge}>\n        def _badge():\n            yield replace_markers(f\"\"\"‹ESCAPE:",
+      "start": 524,
+      "suffix": "›\"\"\")\n        yield from Badge(_badge(), color=\"blue\")\n        # </{Badge}>\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 47,
-      "compiled_start": 37,
+      "compiled_end": 90,
+      "compiled_start": 80,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 60,
-      "compiled_start": 49,
+      "compiled_end": 103,
+      "compiled_start": 92,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 11
     },
     {
-      "compiled_end": 177,
-      "compiled_start": 172,
+      "compiled_end": 248,
+      "compiled_start": 241,
+      "range_type": "Python",
+      "source_end": 96,
+      "source_start": 89
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 456,
+      "range_type": "Python",
+      "source_end": 185,
+      "source_start": 180
+    },
+    {
+      "compiled_end": 600,
+      "compiled_start": 594,
+      "range_type": "Python",
+      "source_end": 242,
+      "source_start": 236
+    },
+    {
+      "compiled_end": 880,
+      "compiled_start": 875,
       "range_type": "Python",
       "source_end": 372,
       "source_start": 367
     },
     {
-      "compiled_end": 421,
-      "compiled_start": 416,
+      "compiled_end": 983,
+      "compiled_start": 976,
+      "range_type": "Python",
+      "source_end": 421,
+      "source_start": 414
+    },
+    {
+      "compiled_end": 1086,
+      "compiled_start": 1081,
       "range_type": "Python",
       "source_end": 487,
       "source_start": 482
+    },
+    {
+      "compiled_end": 1182,
+      "compiled_start": 1176,
+      "range_type": "Python",
+      "source_end": 530,
+      "source_start": 524
     }
   ]
 }

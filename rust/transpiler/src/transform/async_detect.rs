@@ -18,7 +18,12 @@ impl Visitor for AsyncDetectionPlugin {
                 }
             }
             Node::For(for_node) => {
-                if for_node.iterable.contains("await ") {
+                if for_node.is_async || for_node.iterable.contains("await ") {
+                    metadata.is_async = true;
+                }
+            }
+            Node::With(with_node) => {
+                if with_node.is_async || with_node.items.contains("await ") {
                     metadata.is_async = true;
                 }
             }

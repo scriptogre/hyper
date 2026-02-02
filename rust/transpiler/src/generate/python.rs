@@ -69,18 +69,48 @@ impl PythonGenerator {
         }
     }
 
-    /// Emit consecutive text/expression/element nodes as a single string literal
+    /// Check if content contains markers that need replace_markers()
+    fn content_has_markers(&self, nodes: &[&Node]) -> bool {
+        for node in nodes {
+            if self.node_has_markers(node) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if a single node contains markers
+    fn node_has_markers(&self, node: &Node) -> bool {
+        match node {
+            Node::Expression(expr) => expr.escape, // Escaped expressions use markers
+            Node::Element(el) => {
+                // Check attributes for markers (class, style, bool, spread)
+                el.attributes.iter().any(|attr| {
+                    matches!(attr.kind,
+                        AttributeKind::Dynamic { ref name, .. } if name == "class" || name == "style" || self.is_boolean_attribute(name))
+                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. })
+                }) || el.children.iter().any(|child| self.node_has_markers(child))
+            }
+            _ => false,
+        }
+    }
+
+    /// Emit consecutive text/expression/element nodes as a single yield statement
     fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize) {
         self.indent(output, indent);
 
         // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
+        // Check if content has markers that need replace_markers()
+        let has_markers = self.content_has_markers(nodes);
 
-        output.push("_parts.append(");
-        if has_expressions {
-            output.push("f\"\"\"");
+        // Build the yield statement
+        if has_markers {
+            output.push("yield replace_markers(f\"\"\"");
+        } else if has_expressions {
+            output.push("yield f\"\"\"");
         } else {
-            output.push("\"\"\"");
+            output.push("yield \"\"\"");
         }
 
         // Emit content
@@ -88,7 +118,11 @@ impl PythonGenerator {
             self.emit_node_content(node, output, has_expressions);
         }
 
-        output.push("\"\"\")");
+        if has_markers {
+            output.push("\"\"\")");
+        } else {
+            output.push("\"\"\"");
+        }
         output.newline();
     }
 
@@ -387,29 +421,29 @@ impl PythonGenerator {
 
     fn emit_text(&self, text: &TextNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        output.push("_parts.append(\"");
+        output.push("yield \"");
         output.push(&escape_string(&text.content));
-        output.push("\")");
+        output.push("\"");
         output.newline();
     }
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        output.push("_parts.append(");
         if expr.escape {
-            output.push("escape(");
-        }
-        output.push(&expr.expr);
-        if expr.escape {
+            output.push("yield escape(");
+            output.push(&expr.expr);
+            output.push(")");
+        } else {
+            output.push("yield str(");
+            output.push(&expr.expr);
             output.push(")");
         }
-        output.push(")");
         output.newline();
     }
 
     fn emit_element(&self, el: &ElementNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        output.push("_parts.append(\"<");
+        output.push("yield \"<");
         output.push(&el.tag);
 
         // Emit attributes
@@ -418,10 +452,10 @@ impl PythonGenerator {
         }
 
         if el.self_closing {
-            output.push(" />\")");
+            output.push(" />\"");
             output.newline();
         } else {
-            output.push(">\")");
+            output.push(">\"");
             output.newline();
 
             // Emit children
@@ -431,9 +465,9 @@ impl PythonGenerator {
 
             // Closing tag
             self.indent(output, indent);
-            output.push("_parts.append(\"</");
+            output.push("yield \"</");
             output.push(&el.tag);
-            output.push(">\")");
+            output.push(">\"");
             output.newline();
         }
     }
@@ -485,169 +519,112 @@ impl PythonGenerator {
         }
     }
 
+    /// Generate a safe function name from a component name
+    fn component_to_func_name(&self, name: &str) -> String {
+        // Convert PascalCase to snake_case and prefix with _
+        let mut result = String::from("_");
+        for (i, ch) in name.chars().enumerate() {
+            if ch.is_uppercase() && i > 0 {
+                result.push('_');
+            }
+            result.push(ch.to_ascii_lowercase());
+        }
+        result
+    }
+
     fn emit_component(&self, c: &ComponentNode, output: &mut Output, indent: usize) {
-        // If component has children, we need to render them first
         let has_children = !c.children.is_empty();
 
         if has_children {
-            // Create a temporary variable to hold children content
+            // Generate inner function name from component name
+            let func_name = self.component_to_func_name(&c.name);
+
+            // Emit comment for opening tag
             self.indent(output, indent);
-            output.push("_child_parts = []");
+            output.push("# <{");
+            output.push(&c.name);
+            output.push("}>");
             output.newline();
 
-            // Emit children into _child_parts
+            // Emit inner function definition
+            self.indent(output, indent);
+            output.push("def ");
+            output.push(&func_name);
+            output.push("():");
+            output.newline();
+
+            // Emit children inside the inner function
             let refs: Vec<&Node> = c.children.iter().collect();
-            // Temporarily swap the output target (we'll render to the same output but using _child_parts)
-            for child in &refs {
-                match *child {
-                    Node::Text(text) => {
-                        self.indent(output, indent);
-                        output.push("_child_parts.append(\"");
-                        output.push(&escape_string(&text.content));
-                        output.push("\")");
-                        output.newline();
-                    }
-                    Node::Expression(expr) => {
-                        self.indent(output, indent);
-                        output.push("_child_parts.append(");
-                        if expr.escape {
-                            output.push("escape(");
-                        }
-                        output.push(&expr.expr);
-                        if expr.escape {
-                            output.push(")");
-                        }
-                        output.push(")");
-                        output.newline();
-                    }
-                    Node::Element(el) => {
-                        // Recursively emit element
-                        self.indent(output, indent);
-                        output.push("_child_parts.append(\"<");
-                        output.push(&el.tag);
-                        for attr in &el.attributes {
-                            self.emit_attribute(attr, output);
-                        }
-                        if el.self_closing {
-                            output.push(" />\")");
-                            output.newline();
-                        } else {
-                            output.push(">\")");
-                            output.newline();
-                            // Recursively handle element children (simplified - just emit as text for now)
-                            for child_el in &el.children {
-                                self.emit_child_node(child_el, output, indent, "_child_parts");
-                            }
-                            self.indent(output, indent);
-                            output.push("_child_parts.append(\"</");
-                            output.push(&el.tag);
-                            output.push(">\")");
-                            output.newline();
-                        }
-                    }
-                    _ => {
-                        // For other node types, emit normally but target _child_parts
-                        self.emit_child_node(*child, output, indent, "_child_parts");
-                    }
-                }
-            }
-        }
+            self.emit_nodes(&refs, output, indent + 1);
 
-        self.indent(output, indent);
-        output.push("_parts.append(");
-        output.push(&c.name);
-        output.push("(");
+            // Emit yield from with component call
+            self.indent(output, indent);
+            output.push("yield from ");
+            output.push(&c.name);
+            output.push("(");
+            output.push(&func_name);
+            output.push("()");
 
-        // Emit attributes as keyword arguments
-        let mut arg_count = 0;
-        for attr in &c.attributes {
-            if arg_count > 0 {
+            // Emit attributes as keyword arguments
+            for attr in &c.attributes {
                 output.push(", ");
-            }
-            match &attr.kind {
-                AttributeKind::Static { name, value } => {
-                    output.push(name);
-                    output.push("=\"");
-                    output.push(&escape_string(value));
-                    output.push("\"");
-                    arg_count += 1;
-                }
-                AttributeKind::Dynamic { name, expr, .. } => {
-                    output.push(name);
-                    output.push("=");
-                    output.push(expr);
-                    arg_count += 1;
-                }
-                _ => {} // TODO: handle other attribute types
-            }
-        }
-
-        // Pass children if present
-        if has_children {
-            if arg_count > 0 {
-                output.push(", ");
-            }
-            output.push("_children=\"\".join(_child_parts)");
-        }
-
-        output.push("))");
-        output.newline();
-    }
-
-    /// Emit a child node into a specified parts array (for component children)
-    fn emit_child_node(&self, node: &Node, output: &mut Output, indent: usize, target: &str) {
-        match node {
-            Node::Text(text) => {
-                self.indent(output, indent);
-                output.push(target);
-                output.push(".append(\"");
-                output.push(&escape_string(&text.content));
-                output.push("\")");
-                output.newline();
-            }
-            Node::Expression(expr) => {
-                self.indent(output, indent);
-                output.push(target);
-                output.push(".append(");
-                if expr.escape {
-                    output.push("escape(");
-                }
-                output.push(&expr.expr);
-                if expr.escape {
-                    output.push(")");
-                }
-                output.push(")");
-                output.newline();
-            }
-            Node::Element(el) => {
-                self.indent(output, indent);
-                output.push(target);
-                output.push(".append(\"<");
-                output.push(&el.tag);
-                for attr in &el.attributes {
-                    self.emit_attribute(attr, output);
-                }
-                if el.self_closing {
-                    output.push(" />\")");
-                    output.newline();
-                } else {
-                    output.push(">\")");
-                    output.newline();
-                    for child in &el.children {
-                        self.emit_child_node(child, output, indent, target);
+                match &attr.kind {
+                    AttributeKind::Static { name, value } => {
+                        output.push(name);
+                        output.push("=\"");
+                        output.push(&escape_string(value));
+                        output.push("\"");
                     }
-                    self.indent(output, indent);
-                    output.push(target);
-                    output.push(".append(\"</");
-                    output.push(&el.tag);
-                    output.push(">\")");
-                    output.newline();
+                    AttributeKind::Dynamic { name, expr, .. } => {
+                        output.push(name);
+                        output.push("=");
+                        output.push(expr);
+                    }
+                    _ => {}
                 }
             }
-            _ => {
-                // For control flow and other nodes, fall back to regular emit
-                // This is a simplification - ideally we'd redirect output
+
+            output.push(")");
+            output.newline();
+
+            // Emit comment for closing tag
+            self.indent(output, indent);
+            output.push("# </{");
+            output.push(&c.name);
+            output.push("}>");
+            output.newline();
+        } else {
+            // No children - simple yield from
+            self.indent(output, indent);
+            output.push("yield from ");
+            output.push(&c.name);
+            output.push("(");
+
+            // Emit attributes as keyword arguments
+            let mut first = true;
+            for attr in &c.attributes {
+                if !first {
+                    output.push(", ");
+                }
+                first = false;
+                match &attr.kind {
+                    AttributeKind::Static { name, value } => {
+                        output.push(name);
+                        output.push("=\"");
+                        output.push(&escape_string(value));
+                        output.push("\"");
+                    }
+                    AttributeKind::Dynamic { name, expr, .. } => {
+                        output.push(name);
+                        output.push("=");
+                        output.push(expr);
+                    }
+                    _ => {}
+                }
             }
+
+            output.push(")");
+            output.newline();
         }
     }
 
@@ -657,14 +634,22 @@ impl PythonGenerator {
     }
 
     fn emit_slot(&self, s: &SlotNode, output: &mut Output, indent: usize) {
-        self.indent(output, indent);
-        if let Some(name) = &s.name {
-            output.push("_parts.append(_");
-            output.push(name);
-            output.push("_children)");
+        // Emit conditional yield from for slot content
+        let slot_var = if let Some(name) = &s.name {
+            format!("_{}_content", name)
         } else {
-            output.push("_parts.append(_children)");
-        }
+            "_content".to_string()
+        };
+
+        self.indent(output, indent);
+        output.push("if ");
+        output.push(&slot_var);
+        output.push(" is not None:");
+        output.newline();
+
+        self.indent(output, indent + 1);
+        output.push("yield from ");
+        output.push(&slot_var);
         output.newline();
     }
 
@@ -1020,15 +1005,17 @@ impl Generator for PythonGenerator {
     fn generate(&self, ast: &Ast, metadata: &crate::transform::TransformMetadata, options: &GenerateOptions) -> GenerateResult {
         let mut output = Output::new();
 
-        // Collect parameters and imports from AST
+        // Collect parameters, imports, decorators, and body from AST
         let mut parameters = Vec::new();
         let mut imports = Vec::new();
+        let mut decorators = Vec::new();
         let mut body_nodes = Vec::new();
 
         for node in &ast.nodes {
             match node {
                 Node::Parameter(param) => parameters.push(param),
                 Node::Import(import) => imports.push(import),
+                Node::Decorator(dec) => decorators.push(dec),
                 _ => body_nodes.push(node),
             }
         }
@@ -1036,6 +1023,12 @@ impl Generator for PythonGenerator {
         // Emit user imports
         for import in &imports {
             output.push(&import.stmt);
+            output.newline();
+        }
+
+        // Emit user decorators (before @component)
+        for dec in &decorators {
+            output.push(&dec.decorator);
             output.newline();
         }
 
@@ -1053,179 +1046,124 @@ impl Generator for PythonGenerator {
         output.push(&func_name);
         output.push("(");
 
-        // Emit parameters
+        // Determine if we have slots (for _content parameter)
+        let has_default_slot = metadata.slots_used.contains("");
+        let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
+
+        // Emit _content parameter first if default slot is used
         let mut param_count = 0;
-        for param in &parameters {
-            if param_count > 0 {
-                output.push(", ");
-            }
-            let param_start = output.position();
-            output.push(&param.name);
-            if let Some(type_hint) = &param.type_hint {
-                output.push(": ");
-                output.push(type_hint);
-            }
-            if let Some(default) = &param.default {
-                output.push(" = ");
-                output.push(default);
-            }
-            let param_end = output.position();
-
-            // Add range for parameter (maps source parameter to compiled signature)
-            output.add_range(Range {
-                range_type: RangeType::Python,
-                source_start: param.span.start.byte,
-                source_end: param.span.end.byte,
-                compiled_start: param_start,
-                compiled_end: param_end,
-                needs_injection: true,
-            });
-
+        if has_default_slot {
+            output.push("_content: Iterable[str] | None = None");
             param_count += 1;
         }
 
-        // Add slot parameters (children, named slots) as keyword-only
-        if !metadata.slots_used.is_empty() {
-            // Add keyword-only marker
+        // Add keyword-only marker if we have user parameters
+        if !parameters.is_empty() {
             if param_count > 0 {
-                output.push(", *");
+                output.push(", *, ");
             } else {
-                output.push("*");
+                output.push("*, ");
             }
 
-            // Sort slot names for deterministic output
-            let mut sorted_slots: Vec<_> = metadata.slots_used.iter().collect();
-            sorted_slots.sort();
-
-            // Add each slot parameter
-            for slot_name in sorted_slots {
-                output.push(", ");
-                // Default slot uses _children, named slots use _{name}_children
-                if slot_name.is_empty() {
-                    output.push("_children: str = \"\"");
-                } else {
-                    output.push("_");
-                    output.push(slot_name);
-                    output.push("_children: str = \"\"");
+            // Emit user parameters as keyword-only
+            for (i, param) in parameters.iter().enumerate() {
+                if i > 0 {
+                    output.push(", ");
                 }
+                let param_start = output.position();
+                output.push(&param.name);
+                if let Some(type_hint) = &param.type_hint {
+                    output.push(": ");
+                    output.push(type_hint);
+                }
+                if let Some(default) = &param.default {
+                    output.push(" = ");
+                    output.push(default);
+                }
+                let param_end = output.position();
+
+                // Add range for parameter (maps source parameter to compiled signature)
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: param.span.start.byte,
+                    source_end: param.span.end.byte,
+                    compiled_start: param_start,
+                    compiled_end: param_end,
+                    needs_injection: true,
+                });
             }
         }
 
-        output.push(") -> str:");
+        // Add named slot parameters
+        if has_named_slots {
+            let mut sorted_slots: Vec<_> = metadata.slots_used.iter()
+                .filter(|s| !s.is_empty())
+                .collect();
+            sorted_slots.sort();
+
+            for slot_name in sorted_slots {
+                if param_count > 0 || !parameters.is_empty() {
+                    output.push(", ");
+                }
+                output.push("_");
+                output.push(slot_name);
+                output.push("_content: Iterable[str] | None = None");
+            }
+        }
+
+        output.push("):");
         output.newline();
 
-        // Initialize _parts
-        self.indent(&mut output, 1);
-        output.push("_parts = []");
-        output.newline();
-
-        // Emit body
+        // Emit body (using yield instead of _parts)
         self.emit_nodes(&body_nodes, &mut output, 1);
-
-        // Return joined parts (we'll add replace_markers wrapper during post-processing if needed)
-        self.indent(&mut output, 1);
-        output.push("return \"\".join(_parts)");
-        output.newline();
 
         let (mut code, mappings, tracked_ranges) = output.finish();
 
-        // Track the import line offset for adjusting ranges
-        let mut import_offset = 0;
+        // Determine if we need Iterable import (for _content parameter)
+        let has_default_slot = metadata.slots_used.contains("");
+        let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
+        let needs_iterable = has_default_slot || has_named_slots;
 
-        // Add replace_markers import and wrap return if markers are present
+        // Build imports
+        let mut hyper_imports = vec!["component"];
+
+        // Add replace_markers if markers are present
         if code.contains('‹') {
-            // Add helpers based on what's used
-            let mut helpers_to_import = Vec::new();
-
-            // Check which helpers are used in metadata
-            if metadata.helpers_used.contains("escape") || code.contains("escape(") {
-                helpers_to_import.push("escape");
-            }
-            if metadata.helpers_used.contains("safe") {
-                helpers_to_import.push("safe");
-            }
-            if metadata.helpers_used.contains("render_class") {
-                helpers_to_import.push("render_class");
-            }
-            if metadata.helpers_used.contains("render_style") {
-                helpers_to_import.push("render_style");
-            }
-            if metadata.helpers_used.contains("render_attr") {
-                helpers_to_import.push("render_attr");
-            }
-            if metadata.helpers_used.contains("render_data") {
-                helpers_to_import.push("render_data");
-            }
-            if metadata.helpers_used.contains("render_aria") {
-                helpers_to_import.push("render_aria");
-            }
-            if metadata.helpers_used.contains("spread_attrs") {
-                helpers_to_import.push("spread_attrs");
-            }
-
-            // Always add replace_markers when markers are present
-            helpers_to_import.push("replace_markers");
-
-            if !helpers_to_import.is_empty() {
-                let import_line = format!("from hyper import {}\n\n", helpers_to_import.join(", "));
-
-                // Find the position after user imports
-                if let Some(def_pos) = code.find("def ") {
-                    code.insert_str(def_pos, &import_line);
-                    import_offset = import_line.len();
-                } else {
-                    // Fallback: prepend at the start
-                    code.insert_str(0, &import_line);
-                    import_offset = import_line.len();
-                }
-            }
-
-            // Wrap return statement with replace_markers
-            code = code.replace(
-                "return \"\".join(_parts)",
-                "return replace_markers(\"\".join(_parts))"
-            );
-        } else {
-            // No markers, just add regular helper imports
-            let mut helpers_to_import = Vec::new();
-
-            if metadata.helpers_used.contains("escape") || code.contains("escape(") {
-                helpers_to_import.push("escape");
-            }
-            if metadata.helpers_used.contains("safe") {
-                helpers_to_import.push("safe");
-            }
-            if metadata.helpers_used.contains("render_class") {
-                helpers_to_import.push("render_class");
-            }
-            if metadata.helpers_used.contains("render_style") {
-                helpers_to_import.push("render_style");
-            }
-            if metadata.helpers_used.contains("render_attr") {
-                helpers_to_import.push("render_attr");
-            }
-            if metadata.helpers_used.contains("render_data") {
-                helpers_to_import.push("render_data");
-            }
-            if metadata.helpers_used.contains("render_aria") {
-                helpers_to_import.push("render_aria");
-            }
-            if metadata.helpers_used.contains("spread_attrs") {
-                helpers_to_import.push("spread_attrs");
-            }
-
-            if !helpers_to_import.is_empty() {
-                let import_line = format!("from hyper import {}\n\n", helpers_to_import.join(", "));
-
-                if let Some(def_pos) = code.find("def ") {
-                    code.insert_str(def_pos, &import_line);
-                    import_offset = import_line.len();
-                } else {
-                    code.insert_str(0, &import_line);
-                    import_offset = import_line.len();
-                }
-            }
+            hyper_imports.push("replace_markers");
         }
+
+        // Add other helpers based on metadata
+        if metadata.helpers_used.contains("escape") || code.contains("escape(") {
+            hyper_imports.push("escape");
+        }
+        if metadata.helpers_used.contains("safe") {
+            hyper_imports.push("safe");
+        }
+
+        // Build import block
+        let mut import_lines = String::new();
+
+        // Add Iterable import if needed
+        if needs_iterable {
+            import_lines.push_str("from collections.abc import Iterable\n");
+        }
+
+        // Add hyper imports
+        import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
+        import_lines.push_str("\n\n");  // Two blank lines before function (PEP 8)
+
+        // Add @component decorator
+        import_lines.push_str("@component\n");
+
+        // Insert imports before function definition
+        // Search for "async def" first to avoid matching "def" inside "async def"
+        let import_offset = if let Some(def_pos) = code.find("async def ").or_else(|| code.find("def ")) {
+            code.insert_str(def_pos, &import_lines);
+            import_lines.len()
+        } else {
+            code.insert_str(0, &import_lines);
+            import_lines.len()
+        };
 
         // Compute injection ranges and injections using the analyzer (if requested)
         let (ranges, injections) = if options.include_ranges {

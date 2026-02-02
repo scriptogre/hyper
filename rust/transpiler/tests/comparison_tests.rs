@@ -12,8 +12,9 @@ fn test_simple_element() {
     let output = compile_v2(source);
 
     println!("Output:\n{}", output);
-    assert!(output.contains("def Render() -> str:"));
-    assert!(output.contains("_parts.append(\"\"\"<div>"));
+    assert!(output.contains("@component"));
+    assert!(output.contains("def Render():"));
+    assert!(output.contains("yield \"\"\"<div>"));
 }
 
 #[test]
@@ -33,8 +34,9 @@ fn test_parameters() {
 
     let output = compile_v2(source);
 
-    assert!(output.contains("def Render(name: str) -> str:"));
-    assert!(!output.contains("name: str\n    _parts")); // Should NOT appear in body
+    println!("Output:\n{}", output);
+    assert!(output.contains("def Render(*, name: str):"));
+    assert!(output.contains("@component"));
 }
 
 #[test]
@@ -47,7 +49,8 @@ end"#;
 
     let output = compile_v2(source);
 
-    assert!(output.contains("def Render(items: list) -> str:"));
+    println!("Output:\n{}", output);
+    assert!(output.contains("def Render(*, items: list):"));
     assert!(output.contains("for item in items:"));
     assert!(!output.contains("for item in items::")); // No double colon
 }

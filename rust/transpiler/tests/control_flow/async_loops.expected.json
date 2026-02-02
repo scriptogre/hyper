@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 14,
-      "prefix": "from hyper import escape, replace_markers\n\ndef AsyncLoops(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\nasync def AsyncLoops(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,14 +16,14 @@
     },
     {
       "end": 81,
-      "prefix": ") -> str:\n    _parts = []\n    async for item in ",
+      "prefix": "):\n    async for item in ",
       "start": 75,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 98,
-      "prefix": ":\n        _parts.append(f\"\"\"<div>‹ESCAPE:",
+      "prefix": ":\n        yield replace_markers(f\"\"\"<div>‹ESCAPE:",
       "start": 92,
       "suffix": "",
       "type": "python"
@@ -37,7 +37,7 @@
     },
     {
       "end": 194,
-      "prefix": ":\n        _parts.append(f\"\"\"<span>Connected: ‹ESCAPE:",
+      "prefix": ":\n        yield replace_markers(f\"\"\"<span>Connected: ‹ESCAPE:",
       "start": 185,
       "suffix": "",
       "type": "python"
@@ -58,72 +58,72 @@
     },
     {
       "end": 313,
-      "prefix": ":\n            _parts.append(f\"\"\"<p>‹ESCAPE:",
+      "prefix": ":\n            yield replace_markers(f\"\"\"<p>‹ESCAPE:",
       "start": 304,
-      "suffix": "›</p>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</p>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 72,
-      "compiled_start": 58,
+      "compiled_end": 104,
+      "compiled_start": 90,
       "range_type": "Python",
       "source_end": 14,
       "source_start": 0
     },
     {
-      "compiled_end": 92,
-      "compiled_start": 74,
+      "compiled_end": 124,
+      "compiled_start": 106,
       "range_type": "Python",
       "source_end": 33,
       "source_start": 15
     },
     {
-      "compiled_end": 146,
-      "compiled_start": 140,
+      "compiled_end": 155,
+      "compiled_start": 149,
       "range_type": "Python",
       "source_end": 81,
       "source_start": 75
     },
     {
-      "compiled_end": 193,
-      "compiled_start": 187,
+      "compiled_end": 210,
+      "compiled_start": 204,
       "range_type": "Python",
       "source_end": 98,
       "source_start": 92
     },
     {
-      "compiled_end": 238,
-      "compiled_start": 220,
+      "compiled_end": 255,
+      "compiled_start": 237,
       "range_type": "Python",
       "source_end": 162,
       "source_start": 144
     },
     {
-      "compiled_end": 300,
-      "compiled_start": 291,
+      "compiled_end": 325,
+      "compiled_start": 316,
       "range_type": "Python",
       "source_end": 194,
       "source_start": 185
     },
     {
-      "compiled_end": 346,
-      "compiled_start": 328,
+      "compiled_end": 371,
+      "compiled_start": 353,
       "range_type": "Python",
       "source_end": 251,
       "source_start": 233
     },
     {
-      "compiled_end": 390,
-      "compiled_start": 377,
+      "compiled_end": 415,
+      "compiled_start": 402,
       "range_type": "Python",
       "source_end": 291,
       "source_start": 278
     },
     {
-      "compiled_end": 442,
-      "compiled_start": 433,
+      "compiled_end": 475,
+      "compiled_start": 466,
       "range_type": "Python",
       "source_end": 313,
       "source_start": 304

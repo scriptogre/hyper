@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 18,
-      "prefix": "from hyper import escape, replace_markers\n\ndef ShortCircuit(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef ShortCircuit(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 99,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<div>‹ESCAPE:",
       "start": 48,
-      "suffix": "›</div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</div>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 78,
-      "compiled_start": 60,
+      "compiled_end": 104,
+      "compiled_start": 86,
       "range_type": "Python",
       "source_end": 18,
       "source_start": 0
     },
     {
-      "compiled_end": 92,
-      "compiled_start": 80,
+      "compiled_end": 118,
+      "compiled_start": 106,
       "range_type": "Python",
       "source_end": 31,
       "source_start": 19
     },
     {
-      "compiled_end": 204,
-      "compiled_start": 153,
+      "compiled_end": 215,
+      "compiled_start": 164,
       "range_type": "Python",
       "source_end": 99,
       "source_start": 48

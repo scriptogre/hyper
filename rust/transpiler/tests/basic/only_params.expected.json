@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "def OnlyParams(",
+      "prefix": "from hyper import component\n\n\n@component\ndef OnlyParams(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -18,28 +18,28 @@
       "end": 36,
       "prefix": ", ",
       "start": 25,
-      "suffix": ") -> str:\n    _parts = []\n    return \"\".join(_parts)\n",
+      "suffix": "):\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 24,
-      "compiled_start": 15,
+      "compiled_end": 68,
+      "compiled_start": 59,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 40,
-      "compiled_start": 26,
+      "compiled_end": 84,
+      "compiled_start": 70,
       "range_type": "Python",
       "source_end": 24,
       "source_start": 10
     },
     {
-      "compiled_end": 53,
-      "compiled_start": 42,
+      "compiled_end": 97,
+      "compiled_start": 86,
       "range_type": "Python",
       "source_end": 36,
       "source_start": 25

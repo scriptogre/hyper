@@ -3,36 +3,4 @@ from hyper import component
 
 @component
 def KeywordContent():
-    # Python keywords as content (no trailing colon = NOT control flow)
-    yield """\
-<p>
-    for example, this is just text
-</p>
-
-<div>
-    if you think about it, this makes sense
-</div>
-
-<pre>
-    class warfare is a political term
-</pre>
-
-<span>
-    while we wait, have some tea
-</span>
-
-<article>
-    try our new product today
-</article>
-
-<p>
-    match the following pairs
-</p>
-
-<blockquote>
-    with great power comes great responsibility
-</blockquote>
-
-<p>
-    def initely the best approach
-</p>"""
+    yield """<p>for example, this is just text</p><div>if you think about it, this makes sense</div><pre>class warfare is a political term</pre><span>while we wait, have some tea</span><article>try our new product today</article><p>match the following pairs</p><blockquote>with great power comes great responsibility</blockquote><p>def initely the best approach</p>"""

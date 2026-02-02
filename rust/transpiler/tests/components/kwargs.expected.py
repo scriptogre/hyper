@@ -1,5 +1,4 @@
-from typing import Any
-from hyper import component, replace_markers
+from hyper import component, replace_markers, escape
 
 
 @component

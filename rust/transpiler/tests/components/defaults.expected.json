@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 19,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Defaults(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Defaults(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,7 +16,7 @@
     },
     {
       "end": 57,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<h1>Hello ‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<h1>Hello ‹ESCAPE:",
       "start": 51,
       "suffix": "",
       "type": "python"
@@ -25,35 +25,35 @@
       "end": 80,
       "prefix": "›</h1><p>Count: ‹ESCAPE:",
       "start": 73,
-      "suffix": "›</p>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</p>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 75,
-      "compiled_start": 56,
+      "compiled_end": 101,
+      "compiled_start": 82,
       "range_type": "Python",
       "source_end": 19,
       "source_start": 0
     },
     {
-      "compiled_end": 91,
-      "compiled_start": 77,
+      "compiled_end": 117,
+      "compiled_start": 103,
       "range_type": "Python",
       "source_end": 34,
       "source_start": 20
     },
     {
-      "compiled_end": 163,
-      "compiled_start": 157,
+      "compiled_end": 174,
+      "compiled_start": 168,
       "range_type": "Python",
       "source_end": 57,
       "source_start": 51
     },
     {
-      "compiled_end": 194,
-      "compiled_start": 187,
+      "compiled_end": 205,
+      "compiled_start": 198,
       "range_type": "Python",
       "source_end": 80,
       "source_start": 73

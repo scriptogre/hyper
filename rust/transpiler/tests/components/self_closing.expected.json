@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "def SelfClosing(",
+      "prefix": "from hyper import component\n\n\n@component\ndef SelfClosing(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -18,28 +18,28 @@
       "end": 37,
       "prefix": ", ",
       "start": 26,
-      "suffix": ") -> str:\n    _parts = []\n    _parts.append(Button())\n    _parts.append(Button(label=\"Click me\"))\n    _parts.append(Button(label=name, onClick=onClick))\n    _parts.append(Button())\n    _parts.append(Icon(name=\"star\", size=24, ))\n    return \"\".join(_parts)\n",
+      "suffix": "):\n    yield from Button()\n    yield from Button(label=\"Click me\")\n    yield from Button(label=name, onClick=onClick)\n    yield from Button()\n    yield from Icon(name=\"star\", size=24, )\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 25,
-      "compiled_start": 16,
+      "compiled_end": 69,
+      "compiled_start": 60,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 27,
+      "compiled_end": 86,
+      "compiled_start": 71,
       "range_type": "Python",
       "source_end": 25,
       "source_start": 10
     },
     {
-      "compiled_end": 55,
-      "compiled_start": 44,
+      "compiled_end": 99,
+      "compiled_start": 88,
       "range_type": "Python",
       "source_end": 37,
       "source_start": 26

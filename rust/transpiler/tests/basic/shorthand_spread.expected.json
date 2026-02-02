@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import replace_markers\n\ndef ShorthandSpread(",
+      "prefix": "from hyper import component, replace_markers\n\n\n@component\ndef ShorthandSpread(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -25,35 +25,35 @@
       "end": 47,
       "prefix": ", ",
       "start": 36,
-      "suffix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› /><div props=‹SPREAD:{props}›>Content</div><button name=‹SPREAD:{name}› props=‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button><input type=\"text\" props=‹SPREAD:{props}› class=\"input\" />\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "):\n    yield replace_markers(f\"\"\"<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› /><div props=‹SPREAD:{props}›>Content</div><button name=‹SPREAD:{name}› props=‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button><input type=\"text\" props=‹SPREAD:{props}› class=\"input\" />\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 64,
-      "compiled_start": 55,
+      "compiled_end": 90,
+      "compiled_start": 81,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 76,
-      "compiled_start": 66,
+      "compiled_end": 102,
+      "compiled_start": 92,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 10
     },
     {
-      "compiled_end": 92,
-      "compiled_start": 78,
+      "compiled_end": 118,
+      "compiled_start": 104,
       "range_type": "Python",
       "source_end": 35,
       "source_start": 21
     },
     {
-      "compiled_end": 105,
-      "compiled_start": 94,
+      "compiled_end": 131,
+      "compiled_start": 120,
       "range_type": "Python",
       "source_end": 47,
       "source_start": 36

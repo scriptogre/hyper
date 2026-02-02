@@ -2,35 +2,35 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Decorators(",
+      "prefix": "@fragment\n@cache\n@fragment\n@fragment(name=\"card\")\nfrom collections.abc import Iterable\nfrom hyper import component, replace_markers, escape\n\n\n@component\ndef Decorators(_content: Iterable[str] | None = None, *, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 99,
-      "prefix": ", *, _children: str = \"\") -> str:\n    _parts = []\n    @fragment\n    def Badge(text: str):\n        _parts.append(f\"\"\"<span class=\"badge\">‹ESCAPE:",
+      "prefix": "):\n    def Badge(text: str):\n        yield replace_markers(f\"\"\"<span class=\"badge\">‹ESCAPE:",
       "start": 93,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 214,
-      "prefix": "›</span>\"\"\")\n    @cache\n    @fragment\n    def CachedList(items: list):\n        _parts.append(\"<ul>\")\n        for item in ",
+      "prefix": "›</span>\"\"\")\n    def CachedList(items: list):\n        yield \"<ul>\"\n        for item in ",
       "start": 209,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 238,
-      "prefix": ":\n            _parts.append(f\"\"\"<li>‹ESCAPE:",
+      "prefix": ":\n            yield replace_markers(f\"\"\"<li>‹ESCAPE:",
       "start": 232,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 461,
-      "prefix": "›</li>\"\"\")\n        _parts.append(\"</ul>\")\n    @fragment(name=\"card\")\n    def Card(title: str):\n        _parts.append(\"<div class=\\\"card\\\">\")\n        _parts.append(\"<h2>\")\n        _parts.append(escape(title))\n        _parts.append(\"</h2>\")\n        _parts.append(_children)\n        _parts.append(\"</div>\")\n    _parts.append(f\"\"\"‹ESCAPE:",
+      "prefix": "›</li>\"\"\")\n        yield \"</ul>\"\n    def Card(title: str):\n        yield \"<div class=\\\"card\\\">\"\n        yield \"<h2>\"\n        yield escape(title)\n        yield \"</h2>\"\n        if _content is not None:\n            yield from _content\n        yield \"</div>\"\n    yield replace_markers(f\"\"\"‹ESCAPE:",
       "start": 447,
       "suffix": "",
       "type": "python"
@@ -39,49 +39,49 @@
       "end": 481,
       "prefix": "›‹ESCAPE:",
       "start": 462,
-      "suffix": "›\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 69,
-      "compiled_start": 58,
+      "compiled_end": 221,
+      "compiled_start": 210,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 219,
-      "compiled_start": 213,
+      "compiled_end": 318,
+      "compiled_start": 312,
       "range_type": "Python",
       "source_end": 99,
       "source_start": 93
     },
     {
-      "compiled_end": 345,
-      "compiled_start": 340,
+      "compiled_end": 410,
+      "compiled_start": 405,
       "range_type": "Python",
       "source_end": 214,
       "source_start": 209
     },
     {
-      "compiled_end": 395,
-      "compiled_start": 389,
+      "compiled_end": 468,
+      "compiled_start": 462,
       "range_type": "Python",
       "source_end": 238,
       "source_start": 232
     },
     {
-      "compiled_end": 743,
-      "compiled_start": 729,
+      "compiled_end": 775,
+      "compiled_start": 761,
       "range_type": "Python",
       "source_end": 461,
       "source_start": 447
     },
     {
-      "compiled_end": 771,
-      "compiled_start": 752,
+      "compiled_end": 803,
+      "compiled_start": 784,
       "range_type": "Python",
       "source_end": 481,
       "source_start": 462
