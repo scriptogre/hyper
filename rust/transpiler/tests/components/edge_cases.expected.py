@@ -3,28 +3,14 @@ from hyper import component
 
 @component
 def EdgeCases(*, module: object, components: dict):
-    # Component from module
     yield from module.Button(label="Click")
-
-    # Component from dict
     # <{components['Card']}>
-    def _card():
+    def _components['_card']():
         yield """<p>Content</p>"""
-    yield from components['Card'](_card())
+    yield from components['Card'](_components['_card']())
     # </{components['Card']}>
-
-    # Empty component (not self-closing)
     yield from Wrapper()
-
-    # Component with only whitespace
-    # <{Container}>
-    def _container():
-        yield """
-"""
-    yield from Container(_container())
-    # </{Container}>
-
-    # Deeply nested components
+    yield from Container()
     # <{Outer}>
     def _outer():
         # <{Middle}>

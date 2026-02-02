@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 15,
-      "prefix": "from hyper import replace_markers\n\ndef ClassList(",
+      "prefix": "from hyper import component, replace_markers\n\n\n@component\ndef ClassList(*, ",
       "start": 0,
-      "suffix": ") -> str:\n    _parts = []\n    _class = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    _parts.append(f\"\"\"<button class=‹CLASS:{_class}›>Click</button>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "):\n    _class = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    yield replace_markers(f\"\"\"<button class=‹CLASS:{_class}›>Click</button>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 64,
-      "compiled_start": 49,
+      "compiled_end": 90,
+      "compiled_start": 75,
       "range_type": "Python",
       "source_end": 15,
       "source_start": 0

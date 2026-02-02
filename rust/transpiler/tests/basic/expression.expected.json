@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Expression(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Expression(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 32,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<h1>Hello ‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<h1>Hello ‹ESCAPE:",
       "start": 26,
-      "suffix": "›</h1>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</h1>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 67,
-      "compiled_start": 58,
+      "compiled_end": 93,
+      "compiled_start": 84,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 139,
-      "compiled_start": 133,
+      "compiled_end": 150,
+      "compiled_start": 144,
       "range_type": "Python",
       "source_end": 32,
       "source_start": 26

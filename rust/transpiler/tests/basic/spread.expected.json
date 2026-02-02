@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 65,
-      "prefix": "from hyper import replace_markers\n\ndef Spread(",
+      "prefix": "from hyper import component, replace_markers\n\n\n@component\ndef Spread(*, ",
       "start": 0,
-      "suffix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<a attrs=‹SPREAD:{attrs}›>Link</a>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "):\n    yield replace_markers(f\"\"\"<a attrs=‹SPREAD:{attrs}›>Link</a>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 111,
-      "compiled_start": 46,
+      "compiled_end": 137,
+      "compiled_start": 72,
       "range_type": "Python",
       "source_end": 65,
       "source_start": 0

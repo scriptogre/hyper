@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "def NamedWithFallback(",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import component\n\n\n@component\ndef NamedWithFallback(_content: Iterable[str] | None = None, *, ",
       "start": 0,
-      "suffix": ", *, _children: str = \"\", _footer_children: str = \"\", _header_children: str = \"\", _sidebar_children: str = \"\") -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"layout\\\">\")\n    _parts.append(\"<header>\")\n    _parts.append(_header_children)\n    _parts.append(\"</header>\")\n    _parts.append(\"<nav>\")\n    _parts.append(_sidebar_children)\n    _parts.append(\"</nav>\")\n    _parts.append(\"<main>\")\n    _parts.append(_children)\n    _parts.append(\"</main>\")\n    _parts.append(\"<footer>\")\n    _parts.append(_footer_children)\n    _parts.append(\"</footer>\")\n    _parts.append(\"</div>\")\n    return \"\".join(_parts)\n",
+      "suffix": ", _footer_content: Iterable[str] | None = None, _header_content: Iterable[str] | None = None, _sidebar_content: Iterable[str] | None = None):\n    yield \"<div class=\\\"layout\\\">\"\n    yield \"<header>\"\n    if _header_content is not None:\n        yield from _header_content\n    yield \"</header>\"\n    yield \"<nav>\"\n    if _sidebar_content is not None:\n        yield from _sidebar_content\n    yield \"</nav>\"\n    yield \"<main>\"\n    if _content is not None:\n        yield from _content\n    yield \"</main>\"\n    yield \"<footer>\"\n    if _footer_content is not None:\n        yield from _footer_content\n    yield \"</footer>\"\n    yield \"</div>\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 32,
-      "compiled_start": 22,
+      "compiled_end": 152,
+      "compiled_start": 142,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0

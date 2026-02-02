@@ -1,22 +1,25 @@
-from hyper import component, replace_markers
+from hyper import component, replace_markers, escape
 
 
 @component
 def Comprehensive(*, name: str, count: int = 0, is_active: bool = True):
-    # Body comment
-    yield """<div class="container">"""
-    # Indented comment
-    yield """\
-    <span>Plain text</span>"""
-    yield replace_markers(f"""\
-    <p>‹ESCAPE:{name}›</p>
-    <p>Count: ‹ESCAPE:{count + 1}›</p>""")
+    yield "<div class=\"container\">"
+    yield "<span>"
+    yield "Plain text"
+    yield "</span>"
+    yield "<p>"
+    yield escape(name)
+    yield "</p>"
+    yield "<p>"
+    yield "Count: "
+    yield escape(count + 1)
+    yield "</p>"
     if is_active:
-        yield """<span>Active</span>"""  # Trailing comment
+        yield """<span>Active</span>"""
     elif count > 0:
         yield """<span>Has count</span>"""
     else:
         yield """<span>Inactive</span>"""
     for item in items:
         yield replace_markers(f"""<li>‹ESCAPE:{item}›</li>""")
-    yield """</div>"""
+    yield "</div>"

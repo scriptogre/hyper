@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Multiline(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Multiline(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,86 +16,86 @@
     },
     {
       "end": 146,
-      "prefix": ") -> str:\n    _parts = []\n    config = {\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "):\n    config = {\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 138,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 245,
-      "prefix": "›</span>\"\"\")\n    values = [\n    \"item1\",\n    \"item2\",\n    \"item3\"\n]\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n    values = [\n    \"item1\",\n    \"item2\",\n    \"item3\"\n]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 237,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 376,
-      "prefix": "›</span>\"\"\")\n    result = some_function(\n    arg1=\"value1\",\n    arg2=\"value2\",\n    arg3=\"value3\"\n)\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n    result = some_function(\n    arg1=\"value1\",\n    arg2=\"value2\",\n    arg3=\"value3\"\n)\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 368,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 497,
-      "prefix": "›</span>\"\"\")\n    squares = [\n    x ** 2\n    for x in range(10)\n    if x % 2 == 0\n]\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n    squares = [\n    x ** 2\n    for x in range(10)\n    if x % 2 == 0\n]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 488,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 619,
-      "prefix": "›</span>\"\"\")\n    processed = (data\n    .get('items', [])\n    .copy()\n)\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n    processed = (data\n    .get('items', [])\n    .copy()\n)\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 608,
-      "suffix": "›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</span>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 67,
-      "compiled_start": 57,
+      "compiled_end": 93,
+      "compiled_start": 83,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 80,
-      "compiled_start": 69,
+      "compiled_end": 106,
+      "compiled_start": 95,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 11
     },
     {
-      "compiled_end": 232,
-      "compiled_start": 224,
+      "compiled_end": 243,
+      "compiled_start": 235,
       "range_type": "Python",
       "source_end": 146,
       "source_start": 138
     },
     {
-      "compiled_end": 344,
-      "compiled_start": 336,
+      "compiled_end": 363,
+      "compiled_start": 355,
       "range_type": "Python",
       "source_end": 245,
       "source_start": 237
     },
     {
-      "compiled_end": 487,
-      "compiled_start": 479,
+      "compiled_end": 514,
+      "compiled_start": 506,
       "range_type": "Python",
       "source_end": 376,
       "source_start": 368
     },
     {
-      "compiled_end": 615,
-      "compiled_start": 606,
+      "compiled_end": 650,
+      "compiled_start": 641,
       "range_type": "Python",
       "source_end": 497,
       "source_start": 488
     },
     {
-      "compiled_end": 733,
-      "compiled_start": 722,
+      "compiled_end": 776,
+      "compiled_start": 765,
       "range_type": "Python",
       "source_end": 619,
       "source_start": 608

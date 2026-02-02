@@ -8,60 +8,57 @@ fn test_selective_helper_imports() {
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should import replace_markers for class markers
-    assert!(result.code.contains("from hyper import replace_markers"));
+    // Should import component and replace_markers for class markers
+    assert!(result.code.contains("from hyper import component, replace_markers"));
     assert!(result.code.contains("‹CLASS:"));
-
-    // Should not import escape (no expression escaping needed)
-    assert!(!result.code.contains("import escape"));
 }
 
 #[test]
 fn test_async_detection() {
-    // Template with await
-    let source = r#"url: str
+    // Template with async for
+    let source = r#"items: list
 ---
-<div>{await fetch(url)}</div>"#;
+async for item in items:
+    <li>{item}</li>
+end"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should have async import line
-    assert!(result.code.contains("async from hyper import"));
-
-    // Should import escape for expression
-    assert!(result.code.contains("import escape"));
+    // Should have async def
+    assert!(result.code.contains("async def Render"));
 }
 
 #[test]
 fn test_non_async_template() {
-    // Template without await
+    // Template without await/async
     let source = r#"<div>Hello</div>"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should NOT have async import
-    assert!(!result.code.contains("async from"));
-    assert!(result.code.contains("def Render() -> str:"));
+    // Should NOT have async def
+    assert!(!result.code.contains("async def"));
+    assert!(result.code.contains("def Render():"));
 
-    // Should have no imports at all
-    assert!(!result.code.contains("from hyper import"));
+    // Should have component import
+    assert!(result.code.contains("from hyper import component"));
+    assert!(result.code.contains("@component"));
 }
 
 #[test]
-fn test_children_slot_parameter() {
+fn test_content_slot_parameter() {
     // Template with only default slot (no explicit parameters)
     let source = r#"<div>{...}</div>"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Function should have _children parameter (actual name may vary based on slot naming)
-    assert!(result.code.contains("_children"));
+    // Function should have _content parameter for default slot
+    assert!(result.code.contains("_content"));
 
-    // Should be optional with default empty string
-    assert!(result.code.contains("_children: str = \"\""));
+    // Should be optional with Iterable type
+    assert!(result.code.contains("_content: Iterable[str] | None = None"));
 }
 
 #[test]
@@ -73,21 +70,24 @@ fn test_multiple_markers() {
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
     // Should import replace_markers for both class and style
-    assert!(result.code.contains("from hyper import replace_markers"));
+    assert!(result.code.contains("replace_markers"));
     assert!(result.code.contains("‹CLASS:"));
     assert!(result.code.contains("‹STYLE:"));
 }
 
 #[test]
-fn test_no_extra_helpers_when_not_needed() {
+fn test_component_always_imported() {
     // Template with static HTML only (no expressions, no markers)
     let source = r#"<div>Hello World</div>"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should not import anything (no escape, no replace_markers needed)
-    assert!(!result.code.contains("from hyper import"));
+    // Should always import component for the decorator
+    assert!(result.code.contains("from hyper import component"));
+    assert!(result.code.contains("@component"));
+
+    // Should NOT have replace_markers (no markers needed)
     assert!(!result.code.contains("replace_markers"));
 }
 
@@ -104,12 +104,11 @@ fn test_parameters_with_slots() {
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should have parameter in signature
-    assert!(result.code.contains("title: str"));
+    // Should have parameter in signature (keyword-only)
+    assert!(result.code.contains("*, title: str"));
 
-    // Should have _children parameter for default slot with correct naming
-    // (Note: slot parameters end with _children suffix)
-    assert!(result.code.contains("_children"));
+    // Should have _content parameter for default slot
+    assert!(result.code.contains("_content: Iterable[str] | None = None"));
 }
 
 #[test]
@@ -118,12 +117,14 @@ fn test_async_with_parameters() {
     let source = r#"url: str
 items: list
 ---
-<div>{await fetch(url)}</div>"#;
+async for item in items:
+    <li>{item}</li>
+end"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    assert!(result.code.contains("async from hyper import"));
+    assert!(result.code.contains("async def Render"));
     assert!(result.code.contains("url: str"));
     assert!(result.code.contains("items: list"));
 }

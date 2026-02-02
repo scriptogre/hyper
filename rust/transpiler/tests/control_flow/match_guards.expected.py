@@ -1,9 +1,8 @@
-from hyper import component, replace_markers
+from hyper import component, replace_markers, escape
 
 
 @component
 def MatchGuards(*, value: int, data: dict):
-    # Match with guards
     match value:
         case x if x < 0:
             yield replace_markers(f"""<span>Negative: ‹ESCAPE:{x}›</span>""")
@@ -13,8 +12,6 @@ def MatchGuards(*, value: int, data: dict):
             yield replace_markers(f"""<span>Large: ‹ESCAPE:{x}›</span>""")
         case x:
             yield replace_markers(f"""<span>Normal: ‹ESCAPE:{x}›</span>""")
-
-    # Match with pattern guards
     match data:
         case {"type": "user", "admin": True}:
             yield """<span>Admin user</span>"""

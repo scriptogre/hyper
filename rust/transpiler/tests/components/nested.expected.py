@@ -1,9 +1,8 @@
-from hyper import component, replace_markers
+from hyper import component, replace_markers, escape
 
 
 @component
 def Nested(*, title: str, items: list):
-    # Nested components
     # <{Card}>
     def _card():
         # <{CardHeader}>
@@ -27,16 +26,12 @@ def Nested(*, title: str, items: list):
         # </{CardBody}>
     yield from Card(_card())
     # </{Card}>
-
-    # Component in control flow
     if title:
         # <{Alert}>
         def _alert():
             yield replace_markers(f"""<span>‹ESCAPE:{title}›</span>""")
         yield from Alert(_alert(), type="info")
         # </{Alert}>
-
-    # Components in loop
     for item in items:
         # <{Badge}>
         def _badge():

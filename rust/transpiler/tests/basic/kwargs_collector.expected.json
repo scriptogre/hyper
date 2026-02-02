@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import escape, replace_markers\n\ndef KwargsCollector(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef KwargsCollector(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 72,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div class=\"card\" attrs=‹SPREAD:{attrs}›><h1>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<div class=\"card\" attrs=‹SPREAD:{attrs}›><h1>‹ESCAPE:",
       "start": 65,
-      "suffix": "›</h1></div>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</h1></div>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 73,
-      "compiled_start": 63,
+      "compiled_end": 99,
+      "compiled_start": 89,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 87,
-      "compiled_start": 75,
+      "compiled_end": 113,
+      "compiled_start": 101,
       "range_type": "Python",
       "source_end": 23,
       "source_start": 11
     },
     {
-      "compiled_end": 195,
-      "compiled_start": 188,
+      "compiled_end": 206,
+      "compiled_start": 199,
       "range_type": "Python",
       "source_end": 72,
       "source_start": 65

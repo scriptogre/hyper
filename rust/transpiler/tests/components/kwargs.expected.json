@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Kwargs(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Kwargs(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 53,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<button attrs=‹SPREAD:{attrs}›>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<button attrs=‹SPREAD:{attrs}›>‹ESCAPE:",
       "start": 46,
-      "suffix": "›</button>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</button>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 64,
-      "compiled_start": 54,
+      "compiled_end": 90,
+      "compiled_start": 80,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 78,
-      "compiled_start": 66,
+      "compiled_end": 104,
+      "compiled_start": 92,
       "range_type": "Python",
       "source_end": 23,
       "source_start": 11
     },
     {
-      "compiled_end": 172,
-      "compiled_start": 165,
+      "compiled_end": 183,
+      "compiled_start": 176,
       "range_type": "Python",
       "source_end": 53,
       "source_start": 46

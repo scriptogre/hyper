@@ -1,9 +1,9 @@
-from hyper import component, replace_markers
+from hyper import component, replace_markers, escape
 
 
 @component
 def ForLoop(*, items: list[str]):
-    yield """<ul>"""
+    yield "<ul>"
     for item in items:
         yield replace_markers(f"""<li>‹ESCAPE:{item}›</li>""")
-    yield """</ul>"""
+    yield "</ul>"

@@ -3,10 +3,4 @@ from hyper import component
 
 @component
 def VoidElements():
-    yield """\
-<br />
-<hr />
-<img src="photo.jpg" alt="Photo" />
-<input type="text" name="field" />
-<meta charset="utf-8" />
-<link rel="stylesheet" href="style.css" />"""
+    yield """<br /><hr /><img src="photo.jpg" alt="Photo" /><input type="text" name="field" /><meta charset="utf-8" /><link rel="stylesheet" href="style.css" />"""

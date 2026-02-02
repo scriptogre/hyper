@@ -3,43 +3,22 @@ from hyper import component
 
 
 @component
-def NamedWithFallback(
-    _content: Iterable[str] | None = None,
-    _header: Iterable[str] | None = None,
-    _sidebar: Iterable[str] | None = None,
-    _footer: Iterable[str] | None = None,
-    *,
-    title: str
-):
-    yield """\
-<div class="layout">
-    <header>"""
-    if _header is not None:
-        yield from _header
-    else:
-        yield """<h1>Default Header</h1>"""
-    yield """\
-</header>
-
-    <nav>"""
-    if _sidebar is not None:
-        yield from _sidebar
-    else:
-        yield """<p>Default sidebar content</p>"""
-    yield """\
-</nav>
-
-    <main>"""
+def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _footer_content: Iterable[str] | None = None, _header_content: Iterable[str] | None = None, _sidebar_content: Iterable[str] | None = None):
+    yield "<div class=\"layout\">"
+    yield "<header>"
+    if _header_content is not None:
+        yield from _header_content
+    yield "</header>"
+    yield "<nav>"
+    if _sidebar_content is not None:
+        yield from _sidebar_content
+    yield "</nav>"
+    yield "<main>"
     if _content is not None:
         yield from _content
-    yield """\
-</main>
-
-    <footer>"""
-    if _footer is not None:
-        yield from _footer
-    else:
-        yield """<p>Default footer</p>"""
-    yield """\
-</footer>
-</div>"""
+    yield "</main>"
+    yield "<footer>"
+    if _footer_content is not None:
+        yield from _footer_content
+    yield "</footer>"
+    yield "</div>"

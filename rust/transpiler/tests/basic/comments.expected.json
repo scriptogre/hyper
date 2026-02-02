@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Comments(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Comments(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,7 +16,7 @@
     },
     {
       "end": 605,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<div>Content</div><span>Text</span><th scope=\"col\">#</th><a href=\"#section\">Jump</a><a href=\"/page#anchor\">Link</a><div style=\"color: #ff0000\">Red</div><div style=\"background: #fff\">White</div><span>&#35;</span><span>&#x23;</span><div>###</div><th>##</th><span>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<div>Content</div><span>Text</span><th scope=\"col\">#</th><a href=\"#section\">Jump</a><a href=\"/page#anchor\">Link</a><div style=\"color: #ff0000\">Red</div><div style=\"background: #fff\">White</div><span>&#35;</span><span>&#x23;</span><div>###</div><th>##</th><span>‹ESCAPE:",
       "start": 599,
       "suffix": "",
       "type": "python"
@@ -32,42 +32,42 @@
       "end": 709,
       "prefix": "›</span><span>‹ESCAPE:",
       "start": 697,
-      "suffix": "›</span><p>Text # with hash # multiple # times</p><span>Item</span># kept as content<div data-info=\"use # for comments\">Info</div><br /><input value=\"#\" />\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</span><p>Text # with hash # multiple # times</p><span>Item</span># kept as content<div data-info=\"use # for comments\">Info</div><br /><input value=\"#\" />\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 65,
-      "compiled_start": 56,
+      "compiled_end": 91,
+      "compiled_start": 82,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 77,
-      "compiled_start": 67,
+      "compiled_end": 103,
+      "compiled_start": 93,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 10
     },
     {
-      "compiled_end": 400,
-      "compiled_start": 394,
+      "compiled_end": 411,
+      "compiled_start": 405,
       "range_type": "Python",
       "source_end": 605,
       "source_start": 599
     },
     {
-      "compiled_end": 435,
-      "compiled_start": 422,
+      "compiled_end": 446,
+      "compiled_start": 433,
       "range_type": "Python",
       "source_end": 683,
       "source_start": 670
     },
     {
-      "compiled_end": 469,
-      "compiled_start": 457,
+      "compiled_end": 480,
+      "compiled_start": 468,
       "range_type": "Python",
       "source_end": 709,
       "source_start": 697

@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import escape, replace_markers\n\ndef EscapedBraces(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef EscapedBraces(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 190,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<p>Use {variable} for templates</p><p>JSON: {\"key\": \"value\"}</p><p>Static {braces} and dynamic ‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<p>Use {variable} for templates</p><p>JSON: {\"key\": \"value\"}</p><p>Static {braces} and dynamic ‹ESCAPE:",
       "start": 184,
-      "suffix": "›</p><style>.card { background: white; }.card:hover { transform: scale(1.05); }</style><script>const obj = { name: \"{name}\" };</script><div x-data=\"{{ open: false }}\"><button @click=\"open = !open\">Toggle</button></div><p>{{nested}}</p>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</p><style>.card { background: white; }.card:hover { transform: scale(1.05); }</style><script>const obj = { name: \"{name}\" };</script><div x-data=\"{{ open: false }}\"><button @click=\"open = !open\">Toggle</button></div><p>{{nested}}</p>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 70,
-      "compiled_start": 61,
+      "compiled_end": 96,
+      "compiled_start": 87,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 227,
-      "compiled_start": 221,
+      "compiled_end": 238,
+      "compiled_start": 232,
       "range_type": "Python",
       "source_end": 190,
       "source_start": 184

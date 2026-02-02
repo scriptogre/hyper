@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import escape\n\ndef DefaultSlot(",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import component, escape\n\n\n@component\ndef DefaultSlot(_content: Iterable[str] | None = None, *, ",
       "start": 0,
-      "suffix": ", *, _children: str = \"\") -> str:\n    _parts = []\n    _parts.append(\"<div class=\\\"card\\\">\")\n    _parts.append(\"<h2>\")\n    _parts.append(escape(title))\n    _parts.append(\"</h2>\")\n    _parts.append(_children)\n    _parts.append(\"</div>\")\n    return \"\".join(_parts)\n",
+      "suffix": "):\n    yield \"<div class=\\\"card\\\">\"\n    yield \"<h2>\"\n    yield escape(title)\n    yield \"</h2>\"\n    if _content is not None:\n        yield from _content\n    yield \"</div>\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 52,
-      "compiled_start": 42,
+      "compiled_end": 154,
+      "compiled_start": 144,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0

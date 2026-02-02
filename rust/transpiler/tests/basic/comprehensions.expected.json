@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import escape, replace_markers\n\ndef Comprehensions(",
+      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Comprehensions(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,7 +16,7 @@
     },
     {
       "end": 84,
-      "prefix": ") -> str:\n    _parts = []\n    _parts.append(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 57,
       "suffix": "",
       "type": "python"
@@ -46,56 +46,56 @@
       "end": 542,
       "prefix": "›</span><span>‹ESCAPE:",
       "start": 509,
-      "suffix": "›</span>\"\"\")\n    return replace_markers(\"\".join(_parts))\n",
+      "suffix": "›</span>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 73,
-      "compiled_start": 62,
+      "compiled_end": 99,
+      "compiled_start": 88,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 85,
-      "compiled_start": 75,
+      "compiled_end": 111,
+      "compiled_start": 101,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 12
     },
     {
-      "compiled_end": 174,
-      "compiled_start": 147,
+      "compiled_end": 185,
+      "compiled_start": 158,
       "range_type": "Python",
       "source_end": 84,
       "source_start": 57
     },
     {
-      "compiled_end": 238,
-      "compiled_start": 196,
+      "compiled_end": 249,
+      "compiled_start": 207,
       "range_type": "Python",
       "source_end": 140,
       "source_start": 98
     },
     {
-      "compiled_end": 301,
-      "compiled_start": 260,
+      "compiled_end": 312,
+      "compiled_start": 271,
       "range_type": "Python",
       "source_end": 195,
       "source_start": 154
     },
     {
-      "compiled_end": 482,
-      "compiled_start": 455,
+      "compiled_end": 493,
+      "compiled_start": 466,
       "range_type": "Python",
       "source_end": 495,
       "source_start": 468
     },
     {
-      "compiled_end": 537,
-      "compiled_start": 504,
+      "compiled_end": 548,
+      "compiled_start": 515,
       "range_type": "Python",
       "source_end": 542,
       "source_start": 509
