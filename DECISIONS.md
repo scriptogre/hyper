@@ -1,359 +1,343 @@
-# Hyper Design Decisions
+# Decisions
 
-## Compiled Output Architecture
+---
 
-### Decision: Yield-based output with @component decorator
+### 001: Yield-Based Streaming
 
-**Transpiler outputs yield-style code:**
+| | |
+|--|--|
+| **Context** | Need to generate Python from .hyper. Options: return string, return list, or yield. |
+| **Decision** | Components are generators that `yield` chunks. `@html` decorator handles str() conversion. |
+| **Trade-off** | Generator overhead, but enables streaming responses without API changes. |
+
+---
+
+### 002: @html Decorator
+
+| | |
+|--|--|
+| **Context** | Without decorator, `str(Template())` returns `"<generator object>"`. |
+| **Decision** | `@html` on all components. Built-in to `.hyper` (no import needed). In compiled output: `from hyper import html`. |
+| **Trade-off** | Decorator overhead, but uniform API (iterable, str()-able). |
+
+**Usage:**
 ```python
-from collections.abc import Iterable
-
-@component
-def MyTemplate(_content: Iterable[str] | None = None, *, title="", items=None):
-    # <{Card}>
-    def _card():
-        # <{CardHeader}>
-        def _card_header():
-            yield f"<h2>{title}</h2>"
-        yield from CardHeader(_card_header())
-        # </{CardHeader}>
-    yield from Card(_card())
-    # </{Card}>
+str(Button(text="Click"))           # full render
+for chunk in Button(text="Click"):  # streaming
+    response.write(chunk)
 ```
-
-**Key points:**
-- Components are generator functions decorated with `@component`
-- Sync components use `def`, `yield`, `yield from`
-- Async components (auto-detected if `await` used) use `async def`, `async for ... yield`
-- The `@component` decorator enables both yield mode and buffer mode usage
-- Comments mirror source structure: `# <{Component}>` and `# </{Component}>`
-
-### Naming conventions:
-- Default slot: `_content` (first positional arg) — **only when component has slots**
-- Named slots: `_header`, `_sidebar`, etc. (underscore prefix)
-- Reserved word props: `_class`, `_for`, `_async` (underscore prefix)
-- Regular props: no prefix
-- Generator function names: lowercase component name (`_card`, `_card_header`, `_list_item`)
 
 ---
 
-## `@component` Decorator Policy
+### 003: Keyword-Only Parameters
 
-**Decision: `@component` on ALL top-level templates.** No exceptions.
+| | |
+|--|--|
+| **Context** | Props could be positional or keyword. Positional is error-prone for many props. |
+| **Decision** | All params keyword-only via `*,` prefix. `*args` rejected at parse time. |
+| **Trade-off** | Verbose call sites, but matches JSX model and allows defaults before non-defaults. |
 
-Rationale: without the decorator, `str(Template())` returns `"<generator object>"`.
-All `.hyper` templates must have a uniform public API — iterable, context-manageable,
-`str()`-able — regardless of complexity. The cost is two lines (import + decorator).
-The benefit is zero surprises.
+---
 
-Inner `def` functions do NOT get `@component` — they're local generators consumed
-via `yield from` in the same file. They don't need buffer mode or `str()` support.
+### 004: Escape Markers
 
-### `_content` parameter is optional
+| | |
+|--|--|
+| **Context** | Expressions need HTML escaping. Can't escape at compile time (values unknown). |
+| **Decision** | Emit `‹ESCAPE:{expr}›` markers, process via `replace_markers()` at runtime. |
+| **Trade-off** | Runtime overhead, but single f-string per block and unified marker system. |
 
-Components **without slots** don't need `_content`:
+---
+
+### 005: Function Naming — render() + Alias
+
+| | |
+|--|--|
+| **Context** | Need consistent function naming that works for imports and avoids linter issues. |
+| **Decision** | Single-component files: generate `def render()` with alias from filename (`Button = render`). Multi-component files: named functions directly (`def Button`, `def ButtonGroup`). |
+| **Trade-off** | Two patterns, but clean imports and linter-compliant. |
+
+---
+
+### 006: File Naming Conventions
+
+| | |
+|--|--|
+| **Context** | Need to distinguish single-component files from multi-component modules. |
+| **Decision** | PascalCase file (`Button.hyper`) = single component, promoted to package level. lowercase file (`buttons.hyper`) = multi-component module, import from submodule. |
+| **Trade-off** | Filename matters, but clear intent and Pythonic import patterns. |
+
+**Import patterns:**
 ```python
-@component
-def Badge(*, text: str = "", color: str = "blue"):
-    yield f'<span class="badge" style="color: {color}">{text}</span>'
+from components import Button, Card        # single-component files
+from components.buttons import IconButton  # multi-component module
+from components.forms import Input, Select # multi-component module
 ```
 
-Components **with slots** have `_content` as first positional arg:
+---
+
+### 007: Component Invocation Syntax
+
+| | |
+|--|--|
+| **Context** | Need syntax to use components in templates that's distinct from HTML elements. |
+| **Decision** | `<{Component} prop={value} />` for components. Braces indicate "this is Python". |
+| **Trade-off** | Slightly more verbose than JSX, but clear distinction between HTML and components. |
+
+**Compiles to:**
 ```python
-from collections.abc import Iterable
-
-@component
-def Card(_content: Iterable[str] | None = None, *, title: str = ""):
-    yield f'<div class="card"><h1>{title}</h1>'
-    if _content is not None:
-        yield from _content
-    yield '</div>'
-```
-
-The `@component` decorator introspects the function signature and handles both cases.
-
----
-
-## File Structure
-
-```
-┌─────────────────────────────────┐
-│  HEADER                         │
-│  (module-level declarations)    │
-├─────────────────────────────────┤
-│  ---                            │  ← Required if header has params
-├─────────────────────────────────┤
-│  BODY                           │
-│  (per-render logic + template)  │
-└─────────────────────────────────┘
+yield from Component(prop=value)
 ```
 
 ---
 
-## `---` Separator
+### 008: Slot Syntax
 
-**Decision: `---` is REQUIRED when the header contains parameters.**
+| | |
+|--|--|
+| **Context** | Components need to accept child content, both default and named slots. |
+| **Decision** | `{...}` = default slot, `{...name}` = named slot (in definition). `<{...name}>content</{...name}>` for filling named slots. |
+| **Trade-off** | New syntax to learn, but consistent with `{}` = Python convention. |
 
-This removes all ambiguity about what's a parameter vs what's body code.
-
-| File has...                               | `---` required? |
-|-------------------------------------------|-----------------|
-| Parameters                                | **Yes**         |
-| Only imports/constants/defs (module mode) | No              |
-| Only HTML (no header content)             | No              |
-
----
-
-## Header Mode (Above `---`)
-
-The header is a Python module's top-level scope. Anything you'd write at the top
-of a `.py` file works here — except mutable assignments and control flow.
-
-### Allowed in Header
-
-| Syntax | What it becomes |
-|--------|-----------------|
-| `import X` / `from X import Y` | Import (module level) |
-| `NAME: Final[type] = expr` | Constant (module level) |
-| `type Name = type_expr` (Python 3.12+) | Type alias (module level) |
-| `def name(...):` with HTML | `@component` function (module level, exported) |
-| `def name(...):` without HTML | Regular function (module level, exported) |
-| `async def name(...):` | Same rules as `def` |
-| `class Name:` | Class (module level) — no HTML in methods |
-| `@dataclass class Name:` | Dataclass (module level) |
-| `class Name(Enum):` | Enum (module level) |
-| `class Name(Protocol):` | Protocol (module level) |
-| `@decorator` | Applied to following def/class |
-| `name: type` | Parameter (function signature) |
-| `name: type = expr` | Parameter with default |
-| `*args: type` | Variadic positional parameter |
-| `**kwargs: type` | Variadic keyword parameter |
-
-### NOT Allowed in Header
-
-| Syntax | Why | Error message |
-|--------|-----|---------------|
-| `name = expr` (untyped) | Ambiguous | "Use `Final[]` for constants or put below `---`" |
-| `if`/`for`/`while`/`match`/`try`/`with` | Logic belongs in body | "Control flow belongs in body (below `---`)" |
-| HTML (`<tag>`) | Template belongs in body | "HTML belongs in body (below `---`)" |
-| HTML inside class methods | Too complex | "HTML not supported in class methods. Use standalone `def`" |
-
-### Header Example
-
+**Definition:**
 ```hyper
-from typing import Final, Protocol
-from dataclasses import dataclass
-from enum import Enum
-
-# Type alias (Python 3.12+)
-type ProductDict = dict[str, Any]
-
-# Constants
-MAX_ITEMS: Final[int] = 100
-COLORS: Final[dict] = {"primary": "blue"}
-
-# Enums
-class Status(Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-end
-
-# Dataclasses
-@dataclass
-class Product:
-    name: str
-    price: float
-end
-
-# Helper functions (no HTML) — exported as regular function
-def format_price(amount: float) -> str:
-    return f"${amount:.2f}"
-end
-
-# Component functions (with HTML) — exported as @component
-def Badge(text: str, color: str = "blue"):
-    <span class="badge" style="color: {color}">{text}</span>
-end
-
-# Parameters (become function signature of main template)
-title: str
-items: list[Product]
-status: Status = Status.DRAFT
----
-```
-
----
-
-## Body Mode (Below `---`)
-
-Everything is allowed. HTML, logic, local definitions, etc.
-
-| Syntax                                  | What it becomes                |
-|-----------------------------------------|--------------------------------|
-| `<tag>...</tag>`                        | `yield "..."`                  |
-| `<{Component}>`                         | `yield from Component(...)`    |
-| `{expr}`                                | `‹ESCAPE:{expr}›` in f-string  |
-| `if`/`for`/`while`/`match`/`try`/`with` | Python control flow + yields   |
-| `name = expr`                           | Local variable                 |
-| `name: type = expr`                     | Typed local variable           |
-| `def name(...):` with HTML              | Local generator (NOT exported) |
-| `def name(...):` without HTML           | Local helper function          |
-| `class Name:`                           | Local class                    |
-
-### Key Difference: Header vs Body `def`
-
-| Location | `def` with HTML              | Can reference params? | Exported? |
-|----------|------------------------------|-----------------------|-----------|
-| Header   | `@component` at module level | No                    | Yes       |
-| Body     | Generator (inner function)   | Yes (closure)         | No        |
-
-**Header `def`s are self-contained** — they can't see the template's parameters.
-**Body `def`s are closures** — they can reference params and local variables.
-
----
-
-## Module Mode (No Body)
-
-A `.hyper` file with NO top-level body code (no HTML, no control flow outside defs)
-compiles as a pure Python module:
-
-```hyper
-# components/badges.hyper — no --- needed, no body
-
-from typing import Final
-
-BADGE_COLORS: Final[dict] = {"info": "blue", "warn": "yellow"}
-
-def Badge(text: str, type: str = "info"):
-    <span class="badge" style="color: {BADGE_COLORS[type]}">{text}</span>
-end
-
-def Chip(label: str):
-    <span class="chip">{label}</span>
-end
-```
-
-Each `def` with HTML becomes an exported `@component`. Use from other files:
-
-```hyper
-from components.badges import Badge, Chip
-
-name: str
----
-<div>
-    <{Badge} text={name} />
-    <{Chip} label={name} />
+# Card.hyper
+<div class="card">
+    <header>{...header}</header>
+    <main>{...}</main>
 </div>
 ```
 
----
-
-## `end` Keyword
-
-**Decision: `end` is NOT required in the header. Required in the body.**
-
-- Header: Python syntax (indentation-based blocks)
-- Body: Hyper syntax (`end` required for blocks)
-
+**Usage:**
 ```hyper
-# Header — Python indentation rules
-class Status(Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-end  # Still need end for class in header? TBD — might use indentation
+<{Card}>
+    <{...header}>
+        <h1>Title</h1>
+    </{...header}>
 
-title: str
+    <p>Default slot content</p>
+</{Card}>
+```
+
+**Slot parameters:** Default slot: `_content`. Named slots: `_header`, `_footer`, etc.
+
 ---
-# Body — end required
+
+### 009: @html Decorator for Local Components
+
+| | |
+|--|--|
+| **Context** | Need to distinguish between components (yield HTML) and helper functions (return values). |
+| **Decision** | `@html` decorator marks functions that produce HTML. Plain `def` = helper function. |
+| **Trade-off** | Explicit decorator, but clear intent and no casing rules. |
+
+**Component (yields):**
+```hyper
+@html
+def Badge(text: str):
+    <span class="badge">{text}</span>
+end
+
+<{Badge} text="New" />
+```
+
+**Helper (returns):**
+```hyper
+def format_price(cents: int) -> str:
+    return f"${cents / 100:.2f}"
+
+<span>{format_price(item.price)}</span>
+```
+
+**Enforcement:**
+- `@html` functions → use with `<{...}>` syntax
+- Plain `def` functions → use with `{...}` syntax
+- `<{lowercase}>` → Compiler error: "Component names must be PascalCase"
+
+---
+
+### 010: `---` Separator
+
+| | |
+|--|--|
+| **Context** | Need clear boundary between setup (params, imports, helpers) and template body. |
+| **Decision** | `---` required when there's any setup code above. Separates "code" from "output". |
+| **Trade-off** | Extra line, but explicit and readable. |
+
+---
+
+### 011: `end` Keyword
+
+| | |
+|--|--|
+| **Context** | Mixed HTML/Python needs clear block boundaries. Indentation alone is ambiguous. |
+| **Decision** | `end` required for control flow blocks (`if`, `for`, `while`, `match`) inside HTML context. Function definitions follow Python rules (end by dedent). |
+| **Trade-off** | Hybrid approach - functions are Pythonic, control flow in HTML is explicit. |
+
+**Function definitions (no `end`, use dedent):**
+```hyper
+@html
+def Badge(text: str):
+    <span>{text}</span>
+
+@html
+def List(items: list):
+    <ul>
+    for item in items:
+        <li>{item}</li>
+    end
+    </ul>
+```
+
+**Control flow needs `end`:**
+```hyper
+if show:
+    <div>Visible</div>
+end
+
 for item in items:
     <li>{item}</li>
 end
 ```
 
-**Note:** Need to decide if `end` is required for classes/defs in header or if we
-use Python indentation. For consistency, probably require `end` everywhere in
-`.hyper` files, but the header uses Python semantics (no HTML compilation).
-
----
-
-## Inner Function Compilation
-
-### Rule: HTML always compiles to `yield`, everywhere
-
-If a function body contains HTML nodes, those nodes compile to `yield`.
-
-### Statement calls vs expression calls
-
-| Inner def has HTML? | Called as           | Compiled call site             | Escape? |
-|---------------------|---------------------|--------------------------------|---------|
-| Yes                 | Statement           | `yield from fn(args)`          | N/A     |
-| Yes                 | Expression `{fn()}` | `‹ESCAPE:{"".join(fn(args))}›` | Yes     |
-| No                  | Statement           | `fn(args)`                     | N/A     |
-| No                  | Expression `{fn()}` | `‹ESCAPE:{fn(args)}›`          | Yes     |
-
-**`{expr}` ALWAYS escapes.** If you want HTML output from a function, use a
-statement call — not an expression.
-
-### Mixed return + yield = compile error
-
-Functions with HTML cannot also have `return value`. The transpiler rejects this.
-
----
-
-## Slot Fallback Pattern
-
-Generators are always truthy, so `or` doesn't work:
-
-```python
-# Wrong — generator is always truthy
-if _header or """<h1>Default</h1>""":
-
-# Correct
-if _header is not None:
-    yield from _header
-else:
-    yield """<h1>Default</h1>"""
+**Pure Python helper (standard Python):**
+```hyper
+def format_price(cents: int) -> str:
+    return f"${cents / 100:.2f}"
 ```
 
 ---
 
-## Marker System
+### 012: Indentation Rules
 
-`replace_markers()` is called per-yield on lines that contain markers:
+| | |
+|--|--|
+| **Context** | How does indentation interact with `end` keywords? |
+| **Decision** | Function definitions use indentation (Python rules). Control flow in HTML uses `end` (indentation optional within). Element tags are self-contained. |
+| **Trade-off** | Hybrid approach - familiar for functions, flexible for HTML content. |
 
-```python
-# Has markers → wrap
-yield replace_markers(f"""<div class=‹CLASS:{cls}›>‹ESCAPE:{name}›</div>""")
+**Functions use indentation:**
+```hyper
+@html
+def Badge(text: str):
+    <span>{text}</span>
+    # dedent ends the function
+```
 
-# Pure static → no wrap
-yield """<footer>Copyright 2025</footer>"""
+**Control flow in HTML - indentation optional:**
+```hyper
+# Valid (though discouraged):
+if items:
+<ul>
+for item in items:
+<li>{item}</li>
+end
+</ul>
+end
+```
+
+**Element tags are self-contained** - no control flow inside `<...>`:
+```hyper
+<div class={...} />  # ✓ attributes in one unit
 ```
 
 ---
 
-## TODO
+### 013: Conditional Attributes
 
-### High Priority
+| | |
+|--|--|
+| **Context** | Need to conditionally include/omit attributes based on runtime values. |
+| **Decision** | Ternary without else: `class={"active" if condition}`. If falsy, attribute is omitted entirely. |
+| **Trade-off** | Hyper-specific extension (Python requires else), but cleaner syntax. |
 
-- [ ] **Write golden tests for all inner function scenarios**
-- [ ] **Update all existing golden tests to yield format**
-- [ ] **Update Rust transpiler to output new format**
-  - `@component` decorator on all top-level templates
-  - yield-style code
-  - `replace_markers()` per-yield
-  - Auto-detect async
-  - Header defs → module-level `@component` or regular function
-  - `Final[]` constants → module level
-  - `---` required when params exist
-  - Omit `_content` for slot-less components
-  - Compile error for HTML in class methods
-  - Compile error for mixed return + yield
+**Examples:**
+```hyper
+<div class={"active" if is_active}>           # omitted if falsy
+<div class={"active" if is_active else ""}>   # empty string if falsy
+<div data-id={user_id if user_id}>            # omitted if None/falsy
+```
 
-### Medium Priority
+**Compiles to:**
+```python
+# Attribute conditionally included
+**({'class': 'active'} if is_active else {})
+```
 
-- [ ] **Write tests for @component decorator**
-- [ ] **Decide on `end` in header** — require everywhere or use indentation?
+---
 
-### Cleanup
+### 014: HTML Validation
 
-- [ ] `rust/playground/` files → DELETE after proper tests
+| | |
+|--|--|
+| **Context** | Invalid HTML causes browser quirks and a11y issues. |
+| **Decision** | Parser validates: void elements, nesting rules, duplicate attributes. Errors include help text. |
+| **Trade-off** | More complex parser, but catches errors early with clear messages. |
+
+---
+
+### 015: Preserve Source Formatting
+
+| | |
+|--|--|
+| **Context** | Generated Python could collapse content to single lines or preserve structure. |
+| **Decision** | Preserve newlines/indentation from source. Use triple quotes. Combine adjacent HTML into single yields until Python/slot breaks it. |
+| **Trade-off** | Larger output files, but readable/debuggable code and accurate source maps. |
+
+---
+
+### 016: Template Attribute Expressions
+
+| | |
+|--|--|
+| **Context** | Attributes like `class="card {theme}"` mix static and dynamic content. |
+| **Decision** | `{expr}` inside quoted attributes = template expression, gets ESCAPE markers. `{{` = literal brace. |
+| **Trade-off** | Implicit f-string behavior, but intuitive for interpolation. |
+
+**Example:**
+```hyper
+<div class="card {theme}" data-id="{id}">
+```
+**Compiles to:**
+```python
+yield replace_markers(f"""<div class="card ‹ESCAPE:{theme}›" data-id="‹ESCAPE:{id}›">""")
+```
+
+---
+
+### 017: Rust Backend Design
+
+| | |
+|--|--|
+| **Context** | The compiler already parses `.hyper` → AST in Rust. Adding a second codegen backend to emit `.rs` instead of `.py` would give Hyper a server-side Rust target. |
+| **Decision** | Rust variant uses Rust types and braces (not indentation/`end`). Props implicitly public, string conversions implicit (`.into()`), variable refs implicit (`{name}` → `&self.name`). Components compile to `struct` + `impl Display`. Slots use buffer strategy initially (render children to `String`). IDE support via ghost macro wrapping (`hyper_component! { ... }` in memory) with span mapping back to source. |
+| **Trade-off** | Buffer strategy allocates intermediate strings (not zero-cost), but trivial to implement and still far faster than Python. Generic strategy (`Layout<T: Display>`) deferred. |
+
+See: [`docs/design/rust-backend.md`](docs/design/rust-backend.md)
+
+---
+
+### 018: Module Mode
+
+| | |
+|--|--|
+| **Context** | Some .hyper files are pure component libraries with no main template. |
+| **Decision** | No `---` body = pure module. Use `@html` to define components explicitly. |
+| **Trade-off** | Explicit decorators, but clear what's exported. |
+
+**Example:**
+```hyper
+# buttons.hyper
+
+@html
+def Button(text: str):
+    <button>{text}</button>
+end
+
+@html
+def IconButton(icon: str, text: str):
+    <button><i class={icon} />{text}</button>
+end
+```
+
+---
