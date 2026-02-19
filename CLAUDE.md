@@ -95,3 +95,21 @@ just test-update                # Shortcut for accept-all
 - Snapshot tests use `insta` — never edit `.snap` files by hand, use `cargo insta accept`
 - The tokenizer is line-based; multiline Python expressions (paren/bracket spanning lines) are a known limitation
 - `is_control_flow()` uses trailing `:` heuristic — content text that starts with a Python keyword and ends with `:` inside an element is an edge case
+
+## TODO — Open Issues
+
+### Codegen: multiline statement indentation
+The line-based tokenizer strips leading indentation from continuation lines in multiline Python expressions (dicts, lists, chained method calls). The generated code loses internal indentation. Fixing this requires tokenizer-level changes to detect and preserve multiline constructs. See `tests/basic/multiline.expected.py` for the current (broken) output.
+
+### Design decision: HTML inside Python expressions
+Two tests contain HTML markup inside Python expressions, which produces invalid Python output:
+- `tests/basic/comprehension.hyper` — `{[<li>{item}</li> for item in items]}` (HTML in list comprehension)
+- `tests/basic/short_circuit.hyper` — `{show_warning and <p class="warning">{message}</p>}` (HTML in `and` expression)
+
+Decide: should hyper support "template comprehensions" (HTML-inside-expressions) as a feature, or should these tests be rewritten to use control flow instead?
+
+### Test fix: missing parameter in comprehensive.hyper
+`tests/basic/comprehensive.hyper` references `items` in a `for` loop but never declares it as a parameter. Either add `items: list` to the header or remove/rewrite that section.
+
+### Cleanup: untracked generated files
+Generated `.py` files in test directories (`functions.py`, `html_entities.py`, `complex_types.py`, `props_edge_cases.py`, `unclosed_class.py`, `unclosed_def.py`) and the `rust/playground/` directory should be either deleted or gitignored.
