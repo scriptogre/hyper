@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 14,
-      "prefix": "from hyper import component\n\n\n@component\ndef IfElse(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef IfElse(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 42,
-      "prefix": "):\n    yield \"<nav>\"\n    if ",
+      "prefix": "):\n\n    yield \"<nav>\"\n\n    if ",
       "start": 34,
-      "suffix": ":\n        yield \"\"\"<a href=\"/admin\">Admin</a>\"\"\"\n    else:\n        yield \"\"\"<a href=\"/account\">Account</a>\"\"\"\n    yield \"</nav>\"\n",
+      "suffix": ":\n        yield \"\"\"\\\n<a href=\"/admin\">Admin</a>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<a href=\"/account\">Account</a>\n    \"\"\"\n\n    yield \"</nav>\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 69,
-      "compiled_start": 55,
+      "compiled_end": 59,
+      "compiled_start": 45,
       "range_type": "Python",
       "source_end": 14,
       "source_start": 0
     },
     {
-      "compiled_end": 105,
-      "compiled_start": 97,
+      "compiled_end": 97,
+      "compiled_start": 89,
       "range_type": "Python",
       "source_end": 42,
       "source_start": 34

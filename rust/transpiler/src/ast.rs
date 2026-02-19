@@ -24,6 +24,7 @@ pub enum Node {
     // Content
     Text(TextNode),
     Expression(ExpressionNode),
+    Comment(CommentNode),
 
     // Structure
     Element(ElementNode),
@@ -51,6 +52,13 @@ pub enum Node {
 #[derive(Debug, Clone)]
 pub struct TextNode {
     pub content: String,
+    pub span: Span,
+}
+
+/// Comment (Python-style # comment)
+#[derive(Debug, Clone)]
+pub struct CommentNode {
+    pub text: String, // includes the # prefix
     pub span: Span,
 }
 
@@ -241,6 +249,12 @@ pub enum AttributeKind {
         name: String,
         expr: String,
         expr_span: Span,
+    },
+
+    /// Template: class="{expr} static" (mixed expressions in quoted value)
+    Template {
+        name: String,
+        value: String, // Raw value with {expr} markers
     },
 
     /// Boolean: disabled

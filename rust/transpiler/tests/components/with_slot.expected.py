@@ -1,10 +1,14 @@
-from hyper import component, replace_markers, escape
+from hyper import html, replace_markers
 
 
-@component
+@html
 def WithSlot(*, title: str):
+
     # <{Card}>
     def _card():
-        yield replace_markers(f"""<h2>‹ESCAPE:{title}›</h2><p>Card content goes here</p>""")
+        yield replace_markers(f"""\
+<h2>‹ESCAPE:{title}›</h2>
+    <p>Card content goes here</p>""")
     yield from Card(_card())
     # </{Card}>
+

@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import component\n\n\n@component\ndef EmptyBlocks(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef EmptyBlocks(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,35 +16,35 @@
     },
     {
       "end": 76,
-      "prefix": "):\n    if ",
+      "prefix": "):\n\n    # Empty if block (should generate pass)\n\n    if ",
       "start": 72,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 109,
-      "prefix": ":\n        pass\n    if ",
+      "prefix": ":\n        pass\n\n    # Empty else block\n\n    if ",
       "start": 105,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 178,
-      "prefix": ":\n        yield \"\"\"<span>Yes</span>\"\"\"\n    else:\n        pass\n    for item in ",
+      "prefix": ":\n        yield \"\"\"<span>Yes</span>\"\"\"\n    else:\n        pass\n\n    # Empty for block\n\n    for item in ",
       "start": 173,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 215,
-      "prefix": ":\n        pass\n    while ",
+      "prefix": ":\n        pass\n\n    # Empty while block\n\n    while ",
       "start": 211,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 252,
-      "prefix": ":\n        pass\n    match ",
+      "prefix": ":\n        pass\n\n    # Empty match cases\n\n    match ",
       "start": 248,
       "suffix": "",
       "type": "python"
@@ -60,70 +60,70 @@
       "end": 283,
       "prefix": ":\n            pass\n        case ",
       "start": 278,
-      "suffix": ":\n            yield \"\"\"<span>False</span>\"\"\"\n    try:\n        pass\n    except:\n        yield \"\"\"<span>Error</span>\"\"\"\n    def empty():\n        pass\n",
+      "suffix": ":\n            yield \"\"\"<span>False</span>\"\"\"\n\n    # Empty try blocks\n\n    try:\n        pass\n    except:\n        yield \"\"\"<span>Error</span>\"\"\"\n\n    # Empty function\n\n    def empty():\n        pass\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 70,
-      "compiled_start": 60,
+      "compiled_end": 60,
+      "compiled_start": 50,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 83,
-      "compiled_start": 72,
+      "compiled_end": 73,
+      "compiled_start": 62,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 11
     },
     {
-      "compiled_end": 97,
-      "compiled_start": 93,
+      "compiled_end": 133,
+      "compiled_start": 129,
       "range_type": "Python",
       "source_end": 76,
       "source_start": 72
     },
     {
-      "compiled_end": 123,
-      "compiled_start": 119,
+      "compiled_end": 184,
+      "compiled_start": 180,
       "range_type": "Python",
       "source_end": 109,
       "source_start": 105
     },
     {
-      "compiled_end": 206,
-      "compiled_start": 201,
+      "compiled_end": 291,
+      "compiled_start": 286,
       "range_type": "Python",
       "source_end": 178,
       "source_start": 173
     },
     {
-      "compiled_end": 235,
-      "compiled_start": 231,
+      "compiled_end": 346,
+      "compiled_start": 342,
       "range_type": "Python",
       "source_end": 215,
       "source_start": 211
     },
     {
-      "compiled_end": 264,
-      "compiled_start": 260,
+      "compiled_end": 401,
+      "compiled_start": 397,
       "range_type": "Python",
       "source_end": 252,
       "source_start": 248
     },
     {
-      "compiled_end": 283,
-      "compiled_start": 279,
+      "compiled_end": 420,
+      "compiled_start": 416,
       "range_type": "Python",
       "source_end": 267,
       "source_start": 263
     },
     {
-      "compiled_end": 320,
-      "compiled_start": 315,
+      "compiled_end": 457,
+      "compiled_start": 452,
       "range_type": "Python",
       "source_end": 283,
       "source_start": 278

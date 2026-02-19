@@ -17,6 +17,26 @@ impl PythonGenerator {
         }
     }
 
+    /// Check if a list of nodes contains only whitespace/newline text (no real content)
+    fn is_effectively_empty(&self, nodes: &[&Node]) -> bool {
+        nodes.iter().all(|node| match node {
+            Node::Text(t) => t.content.trim().is_empty(),
+            _ => false,
+        })
+    }
+
+    /// Emit body nodes, or `pass` if the body is empty/whitespace-only
+    fn emit_body_or_pass(&self, body: &[Node], output: &mut Output, indent: usize) {
+        let refs: Vec<&Node> = body.iter().collect();
+        if refs.is_empty() || self.is_effectively_empty(&refs) {
+            self.indent(output, indent);
+            output.push("pass");
+            output.newline();
+        } else {
+            self.emit_nodes(&refs, output, indent);
+        }
+    }
+
     /// Check if a node can be combined into a string literal (not control flow)
     fn is_combinable(&self, node: &Node) -> bool {
         match node {
@@ -84,11 +104,11 @@ impl PythonGenerator {
         match node {
             Node::Expression(expr) => expr.escape, // Escaped expressions use markers
             Node::Element(el) => {
-                // Check attributes for markers (class, style, bool, spread)
+                // Check attributes for markers (class, style, bool, spread, template)
                 el.attributes.iter().any(|attr| {
                     matches!(attr.kind,
                         AttributeKind::Dynamic { ref name, .. } if name == "class" || name == "style" || self.is_boolean_attribute(name))
-                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. })
+                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. } | AttributeKind::Template { .. })
                 }) || el.children.iter().any(|child| self.node_has_markers(child))
             }
             _ => false,
@@ -97,25 +117,82 @@ impl PythonGenerator {
 
     /// Emit consecutive text/expression/element nodes as a single yield statement
     fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize) {
-        self.indent(output, indent);
-
         // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
         // Check if content has markers that need replace_markers()
         let has_markers = self.content_has_markers(nodes);
 
-        // Build the yield statement
-        if has_markers {
-            output.push("yield replace_markers(f\"\"\"");
-        } else if has_expressions {
-            output.push("yield f\"\"\"");
-        } else {
-            output.push("yield \"\"\"");
+        // Collect content to a temporary buffer to analyze it and capture ranges
+        let mut content_output = Output::new();
+        for node in nodes {
+            self.emit_node_content(node, &mut content_output, has_expressions);
+        }
+        let ranges = content_output.take_ranges();
+        let (content, _, _) = content_output.finish();
+
+        // Calculate how much leading content we're trimming (needed for range adjustment)
+        let trimmed = content.trim_start_matches(|c| c == '\n' || c == ' ');
+        let leading_trimmed = content.len() - trimmed.len();
+        let leading_trimmed_utf16 = content[..leading_trimmed].encode_utf16().count();
+        // Only trim ONE trailing newline (the line ending), preserve any extras (blank lines)
+        let trimmed = trimmed.strip_suffix('\n').unwrap_or(trimmed);
+        // Count remaining trailing newlines (these are blank lines to preserve)
+        let trailing_blank_lines = trimmed.chars().rev().take_while(|&c| c == '\n').count();
+        let trimmed = trimmed.trim_end_matches('\n');
+
+        // If content is empty after trimming, check if we need to preserve blank lines
+        if trimmed.is_empty() {
+            // If original content had newlines (blank lines), emit a blank line
+            if content.contains('\n') {
+                output.newline();
+            }
+            return;
         }
 
-        // Emit content
-        for node in nodes {
-            self.emit_node_content(node, output, has_expressions);
+        self.indent(output, indent);
+
+        // Determine if content is multiline
+        let is_multiline = trimmed.contains('\n');
+
+        // Build the yield statement
+        if has_markers {
+            if is_multiline {
+                output.push("yield replace_markers(f\"\"\"\\");
+                output.newline();
+            } else {
+                output.push("yield replace_markers(f\"\"\"");
+            }
+        } else if has_expressions {
+            if is_multiline {
+                output.push("yield f\"\"\"\\");
+                output.newline();
+            } else {
+                output.push("yield f\"\"\"");
+            }
+        } else {
+            if is_multiline {
+                output.push("yield \"\"\"\\");
+                output.newline();
+            } else {
+                output.push("yield \"\"\"");
+            }
+        }
+
+        // Get position before emitting content (for range offset calculation)
+        let content_start_pos = output.position();
+
+        // Emit the trimmed content
+        output.push(trimmed);
+
+        // Transfer ranges from temp buffer, adjusting for:
+        // 1. The position where content starts in main output
+        // 2. The leading content that was trimmed
+        // Note: ranges use signed arithmetic to handle the subtraction
+        let offset = content_start_pos as isize - leading_trimmed_utf16 as isize;
+        for mut range in ranges {
+            range.compiled_start = (range.compiled_start as isize + offset) as usize;
+            range.compiled_end = (range.compiled_end as isize + offset) as usize;
+            output.add_range(range);
         }
 
         if has_markers {
@@ -124,13 +201,23 @@ impl PythonGenerator {
             output.push("\"\"\"");
         }
         output.newline();
+
+        // Emit preserved blank lines
+        for _ in 0..trailing_blank_lines {
+            output.newline();
+        }
     }
 
     /// Emit the content of a node as part of a string literal
     fn emit_node_content(&self, node: &Node, output: &mut Output, in_fstring: bool) {
         match node {
             Node::Text(text) => {
-                output.push(&text.content);
+                if in_fstring {
+                    // Escape braces so they're literal in the f-string
+                    output.push(&text.content.replace('{', "{{").replace('}', "}}"));
+                } else {
+                    output.push(&text.content);
+                }
             }
             Node::Expression(expr) => {
                 if in_fstring {
@@ -394,13 +481,60 @@ impl PythonGenerator {
                     output.push(name);
                 }
             }
+            AttributeKind::Template { name, value } => {
+                if in_fstring {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\"");
+                    // Parse and emit the template value, converting {expr} to ‹ESCAPE:{expr}›
+                    output.push(&self.convert_template_expressions(value));
+                    output.push("\"");
+                }
+            }
         }
+    }
+
+    /// Convert {expr} in template string to ‹ESCAPE:{expr}› for runtime processing
+    fn convert_template_expressions(&self, template: &str) -> String {
+        let mut result = String::new();
+        let mut chars = template.chars().peekable();
+
+        while let Some(ch) = chars.next() {
+            if ch == '{' {
+                // Found start of expression, collect until closing }
+                let mut expr = String::new();
+                let mut depth = 1;
+                while let Some(inner) = chars.next() {
+                    if inner == '{' {
+                        depth += 1;
+                        expr.push(inner);
+                    } else if inner == '}' {
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
+                        expr.push(inner);
+                    } else {
+                        expr.push(inner);
+                    }
+                }
+                // Emit as ESCAPE marker
+                result.push_str("‹ESCAPE:{");
+                result.push_str(&expr);
+                result.push_str("}›");
+            } else {
+                result.push(ch);
+            }
+        }
+
+        result
     }
 
     fn emit_node(&self, node: &Node, output: &mut Output, indent: usize) {
         match node {
             Node::Text(text) => self.emit_text(text, output, indent),
             Node::Expression(expr) => self.emit_expression(expr, output, indent),
+            Node::Comment(comment) => self.emit_comment(comment, output, indent),
             Node::Element(el) => self.emit_element(el, output, indent),
             Node::Component(c) => self.emit_component(c, output, indent),
             Node::Fragment(f) => self.emit_fragment(f, output, indent),
@@ -424,6 +558,12 @@ impl PythonGenerator {
         output.push("yield \"");
         output.push(&escape_string(&text.content));
         output.push("\"");
+        output.newline();
+    }
+
+    fn emit_comment(&self, comment: &CommentNode, output: &mut Output, indent: usize) {
+        self.indent(output, indent);
+        output.push(&comment.text);
         output.newline();
     }
 
@@ -458,10 +598,9 @@ impl PythonGenerator {
             output.push(">\"");
             output.newline();
 
-            // Emit children
-            for child in &el.children {
-                self.emit_node(child, output, indent);
-            }
+            // Emit children using emit_nodes for proper grouping
+            let refs: Vec<&Node> = el.children.iter().collect();
+            self.emit_nodes(&refs, output, indent);
 
             // Closing tag
             self.indent(output, indent);
@@ -516,18 +655,41 @@ impl PythonGenerator {
                     output.push(name);
                 }
             }
+            AttributeKind::Template { name, value } => {
+                output.push(" ");
+                output.push(name);
+                output.push("=\\\"");
+                // Convert {expr} to f-string syntax with escaping
+                output.push(&self.convert_template_expressions(value));
+                output.push("\\\"");
+            }
         }
     }
 
     /// Generate a safe function name from a component name
     fn component_to_func_name(&self, name: &str) -> String {
         // Convert PascalCase to snake_case and prefix with _
+        // Skip non-identifier characters (brackets, quotes, dots, etc.)
         let mut result = String::from("_");
+        let mut prev_was_separator = false;
         for (i, ch) in name.chars().enumerate() {
-            if ch.is_uppercase() && i > 0 {
-                result.push('_');
+            if ch.is_alphanumeric() || ch == '_' {
+                if ch.is_uppercase() && i > 0 && !prev_was_separator {
+                    result.push('_');
+                }
+                result.push(ch.to_ascii_lowercase());
+                prev_was_separator = false;
+            } else {
+                // Non-identifier character acts as a separator
+                if !prev_was_separator && i > 0 && !result.ends_with('_') {
+                    result.push('_');
+                }
+                prev_was_separator = true;
             }
-            result.push(ch.to_ascii_lowercase());
+        }
+        // Trim trailing underscore from separators
+        while result.ends_with('_') && result.len() > 1 {
+            result.pop();
         }
         result
     }
@@ -636,7 +798,7 @@ impl PythonGenerator {
     fn emit_slot(&self, s: &SlotNode, output: &mut Output, indent: usize) {
         // Emit conditional yield from for slot content
         let slot_var = if let Some(name) = &s.name {
-            format!("_{}_content", name)
+            format!("_{}", name)
         } else {
             "_content".to_string()
         };
@@ -651,6 +813,15 @@ impl PythonGenerator {
         output.push("yield from ");
         output.push(&slot_var);
         output.newline();
+
+        if !s.fallback.is_empty() {
+            self.indent(output, indent);
+            output.push("else:");
+            output.newline();
+
+            let refs: Vec<&Node> = s.fallback.iter().collect();
+            self.emit_nodes(&refs, output, indent + 1);
+        }
     }
 
     fn emit_if(&self, if_node: &IfNode, output: &mut Output, indent: usize) {
@@ -675,14 +846,7 @@ impl PythonGenerator {
         output.push(":");
         output.newline();
 
-        if if_node.then_branch.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = if_node.then_branch.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&if_node.then_branch, output, indent + 1);
 
         for (condition, condition_span, body) in &if_node.elif_branches {
             self.indent(output, indent);
@@ -703,14 +867,7 @@ impl PythonGenerator {
             output.push(":");
             output.newline();
 
-            if body.is_empty() {
-                self.indent(output, indent + 1);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = body.iter().collect();
-                self.emit_nodes(&refs, output, indent + 1);
-            }
+            self.emit_body_or_pass(body, output, indent + 1);
         }
 
         if let Some(else_branch) = &if_node.else_branch {
@@ -718,14 +875,7 @@ impl PythonGenerator {
             output.push("else:");
             output.newline();
 
-            if else_branch.is_empty() {
-                self.indent(output, indent + 1);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = else_branch.iter().collect();
-                self.emit_nodes(&refs, output, indent + 1);
-            }
+            self.emit_body_or_pass(else_branch, output, indent + 1);
         }
     }
 
@@ -756,14 +906,7 @@ impl PythonGenerator {
         output.push(":");
         output.newline();
 
-        if for_node.body.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = for_node.body.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&for_node.body, output, indent + 1);
     }
 
     fn emit_match(&self, match_node: &MatchNode, output: &mut Output, indent: usize) {
@@ -806,14 +949,7 @@ impl PythonGenerator {
             output.push(":");
             output.newline();
 
-            if case.body.is_empty() {
-                self.indent(output, indent + 2);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = case.body.iter().collect();
-                self.emit_nodes(&refs, output, indent + 2);
-            }
+            self.emit_body_or_pass(&case.body, output, indent + 2);
         }
     }
 
@@ -837,14 +973,7 @@ impl PythonGenerator {
         output.push(":");
         output.newline();
 
-        if while_node.body.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = while_node.body.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&while_node.body, output, indent + 1);
     }
 
     fn emit_with(&self, with_node: &WithNode, output: &mut Output, indent: usize) {
@@ -872,14 +1001,7 @@ impl PythonGenerator {
         output.push(":");
         output.newline();
 
-        if with_node.body.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = with_node.body.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&with_node.body, output, indent + 1);
     }
 
     fn emit_try(&self, try_node: &TryNode, output: &mut Output, indent: usize) {
@@ -887,33 +1009,20 @@ impl PythonGenerator {
         output.push("try:");
         output.newline();
 
-        if try_node.body.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = try_node.body.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&try_node.body, output, indent + 1);
 
         for except in &try_node.except_clauses {
             self.indent(output, indent);
             output.push("except");
             if let Some(exception) = &except.exception {
                 output.push(" ");
+                let exception = exception.trim_end_matches(':').trim();
                 output.push(exception);
             }
             output.push(":");
             output.newline();
 
-            if except.body.is_empty() {
-                self.indent(output, indent + 1);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = except.body.iter().collect();
-                self.emit_nodes(&refs, output, indent + 1);
-            }
+            self.emit_body_or_pass(&except.body, output, indent + 1);
         }
 
         if let Some(else_clause) = &try_node.else_clause {
@@ -921,14 +1030,7 @@ impl PythonGenerator {
             output.push("else:");
             output.newline();
 
-            if else_clause.is_empty() {
-                self.indent(output, indent + 1);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = else_clause.iter().collect();
-                self.emit_nodes(&refs, output, indent + 1);
-            }
+            self.emit_body_or_pass(else_clause, output, indent + 1);
         }
 
         if let Some(finally_clause) = &try_node.finally_clause {
@@ -936,14 +1038,7 @@ impl PythonGenerator {
             output.push("finally:");
             output.newline();
 
-            if finally_clause.is_empty() {
-                self.indent(output, indent + 1);
-                output.push("pass");
-                output.newline();
-            } else {
-                let refs: Vec<&Node> = finally_clause.iter().collect();
-                self.emit_nodes(&refs, output, indent + 1);
-            }
+            self.emit_body_or_pass(finally_clause, output, indent + 1);
         }
     }
 
@@ -967,14 +1062,7 @@ impl PythonGenerator {
         output.push(&def.signature);
         output.newline();
 
-        if def.body.is_empty() {
-            self.indent(output, indent + 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            let refs: Vec<&Node> = def.body.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
-        }
+        self.emit_body_or_pass(&def.body, output, indent + 1);
     }
 
     fn emit_import(&self, import: &ImportNode, output: &mut Output, _indent: usize) {
@@ -1011,11 +1099,20 @@ impl Generator for PythonGenerator {
         let mut decorators = Vec::new();
         let mut body_nodes = Vec::new();
 
-        for node in &ast.nodes {
+        for (i, node) in ast.nodes.iter().enumerate() {
             match node {
                 Node::Parameter(param) => parameters.push(param),
                 Node::Import(import) => imports.push(import),
-                Node::Decorator(dec) => decorators.push(dec),
+                Node::Decorator(dec) => {
+                    // If decorator is followed by a Definition, keep them together as body
+                    let next_is_def = ast.nodes.get(i + 1)
+                        .map_or(false, |n| matches!(n, Node::Definition(_)));
+                    if next_is_def {
+                        body_nodes.push(node);
+                    } else {
+                        decorators.push(dec);
+                    }
+                }
                 _ => body_nodes.push(node),
             }
         }
@@ -1050,6 +1147,19 @@ impl Generator for PythonGenerator {
         let has_default_slot = metadata.slots_used.contains("");
         let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
 
+        // Separate regular params from **kwargs
+        // Note: *args is rejected at parse time - hyper uses keyword-only params
+        let mut regular_params: Vec<_> = Vec::new();
+        let mut star_star_kwargs: Option<&ParameterNode> = None;
+
+        for param in &parameters {
+            if param.name.starts_with("**") {
+                star_star_kwargs = Some(param);
+            } else {
+                regular_params.push(param);
+            }
+        }
+
         // Emit _content parameter first if default slot is used
         let mut param_count = 0;
         if has_default_slot {
@@ -1058,40 +1168,40 @@ impl Generator for PythonGenerator {
         }
 
         // Add keyword-only marker if we have user parameters
-        if !parameters.is_empty() {
+        // All hyper params are keyword-only (*, prefix)
+        if !regular_params.is_empty() {
             if param_count > 0 {
                 output.push(", *, ");
             } else {
                 output.push("*, ");
             }
+        }
 
-            // Emit user parameters as keyword-only
-            for (i, param) in parameters.iter().enumerate() {
-                if i > 0 {
-                    output.push(", ");
-                }
-                let param_start = output.position();
-                output.push(&param.name);
-                if let Some(type_hint) = &param.type_hint {
-                    output.push(": ");
-                    output.push(type_hint);
-                }
-                if let Some(default) = &param.default {
-                    output.push(" = ");
-                    output.push(default);
-                }
-                let param_end = output.position();
-
-                // Add range for parameter (maps source parameter to compiled signature)
-                output.add_range(Range {
-                    range_type: RangeType::Python,
-                    source_start: param.span.start.byte,
-                    source_end: param.span.end.byte,
-                    compiled_start: param_start,
-                    compiled_end: param_end,
-                    needs_injection: true,
-                });
+        // Emit regular user parameters
+        for (i, param) in regular_params.iter().enumerate() {
+            if i > 0 {
+                output.push(", ");
             }
+            let param_start = output.position();
+            output.push(&param.name);
+            if let Some(type_hint) = &param.type_hint {
+                output.push(": ");
+                output.push(type_hint);
+            }
+            if let Some(default) = &param.default {
+                output.push(" = ");
+                output.push(default);
+            }
+            let param_end = output.position();
+
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: param.span.start.byte,
+                source_end: param.span.end.byte,
+                compiled_start: param_start,
+                compiled_end: param_end,
+                needs_injection: true,
+            });
         }
 
         // Add named slot parameters
@@ -1102,12 +1212,24 @@ impl Generator for PythonGenerator {
             sorted_slots.sort();
 
             for slot_name in sorted_slots {
-                if param_count > 0 || !parameters.is_empty() {
+                if param_count > 0 || !regular_params.is_empty() {
                     output.push(", ");
                 }
                 output.push("_");
                 output.push(slot_name);
-                output.push("_content: Iterable[str] | None = None");
+                output.push(": Iterable[str] | None = None");
+            }
+        }
+
+        // Emit **kwargs if present
+        if let Some(kwargs) = star_star_kwargs {
+            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
+                output.push(", ");
+            }
+            output.push(&kwargs.name);
+            if let Some(type_hint) = &kwargs.type_hint {
+                output.push(": ");
+                output.push(type_hint);
             }
         }
 
@@ -1125,23 +1247,50 @@ impl Generator for PythonGenerator {
         let needs_iterable = has_default_slot || has_named_slots;
 
         // Build imports
-        let mut hyper_imports = vec!["component"];
+        let mut hyper_imports = vec!["html"];
 
         // Add replace_markers if markers are present
         if code.contains('‹') {
             hyper_imports.push("replace_markers");
         }
 
-        // Add other helpers based on metadata
-        if metadata.helpers_used.contains("escape") || code.contains("escape(") {
-            hyper_imports.push("escape");
-        }
+        // Add other helpers based on metadata (only if actually called in code)
+        // Note: escape() is never directly called - we use ‹ESCAPE:...› markers
         if metadata.helpers_used.contains("safe") {
             hyper_imports.push("safe");
         }
 
+        // Detect typing constructs needed from parameter type hints
+        let mut typing_imports: Vec<&str> = Vec::new();
+        let all_type_hints: String = parameters.iter()
+            .filter_map(|p| p.type_hint.as_ref())
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        if all_type_hints.contains("Any") {
+            typing_imports.push("Any");
+        }
+        if all_type_hints.contains("Callable") {
+            typing_imports.push("Callable");
+        }
+        if all_type_hints.contains("Optional") {
+            typing_imports.push("Optional");
+        }
+        if all_type_hints.contains("Union") {
+            typing_imports.push("Union");
+        }
+        if all_type_hints.contains("TypeVar") {
+            typing_imports.push("TypeVar");
+        }
+
         // Build import block
         let mut import_lines = String::new();
+
+        // Add typing imports if needed
+        if !typing_imports.is_empty() {
+            import_lines.push_str(&format!("from typing import {}\n", typing_imports.join(", ")));
+        }
 
         // Add Iterable import if needed
         if needs_iterable {
@@ -1152,8 +1301,8 @@ impl Generator for PythonGenerator {
         import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
         import_lines.push_str("\n\n");  // Two blank lines before function (PEP 8)
 
-        // Add @component decorator
-        import_lines.push_str("@component\n");
+        // Add @html decorator
+        import_lines.push_str("@html\n");
 
         // Insert imports before function definition
         // Search for "async def" first to avoid matching "def" inside "async def"

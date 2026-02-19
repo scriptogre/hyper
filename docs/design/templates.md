@@ -864,7 +864,6 @@ def Card(title: str):
         <h2>{title}</h2>
         {...}
     </div>
-end
 
 ---
 
@@ -937,17 +936,14 @@ def Form(action: str):
     <form {action}>
         {...}
     </form>
-end
 
 def Input(name: str, type: str = "text"):
     <input {name} {type} />
-end
 
 def Button(type: str = "submit"):
     <button {type}>
         {...}
     </button>
-end
 ```
 
 Create `pages/Login.hyper`:
@@ -1114,7 +1110,6 @@ from utils import helper
 
 def Badge(text: str):
     <span class="badge">{text}</span>
-end
 
 name: str
 count: int = 0
@@ -1133,7 +1128,7 @@ greeting = f"Hello {name}"
 
 **Header zone** (above `---`):
 - `import` statements
-- `def` functions — with HTML becomes `@component`, without HTML becomes regular function
+- `def` functions — with HTML becomes `@html`, without HTML becomes regular function
 - `class` definitions (including `@dataclass`, `Enum`, `Protocol`)
 - `NAME: Final[type] = expr` — module-level constants
 - `type Name = type_expr` — type aliases (Python 3.12+)
@@ -1177,9 +1172,7 @@ Library files (no top-level HTML) need no separator:
 ```hyper
 def Header(title: str):
     <header>{title}</header>
-end
 
 def Footer():
     <footer>Copyright 2024</footer>
-end
 ```

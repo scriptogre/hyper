@@ -2,44 +2,44 @@
   "injections": [
     {
       "end": 16,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef ForLoop(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef ForLoop(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 49,
-      "prefix": "):\n    yield \"<ul>\"\n    for item in ",
+      "prefix": "):\n\n    yield \"<ul>\"\n\n    for item in ",
       "start": 44,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 69,
-      "prefix": ":\n        yield replace_markers(f\"\"\"<li>‹ESCAPE:",
+      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
       "start": 63,
-      "suffix": "›</li>\"\"\")\n    yield \"</ul>\"\n",
+      "suffix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 97,
-      "compiled_start": 81,
+      "compiled_end": 79,
+      "compiled_start": 63,
       "range_type": "Python",
       "source_end": 16,
       "source_start": 0
     },
     {
-      "compiled_end": 138,
-      "compiled_start": 133,
+      "compiled_end": 122,
+      "compiled_start": 117,
       "range_type": "Python",
       "source_end": 49,
       "source_start": 44
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 186,
+      "compiled_end": 178,
+      "compiled_start": 172,
       "range_type": "Python",
       "source_end": 69,
       "source_start": 63

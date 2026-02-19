@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 19,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Defaults(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Defaults(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,14 +16,14 @@
     },
     {
       "end": 57,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<h1>Hello ‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<h1>Hello ‹ESCAPE:",
       "start": 51,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 80,
-      "prefix": "›</h1><p>Count: ‹ESCAPE:",
+      "prefix": "›</h1>\n<p>Count: ‹ESCAPE:",
       "start": 73,
       "suffix": "›</p>\"\"\")\n",
       "type": "python"
@@ -31,29 +31,29 @@
   ],
   "ranges": [
     {
-      "compiled_end": 101,
-      "compiled_start": 82,
+      "compiled_end": 83,
+      "compiled_start": 64,
       "range_type": "Python",
       "source_end": 19,
       "source_start": 0
     },
     {
-      "compiled_end": 117,
-      "compiled_start": 103,
+      "compiled_end": 99,
+      "compiled_start": 85,
       "range_type": "Python",
       "source_end": 34,
       "source_start": 20
     },
     {
-      "compiled_end": 174,
-      "compiled_start": 168,
+      "compiled_end": 158,
+      "compiled_start": 152,
       "range_type": "Python",
       "source_end": 57,
       "source_start": 51
     },
     {
-      "compiled_end": 205,
-      "compiled_start": 198,
+      "compiled_end": 190,
+      "compiled_start": 183,
       "range_type": "Python",
       "source_end": 80,
       "source_start": 73

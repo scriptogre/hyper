@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Unicode(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Unicode(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,58 +16,58 @@
     },
     {
       "end": 137,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<span>Hello 👋</span><span>Stars: ⭐⭐⭐</span><span>‹ESCAPE:",
+      "prefix": "):\n\n    # Emoji in content\n    yield \"\"\"\\\n<span>Hello 👋</span>\n<span>Stars: ⭐⭐⭐</span>\"\"\"\n\n    # Emoji in expressions\n    yield replace_markers(f\"\"\"\\\n<span>‹ESCAPE:",
       "start": 130,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 162,
-      "prefix": "›</span><span>‹ESCAPE:",
+      "prefix": "›</span>\n<span>‹ESCAPE:",
       "start": 151,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 420,
-      "prefix": "›</span><p lang=\"zh\">你好世界</p><p lang=\"ja\">こんにちは</p><p lang=\"ko\">안녕하세요</p><p dir=\"rtl\" lang=\"ar\">مرحبا بالعالم</p><p dir=\"rtl\" lang=\"he\">שלום עולם</p><p>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n\n    # CJK characters\n    yield \"\"\"\\\n<p lang=\"zh\">你好世界</p>\n<p lang=\"ja\">こんにちは</p>\n<p lang=\"ko\">안녕하세요</p>\"\"\"\n\n    # RTL text\n    yield \"\"\"\\\n<p dir=\"rtl\" lang=\"ar\">مرحبا بالعالم</p>\n<p dir=\"rtl\" lang=\"he\">שלום עולם</p>\"\"\"\n\n    # Mixed scripts\n    yield replace_markers(f\"\"\"<p>‹ESCAPE:",
       "start": 414,
-      "suffix": "›: 你好, مرحبا, שלום</p><span>En dash: –</span><span>Em dash: —</span><span>Ellipsis: …</span><span>Quotes: \"quoted\"</span><span>Arrows: ← → ↑ ↓</span><span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>\"\"\")\n",
+      "suffix": "›: 你好, مرحبا, שלום</p>\"\"\")\n\n    # Special Unicode\n    yield \"\"\"\\\n<span>En dash: –</span>\n<span>Em dash: —</span>\n<span>Ellipsis: …</span>\n<span>Quotes: \"quoted\"</span>\n<span>Arrows: ← → ↑ ↓</span>\n<span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 91,
-      "compiled_start": 81,
+      "compiled_end": 73,
+      "compiled_start": 63,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 102,
-      "compiled_start": 93,
+      "compiled_end": 84,
+      "compiled_start": 75,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 11
     },
     {
-      "compiled_end": 200,
-      "compiled_start": 193,
+      "compiled_end": 256,
+      "compiled_start": 249,
       "range_type": "Python",
       "source_end": 137,
       "source_start": 130
     },
     {
-      "compiled_end": 231,
-      "compiled_start": 222,
+      "compiled_end": 288,
+      "compiled_start": 279,
       "range_type": "Python",
       "source_end": 162,
       "source_start": 151
     },
     {
-      "compiled_end": 397,
-      "compiled_start": 391,
+      "compiled_end": 589,
+      "compiled_start": 583,
       "range_type": "Python",
       "source_end": 420,
       "source_start": 414

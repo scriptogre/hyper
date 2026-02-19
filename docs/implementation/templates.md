@@ -1,6 +1,6 @@
 # Templates
 
-`.hyper` files compile to Python functions that return HTML strings.
+`.hyper` files compile to Python generator functions that yield HTML chunks.
 
 ## Basic Example
 
@@ -23,19 +23,24 @@ count: int = 0
 Get this:
 
 ```python
-from hyper import escape
+from hyper import html, replace_markers
 
-def Template(name: str, count: int = 0) -> str:
-    _parts = []
-    _parts.append(f"""<div>
-    <h1>Hello {escape(name)}</h1>
-    """)
+
+@html
+def Template(*, name: str, count: int = 0):
+    yield replace_markers(f"""\
+<div>
+    <h1>Hello ‹ESCAPE:{name}›</h1>""")
+
     if count > 0:
-        _parts.append(f"""<p>You have {escape(count)} items</p>
+        yield replace_markers(f"""\
+<p>You have ‹ESCAPE:{count}› items</p>
     """)
-    _parts.append(f"""</div>""")
-    return ''.join(_parts)
+
+    yield "</div>"
 ```
+
+The `@html` decorator handles string conversion — `str(Template(name="World"))` joins all yielded chunks. Iterating directly enables streaming.
 
 Transpile once. Execute many times.
 
@@ -47,7 +52,7 @@ Each `.hyper` file is a Python module. The `---` separates module-level code fro
 
 ### Above `---`: Module-Level
 
-Type hints become function parameters:
+Type hints become keyword-only function parameters:
 
 ```hyper
 title: str
@@ -58,10 +63,12 @@ count: int = 0
 ```
 
 ```python
-def Template(title: str, count: int = 0, **kwargs: dict) -> str:
-    _parts = []
-    _parts.append(f"""<div>{escape(title)}</div>""")
-    return ''.join(_parts)
+from hyper import html, replace_markers
+
+
+@html
+def Template(*, title: str, count: int = 0, **kwargs: dict):
+    yield replace_markers(f"""<div>‹ESCAPE:{title}›</div>""")
 ```
 
 ### Below `---`: Function Body
@@ -82,45 +89,57 @@ items = ["Apple", "Banana", "Cherry"]
 ```
 
 ```python
-def Template() -> str:
-    _parts = []
+@html
+def Template():
+
     items = ["Apple", "Banana", "Cherry"]
 
-    _parts.append("""<ul>""")
+    yield "<ul>"
+
     for item in items:
-        _parts.append(f"""<li>{escape(item)}</li>""")
-    _parts.append("""</ul>""")
-    return ''.join(_parts)
+        yield replace_markers(f"""\
+<li>‹ESCAPE:{item}›</li>
+    """)
+
+    yield "</ul>"
 ```
 
-**The `end` keyword:** Required for control flow and definitions. Matches HTML's visual block structure.
+### The `end` Keyword
+
+`end` is required for control flow inside HTML-rendering contexts — below `---`, or inside `def` blocks that emit HTML:
 
 ```hyper
 ---
 for item in items:
     <li>{item}</li>
-end  # Required
+end
 
 if is_active:
     <span>Active</span>
-end  # Required
+end
 ```
 
-Without `end`, the parser can't tell where blocks end (HTML has closing tags, Python doesn't).
+Without `end`, the parser can't tell where blocks end (HTML closing tags don't signal block boundaries to the parser).
 
-**Define functions below `---`:**
+**Above `---`**, blocks scope by indentation like normal Python. No `end` needed:
 
 ```hyper
----
-def calculate_total(items):
-    return sum(item.price for item in items)
-end
+def format_date(date):
+    return date.strftime("%Y-%m-%d")
 
-total = calculate_total(cart_items)
-<p>Total: ${total}</p>
+def Card(title: str):
+    <div class="card">
+        <h2>{title}</h2>
+        if show:
+            <p>Details</p>
+        end
+    </div>
+
+name: str
+---
 ```
 
-Any Python. Plus HTML.
+Both `def` blocks end via dedentation. The `if` inside `Card` needs `end` because it's inside an HTML-rendering context.
 
 ### Add Imports
 
@@ -136,11 +155,12 @@ title: str
 
 ```python
 from components import Button
+from hyper import html
 
-def Template(title: str) -> str:
-    _parts = []
-    _parts.append(Button(label=title))
-    return ''.join(_parts)
+
+@html
+def Template(*, title: str):
+    yield from Button(label=title)
 ```
 
 ### Add Helpers
@@ -160,11 +180,13 @@ created_at: datetime
 def format_date(date):
     return date.strftime("%Y-%m-%d")
 
-def Template(created_at: datetime) -> str:
-    _parts = []
-    _parts.append(f"""<p>Created: {escape(format_date(created_at))}</p>""")
-    return ''.join(_parts)
+
+@html
+def Template(*, created_at: datetime):
+    yield replace_markers(f"""<p>Created: ‹ESCAPE:{format_date(created_at)}›</p>""")
 ```
+
+Pure Python helpers above `---` use normal Python scoping — no `end` needed.
 
 Functions and classes are importable:
 
@@ -188,13 +210,14 @@ items: list
 
 ```python
 from typing import Final
+from hyper import html, replace_markers
 
 MAX_ITEMS: Final[int] = 100
 
-def Template(items: list) -> str:
-    _parts = []
-    _parts.append(f"""<p>Showing {escape(len(items[:MAX_ITEMS]))} items</p>""")
-    return ''.join(_parts)
+
+@html
+def Template(*, items: list):
+    yield replace_markers(f"""<p>Showing ‹ESCAPE:{len(items[:MAX_ITEMS])}› items</p>""")
 ```
 
 Constants stay at module level.
@@ -248,7 +271,9 @@ Splits on `---`. Builds AST. Tracks positions for errors and IDE.
 
 Collects info: which helpers are used, async detection, slot parameters.
 
-### Generator: Marker-Based Rendering
+### Generator: Yield-Based Streaming
+
+The generator emits `yield` statements instead of appending to a list. Static HTML yields plain strings. Dynamic content yields f-strings processed by `replace_markers`.
 
 Special attributes use markers:
 
@@ -259,11 +284,10 @@ class = ["btn", "active"]
 
 ```python
 _class = ["btn", "active"]
-_parts.append(f"""<div class=‹CLASS:{_class}›>""")
-return replace_markers("".join(_parts))
+yield replace_markers(f"""<div class=‹CLASS:{_class}›>""")
 ```
 
-**Why?** IDE sees `_class`, not `render_class(_class)`. Autocomplete works. Runtime processes marker.
+**Why markers?** IDE sees `_class`, not `render_class(_class)`. Autocomplete works. `replace_markers` processes them at runtime.
 
 ---
 
@@ -298,40 +322,56 @@ Import like normal Python:
 ```python
 from components import Button
 
-html = Button(label="Click me", disabled=False)
+html = str(Button(label="Click me", disabled=False))
 ```
+
+Templates return generators. Use `str()` for buffered output, or iterate for streaming.
 
 ### Framework Integration
 
-Works with any framework. Templates return strings.
+Works with any framework.
 
-**FastAPI:**
+**FastAPI (streaming):**
+```python
+from fastapi.responses import StreamingResponse
+from pages import Home
+
+@app.get("/")
+def index():
+    return StreamingResponse(
+        Home(title="Welcome"),
+        media_type="text/html"
+    )
+```
+
+**FastAPI (buffered):**
 ```python
 from fastapi.responses import HTMLResponse
 from pages import Home
 
 @app.get("/")
 def index():
-    return HTMLResponse(Home(title="Welcome"))
+    return HTMLResponse(str(Home(title="Welcome")))
 ```
 
-**Django / Flask:** Same pattern. Import template, call function, return response.
+**Django / Flask:** Same patterns. Import template, call function, iterate or `str()`.
 
 ---
 
 ## Generated Code Patterns
 
-Type hints → parameters:
+Type hints → keyword-only parameters:
 
 ```hyper
 title: str
 is_active: bool = False
 ```
 ```python
-def Template(title: str, is_active: bool = False) -> str: ...
+@html
+def Template(*, title: str, is_active: bool = False):
 ```
 
-Control flow → Python:
+Control flow → Python with yields:
 
 ```hyper
 if active:
@@ -340,10 +380,10 @@ end
 ```
 ```python
 if active:
-    _parts.append(f"""<span>Active</span>""")
+    yield """<span>Active</span>"""
 ```
 
-Loops → Python:
+Loops → Python with yields:
 
 ```hyper
 for item in items:
@@ -352,23 +392,21 @@ end
 ```
 ```python
 for item in items:
-    _parts.append(f"""<li>{escape(item.name)}</li>""")
+    yield replace_markers(f"""<li>‹ESCAPE:{item.name}›</li>""")
 ```
 
-Components → function calls:
+Components → yield from:
 
 ```hyper
 <{Button} label="Save" />
 ```
 ```python
-_parts.append(Button(label="Save"))
+yield from Button(label="Save")
 ```
 
 ---
 
 ## IDE Integration
-
-> **Status**: 🚧 Actively being refined
 
 Transpiler tracks source positions to compiled positions:
 
@@ -398,14 +436,16 @@ hyper generate --stdin --json --injection
 
 ### Auto-Escaping
 
-All expressions escape HTML:
+All expressions are escaped via markers:
 
 ```hyper
 <div>{user_input}</div>
 ```
 ```python
-_parts.append(f"""<div>{escape(user_input)}</div>""")
+yield replace_markers(f"""<div>‹ESCAPE:{user_input}›</div>""")
 ```
+
+`replace_markers` escapes values at runtime. Static HTML (no expressions) yields plain strings without processing.
 
 ### Raw HTML
 
@@ -430,62 +470,32 @@ Control imports via:
 
 ## Compile-Time Validation
 
-> **Status**: 🔮 Planned
-
 Validates templates before code runs.
 
 **Implemented:**
 - Unclosed tags
 - Mismatched tags
+- Void element children
+- Duplicate attributes
+- Invalid HTML nesting (block in inline, nested interactive)
 
 **Planned:**
 - Type mismatches in component props
 - Unknown props
 - Missing required props
-- Invalid HTML nesting
 - Missing accessibility attributes
-- Invalid boolean attributes
 - Slot validation
-
-Configure strictness:
-
-```toml
-[validation]
-strict = true  # Warnings become errors
-```
-
----
-
-## Streaming Responses
-
-> **Status**: 🔮 Exploring
-
-Potential async iteration for large responses:
-
-```python
-from fastapi.responses import StreamingResponse
-
-@app.get("/feed")
-def feed():
-    return StreamingResponse(
-        Feed(posts=all_posts),
-        media_type="text/html"
-    )
-```
-
-Template stays the same. Framework detects async iteration.
-
-Design TBD.
 
 ---
 
 ## Summary
 
 - `.hyper` → `.py` at build time
-- Framework-agnostic functions
-- Auto-escaping prevents XSS
-- Source maps for IDE support (evolving)
-- Validation planned
+- Yield-based generators enable streaming
+- `@html` decorator handles `str()` conversion
+- Auto-escaping via markers prevents XSS
+- Source maps for IDE support
+- `end` keyword required in HTML-rendering contexts, not for pure Python above `---`
 
 ---
 

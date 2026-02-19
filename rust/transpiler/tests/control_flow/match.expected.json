@@ -2,14 +2,14 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import component\n\n\n@component\ndef Match(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef Match(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 30,
-      "prefix": "):\n    match ",
+      "prefix": "):\n\n    match ",
       "start": 24,
       "suffix": "",
       "type": "python"
@@ -23,14 +23,14 @@
     },
     {
       "end": 94,
-      "prefix": ":\n            yield \"\"\"<p>Loading...</p>\"\"\"\n        case ",
+      "prefix": ":\n            yield \"\"\"\\\n<p>Loading...</p>\n    \"\"\"\n        case ",
       "start": 87,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 128,
-      "prefix": ":\n            yield \"\"\"<p>Error!</p>\"\"\"\n        case ",
+      "prefix": ":\n            yield \"\"\"\\\n<p>Error!</p>\n    \"\"\"\n        case ",
       "start": 127,
       "suffix": ":\n            yield \"\"\"<p>Ready</p>\"\"\"\n",
       "type": "python"
@@ -38,36 +38,36 @@
   ],
   "ranges": [
     {
-      "compiled_end": 65,
-      "compiled_start": 54,
+      "compiled_end": 55,
+      "compiled_start": 44,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 84,
-      "compiled_start": 78,
+      "compiled_end": 75,
+      "compiled_start": 69,
       "range_type": "Python",
       "source_end": 30,
       "source_start": 24
     },
     {
-      "compiled_end": 108,
-      "compiled_start": 99,
+      "compiled_end": 99,
+      "compiled_start": 90,
       "range_type": "Python",
       "source_end": 50,
       "source_start": 41
     },
     {
-      "compiled_end": 172,
-      "compiled_start": 165,
+      "compiled_end": 170,
+      "compiled_start": 163,
       "range_type": "Python",
       "source_end": 94,
       "source_start": 87
     },
     {
-      "compiled_end": 226,
-      "compiled_start": 225,
+      "compiled_end": 231,
+      "compiled_start": 230,
       "range_type": "Python",
       "source_end": 128,
       "source_start": 127

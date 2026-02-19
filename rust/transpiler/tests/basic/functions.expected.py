@@ -1,19 +1,18 @@
+from hyper import html, replace_markers
+
+
+@html
 def Functions(*, name: str):
-    def greet(who: str):
+    @html
+    def Greet(who: str):
         yield replace_markers(f"""<h1>Hello, ‹ESCAPE:{who}›!</h1>""")
-    def make_badge(text: str, color: str = "blue") -> str:
-        yield replace_markers(f"""<span class="badge badge-{color}">‹ESCAPE:{text}›</span>""")
-    from hyper import component, replace_markers, escape
-
-
-@component
-async def fetch_and_render(url: str):
-        yield replace_markers(f"""<div class="loading">Fetching ‹ESCAPE:{url}›...</div>""")
-    def render_list(items: list, title: str = "List"):
+    @html
+    def Badge(text: str, color: str = "blue"):
+        yield replace_markers(f"""<span class="badge badge-‹ESCAPE:{color}›">‹ESCAPE:{text}›</span>""")
+    @html
+    def List(items: list, title: str = "Items"):
         yield "<div class=\"list-container\">"
-        yield "<h2>"
-        yield escape(title)
-        yield "</h2>"
+        yield replace_markers(f"""<h2>‹ESCAPE:{title}›</h2>""")
         if items:
             yield "<ul>"
             for item in items:
@@ -22,5 +21,10 @@ async def fetch_and_render(url: str):
         else:
             yield """<p>No items</p>"""
         yield "</div>"
-    greet(name)
-    yield replace_markers(f"""‹ESCAPE:{make_badge("Admin", "red")}›""")
+    def format_name(n: str) -> str:
+        return n.upper()
+
+    yield from Greet(who=format_name(name))
+
+    yield from Badge(text="Admin", color="red")
+

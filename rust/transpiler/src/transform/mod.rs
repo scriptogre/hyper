@@ -110,6 +110,7 @@ impl Transformer {
                     // Leaf nodes
                     Node::Text(_)
                     | Node::Expression(_)
+                    | Node::Comment(_)
                     | Node::Statement(_)
                     | Node::Import(_)
                     | Node::Parameter(_)

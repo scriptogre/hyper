@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 18,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef ShortCircuit(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef ShortCircuit(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 99,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<div>‹ESCAPE:",
+      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<div>\n    ‹ESCAPE:",
       "start": 48,
-      "suffix": "›</div>\"\"\")\n",
+      "suffix": "›\n</div>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 104,
-      "compiled_start": 86,
+      "compiled_end": 86,
+      "compiled_start": 68,
       "range_type": "Python",
       "source_end": 18,
       "source_start": 0
     },
     {
-      "compiled_end": 118,
-      "compiled_start": 106,
+      "compiled_end": 100,
+      "compiled_start": 88,
       "range_type": "Python",
       "source_end": 31,
       "source_start": 19
     },
     {
-      "compiled_end": 215,
-      "compiled_start": 164,
+      "compiled_end": 204,
+      "compiled_start": 153,
       "range_type": "Python",
       "source_end": 99,
       "source_start": 48

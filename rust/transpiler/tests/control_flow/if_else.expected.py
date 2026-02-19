@@ -1,11 +1,18 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def IfElse(*, is_admin: bool):
+
     yield "<nav>"
+
     if is_admin:
-        yield """<a href="/admin">Admin</a>"""
+        yield """\
+<a href="/admin">Admin</a>
+    """
     else:
-        yield """<a href="/account">Account</a>"""
+        yield """\
+<a href="/account">Account</a>
+    """
+
     yield "</nav>"

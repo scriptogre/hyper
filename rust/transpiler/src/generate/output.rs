@@ -188,6 +188,21 @@ impl Output {
         let code = self.lines.join("");
         (code, self.mappings, self.ranges)
     }
+
+    /// Transfer ranges from another Output, adjusting compiled positions by an offset.
+    /// The offset is the compiled position where the other output's content starts in this output.
+    pub fn transfer_ranges(&mut self, other_ranges: Vec<Range>, compiled_offset: usize) {
+        for mut range in other_ranges {
+            range.compiled_start += compiled_offset;
+            range.compiled_end += compiled_offset;
+            self.ranges.push(range);
+        }
+    }
+
+    /// Get the accumulated ranges (for extracting from a temporary buffer)
+    pub fn take_ranges(&mut self) -> Vec<Range> {
+        std::mem::take(&mut self.ranges)
+    }
 }
 
 impl Default for Output {

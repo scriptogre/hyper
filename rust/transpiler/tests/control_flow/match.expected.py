@@ -1,12 +1,17 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def Match(*, status: str):
+
     match status:
         case "loading":
-            yield """<p>Loading...</p>"""
+            yield """\
+<p>Loading...</p>
+    """
         case "error":
-            yield """<p>Error!</p>"""
+            yield """\
+<p>Error!</p>
+    """
         case _:
             yield """<p>Ready</p>"""

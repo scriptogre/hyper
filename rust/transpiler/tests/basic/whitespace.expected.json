@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import component\n\n\n@component\ndef Whitespace(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef Whitespace(*, ",
       "start": 0,
-      "suffix": "):\n    yield \"\"\"<div>After blank lines</div><span>Between blank lines</span><p>More content</p>\"\"\"\n",
+      "suffix": "):\n    yield \"\"\"\\\n<div>After blank lines</div>\n\n<span>Between blank lines</span>\n\n<p>More content</p>\"\"\"\n\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 68,
-      "compiled_start": 59,
+      "compiled_end": 58,
+      "compiled_start": 49,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0

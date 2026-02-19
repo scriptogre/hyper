@@ -1,5 +1,5 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def EmptyMinimal():

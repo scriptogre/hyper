@@ -1,5 +1,6 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def OnlyParams(*, name: str, count: int = 0, items: list):
+

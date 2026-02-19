@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 14,
-      "prefix": "from hyper import component\n\n\n@component\ndef EdgeCases(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef EdgeCases(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -11,21 +11,21 @@
       "end": 31,
       "prefix": ", ",
       "start": 15,
-      "suffix": "):\n    yield from module.Button(label=\"Click\")\n    # <{components['Card']}>\n    def _components['_card']():\n        yield \"\"\"<p>Content</p>\"\"\"\n    yield from components['Card'](_components['_card']())\n    # </{components['Card']}>\n    yield from Wrapper()\n    yield from Container()\n    # <{Outer}>\n    def _outer():\n        # <{Middle}>\n        def _middle():\n            # <{Inner}>\n            def _inner():\n                yield \"\"\"<span>Deep</span>\"\"\"\n            yield from Inner(_inner())\n            # </{Inner}>\n        yield from Middle(_middle())\n        # </{Middle}>\n    yield from Outer(_outer())\n    # </{Outer}>\n",
+      "suffix": "):\n\n    # Component from module\n\n    yield from module.Button(label=\"Click\")\n\n    # Component from dict\n\n    # <{components['Card']}>\n    def _components_card():\n        yield \"\"\"<p>Content</p>\"\"\"\n    yield from components['Card'](_components_card())\n    # </{components['Card']}>\n\n    # Empty component (not self-closing)\n\n    yield from Wrapper()\n\n    # Component with only whitespace\n\n    # <{Container}>\n    def _container():\n\n    yield from Container(_container())\n    # </{Container}>\n\n    # Deeply nested components\n\n    # <{Outer}>\n    def _outer():\n\n        # <{Middle}>\n        def _middle():\n\n            # <{Inner}>\n            def _inner():\n                yield \"\"\"\\\n<span>Deep</span>\n        \"\"\"\n            yield from Inner(_inner())\n            # </{Inner}>\n\n        yield from Middle(_middle())\n        # </{Middle}>\n\n    yield from Outer(_outer())\n    # </{Outer}>\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 72,
-      "compiled_start": 58,
+      "compiled_end": 62,
+      "compiled_start": 48,
       "range_type": "Python",
       "source_end": 14,
       "source_start": 0
     },
     {
-      "compiled_end": 90,
-      "compiled_start": 74,
+      "compiled_end": 80,
+      "compiled_start": 64,
       "range_type": "Python",
       "source_end": 31,
       "source_start": 15

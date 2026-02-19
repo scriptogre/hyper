@@ -1,7 +1,7 @@
 
- file: unclosed_class.hyper:1:1
+ file: unclosed_class.hyper:3:1
 error: This 'class' block is never closed.
- 1 | class Card:
+ 3 | class Card:
    | ^^^^^^^^^^^ opened here
 
  help: Close with 'end'
