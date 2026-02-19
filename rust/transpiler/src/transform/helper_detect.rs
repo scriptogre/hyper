@@ -9,11 +9,10 @@ impl Visitor for HelperDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
             Node::Expression(expr) => {
-                // Track escape usage for escaped expressions
-                if expr.escape {
-                    metadata.helpers_used.insert("escape".to_string());
-                }
-                // Check if expression contains safe()
+                // Note: we don't track escape here because escaped expressions use
+                // ‹ESCAPE:...› markers which are handled by replace_markers() at runtime
+
+                // Check if expression explicitly uses safe()
                 if expr.expr.contains("safe(") {
                     metadata.helpers_used.insert("safe".to_string());
                 }

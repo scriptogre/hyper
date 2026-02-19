@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 15,
-      "prefix": "from hyper import component, replace_markers\n\n\n@component\ndef ClassList(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef ClassList(*, ",
       "start": 0,
-      "suffix": "):\n    _class = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    yield replace_markers(f\"\"\"<button class=‹CLASS:{_class}›>Click</button>\"\"\")\n",
+      "suffix": "):\n\n    _class = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    yield replace_markers(f\"\"\"<button class=‹CLASS:{_class}›>Click</button>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 90,
-      "compiled_start": 75,
+      "compiled_end": 80,
+      "compiled_start": 65,
       "range_type": "Python",
       "source_end": 15,
       "source_start": 0

@@ -1,6 +1,6 @@
-from hyper import component, replace_markers, escape
+from hyper import html, replace_markers
 
 
-@component
+@html
 def Expression(*, name: str):
     yield replace_markers(f"""<h1>Hello ‹ESCAPE:{name}›</h1>""")

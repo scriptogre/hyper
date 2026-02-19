@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 17,
-      "prefix": "from hyper import component, replace_markers\n\n\n@component\ndef Boolean(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Boolean(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -17,15 +17,15 @@
   ],
   "ranges": [
     {
-      "compiled_end": 90,
-      "compiled_start": 73,
+      "compiled_end": 80,
+      "compiled_start": 63,
       "range_type": "Python",
       "source_end": 17,
       "source_start": 0
     },
     {
-      "compiled_end": 158,
-      "compiled_start": 147,
+      "compiled_end": 148,
+      "compiled_start": 137,
       "range_type": "Python",
       "source_end": 53,
       "source_start": 42

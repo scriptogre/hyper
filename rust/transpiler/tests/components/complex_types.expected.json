@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef ComplexTypes(*, ",
+      "prefix": "from typing import Any, Callable\nfrom hyper import html, replace_markers\n\n\n@html\ndef ComplexTypes(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -50,153 +50,125 @@
       "type": "python"
     },
     {
-      "end": 183,
-      "prefix": ", ",
-      "start": 171,
+      "end": 215,
+      "prefix": ", **kwargs: Any):\n    yield replace_markers(f\"\"\"\\\n<div>\n    <span>‹ESCAPE:",
+      "start": 207,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 197,
-      "prefix": ", ",
-      "start": 184,
+      "end": 247,
+      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "start": 233,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 228,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<div><span>‹ESCAPE:",
-      "start": 220,
+      "end": 285,
+      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "start": 265,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 260,
-      "prefix": "›</span><span>‹ESCAPE:",
-      "start": 246,
+      "end": 315,
+      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "start": 303,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 298,
-      "prefix": "›</span><span>‹ESCAPE:",
-      "start": 278,
-      "suffix": "",
-      "type": "python"
-    },
-    {
-      "end": 328,
-      "prefix": "›</span><span>‹ESCAPE:",
-      "start": 316,
-      "suffix": "",
-      "type": "python"
-    },
-    {
-      "end": 360,
-      "prefix": "›</span><span>‹ESCAPE:",
-      "start": 346,
-      "suffix": "›</span></div>\"\"\")\n",
+      "end": 347,
+      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "start": 333,
+      "suffix": "›</span>\n</div>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 97,
-      "compiled_start": 86,
+      "compiled_end": 112,
+      "compiled_start": 101,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 128,
-      "compiled_start": 99,
+      "compiled_end": 143,
+      "compiled_start": 114,
       "range_type": "Python",
       "source_end": 41,
       "source_start": 12
     },
     {
-      "compiled_end": 157,
-      "compiled_start": 130,
+      "compiled_end": 172,
+      "compiled_start": 145,
       "range_type": "Python",
       "source_end": 69,
       "source_start": 42
     },
     {
-      "compiled_end": 175,
-      "compiled_start": 159,
+      "compiled_end": 190,
+      "compiled_start": 174,
       "range_type": "Python",
       "source_end": 86,
       "source_start": 70
     },
     {
-      "compiled_end": 200,
-      "compiled_start": 177,
+      "compiled_end": 215,
+      "compiled_start": 192,
       "range_type": "Python",
       "source_end": 110,
       "source_start": 87
     },
     {
-      "compiled_end": 230,
-      "compiled_start": 202,
+      "compiled_end": 245,
+      "compiled_start": 217,
       "range_type": "Python",
       "source_end": 139,
       "source_start": 111
     },
     {
-      "compiled_end": 262,
-      "compiled_start": 232,
+      "compiled_end": 277,
+      "compiled_start": 247,
       "range_type": "Python",
       "source_end": 170,
       "source_start": 140
     },
     {
-      "compiled_end": 276,
-      "compiled_start": 264,
+      "compiled_end": 359,
+      "compiled_start": 351,
       "range_type": "Python",
-      "source_end": 183,
-      "source_start": 171
+      "source_end": 215,
+      "source_start": 207
     },
     {
-      "compiled_end": 291,
-      "compiled_start": 278,
+      "compiled_end": 400,
+      "compiled_start": 386,
       "range_type": "Python",
-      "source_end": 197,
-      "source_start": 184
+      "source_end": 247,
+      "source_start": 233
     },
     {
-      "compiled_end": 351,
-      "compiled_start": 343,
+      "compiled_end": 447,
+      "compiled_start": 427,
       "range_type": "Python",
-      "source_end": 228,
-      "source_start": 220
+      "source_end": 285,
+      "source_start": 265
     },
     {
-      "compiled_end": 387,
-      "compiled_start": 373,
+      "compiled_end": 486,
+      "compiled_start": 474,
       "range_type": "Python",
-      "source_end": 260,
-      "source_start": 246
+      "source_end": 315,
+      "source_start": 303
     },
     {
-      "compiled_end": 429,
-      "compiled_start": 409,
+      "compiled_end": 527,
+      "compiled_start": 513,
       "range_type": "Python",
-      "source_end": 298,
-      "source_start": 278
-    },
-    {
-      "compiled_end": 463,
-      "compiled_start": 451,
-      "range_type": "Python",
-      "source_end": 328,
-      "source_start": 316
-    },
-    {
-      "compiled_end": 499,
-      "compiled_start": 485,
-      "range_type": "Python",
-      "source_end": 360,
-      "source_start": 346
+      "source_end": 347,
+      "source_start": 333
     }
   ]
 }

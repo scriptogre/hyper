@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import component\n\n\n@component\ndef TextPositions(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef TextPositions(*, ",
       "start": 0,
-      "suffix": "):\n    yield \"\"\"Text before any element<div>Inside div</div>Text between elements<span>Inside span</span>Text after elementsMore text<p>Multilinetext insideparagraph</p>Final text\"\"\"\n",
+      "suffix": "):\n    yield \"\"\"\\\nText before any element\n<div>Inside div</div>\nText between elements\n<span>Inside span</span>\nText after elements\nMore text\n<p>\n    Multiline\n    text inside\n    paragraph\n</p>\nFinal text\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 71,
-      "compiled_start": 62,
+      "compiled_end": 61,
+      "compiled_start": 52,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0

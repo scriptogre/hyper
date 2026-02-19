@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import component\n\n\n@component\ndef OnlyParams(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef OnlyParams(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -18,28 +18,28 @@
       "end": 36,
       "prefix": ", ",
       "start": 25,
-      "suffix": "):\n",
+      "suffix": "):\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 68,
-      "compiled_start": 59,
+      "compiled_end": 58,
+      "compiled_start": 49,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 84,
-      "compiled_start": 70,
+      "compiled_end": 74,
+      "compiled_start": 60,
       "range_type": "Python",
       "source_end": 24,
       "source_start": 10
     },
     {
-      "compiled_end": 97,
-      "compiled_start": 86,
+      "compiled_end": 87,
+      "compiled_start": 76,
       "range_type": "Python",
       "source_end": 36,
       "source_start": 25

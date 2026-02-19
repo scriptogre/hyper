@@ -77,10 +77,36 @@ impl TreeBuilder {
         let token = &self.tokens[self.pos];
 
         match token {
-            Token::Newline { .. } | Token::Indent { .. } => {
-                // Skip structural tokens at top level
-                self.advance();
-                Ok(None)
+            Token::Newline { span } => {
+                // In content area, preserve newlines as text
+                if !self.in_header {
+                    let node = Node::Text(TextNode {
+                        content: "\n".to_string(),
+                        span: *span,
+                    });
+                    self.advance();
+                    Ok(Some(node))
+                } else {
+                    // In header area, skip newlines
+                    self.advance();
+                    Ok(None)
+                }
+            }
+            Token::Indent { level, span } => {
+                // In content area, preserve indentation as whitespace
+                if !self.in_header && *level > 0 {
+                    let spaces = " ".repeat(*level);
+                    let node = Node::Text(TextNode {
+                        content: spaces,
+                        span: *span,
+                    });
+                    self.advance();
+                    Ok(Some(node))
+                } else {
+                    // In header area or zero indent, skip
+                    self.advance();
+                    Ok(None)
+                }
             }
 
             Token::Text { text, span } => {
@@ -260,10 +286,13 @@ impl TreeBuilder {
                 Ok(Some(node))
             }
 
-            Token::Comment { .. } => {
-                // Skip comments
+            Token::Comment { text, span } => {
+                let node = Node::Comment(CommentNode {
+                    text: text.clone(),
+                    span: *span,
+                });
                 self.advance();
-                Ok(None)
+                Ok(Some(node))
             }
 
             Token::Separator { .. } => {
@@ -593,10 +622,13 @@ impl TreeBuilder {
         let def_span = *span;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
-
-        // Require 'end' token
-        self.expect_end("def", &def_span)?;
+        let body = if self.in_header {
+            self.parse_header_block_body(def_span.start.col)?
+        } else {
+            let body = self.parse_until_block_end()?;
+            self.expect_end("def", &def_span)?;
+            body
+        };
 
         Ok(Some(Node::Definition(DefinitionNode {
             kind: DefinitionKind::Function,
@@ -615,10 +647,13 @@ impl TreeBuilder {
         let class_span = *span;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
-
-        // Require 'end' token
-        self.expect_end("class", &class_span)?;
+        let body = if self.in_header {
+            self.parse_header_block_body(class_span.start.col)?
+        } else {
+            let body = self.parse_until_block_end()?;
+            self.expect_end("class", &class_span)?;
+            body
+        };
 
         Ok(Some(Node::Definition(DefinitionNode {
             kind: DefinitionKind::Class,
@@ -627,6 +662,52 @@ impl TreeBuilder {
             body,
             span: class_span,
         })))
+    }
+
+    /// Parse a block body in the header zone, ending by dedentation rather than 'end'.
+    /// The block ends when we see a non-whitespace token at or before `base_col`,
+    /// a separator, or EOF. Explicit 'end' is still accepted for backwards compat.
+    fn parse_header_block_body(&mut self, base_col: usize) -> Result<Vec<Node>, ParseError> {
+        let mut nodes = Vec::new();
+        // Track whether we've consumed an Indent token for the current line.
+        // After a Newline resets this to false, a non-Indent token at the start
+        // of a line means column 0 (dedented).
+        let mut line_indent_seen = false;
+        while !self.is_at_end() {
+            match self.peek() {
+                // Backwards compat: still accept explicit 'end'
+                Some(Token::End { .. }) => {
+                    self.advance();
+                    break;
+                }
+                // Stop at separator
+                Some(Token::Separator { .. }) => break,
+                // Newline: reset line tracking
+                Some(Token::Newline { .. }) => {
+                    line_indent_seen = false;
+                    self.advance();
+                }
+                // Indent at start of a new line: check if dedented
+                Some(Token::Indent { level, .. }) => {
+                    if *level <= base_col {
+                        break;
+                    }
+                    line_indent_seen = true;
+                    self.advance();
+                }
+                // Non-whitespace token with no preceding Indent = column 0
+                Some(_) if !line_indent_seen => {
+                    break;
+                }
+                // Content token within an indented line
+                _ => {
+                    if let Some(node) = self.parse_node()? {
+                        nodes.push(node);
+                    }
+                }
+            }
+        }
+        Ok(nodes)
     }
 
     fn parse_until_block_end(&mut self) -> Result<Vec<Node>, ParseError> {
@@ -771,10 +852,22 @@ impl TreeBuilder {
                 use super::tokenizer::AttributeValue;
 
                 let kind = match &attr.value {
-                    AttributeValue::String(s) => AttributeKind::Static {
-                        name: attr.name.clone(),
-                        value: s.clone(),
-                    },
+                    AttributeValue::String(s) => {
+                        // Check if the string contains unescaped expressions like {expr}
+                        // (ignoring {{ and }} which are escaped braces)
+                        let without_escaped = s.replace("{{", "").replace("}}", "");
+                        if without_escaped.contains('{') && without_escaped.contains('}') {
+                            AttributeKind::Template {
+                                name: attr.name.clone(),
+                                value: s.clone(),
+                            }
+                        } else {
+                            AttributeKind::Static {
+                                name: attr.name.clone(),
+                                value: s.clone(),
+                            }
+                        }
+                    }
                     AttributeValue::Expression(code, span) => AttributeKind::Dynamic {
                         name: attr.name.clone(),
                         expr: code.clone(),
@@ -843,6 +936,7 @@ impl TreeBuilder {
             let name = match &attr.kind {
                 AttributeKind::Static { name, .. }
                 | AttributeKind::Dynamic { name, .. }
+                | AttributeKind::Template { name, .. }
                 | AttributeKind::Boolean { name }
                 | AttributeKind::Shorthand { name, .. } => Some(name.as_str()),
                 AttributeKind::Spread { .. } | AttributeKind::SlotAssignment { .. } => None,
@@ -946,6 +1040,19 @@ impl TreeBuilder {
 
         let name = parts[0].trim().to_string();
         let rest = parts[1].trim();
+
+        // Reject *args - hyper components use keyword-only arguments
+        if name.starts_with('*') && !name.starts_with("**") {
+            return Err(ParseError::new(
+                ErrorKind::InvalidSyntax,
+                "Hyper components don't support *args.".to_string(),
+                *span,
+            ).with_help(
+                "Hyper components use keyword-only arguments, so *args (which captures \
+                positional arguments) doesn't make sense. If you want to accept extra \
+                keyword arguments, use **kwargs instead."
+            ));
+        }
 
         // Check if there's a default value
         let (type_hint, default) = if rest.contains('=') {

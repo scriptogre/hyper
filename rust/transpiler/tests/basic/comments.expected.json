@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Comments(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Comments(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,58 +16,58 @@
     },
     {
       "end": 605,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<div>Content</div><span>Text</span><th scope=\"col\">#</th><a href=\"#section\">Jump</a><a href=\"/page#anchor\">Link</a><div style=\"color: #ff0000\">Red</div><div style=\"background: #fff\">White</div><span>&#35;</span><span>&#x23;</span><div>###</div><th>##</th><span>‹ESCAPE:",
+      "prefix": "):\n\n    # Full-line comment (stripped)\n    yield \"\"\"<div>Content</div>\"\"\"\n\n    # Another full-line comment\n    yield \"\"\"<span>Text</span>\"\"\"\n    # trailing comment after close tag\n\n    # Hash in table header (not a comment)\n    yield \"\"\"<th scope=\"col\">#</th>\"\"\"\n\n    # Hash in URLs (not a comment)\n    yield \"\"\"\\\n<a href=\"#section\">Jump</a>\n<a href=\"/page#anchor\">Link</a>\"\"\"\n\n    # Hash in CSS colors (not a comment)\n    yield \"\"\"\\\n<div style=\"color: #ff0000\">Red</div>\n<div style=\"background: #fff\">White</div>\"\"\"\n\n    # HTML entities with hash\n    yield \"\"\"\\\n<span>&#35;</span>\n<span>&#x23;</span>\"\"\"\n\n    # Multiple hashes as content\n    yield \"\"\"\\\n<div>###</div>\n<th>##</th>\"\"\"\n\n    # Trailing comment after expression\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 599,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 683,
-      "prefix": "›</span><span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n    # show name\n\n    # Hash in expression (not a comment)\n    yield replace_markers(f\"\"\"\\\n<span>‹ESCAPE:",
       "start": 670,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 709,
-      "prefix": "›</span><span>‹ESCAPE:",
+      "prefix": "›</span>\n<span>‹ESCAPE:",
       "start": 697,
-      "suffix": "›</span><p>Text # with hash # multiple # times</p><span>Item</span># kept as content<div data-info=\"use # for comments\">Info</div><br /><input value=\"#\" />\"\"\")\n",
+      "suffix": "›</span>\"\"\")\n\n    # Hash inside paragraph content (not a comment)\n    yield \"\"\"<p>Text # with hash # multiple # times</p>\"\"\"\n\n    # No space before hash (not a comment)\n    yield \"\"\"<span>Item</span># kept as content\"\"\"\n\n    # Hash in attribute value (not a comment)\n    yield \"\"\"<div data-info=\"use # for comments\">Info</div>\"\"\"\n\n    # Trailing comment after self-closing tag\n    yield \"\"\"<br />\"\"\"\n    # self-closing\n\n    # Hash in value attr + trailing comment\n    yield \"\"\"<input value=\"#\" />\"\"\"\n    # input comment\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 91,
-      "compiled_start": 82,
+      "compiled_end": 73,
+      "compiled_start": 64,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 103,
-      "compiled_start": 93,
+      "compiled_end": 85,
+      "compiled_start": 75,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 10
     },
     {
-      "compiled_end": 411,
-      "compiled_start": 405,
+      "compiled_end": 860,
+      "compiled_start": 854,
       "range_type": "Python",
       "source_end": 605,
       "source_start": 599
     },
     {
-      "compiled_end": 446,
-      "compiled_start": 433,
+      "compiled_end": 990,
+      "compiled_start": 977,
       "range_type": "Python",
       "source_end": 683,
       "source_start": 670
     },
     {
-      "compiled_end": 480,
-      "compiled_start": 468,
+      "compiled_end": 1025,
+      "compiled_start": 1013,
       "range_type": "Python",
       "source_end": 709,
       "source_start": 697

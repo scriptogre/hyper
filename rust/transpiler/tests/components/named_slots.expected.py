@@ -1,13 +1,13 @@
 from collections.abc import Iterable
-from hyper import component
+from hyper import html
 
 
-@component
-def NamedSlots(_content: Iterable[str] | None = None, _sidebar_content: Iterable[str] | None = None):
+@html
+def NamedSlots(_content: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):
     yield "<div class=\"layout\">"
     yield "<aside>"
-    if _sidebar_content is not None:
-        yield from _sidebar_content
+    if _sidebar is not None:
+        yield from _sidebar
     yield "</aside>"
     yield "<main>"
     if _content is not None:

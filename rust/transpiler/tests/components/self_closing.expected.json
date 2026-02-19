@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import component\n\n\n@component\ndef SelfClosing(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef SelfClosing(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -18,28 +18,28 @@
       "end": 37,
       "prefix": ", ",
       "start": 26,
-      "suffix": "):\n    yield from Button()\n    yield from Button(label=\"Click me\")\n    yield from Button(label=name, onClick=onClick)\n    yield from Button()\n    yield from Icon(name=\"star\", size=24, )\n",
+      "suffix": "):\n\n    # Simple self-closing\n\n    yield from Button()\n\n    # With attributes\n\n    yield from Button(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from Button(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from Button()\n\n    # Mixed\n\n    yield from Icon(name=\"star\", size=24, )\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 69,
-      "compiled_start": 60,
+      "compiled_end": 59,
+      "compiled_start": 50,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 86,
-      "compiled_start": 71,
+      "compiled_end": 76,
+      "compiled_start": 61,
       "range_type": "Python",
       "source_end": 25,
       "source_start": 10
     },
     {
-      "compiled_end": 99,
-      "compiled_start": 88,
+      "compiled_end": 89,
+      "compiled_start": 78,
       "range_type": "Python",
       "source_end": 37,
       "source_start": 26

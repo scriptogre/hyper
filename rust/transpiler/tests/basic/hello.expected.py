@@ -1,6 +1,6 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def Hello():
     yield """<h1>Hello World</h1>"""

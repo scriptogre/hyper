@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 7,
-      "prefix": "from hyper import component\n\n\n@component\ndef Mixed(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Mixed(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -25,35 +25,35 @@
       "end": 45,
       "prefix": ", ",
       "start": 35,
-      "suffix": "):\n    yield \"\"\"<div class=\"card {theme}\" id=\"card-{id}\">Content</div><div class=\"{theme} {'active' if is_active else 'inactive'} size-{count}\">Content</div><div class=\"base {'special' if is_active else 'normal'}\">Content</div><div data-id=\"{id}\" data-count=\"{count}\" data-active=\"{is_active}\">Content</div><div aria-label=\"Item {id}\" aria-hidden=\"{not is_active}\">Content</div><button @click=\"handleClick({id})\">Click</button><button x-on:click=\"toggle()\">Toggle</button>\"\"\"\n",
+      "suffix": "):\n\n    # Static and dynamic mixed\n    yield replace_markers(f\"\"\"<div class=\"card ‹ESCAPE:{theme}›\" id=\"card-‹ESCAPE:{id}›\">Content</div>\"\"\")\n\n    # Multiple dynamic parts\n    yield replace_markers(f\"\"\"<div class=\"‹ESCAPE:{theme}› ‹ESCAPE:{'active' if is_active else 'inactive'}› size-‹ESCAPE:{count}›\">Content</div>\"\"\")\n\n    # Quotes inside expressions\n    yield replace_markers(f\"\"\"<div class=\"base ‹ESCAPE:{'special' if is_active else 'normal'}›\">Content</div>\"\"\")\n\n    # Data attributes\n    yield replace_markers(f\"\"\"<div data-id=\"‹ESCAPE:{id}›\" data-count=\"‹ESCAPE:{count}›\" data-active=\"‹ESCAPE:{is_active}›\">Content</div>\"\"\")\n\n    # Aria attributes\n    yield replace_markers(f\"\"\"<div aria-label=\"Item ‹ESCAPE:{id}›\" aria-hidden=\"‹ESCAPE:{not is_active}›\">Content</div>\"\"\")\n\n    # Event handlers (Alpine.js style)\n    yield replace_markers(f\"\"\"\\\n<button @click=\"handleClick(‹ESCAPE:{id}›)\">Click</button>\n<button x-on:click=\"toggle()\">Toggle</button>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 61,
-      "compiled_start": 54,
+      "compiled_end": 68,
+      "compiled_start": 61,
       "range_type": "Python",
       "source_end": 7,
       "source_start": 0
     },
     {
-      "compiled_end": 73,
-      "compiled_start": 63,
+      "compiled_end": 80,
+      "compiled_start": 70,
       "range_type": "Python",
       "source_end": 18,
       "source_start": 8
     },
     {
-      "compiled_end": 90,
-      "compiled_start": 75,
+      "compiled_end": 97,
+      "compiled_start": 82,
       "range_type": "Python",
       "source_end": 34,
       "source_start": 19
     },
     {
-      "compiled_end": 102,
-      "compiled_start": 92,
+      "compiled_end": 109,
+      "compiled_start": 99,
       "range_type": "Python",
       "source_end": 45,
       "source_start": 35

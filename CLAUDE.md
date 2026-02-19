@@ -79,6 +79,8 @@ cargo insta review              # Review interactively
 just test-update                # Shortcut for accept-all
 ```
 
+**IMPORTANT — expected output review:** `cargo run --bin accept_expected` and `cargo insta accept` blindly stamp the compiler's current output as correct. Never run these after a change without manually reviewing the diffs (`git diff`) to confirm the new output is actually what you expect. A bug in the compiler will silently become the blessed expected output otherwise. When changing parser or codegen logic, always spot-check at least the directly affected `.expected.py` files before considering the change done.
+
 ## CLI Modes (`main.rs`)
 
 - `hyper generate <files|dirs>` — Compile to `.py` files, walks directories

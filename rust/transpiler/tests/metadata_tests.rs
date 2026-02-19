@@ -8,8 +8,8 @@ fn test_selective_helper_imports() {
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should import component and replace_markers for class markers
-    assert!(result.code.contains("from hyper import component, replace_markers"));
+    // Should import html and replace_markers for class markers
+    assert!(result.code.contains("from hyper import html, replace_markers"));
     assert!(result.code.contains("‹CLASS:"));
 }
 
@@ -42,8 +42,8 @@ fn test_non_async_template() {
     assert!(result.code.contains("def Render():"));
 
     // Should have component import
-    assert!(result.code.contains("from hyper import component"));
-    assert!(result.code.contains("@component"));
+    assert!(result.code.contains("from hyper import html"));
+    assert!(result.code.contains("@html"));
 }
 
 #[test]
@@ -84,8 +84,8 @@ fn test_component_always_imported() {
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
     // Should always import component for the decorator
-    assert!(result.code.contains("from hyper import component"));
-    assert!(result.code.contains("@component"));
+    assert!(result.code.contains("from hyper import html"));
+    assert!(result.code.contains("@html"));
 
     // Should NOT have replace_markers (no markers needed)
     assert!(!result.code.contains("replace_markers"));

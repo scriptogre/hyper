@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 526,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef HtmlEntities():\n    yield replace_markers(f\"\"\"<p>&lt;script&gt; is escaped</p><p>Ampersand: &amp;</p><p>Non-breaking space: hello&nbsp;world</p><p>Copyright: &copy; 2024</p><p>Registered: &reg;</p><p>Trademark: &trade;</p><p>Dollar: &#36;100</p><p>Euro: &euro;50</p><p>Pound: &pound;30</p><p>Yen: &yen;1000</p><p>&quot;quoted&quot;</p><p>&apos;single&apos;</p><p>&ldquo;smart quotes&rdquo;</p><p>&#60;angle brackets&#62;</p><p>&#x3C;hex entities&#x3E;</p><p>&copy; ‹ESCAPE:",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef HtmlEntities():\n    # Common entities\n    yield \"\"\"<p>&lt;script&gt; is escaped</p><p>Ampersand: &amp;</p><p>Non-breaking space: hello&nbsp;world</p><p>Copyright: &copy; 2024</p><p>Registered: &reg;</p><p>Trademark: &trade;</p>\"\"\"\n    # Currency\n    yield \"\"\"<p>Dollar: &#36;100</p><p>Euro: &euro;50</p><p>Pound: &pound;30</p><p>Yen: &yen;1000</p>\"\"\"\n    # Quotes\n    yield \"\"\"<p>&quot;quoted&quot;</p><p>&apos;single&apos;</p><p>&ldquo;smart quotes&rdquo;</p>\"\"\"\n    # Numeric entities\n    yield \"\"\"<p>&#60;angle brackets&#62;</p><p>&#x3C;hex entities&#x3E;</p>\"\"\"\n    # Mixed with expressions\n    yield replace_markers(f\"\"\"<p>&copy; ‹ESCAPE:",
       "start": 520,
       "suffix": "› All rights reserved</p>\"\"\")\n",
       "type": "python"
@@ -10,8 +10,8 @@
   ],
   "ranges": [
     {
-      "compiled_end": 549,
-      "compiled_start": 543,
+      "compiled_end": 701,
+      "compiled_start": 695,
       "range_type": "Python",
       "source_end": 526,
       "source_start": 520

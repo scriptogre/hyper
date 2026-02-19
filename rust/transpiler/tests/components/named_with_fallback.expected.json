@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from collections.abc import Iterable\nfrom hyper import component\n\n\n@component\ndef NamedWithFallback(_content: Iterable[str] | None = None, *, ",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import html\n\n\n@html\ndef NamedWithFallback(_content: Iterable[str] | None = None, *, ",
       "start": 0,
-      "suffix": ", _footer_content: Iterable[str] | None = None, _header_content: Iterable[str] | None = None, _sidebar_content: Iterable[str] | None = None):\n    yield \"<div class=\\\"layout\\\">\"\n    yield \"<header>\"\n    if _header_content is not None:\n        yield from _header_content\n    yield \"</header>\"\n    yield \"<nav>\"\n    if _sidebar_content is not None:\n        yield from _sidebar_content\n    yield \"</nav>\"\n    yield \"<main>\"\n    if _content is not None:\n        yield from _content\n    yield \"</main>\"\n    yield \"<footer>\"\n    if _footer_content is not None:\n        yield from _footer_content\n    yield \"</footer>\"\n    yield \"</div>\"\n",
+      "suffix": ", _footer: Iterable[str] | None = None, _header: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):\n\n    yield \"<div class=\\\"layout\\\">\"\n\n    yield \"<header>\"\n\n    if _header is not None:\n        yield from _header\n    else:\n        yield \"\"\"\\\n<h1>Default Header</h1>\n        \"\"\"\n\n    yield \"</header>\"\n\n    yield \"<nav>\"\n\n    if _sidebar is not None:\n        yield from _sidebar\n    else:\n        yield \"\"\"\\\n<p>Default sidebar content</p>\n        \"\"\"\n\n    yield \"</nav>\"\n\n    yield \"<main>\"\n\n    if _content is not None:\n        yield from _content\n\n    yield \"</main>\"\n\n    yield \"<footer>\"\n\n    if _footer is not None:\n        yield from _footer\n    else:\n        yield \"\"\"\\\n<p>Default footer</p>\n        \"\"\"\n\n    yield \"</footer>\"\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 152,
-      "compiled_start": 142,
+      "compiled_end": 142,
+      "compiled_start": 132,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0

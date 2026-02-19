@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import component, replace_markers, escape\n\n\n@component\ndef Ternary(*, ",
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Ternary(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -24,22 +24,22 @@
   ],
   "ranges": [
     {
-      "compiled_end": 91,
-      "compiled_start": 81,
+      "compiled_end": 73,
+      "compiled_start": 63,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 138,
+      "compiled_end": 127,
+      "compiled_start": 120,
       "range_type": "Python",
       "source_end": 30,
       "source_start": 23
     },
     {
-      "compiled_end": 190,
-      "compiled_start": 155,
+      "compiled_end": 172,
+      "compiled_start": 137,
       "range_type": "Python",
       "source_end": 66,
       "source_start": 31

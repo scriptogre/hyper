@@ -12,7 +12,7 @@ fn test_simple_element() {
     let output = compile_v2(source);
 
     println!("Output:\n{}", output);
-    assert!(output.contains("@component"));
+    assert!(output.contains("@html"));
     assert!(output.contains("def Render():"));
     assert!(output.contains("yield \"\"\"<div>"));
 }
@@ -36,7 +36,7 @@ fn test_parameters() {
 
     println!("Output:\n{}", output);
     assert!(output.contains("def Render(*, name: str):"));
-    assert!(output.contains("@component"));
+    assert!(output.contains("@html"));
 }
 
 #[test]

@@ -1,6 +1,6 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def SelfClosing():
     yield """<br /><hr /><img src="photo.jpg" alt="Photo" /><input type="text" name="field" /><div /><span />"""

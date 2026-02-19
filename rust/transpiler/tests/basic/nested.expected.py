@@ -1,6 +1,6 @@
-from hyper import component
+from hyper import html
 
 
-@component
+@html
 def Nested():
     yield """<div><h1>Title</h1><p>Paragraph</p></div>"""
