@@ -8,10 +8,17 @@
       "type": "python"
     },
     {
+      "end": 49,
+      "prefix": "):\n\n    yield \"<ul>\"\n\n    for item in ",
+      "start": 44,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 69,
-      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<ul>\n    ‹ESCAPE:",
-      "start": 32,
-      "suffix": "›\n</ul>\"\"\")\n",
+      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
+      "start": 63,
+      "suffix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n\n",
       "type": "python"
     }
   ],
@@ -24,11 +31,18 @@
       "source_start": 0
     },
     {
-      "compiled_end": 174,
-      "compiled_start": 137,
+      "compiled_end": 128,
+      "compiled_start": 123,
+      "range_type": "Python",
+      "source_end": 49,
+      "source_start": 44
+    },
+    {
+      "compiled_end": 184,
+      "compiled_start": 178,
       "range_type": "Python",
       "source_end": 69,
-      "source_start": 32
+      "source_start": 63
     }
   ]
 }

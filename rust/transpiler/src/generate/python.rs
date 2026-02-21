@@ -1053,7 +1053,22 @@ impl PythonGenerator {
             .replace("type =", "_type =")
             .replace("type=", "_type=");
 
-        output.push(&statement);
+        // For multiline statements, add indent to each continuation line
+        if statement.contains('\n') {
+            let indent_str = "    ".repeat(indent);
+            let lines: Vec<&str> = statement.split('\n').collect();
+            for (i, line) in lines.iter().enumerate() {
+                if i > 0 {
+                    output.push(&indent_str);
+                }
+                output.push(line);
+                if i < lines.len() - 1 {
+                    output.newline();
+                }
+            }
+        } else {
+            output.push(&statement);
+        }
         output.newline();
     }
 

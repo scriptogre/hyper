@@ -3,5 +3,7 @@ items: list[str]
 ---
 
 <ul>
-    {[<li>{item}</li> for item in items]}
+    for item in items:
+        <li>{item}</li>
+    end
 </ul>

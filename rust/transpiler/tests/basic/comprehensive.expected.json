@@ -22,44 +22,51 @@
       "type": "python"
     },
     {
-      "end": 177,
+      "end": 86,
+      "prefix": ", ",
+      "start": 70,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 194,
       "prefix": "):\n    # Frontmatter comment\n\n    # Body comment\n\n    yield \"<div class=\\\"container\\\">\"\n\n    # Indented comment\n    yield replace_markers(f\"\"\"\\\n<span>Plain text</span>\n    <p>‹ESCAPE:",
-      "start": 171,
+      "start": 188,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 207,
+      "end": 224,
       "prefix": "›</p>\n    <p>Count: ‹ESCAPE:",
-      "start": 196,
+      "start": 213,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 228,
+      "end": 245,
       "prefix": "›</p>\n    \"\"\")\n    if ",
-      "start": 219,
+      "start": 236,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 296,
+      "end": 313,
       "prefix": ":\n        yield \"\"\"<span>Active</span>\"\"\"\n        # Trailing comment\n\n    elif ",
-      "start": 287,
+      "start": 304,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 398,
+      "end": 415,
       "prefix": ":\n        yield \"\"\"\\\n<span>Has count</span>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<span>Inactive</span>\n    \"\"\"\n\n    for item in ",
-      "start": 393,
+      "start": 410,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 418,
+      "end": 435,
       "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
-      "start": 412,
+      "start": 429,
       "suffix": "›</li>\n    \"\"\")\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
@@ -87,46 +94,53 @@
       "source_start": 47
     },
     {
-      "compiled_end": 307,
-      "compiled_start": 301,
+      "compiled_end": 136,
+      "compiled_start": 120,
       "range_type": "Python",
-      "source_end": 177,
-      "source_start": 171
+      "source_end": 86,
+      "source_start": 70
     },
     {
-      "compiled_end": 346,
-      "compiled_start": 335,
+      "compiled_end": 325,
+      "compiled_start": 319,
       "range_type": "Python",
-      "source_end": 207,
-      "source_start": 196
+      "source_end": 194,
+      "source_start": 188
     },
     {
-      "compiled_end": 377,
-      "compiled_start": 368,
+      "compiled_end": 364,
+      "compiled_start": 353,
       "range_type": "Python",
-      "source_end": 228,
-      "source_start": 219
+      "source_end": 224,
+      "source_start": 213
     },
     {
-      "compiled_end": 465,
-      "compiled_start": 456,
+      "compiled_end": 395,
+      "compiled_start": 386,
       "range_type": "Python",
-      "source_end": 296,
-      "source_start": 287
+      "source_end": 245,
+      "source_start": 236
     },
     {
-      "compiled_end": 598,
-      "compiled_start": 593,
+      "compiled_end": 483,
+      "compiled_start": 474,
       "range_type": "Python",
-      "source_end": 398,
-      "source_start": 393
+      "source_end": 313,
+      "source_start": 304
     },
     {
-      "compiled_end": 654,
-      "compiled_start": 648,
+      "compiled_end": 616,
+      "compiled_start": 611,
       "range_type": "Python",
-      "source_end": 418,
-      "source_start": 412
+      "source_end": 415,
+      "source_start": 410
+    },
+    {
+      "compiled_end": 672,
+      "compiled_start": 666,
+      "range_type": "Python",
+      "source_end": 435,
+      "source_start": 429
     }
   ]
 }

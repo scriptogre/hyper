@@ -15,10 +15,17 @@
       "type": "python"
     },
     {
-      "end": 99,
-      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<div>\n    ‹ESCAPE:",
-      "start": 48,
-      "suffix": "›\n</div>\"\"\")\n",
+      "end": 63,
+      "prefix": "):\n\n    yield \"<div>\"\n\n    if ",
+      "start": 51,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 101,
+      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<p class=\"warning\">‹ESCAPE:",
+      "start": 92,
+      "suffix": "›</p>\n    \"\"\")\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
   ],
@@ -38,11 +45,18 @@
       "source_start": 19
     },
     {
-      "compiled_end": 204,
-      "compiled_start": 153,
+      "compiled_end": 142,
+      "compiled_start": 130,
       "range_type": "Python",
-      "source_end": 99,
-      "source_start": 48
+      "source_end": 63,
+      "source_start": 51
+    },
+    {
+      "compiled_end": 216,
+      "compiled_start": 207,
+      "range_type": "Python",
+      "source_end": 101,
+      "source_start": 92
     }
   ]
 }

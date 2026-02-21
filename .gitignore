@@ -10,6 +10,11 @@ build/
 # Virtual/generated files
 *.virtual.py
 playground/templates/**/*.py
+rust/playground/
+
+# Generated .py files in test directories (only .expected.py should be tracked)
+rust/transpiler/tests/**/*.py
+!rust/transpiler/tests/**/*.expected.py
 
 # Rust build artifacts
 rust/target/
