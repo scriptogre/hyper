@@ -4,5 +4,7 @@ message: str
 ---
 
 <div>
-    {show_warning and <p class="warning">{message}</p>}
+    if show_warning:
+        <p class="warning">{message}</p>
+    end
 </div>

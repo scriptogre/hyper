@@ -16,35 +16,35 @@
     },
     {
       "end": 146,
-      "prefix": "):\n\n    # Multiline dict literal\n\n    config = {\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "):\n\n    # Multiline dict literal\n\n    config = {\n        \"key1\": \"value1\",\n        \"key2\": \"value2\",\n        \"key3\": \"value3\"\n    }\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 138,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 245,
-      "prefix": "›</span>\"\"\")\n\n    # Multiline list literal\n\n    values = [\n    \"item1\",\n    \"item2\",\n    \"item3\"\n]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n\n    # Multiline list literal\n\n    values = [\n        \"item1\",\n        \"item2\",\n        \"item3\"\n    ]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 237,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 376,
-      "prefix": "›</span>\"\"\")\n\n    # Multiline function call\n\n    result = some_function(\n    arg1=\"value1\",\n    arg2=\"value2\",\n    arg3=\"value3\"\n)\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n\n    # Multiline function call\n\n    result = some_function(\n        arg1=\"value1\",\n        arg2=\"value2\",\n        arg3=\"value3\"\n    )\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 368,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 497,
-      "prefix": "›</span>\"\"\")\n\n    # Multiline list comprehension\n\n    squares = [\n    x ** 2\n    for x in range(10)\n    if x % 2 == 0\n]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n\n    # Multiline list comprehension\n\n    squares = [\n        x ** 2\n        for x in range(10)\n        if x % 2 == 0\n    ]\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 488,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 619,
-      "prefix": "›</span>\"\"\")\n\n    # Chained method calls (each on own line)\n\n    processed = (data\n    .get('items', [])\n    .copy()\n)\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "›</span>\"\"\")\n\n    # Chained method calls (each on own line)\n\n    processed = (data\n        .get('items', [])\n        .copy()\n    )\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
       "start": 608,
       "suffix": "›</span>\"\"\")\n",
       "type": "python"
@@ -66,36 +66,36 @@
       "source_start": 11
     },
     {
-      "compiled_end": 256,
-      "compiled_start": 248,
+      "compiled_end": 272,
+      "compiled_start": 264,
       "range_type": "Python",
       "source_end": 146,
       "source_start": 138
     },
     {
-      "compiled_end": 407,
-      "compiled_start": 399,
+      "compiled_end": 439,
+      "compiled_start": 431,
       "range_type": "Python",
       "source_end": 245,
       "source_start": 237
     },
     {
-      "compiled_end": 590,
-      "compiled_start": 582,
+      "compiled_end": 638,
+      "compiled_start": 630,
       "range_type": "Python",
       "source_end": 376,
       "source_start": 368
     },
     {
-      "compiled_end": 763,
-      "compiled_start": 754,
+      "compiled_end": 827,
+      "compiled_start": 818,
       "range_type": "Python",
       "source_end": 497,
       "source_start": 488
     },
     {
-      "compiled_end": 937,
-      "compiled_start": 926,
+      "compiled_end": 1013,
+      "compiled_start": 1002,
       "range_type": "Python",
       "source_end": 619,
       "source_start": 608

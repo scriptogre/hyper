@@ -3,7 +3,13 @@ from hyper import html, replace_markers
 
 @html
 def Comprehension(*, items: list[str]):
-    yield replace_markers(f"""\
-<ul>
-    ‹ESCAPE:{[<li>{item}</li> for item in items]}›
-</ul>""")
+
+    yield "<ul>"
+
+    for item in items:
+        yield replace_markers(f"""\
+<li>‹ESCAPE:{item}›</li>
+    """)
+
+    yield "</ul>"
+

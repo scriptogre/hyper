@@ -2,7 +2,7 @@ from hyper import html, replace_markers
 
 
 @html
-def Comprehensive(*, name: str, count: int = 0, is_active: bool = True):
+def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: list = []):
     # Frontmatter comment
 
     # Body comment
