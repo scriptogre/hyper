@@ -1,13 +1,13 @@
 """Decorators for Hyper templates.
 
-The @component decorator makes generator functions work in both modes:
+The @html decorator makes generator functions work in both modes:
 - Yield mode: `yield from Component(_content)` or `async for chunk in Component(_content)`
 - Buffer mode: `with Component() as _c: _c.append(...)`
 
 Supports both sync and async generator functions automatically.
 
 Components with slots (accepts _content as first parameter):
-    @component
+    @html
     def Card(_content=None, *, title=""):
         yield f'<div class="card"><h1>{title}</h1>'
         if _content:
@@ -15,26 +15,26 @@ Components with slots (accepts _content as first parameter):
         yield '</div>'
 
     # Yield mode
-    html = "".join(Card(title="Hello"))
+    output = "".join(Card(title="Hello"))
 
     # Buffer mode
     with Card(title="Hello") as card:
         card.append("<p>Content</p>")
-    html = str(card)
+    output = str(card)
 
 Components without slots (no _content parameter):
-    @component
+    @html
     def Badge(*, text="", color="blue"):
         yield f'<span class="badge" style="color: {color}">{text}</span>'
 
     # Yield mode
-    html = "".join(Badge(text="New", color="red"))
+    output = "".join(Badge(text="New", color="red"))
 
     # As string
-    html = str(Badge(text="New"))
+    output = str(Badge(text="New"))
 
 Async components:
-    @component
+    @html
     async def Card(_content=None, *, title=""):
         data = await fetch_data()
         yield f'<div class="card"><h1>{title} - {data}</h1>'
@@ -45,21 +45,21 @@ Async components:
 
     # Yield mode
     chunks = [chunk async for chunk in Card(title="Hello")]
-    html = "".join(chunks)
+    output = "".join(chunks)
 
     # Buffer mode
     async with Card(title="Hello") as card:
         card.append("<p>Content</p>")
-    html = await card.render()
+    output = await card.render()
 """
 
 import asyncio
 import inspect
 
-__all__ = ["component"]
+__all__ = ["html"]
 
 
-def component(fn):
+def html(fn):
     """Decorator that wraps a generator function to support both yield and buffer modes.
 
     Automatically detects sync vs async generator functions and returns the appropriate wrapper.
@@ -187,7 +187,7 @@ def _make_async_wrapper(fn):
                 asyncio.get_running_loop()
                 # Already in async context - can't use asyncio.run
                 raise RuntimeError(
-                    "Use 'await component.render()' in async context, "
+                    "Use 'await template.render()' in async context, "
                     "or use yield mode with 'async for'"
                 )
             except RuntimeError as e:

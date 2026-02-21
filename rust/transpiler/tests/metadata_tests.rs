@@ -83,7 +83,7 @@ fn test_component_always_imported() {
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should always import component for the decorator
+    // Should always import html for the decorator
     assert!(result.code.contains("from hyper import html"));
     assert!(result.code.contains("@html"));
 
