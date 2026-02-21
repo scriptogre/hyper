@@ -1044,13 +1044,18 @@ impl PythonGenerator {
     fn emit_statement(&self, stmt: &StatementNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
 
-        // Handle reserved keywords by prefixing with underscore
-        // This handles cases like: class = [...], type = ..., etc.
-        let statement = stmt.stmt
-            .replace("class =", "_class =")
-            .replace("class=", "_class=")
-            .replace("type =", "_type =")
-            .replace("type=", "_type=");
+        // Rename Python reserved keywords used as variable names in assignments.
+        // This matches how shorthand attributes rename {class} → _class, {type} → _type.
+        let owned_statement;
+        let statement = if stmt.stmt.starts_with("class ") || stmt.stmt.starts_with("class=") {
+            owned_statement = format!("_{}", &stmt.stmt);
+            &owned_statement
+        } else if stmt.stmt.starts_with("type ") || stmt.stmt.starts_with("type=") {
+            owned_statement = format!("_{}", &stmt.stmt);
+            &owned_statement
+        } else {
+            &stmt.stmt
+        };
 
         // For multiline statements, add indent to each continuation line
         if statement.contains('\n') {
@@ -1066,7 +1071,7 @@ impl PythonGenerator {
                 }
             }
         } else {
-            output.push(&statement);
+            output.push(statement);
         }
         output.newline();
     }

@@ -267,6 +267,13 @@ impl TreeBuilder {
                 // If we're in the header and this looks like a parameter, parse it as such
                 if self.in_header && self.is_parameter_declaration(&code) {
                     self.parse_parameter(&code, &span)
+                } else if self.is_import_statement(&code) {
+                    let node = Node::Import(ImportNode {
+                        stmt: code,
+                        span,
+                    });
+                    self.advance();
+                    Ok(Some(node))
                 } else {
                     let node = Node::Statement(StatementNode {
                         stmt: code,
@@ -1023,6 +1030,11 @@ impl TreeBuilder {
         } else {
             false
         }
+    }
+
+    fn is_import_statement(&self, code: &str) -> bool {
+        let trimmed = code.trim();
+        trimmed.starts_with("import ") || trimmed.starts_with("from ")
     }
 
     fn parse_parameter(&mut self, code: &str, span: &Span) -> Result<Option<Node>, ParseError> {

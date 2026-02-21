@@ -1,0 +1,17 @@
+variant: str = "primary"
+size: str = "md"
+id: int = 0
+
+---
+
+# Template string in class attribute
+<button class="btn btn-{variant}">Click</button>
+
+# Multiple expressions in one template attribute
+<div data-info="{id}-{variant}">Info</div>
+
+# Template with size
+<input class="input input-{size}" type="text" />
+
+# Mixed static and template
+<a href="/users/{id}" class="link link-{variant}">Profile</a>
