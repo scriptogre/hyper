@@ -716,8 +716,7 @@ impl PythonGenerator {
             output.newline();
 
             // Emit children inside the inner function
-            let refs: Vec<&Node> = c.children.iter().collect();
-            self.emit_nodes(&refs, output, indent + 1);
+            self.emit_body_or_pass(&c.children, output, indent + 1);
 
             // Emit yield from with component call
             self.indent(output, indent);
@@ -1114,20 +1113,53 @@ impl Generator for PythonGenerator {
         let mut decorators = Vec::new();
         let mut body_nodes = Vec::new();
 
+        // First pass: identify which decorators lead to definitions
+        // so we can correctly handle decorator-definition grouping
+        let mut decorator_leads_to_def = vec![false; ast.nodes.len()];
+        let mut whitespace_in_decorator_chain = vec![false; ast.nodes.len()];
+
+        for (i, node) in ast.nodes.iter().enumerate() {
+            if matches!(node, Node::Decorator(_)) {
+                let mut found_def = false;
+                for j in (i + 1)..ast.nodes.len() {
+                    match &ast.nodes[j] {
+                        Node::Decorator(_) | Node::Comment(_) => continue,
+                        Node::Text(t) if t.content.trim().is_empty() => continue,
+                        Node::Definition(_) => { found_def = true; break; }
+                        _ => break,
+                    }
+                }
+                decorator_leads_to_def[i] = found_def;
+
+                // Mark whitespace text nodes between this decorator and the next
+                // decorator/definition as part of the decorator chain (suppress them)
+                if found_def {
+                    for j in (i + 1)..ast.nodes.len() {
+                        match &ast.nodes[j] {
+                            Node::Text(t) if t.content.trim().is_empty() => {
+                                whitespace_in_decorator_chain[j] = true;
+                            }
+                            Node::Decorator(_) | Node::Comment(_) => continue,
+                            _ => break,
+                        }
+                    }
+                }
+            }
+        }
+
         for (i, node) in ast.nodes.iter().enumerate() {
             match node {
                 Node::Parameter(param) => parameters.push(param),
                 Node::Import(import) => imports.push(import),
                 Node::Decorator(dec) => {
-                    // If decorator is followed by a Definition, keep them together as body
-                    let next_is_def = ast.nodes.get(i + 1)
-                        .map_or(false, |n| matches!(n, Node::Definition(_)));
-                    if next_is_def {
+                    if decorator_leads_to_def[i] {
                         body_nodes.push(node);
                     } else {
                         decorators.push(dec);
                     }
                 }
+                // Skip whitespace text that's between a decorator and its definition
+                Node::Text(t) if whitespace_in_decorator_chain[i] && t.content.trim().is_empty() => {}
                 _ => body_nodes.push(node),
             }
         }
@@ -1138,11 +1170,9 @@ impl Generator for PythonGenerator {
             output.newline();
         }
 
-        // Emit user decorators (before @component)
-        for dec in &decorators {
-            output.push(&dec.decorator);
-            output.newline();
-        }
+        // Note: orphaned decorators (not attached to inner defs) are applied to
+        // the outer template function, emitted later alongside @html in the
+        // import block insertion step.
 
         // Emit function signature with parameters
         let func_name = options.function_name.as_deref()
@@ -1252,7 +1282,13 @@ impl Generator for PythonGenerator {
         output.newline();
 
         // Emit body (using yield instead of _parts)
-        self.emit_nodes(&body_nodes, &mut output, 1);
+        if body_nodes.is_empty() || self.is_effectively_empty(&body_nodes) {
+            self.indent(&mut output, 1);
+            output.push("pass");
+            output.newline();
+        } else {
+            self.emit_nodes(&body_nodes, &mut output, 1);
+        }
 
         let (mut code, mappings, tracked_ranges) = output.finish();
 
@@ -1315,6 +1351,12 @@ impl Generator for PythonGenerator {
         // Add hyper imports
         import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
         import_lines.push_str("\n\n");  // Two blank lines before function (PEP 8)
+
+        // Add user decorators for the outer template function (before @html)
+        for dec in &decorators {
+            import_lines.push_str(&dec.decorator);
+            import_lines.push('\n');
+        }
 
         // Add @html decorator
         import_lines.push_str("@html\n");
