@@ -1,7 +1,3 @@
-@fragment
-@cache
-@fragment
-@fragment(name="card")
 from collections.abc import Iterable
 from hyper import html, replace_markers
 
@@ -11,11 +7,14 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
 
     # Simple decorator
 
+    @fragment
     def Badge(text: str):
         yield replace_markers(f"""<span class="badge">‹ESCAPE:{text}›</span>""")
 
     # Multiple decorators
 
+    @cache
+    @fragment
     def CachedList(items: list):
 
         yield "<ul>"
@@ -30,6 +29,7 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
 
     # Decorator with arguments
 
+    @fragment(name="card")
     def Card(title: str):
 
         yield "<div class=\"card\">"

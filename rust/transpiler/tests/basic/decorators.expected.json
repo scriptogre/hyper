@@ -2,21 +2,21 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "@fragment\n@cache\n@fragment\n@fragment(name=\"card\")\nfrom collections.abc import Iterable\nfrom hyper import html, replace_markers\n\n\n@html\ndef Decorators(_content: Iterable[str] | None = None, *, ",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import html, replace_markers\n\n\n@html\ndef Decorators(_content: Iterable[str] | None = None, *, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 99,
-      "prefix": "):\n\n    # Simple decorator\n\n    def Badge(text: str):\n        yield replace_markers(f\"\"\"<span class=\"badge\">‹ESCAPE:",
+      "prefix": "):\n\n    # Simple decorator\n\n    @fragment\n    def Badge(text: str):\n        yield replace_markers(f\"\"\"<span class=\"badge\">‹ESCAPE:",
       "start": 93,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 214,
-      "prefix": "›</span>\"\"\")\n\n    # Multiple decorators\n\n    def CachedList(items: list):\n\n        yield \"<ul>\"\n\n        for item in ",
+      "prefix": "›</span>\"\"\")\n\n    # Multiple decorators\n\n    @cache\n    @fragment\n    def CachedList(items: list):\n\n        yield \"<ul>\"\n\n        for item in ",
       "start": 209,
       "suffix": "",
       "type": "python"
@@ -30,7 +30,7 @@
     },
     {
       "end": 385,
-      "prefix": "›</li>\n        \"\"\")\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield replace_markers(f\"\"\"\\\n<h2>‹ESCAPE:",
+      "prefix": "›</li>\n        \"\"\")\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    @fragment(name=\"card\")\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield replace_markers(f\"\"\"\\\n<h2>‹ESCAPE:",
       "start": 378,
       "suffix": "",
       "type": "python"
@@ -52,50 +52,50 @@
   ],
   "ranges": [
     {
-      "compiled_end": 203,
-      "compiled_start": 192,
+      "compiled_end": 153,
+      "compiled_start": 142,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 325,
-      "compiled_start": 319,
+      "compiled_end": 289,
+      "compiled_start": 283,
       "range_type": "Python",
       "source_end": 99,
       "source_start": 93
     },
     {
-      "compiled_end": 447,
-      "compiled_start": 442,
+      "compiled_end": 436,
+      "compiled_start": 431,
       "range_type": "Python",
       "source_end": 214,
       "source_start": 209
     },
     {
-      "compiled_end": 507,
-      "compiled_start": 501,
+      "compiled_end": 496,
+      "compiled_start": 490,
       "range_type": "Python",
       "source_end": 238,
       "source_start": 232
     },
     {
-      "compiled_end": 703,
-      "compiled_start": 696,
+      "compiled_end": 719,
+      "compiled_start": 712,
       "range_type": "Python",
       "source_end": 385,
       "source_start": 378
     },
     {
-      "compiled_end": 898,
-      "compiled_start": 884,
+      "compiled_end": 914,
+      "compiled_start": 900,
       "range_type": "Python",
       "source_end": 461,
       "source_start": 447
     },
     {
-      "compiled_end": 927,
-      "compiled_start": 908,
+      "compiled_end": 943,
+      "compiled_start": 924,
       "range_type": "Python",
       "source_end": 481,
       "source_start": 462

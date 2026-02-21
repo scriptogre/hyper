@@ -24,7 +24,7 @@ def EdgeCases(*, module: object, components: dict):
 
     # <{Container}>
     def _container():
-
+        pass
     yield from Container(_container())
     # </{Container}>
 
