@@ -1,16 +1,16 @@
 """Hyper - Python framework for hypermedia-driven applications.
 
 Public API exports:
-- Component decorator (from hyper.component)
-- HTML helpers (from hyper.html)
+- @html decorator (from hyper.decorators)
+- HTML helpers (from hyper.helpers)
 - Content collections (from hyper.content, requires 'content' extra)
 """
 
 # Decorators
-from hyper.decorators import component
+from hyper.decorators import html
 
 # HTML rendering helpers
-from hyper.html import (
+from hyper.helpers import (
     Safe,
     safe,
     escape_html,
@@ -27,8 +27,8 @@ from hyper.html import (
 escape = escape_html
 
 __all__ = [
-    # Component decorator
-    'component',
+    # Decorator
+    'html',
     # Core escaping
     'Safe',
     'safe',
