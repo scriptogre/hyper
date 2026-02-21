@@ -1,0 +1,11 @@
+from datetime import datetime
+import json
+from pathlib import Path
+
+name: str
+
+---
+
+<p>{datetime.now().isoformat()}</p>
+<pre>{json.dumps({"name": name}, indent=2)}</pre>
+<span>{Path("/tmp").name}</span>

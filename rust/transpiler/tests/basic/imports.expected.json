@@ -1,0 +1,62 @@
+{
+  "injections": [
+    {
+      "end": 77,
+      "prefix": "from datetime import datetime\nimport json\nfrom pathlib import Path\nfrom hyper import html, replace_markers\n\n\n@html\ndef Imports(*, ",
+      "start": 68,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 115,
+      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<p>‹ESCAPE:",
+      "start": 87,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 163,
+      "prefix": "›</p>\n<pre>‹ESCAPE:",
+      "start": 125,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 195,
+      "prefix": "›</pre>\n<span>‹ESCAPE:",
+      "start": 176,
+      "suffix": "›</span>\"\"\")\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 139,
+      "compiled_start": 130,
+      "range_type": "Python",
+      "source_end": 77,
+      "source_start": 68
+    },
+    {
+      "compiled_end": 213,
+      "compiled_start": 185,
+      "range_type": "Python",
+      "source_end": 115,
+      "source_start": 87
+    },
+    {
+      "compiled_end": 270,
+      "compiled_start": 232,
+      "range_type": "Python",
+      "source_end": 163,
+      "source_start": 125
+    },
+    {
+      "compiled_end": 311,
+      "compiled_start": 292,
+      "range_type": "Python",
+      "source_end": 195,
+      "source_start": 176
+    }
+  ]
+}

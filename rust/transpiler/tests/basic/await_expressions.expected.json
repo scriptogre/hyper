@@ -1,0 +1,48 @@
+{
+  "injections": [
+    {
+      "end": 12,
+      "prefix": "from hyper import html, replace_markers\n\n\n@html\nasync def AwaitExpressions(*, ",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 81,
+      "prefix": "):\n\n    result = await fetch_user(user_id)\n    yield replace_markers(f\"\"\"\\\n<div>\n    <h1>‹ESCAPE:",
+      "start": 68,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 118,
+      "prefix": "›</h1>\n    <p>‹ESCAPE:",
+      "start": 94,
+      "suffix": "›</p>\n</div>\"\"\")\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 90,
+      "compiled_start": 78,
+      "range_type": "Python",
+      "source_end": 12,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 200,
+      "compiled_start": 187,
+      "range_type": "Python",
+      "source_end": 81,
+      "source_start": 68
+    },
+    {
+      "compiled_end": 246,
+      "compiled_start": 222,
+      "range_type": "Python",
+      "source_end": 118,
+      "source_start": 94
+    }
+  ]
+}
