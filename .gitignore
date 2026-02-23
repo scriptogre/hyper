@@ -31,6 +31,9 @@ editors/jetbrains-plugin/.gradle/
 editors/jetbrains-plugin/build/
 editors/jetbrains-plugin/src/main/gen/
 
+# Worktrees
+.worktrees/
+
 # Temp files
 *.log
 .DS_Store
