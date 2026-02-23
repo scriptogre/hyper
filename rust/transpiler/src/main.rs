@@ -74,47 +74,15 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
         Err(e) => {
             if json_output {
                 println!("{}", error_to_json(&e));
-            } else if io::stderr().is_terminal() {
-                eprint!("{}", e.render_color(&source, "stdin"));
             } else {
-                eprint!("{}", e.render(&source, "stdin"));
+                render_error(&e, &source, "stdin");
             }
             std::process::exit(1);
         }
     };
 
     if json_output {
-        let output = DaemonResponse {
-            compiled: result.code,
-            mappings: result.mappings.into_iter().map(|m| DaemonMapping {
-                gen_line: m.gen_line,
-                gen_col: m.gen_col,
-                src_line: m.src_line,
-                src_col: m.src_col,
-            }).collect(),
-            ranges: if include_injections {
-                Some(result.ranges.into_iter().map(|r| DaemonRange {
-                    range_type: format!("{:?}", r.range_type).to_lowercase(),
-                    source_start: r.source_start,
-                    source_end: r.source_end,
-                    compiled_start: r.compiled_start,
-                    compiled_end: r.compiled_end,
-                }).collect())
-            } else {
-                None
-            },
-            injections: if include_injections {
-                Some(result.injections.into_iter().map(|i| DaemonInjection {
-                    injection_type: i.injection_type,
-                    start: i.start,
-                    end: i.end,
-                    prefix: i.prefix,
-                    suffix: i.suffix,
-                }).collect())
-            } else {
-                None
-            },
-        };
+        let output = result_to_response(result, include_injections);
         println!("{}", serde_json::to_string(&output).unwrap());
     } else {
         print!("{}", result.code);
@@ -173,11 +141,7 @@ fn generate_files(files: Vec<String>, _json_output: bool, _include_injections: b
         let result = match pipeline.compile(&source, &options) {
             Ok(r) => r,
             Err(e) => {
-                if io::stderr().is_terminal() {
-                    eprint!("{}", e.render_color(&source, &file_path));
-                } else {
-                    eprint!("{}", e.render(&source, &file_path));
-                }
+                render_error(&e, &source, &file_path);
                 has_errors = true;
                 continue;
             }
@@ -347,37 +311,9 @@ fn process_request(json: &str) -> String {
         Err(e) => return error_to_json(&e),
     };
 
-    serde_json::to_string(&DaemonResponse {
-        compiled: result.code,
-        mappings: result.mappings.into_iter().map(|m| DaemonMapping {
-            gen_line: m.gen_line,
-            gen_col: m.gen_col,
-            src_line: m.src_line,
-            src_col: m.src_col,
-        }).collect(),
-        ranges: if req.injection {
-            Some(result.ranges.into_iter().map(|r| DaemonRange {
-                range_type: format!("{:?}", r.range_type).to_lowercase(),
-                source_start: r.source_start,
-                source_end: r.source_end,
-                compiled_start: r.compiled_start,
-                compiled_end: r.compiled_end,
-            }).collect())
-        } else {
-            None
-        },
-        injections: if req.injection {
-            Some(result.injections.into_iter().map(|i| DaemonInjection {
-                injection_type: i.injection_type,
-                start: i.start,
-                end: i.end,
-                prefix: i.prefix,
-                suffix: i.suffix,
-            }).collect())
-        } else {
-            None
-        },
-    }).unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
+    let response = result_to_response(result, req.injection);
+    serde_json::to_string(&response)
+        .unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
 }
 
 #[derive(serde::Serialize)]
@@ -391,6 +327,48 @@ struct DaemonErrorResponse {
     error_end_line: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error_end_col: Option<usize>,
+}
+
+fn render_error(e: &hyper_transpiler::CompileError, source: &str, filename: &str) {
+    if io::stderr().is_terminal() {
+        eprint!("{}", e.render_color(source, filename));
+    } else {
+        eprint!("{}", e.render(source, filename));
+    }
+}
+
+fn result_to_response(result: hyper_transpiler::GenerateResult, include_injections: bool) -> DaemonResponse {
+    DaemonResponse {
+        compiled: result.code,
+        mappings: result.mappings.into_iter().map(|m| DaemonMapping {
+            gen_line: m.gen_line,
+            gen_col: m.gen_col,
+            src_line: m.src_line,
+            src_col: m.src_col,
+        }).collect(),
+        ranges: if include_injections {
+            Some(result.ranges.into_iter().map(|r| DaemonRange {
+                range_type: format!("{:?}", r.range_type).to_lowercase(),
+                source_start: r.source_start,
+                source_end: r.source_end,
+                compiled_start: r.compiled_start,
+                compiled_end: r.compiled_end,
+            }).collect())
+        } else {
+            None
+        },
+        injections: if include_injections {
+            Some(result.injections.into_iter().map(|i| DaemonInjection {
+                injection_type: i.injection_type,
+                start: i.start,
+                end: i.end,
+                prefix: i.prefix,
+                suffix: i.suffix,
+            }).collect())
+        } else {
+            None
+        },
+    }
 }
 
 fn error_to_json(e: &hyper_transpiler::CompileError) -> String {
