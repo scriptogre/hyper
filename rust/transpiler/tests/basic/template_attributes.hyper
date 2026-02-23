@@ -15,3 +15,16 @@ id: int = 0
 
 # Mixed static and template
 <a href="/users/{id}" class="link link-{variant}">Profile</a>
+
+# Adjacent expressions (no static text between)
+<span data-key="{id}{variant}">Adjacent</span>
+
+# Expression at start and end of value
+<div title="{variant} button">Start</div>
+<div title="button {variant}">End</div>
+
+# Single expression is entire value
+<div title="{variant}">Full</div>
+
+# Multiple attributes, some template some not
+<a href="/items/{id}" class="link" data-label="item-{variant}">Multi</a>

@@ -739,3 +739,143 @@ fn test_html_ranges_with_expression() {
         }
     }
 }
+
+// ========================================================================
+// Template attribute expression ranges
+// ========================================================================
+
+#[test]
+fn test_template_attribute_single_expression() {
+    let source = r#"<button class="btn btn-{variant}">Click</button>"#;
+    let mut pipeline = Pipeline::standard();
+    let result = pipeline.compile(source, &GenerateOptions {
+        function_name: Some("Test".to_string()),
+        include_ranges: true,
+    }).unwrap();
+
+    let py = python_ranges(&result);
+    // Should have a Python range for the {variant} expression
+    let variant_range = py.iter().find(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "variant"
+    });
+    assert!(variant_range.is_some(),
+            "Should have Python range for 'variant' in template attribute. Got: {:?}",
+            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+
+    // Verify compiled text is also 'variant' (expression should match)
+    let range = variant_range.unwrap();
+    assert!(range.compiled_end > range.compiled_start,
+            "Template expression range should have positive compiled length");
+}
+
+#[test]
+fn test_template_attribute_multiple_expressions() {
+    let source = r#"<div data-info="{id}-{variant}">Info</div>"#;
+    let mut pipeline = Pipeline::standard();
+    let result = pipeline.compile(source, &GenerateOptions {
+        function_name: Some("Test".to_string()),
+        include_ranges: true,
+    }).unwrap();
+
+    let py = python_ranges(&result);
+    let id_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "id");
+    let variant_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "variant");
+
+    assert!(id_range.is_some(), "Should have Python range for 'id'");
+    assert!(variant_range.is_some(), "Should have Python range for 'variant'");
+
+    // id should come before variant in source
+    assert!(id_range.unwrap().source_start < variant_range.unwrap().source_start);
+}
+
+#[test]
+fn test_template_attribute_adjacent_expressions() {
+    let source = r#"<span data-key="{a}{b}">text</span>"#;
+    let mut pipeline = Pipeline::standard();
+    let result = pipeline.compile(source, &GenerateOptions {
+        function_name: Some("Test".to_string()),
+        include_ranges: true,
+    }).unwrap();
+
+    let py = python_ranges(&result);
+    let a_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "a");
+    let b_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "b");
+
+    assert!(a_range.is_some(), "Should have Python range for 'a'");
+    assert!(b_range.is_some(), "Should have Python range for 'b'");
+}
+
+#[test]
+fn test_template_attribute_html_range_splits() {
+    let source = r#"<a href="/users/{id}" class="link">Go</a>"#;
+    let mut pipeline = Pipeline::standard();
+    let result = pipeline.compile(source, &GenerateOptions {
+        function_name: Some("Test".to_string()),
+        include_ranges: true,
+    }).unwrap();
+
+    let html = html_ranges(&result);
+    let py = python_ranges(&result);
+
+    // HTML ranges should split around the {id} expression in the template attribute
+    assert!(html.len() >= 2,
+            "Should have at least 2 HTML ranges (split around template expression), got {}",
+            html.len());
+
+    // No HTML range should contain the expression braces
+    for h in &html {
+        let text = &source[h.source_start..h.source_end];
+        assert!(!text.contains("{id}"),
+                "HTML range should not contain '{{id}}', got: {:?}", text);
+    }
+
+    // Python range should exist for the expression
+    let id_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "id");
+    assert!(id_range.is_some(), "Should have Python range for 'id' in template attribute");
+
+    // No overlap between HTML and Python ranges
+    for h in &html {
+        for p in &py {
+            let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
+            assert!(!overlaps,
+                    "HTML range [{},{}] overlaps Python range [{},{}]",
+                    h.source_start, h.source_end, p.source_start, p.source_end);
+        }
+    }
+}
+
+#[test]
+fn test_template_attribute_roundtrip() {
+    // Verify the virtual Python reconstruction works for template attributes
+    let source = r#"name: str
+---
+<div class="item-{name}">text</div>"#;
+    let mut pipeline = Pipeline::standard();
+    let result = pipeline.compile(source, &GenerateOptions {
+        function_name: Some("Test".to_string()),
+        include_ranges: true,
+    }).unwrap();
+
+    // Reconstruct virtual Python from injections
+    let py_injections: Vec<_> = result.injections.iter()
+        .filter(|i| i.injection_type == "python")
+        .collect();
+
+    assert!(!py_injections.is_empty(), "Should have Python injections");
+
+    let mut virtual_python = String::new();
+    for inj in &py_injections {
+        virtual_python.push_str(&inj.prefix);
+        // Use UTF-16 substring since injection positions are UTF-16
+        let units: Vec<u16> = source.encode_utf16().collect();
+        let end = inj.end.min(units.len());
+        let start = inj.start.min(end);
+        let slice = String::from_utf16_lossy(&units[start..end]);
+        virtual_python.push_str(&slice);
+        virtual_python.push_str(&inj.suffix);
+    }
+
+    assert_eq!(virtual_python, result.code,
+               "Virtual Python from injections should match compiled code");
+}
