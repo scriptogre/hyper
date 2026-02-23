@@ -1,0 +1,9 @@
+
+ file: star_args.hyper:1:1
+error: Hyper components don't support *args.
+   |
+ 1 | *args: str
+   | ^^^^^^^^^^
+
+ help: Hyper components use keyword-only arguments, so *args (which captures positional arguments) doesn't make sense. If you want to accept extra keyword arguments, use **kwargs instead.
+

@@ -1,0 +1,8 @@
+
+ file: mismatched_component_tags.hyper:3:1
+error: <{Card}> is never closed.
+ 3 | <{Card}>
+   | ^^^^^^^^ opened here
+
+ help: Close with </{Card}> or <{Card} />
+

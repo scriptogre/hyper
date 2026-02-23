@@ -1,9 +1,9 @@
-def Examples(user: dict, items: list, count: int = 0, is_active: bool = True):
-    _parts = []
+from hyper import html, escape
 
-    _parts.append(f"""---""")
+
+@html
+def Examples(*, user: dict, items: list, count: int = 0, is_active: bool = True):
 
     # Simple if
     if is_active:
-        _parts.append(f"""<span>Active {count}</span>""")  # Comment
-    return ''.join(_parts)
+        yield f"""<span>Active {escape(count)}</span>"""  # Comment

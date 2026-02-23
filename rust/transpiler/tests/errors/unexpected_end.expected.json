@@ -1,0 +1,34 @@
+{
+  "injections": [
+    {
+      "end": 5,
+      "prefix": "",
+      "start": 0,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 18,
+      "prefix": "",
+      "start": 12,
+      "suffix": "",
+      "type": "html"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 65,
+      "compiled_start": 65,
+      "range_type": "Html",
+      "source_end": 5,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 65,
+      "compiled_start": 65,
+      "range_type": "Html",
+      "source_end": 18,
+      "source_start": 12
+    }
+  ]
+}

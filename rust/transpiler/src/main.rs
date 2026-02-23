@@ -73,7 +73,7 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
         Ok(r) => r,
         Err(e) => {
             if json_output {
-                println!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\""));
+                println!("{}", error_to_json(&e));
             } else {
                 if io::stderr().is_terminal() {
                     eprint!("{}", e.render_color(&source, "stdin"));
@@ -346,7 +346,7 @@ fn process_request(json: &str) -> String {
     let mut pipeline = Pipeline::standard();
     let result = match pipeline.compile(&req.content, &options) {
         Ok(r) => r,
-        Err(e) => return format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\"")),
+        Err(e) => return error_to_json(&e),
     };
 
     serde_json::to_string(&DaemonResponse {
@@ -380,6 +380,44 @@ fn process_request(json: &str) -> String {
             None
         },
     }).unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
+}
+
+#[derive(serde::Serialize)]
+struct DaemonErrorResponse {
+    error: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_col: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_end_line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_end_col: Option<usize>,
+}
+
+fn error_to_json(e: &hyper_transpiler::CompileError) -> String {
+    use hyper_transpiler::CompileError;
+
+    let (line, col, end_line, end_col) = match e {
+        CompileError::Parse(parse_err) => (
+            Some(parse_err.span.start.line),
+            Some(parse_err.span.start.col),
+            Some(parse_err.span.end.line),
+            Some(parse_err.span.end.col),
+        ),
+        CompileError::Generate(_) => (None, None, None, None),
+    };
+
+    let response = DaemonErrorResponse {
+        error: e.to_string(),
+        error_line: line,
+        error_col: col,
+        error_end_line: end_line,
+        error_end_col: end_col,
+    };
+
+    serde_json::to_string(&response)
+        .unwrap_or_else(|_| format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\"")))
 }
 
 #[derive(serde::Serialize)]

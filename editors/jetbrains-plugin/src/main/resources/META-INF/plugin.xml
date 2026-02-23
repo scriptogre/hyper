@@ -29,6 +29,14 @@
 
         <multiHostInjector implementation="com.hyper.plugin.HyperLanguageInjector"/>
 
+        <!-- Sub-line syntax highlighting: braces, tags, inline comments -->
+        <annotator language="Hyper"
+                   implementationClass="com.hyper.plugin.HyperSyntaxAnnotator"/>
+
+        <!-- Show transpiler errors as red squiggles -->
+        <externalAnnotator language="Hyper"
+                           implementationClass="com.hyper.plugin.HyperExternalAnnotator"/>
+
         <!-- Auto-generate .py on save -->
         <vfs.asyncListener implementation="com.hyper.plugin.HyperFileListener"/>
 

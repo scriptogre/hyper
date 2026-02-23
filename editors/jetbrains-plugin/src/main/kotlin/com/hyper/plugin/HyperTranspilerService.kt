@@ -149,10 +149,42 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         val name: String? = null
     )
 
+    @Serializable
+    data class ErrorResponseJson(
+        val error: String,
+        val error_line: Int? = null,
+        val error_col: Int? = null,
+        val error_end_line: Int? = null,
+        val error_end_col: Int? = null
+    )
+
+    /**
+     * Structured transpiler error with source position.
+     */
+    data class TranspileError(
+        val message: String,
+        val line: Int?,      // 0-based line number
+        val col: Int?,       // 0-based column
+        val endLine: Int?,
+        val endCol: Int?
+    )
+
     /**
      * Parse JSON response - injections are computed by the transpiler.
      */
     private fun parseResponse(jsonString: String): TranspileResult {
+        // Check if response is an error
+        if (jsonString.contains("\"error\"") && !jsonString.contains("\"compiled\"")) {
+            val errorJson = json.decodeFromString<ErrorResponseJson>(jsonString)
+            throw TranspileException(
+                errorJson.error,
+                errorJson.error_line,
+                errorJson.error_col,
+                errorJson.error_end_line,
+                errorJson.error_end_col
+            )
+        }
+
         val parsed = json.decodeFromString<TranspileResultJson>(jsonString)
         val ranges = parsed.ranges ?: emptyList()
 
@@ -359,7 +391,21 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         }
 
         if (process.exitValue() != 0) {
-            throw TranspileException("Transpiler failed: $output")
+            // Try to parse structured error from JSON output
+            try {
+                val errorJson = json.decodeFromString<ErrorResponseJson>(output.trim())
+                throw TranspileException(
+                    errorJson.error,
+                    errorJson.error_line,
+                    errorJson.error_col,
+                    errorJson.error_end_line,
+                    errorJson.error_end_col
+                )
+            } catch (e: TranspileException) {
+                throw e
+            } catch (e: Exception) {
+                throw TranspileException("Transpiler failed: $output")
+            }
         }
 
         val result = parseResponse(output)
@@ -448,5 +494,11 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         }
     }
 
-    class TranspileException(message: String) : Exception(message)
+    class TranspileException(
+        message: String,
+        val line: Int? = null,
+        val col: Int? = null,
+        val endLine: Int? = null,
+        val endCol: Int? = null
+    ) : Exception(message)
 }
