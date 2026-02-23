@@ -6,6 +6,48 @@
       "start": 0,
       "suffix": "):\n    yield \"\"\"\\\nText before any element\n<div>Inside div</div>\nText between elements\n<span>Inside span</span>\nText after elements\nMore text\n<p>\n    Multiline\n    text inside\n    paragraph\n</p>\nFinal text\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 45,
+      "prefix": "",
+      "start": 40,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 61,
+      "prefix": "",
+      "start": 55,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 90,
+      "prefix": "",
+      "start": 84,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 108,
+      "prefix": "",
+      "start": 101,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 142,
+      "prefix": "",
+      "start": 139,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 191,
+      "prefix": "",
+      "start": 187,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -15,6 +57,48 @@
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 45,
+      "source_start": 40
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 61,
+      "source_start": 55
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 90,
+      "source_start": 84
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 108,
+      "source_start": 101
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 142,
+      "source_start": 139
+    },
+    {
+      "compiled_end": 77,
+      "compiled_start": 77,
+      "range_type": "Html",
+      "source_end": 191,
+      "source_start": 187
     }
   ]
 }

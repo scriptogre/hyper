@@ -69,7 +69,17 @@ impl Pipeline {
         let metadata = self.transformer.transform(&mut ast);
 
         // Generate
-        Ok(self.generator.generate(&ast, metadata, options))
+        let mut result = self.generator.generate(&ast, metadata, options);
+
+        // Validate injection ranges: drop any Python range where source text ≠ compiled text.
+        // This prevents malformed virtual Python files in IDE injection (e.g. when the
+        // transpiler renames `class` → `class_`, the source fragment would be a keyword).
+        if options.include_ranges {
+            generate::validate_python_ranges(source, &result.code, &mut result.ranges);
+            result.injections = generate::compute_injections(&result.code, &result.ranges);
+        }
+
+        Ok(result)
     }
 }
 

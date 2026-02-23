@@ -8,8 +8,7 @@ def Comments(*, name: str, color: str):
     yield """<div>Content</div>"""
 
     # Another full-line comment
-    yield """<span>Text</span>"""
-    # trailing comment after close tag
+    yield """<span>Text</span>"""  # trailing comment after close tag
 
     # Hash in table header (not a comment)
     yield """<th scope="col">#</th>"""
@@ -35,8 +34,7 @@ def Comments(*, name: str, color: str):
 <th>##</th>"""
 
     # Trailing comment after expression
-    yield f"""<span>{escape(name)}</span>"""
-    # show name
+    yield f"""<span>{escape(name)}</span>"""  # show name
 
     # Hash in expression (not a comment)
     yield f"""\
@@ -53,10 +51,8 @@ def Comments(*, name: str, color: str):
     yield """<div data-info="use # for comments">Info</div>"""
 
     # Trailing comment after self-closing tag
-    yield """<br />"""
-    # self-closing
+    yield """<br />"""  # self-closing
 
     # Hash in value attr + trailing comment
-    yield """<input value="#" />"""
-    # input comment
+    yield """<input value="#" />"""  # input comment
 

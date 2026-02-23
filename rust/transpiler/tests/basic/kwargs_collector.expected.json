@@ -8,11 +8,53 @@
       "type": "python"
     },
     {
-      "end": 72,
-      "prefix": ", **attrs: Any):\n    yield f\"\"\"\\\n<div class=\"card\"{spread_attrs(attrs)}>\n    <h1>{escape(",
-      "start": 65,
+      "end": 54,
+      "prefix": ", **attrs: Any):\n    yield f\"\"\"\\\n<div class=\"card\"{spread_attrs(",
+      "start": 49,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 71,
+      "prefix": ")}>\n    <h1>{escape(",
+      "start": 66,
       "suffix": ")}</h1>\n</div>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 48,
+      "prefix": "",
+      "start": 30,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 56,
+      "prefix": "",
+      "start": 55,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 65,
+      "prefix": "",
+      "start": 61,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 77,
+      "prefix": "",
+      "start": 72,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 84,
+      "prefix": "",
+      "start": 78,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -24,11 +66,53 @@
       "source_start": 0
     },
     {
+      "compiled_end": 178,
+      "compiled_start": 173,
+      "range_type": "Python",
+      "source_end": 54,
+      "source_start": 49
+    },
+    {
       "compiled_end": 203,
       "compiled_start": 198,
       "range_type": "Python",
-      "source_end": 72,
-      "source_start": 65
+      "source_end": 71,
+      "source_start": 66
+    },
+    {
+      "compiled_end": 140,
+      "compiled_start": 140,
+      "range_type": "Html",
+      "source_end": 65,
+      "source_start": 61
+    },
+    {
+      "compiled_end": 140,
+      "compiled_start": 140,
+      "range_type": "Html",
+      "source_end": 77,
+      "source_start": 72
+    },
+    {
+      "compiled_end": 140,
+      "compiled_start": 140,
+      "range_type": "Html",
+      "source_end": 48,
+      "source_start": 30
+    },
+    {
+      "compiled_end": 140,
+      "compiled_start": 140,
+      "range_type": "Html",
+      "source_end": 56,
+      "source_start": 55
+    },
+    {
+      "compiled_end": 140,
+      "compiled_start": 140,
+      "range_type": "Html",
+      "source_end": 84,
+      "source_start": 78
     }
   ]
 }

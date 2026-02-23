@@ -34,8 +34,8 @@ def PythonFeatures(*, items: list, data: dict, value: int):
 
     # F-string style expressions
     yield f"""\
-<span>{escape(value=)}</span>
-<span>{escape(items!r)}</span>"""
+<span>{value=}</span>
+<span>{items!r}</span>"""
 
     # Star unpacking in function call
 

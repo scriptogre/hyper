@@ -1,0 +1,34 @@
+{
+  "injections": [
+    {
+      "end": 11,
+      "prefix": "from hyper import html\n\n\n@html\ndef SpreadProps(*, ",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 22,
+      "prefix": ", ",
+      "start": 12,
+      "suffix": "):\n\n    yield from Button(**props)\n\n    yield from Button(label=label, **props)\n\n    yield from Button(disabled=True, **props)\n\n",
+      "type": "python"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 61,
+      "compiled_start": 50,
+      "range_type": "Python",
+      "source_end": 11,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 73,
+      "compiled_start": 63,
+      "range_type": "Python",
+      "source_end": 22,
+      "source_start": 12
+    }
+  ]
+}

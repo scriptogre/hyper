@@ -10,7 +10,7 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
 
         for section in sections:
 
-            yield "<section id=\"section-{escape(section['id'])}\">"
+            yield f"<section id=\"section-{escape(section['id'])}\">"
 
             if section.get('visible', True):
 

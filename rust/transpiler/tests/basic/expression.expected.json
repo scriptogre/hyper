@@ -8,11 +8,25 @@
       "type": "python"
     },
     {
-      "end": 32,
+      "end": 31,
       "prefix": "):\n    yield f\"\"\"<h1>Hello {escape(",
-      "start": 26,
+      "start": 27,
       "suffix": ")}</h1>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 20,
+      "prefix": "",
+      "start": 16,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 37,
+      "prefix": "",
+      "start": 32,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -27,8 +41,22 @@
       "compiled_end": 105,
       "compiled_start": 101,
       "range_type": "Python",
-      "source_end": 32,
-      "source_start": 26
+      "source_end": 31,
+      "source_start": 27
+    },
+    {
+      "compiled_end": 81,
+      "compiled_start": 81,
+      "range_type": "Html",
+      "source_end": 20,
+      "source_start": 16
+    },
+    {
+      "compiled_end": 81,
+      "compiled_start": 81,
+      "range_type": "Html",
+      "source_end": 37,
+      "source_start": 32
     }
   ]
 }

@@ -4,8 +4,176 @@
       "end": 10,
       "prefix": "from hyper import html, escape\n\n\n@html\ndef AttrEdgeCases(*, ",
       "start": 0,
-      "suffix": "):\n\n    # Empty attribute value\n    yield \"\"\"\\\n<input value=\"\" />\n<div class=\"\">Empty class</div>\"\"\"\n\n    # Multiple classes (space-separated)\n    yield \"\"\"<div class=\"one two three four\">Multiple classes</div>\"\"\"\n\n    # Attribute with special characters\n    yield \"\"\"<div data-value=\"a&lt;b\">Encoded</div>\"\"\"\n\n    # XML namespace attributes\n    yield \"\"\"\\\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n    <use xlink:href=\"#icon\" />\n</svg>\"\"\"\n\n    # Boolean attributes (true = present, false = absent)\n    yield \"\"\"\\\n<input type=\"checkbox\" checked />\n<input type=\"checkbox\" disabled />\n<button disabled>Disabled</button>\"\"\"\n\n    # Very long attribute\n    yield \"\"\"<div data-config=\"this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output\">Long</div>\"\"\"\n\n    # Attribute with expression containing quotes\n    yield f\"\"\"\\\n<div title=\"{escape(value)} said 'hello'\">Quotes</div>\n<div data-msg=\"{escape(value)} said \"hi\"\">Double quotes</div>\"\"\"\n\n    # Single vs double quotes\n    yield \"\"\"\\\n<div class=\"single-quoted\">Single</div>\n<div class=\"double-quoted\">Double</div>\"\"\"\n",
+      "suffix": "):\n\n    # Empty attribute value\n    yield \"\"\"\\\n<input value=\"\" />\n<div class=\"\">Empty class</div>\"\"\"\n\n    # Multiple classes (space-separated)\n    yield \"\"\"<div class=\"one two three four\">Multiple classes</div>\"\"\"\n\n    # Attribute with special characters\n    yield \"\"\"<div data-value=\"a&lt;b\">Encoded</div>\"\"\"\n\n    # XML namespace attributes\n    yield \"\"\"\\\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n    <use xlink:href=\"#icon\" />\n</svg>\"\"\"\n\n    # Boolean attributes (true = present, false = absent)\n    yield \"\"\"\\\n<input type=\"checkbox\" checked />\n<input type=\"checkbox\" disabled />\n<button disabled>Disabled</button>\"\"\"\n\n    # Very long attribute\n    yield \"\"\"<div data-config=\"this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output\">Long</div>\"\"\"\n\n    # Attribute with expression containing quotes\n    yield f\"\"\"\\\n<div title=\"{escape(value)} said 'hello'\">Quotes</div>\n<div data-msg=\"{escape(value)} said &quot;hi&quot;\">Double quotes</div>\"\"\"\n\n    # Single vs double quotes\n    yield \"\"\"\\\n<div class=\"single-quoted\">Single</div>\n<div class=\"double-quoted\">Double</div>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 59,
+      "prefix": "",
+      "start": 41,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 74,
+      "prefix": "",
+      "start": 60,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 91,
+      "prefix": "",
+      "start": 85,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 162,
+      "prefix": "",
+      "start": 130,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 184,
+      "prefix": "",
+      "start": 178,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 247,
+      "prefix": "",
+      "start": 222,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 260,
+      "prefix": "",
+      "start": 254,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 372,
+      "prefix": "",
+      "start": 289,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 403,
+      "prefix": "",
+      "start": 377,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 410,
+      "prefix": "",
+      "start": 404,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 499,
+      "prefix": "",
+      "start": 466,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 534,
+      "prefix": "",
+      "start": 500,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 552,
+      "prefix": "",
+      "start": 535,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 569,
+      "prefix": "",
+      "start": 560,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 765,
+      "prefix": "",
+      "start": 593,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 775,
+      "prefix": "",
+      "start": 769,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 857,
+      "prefix": "",
+      "start": 823,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 869,
+      "prefix": "",
+      "start": 863,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 904,
+      "prefix": "",
+      "start": 870,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 923,
+      "prefix": "",
+      "start": 917,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 978,
+      "prefix": "",
+      "start": 951,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 990,
+      "prefix": "",
+      "start": 984,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 1018,
+      "prefix": "",
+      "start": 991,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 1030,
+      "prefix": "",
+      "start": 1024,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -15,6 +183,174 @@
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
+    },
+    {
+      "compiled_end": 116,
+      "compiled_start": 116,
+      "range_type": "Html",
+      "source_end": 59,
+      "source_start": 41
+    },
+    {
+      "compiled_end": 116,
+      "compiled_start": 116,
+      "range_type": "Html",
+      "source_end": 74,
+      "source_start": 60
+    },
+    {
+      "compiled_end": 116,
+      "compiled_start": 116,
+      "range_type": "Html",
+      "source_end": 91,
+      "source_start": 85
+    },
+    {
+      "compiled_end": 225,
+      "compiled_start": 225,
+      "range_type": "Html",
+      "source_end": 162,
+      "source_start": 130
+    },
+    {
+      "compiled_end": 225,
+      "compiled_start": 225,
+      "range_type": "Html",
+      "source_end": 184,
+      "source_start": 178
+    },
+    {
+      "compiled_end": 337,
+      "compiled_start": 337,
+      "range_type": "Html",
+      "source_end": 247,
+      "source_start": 222
+    },
+    {
+      "compiled_end": 337,
+      "compiled_start": 337,
+      "range_type": "Html",
+      "source_end": 260,
+      "source_start": 254
+    },
+    {
+      "compiled_end": 426,
+      "compiled_start": 426,
+      "range_type": "Html",
+      "source_end": 403,
+      "source_start": 377
+    },
+    {
+      "compiled_end": 426,
+      "compiled_start": 426,
+      "range_type": "Html",
+      "source_end": 372,
+      "source_start": 289
+    },
+    {
+      "compiled_end": 426,
+      "compiled_start": 426,
+      "range_type": "Html",
+      "source_end": 410,
+      "source_start": 404
+    },
+    {
+      "compiled_end": 625,
+      "compiled_start": 625,
+      "range_type": "Html",
+      "source_end": 499,
+      "source_start": 466
+    },
+    {
+      "compiled_end": 625,
+      "compiled_start": 625,
+      "range_type": "Html",
+      "source_end": 534,
+      "source_start": 500
+    },
+    {
+      "compiled_end": 625,
+      "compiled_start": 625,
+      "range_type": "Html",
+      "source_end": 552,
+      "source_start": 535
+    },
+    {
+      "compiled_end": 625,
+      "compiled_start": 625,
+      "range_type": "Html",
+      "source_end": 569,
+      "source_start": 560
+    },
+    {
+      "compiled_end": 772,
+      "compiled_start": 772,
+      "range_type": "Html",
+      "source_end": 765,
+      "source_start": 593
+    },
+    {
+      "compiled_end": 772,
+      "compiled_start": 772,
+      "range_type": "Html",
+      "source_end": 775,
+      "source_start": 769
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 857,
+      "source_start": 823
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 869,
+      "source_start": 863
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 904,
+      "source_start": 870
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 923,
+      "source_start": 917
+    },
+    {
+      "compiled_end": 1201,
+      "compiled_start": 1201,
+      "range_type": "Html",
+      "source_end": 978,
+      "source_start": 951
+    },
+    {
+      "compiled_end": 1201,
+      "compiled_start": 1201,
+      "range_type": "Html",
+      "source_end": 990,
+      "source_start": 984
+    },
+    {
+      "compiled_end": 1201,
+      "compiled_start": 1201,
+      "range_type": "Html",
+      "source_end": 1018,
+      "source_start": 991
+    },
+    {
+      "compiled_end": 1201,
+      "compiled_start": 1201,
+      "range_type": "Html",
+      "source_end": 1030,
+      "source_start": 1024
     }
   ]
 }

@@ -62,6 +62,48 @@
       "start": 278,
       "suffix": ":\n            yield \"\"\"<span>False</span>\"\"\"\n\n    # Empty try blocks\n\n    try:\n        pass\n    except:\n        yield \"\"\"<span>Error</span>\"\"\"\n\n    # Empty function\n\n    def empty():\n        pass\n\n",
       "type": "python"
+    },
+    {
+      "end": 121,
+      "prefix": "",
+      "start": 115,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 131,
+      "prefix": "",
+      "start": 124,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 299,
+      "prefix": "",
+      "start": 293,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 311,
+      "prefix": "",
+      "start": 304,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 359,
+      "prefix": "",
+      "start": 353,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 371,
+      "prefix": "",
+      "start": 364,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -92,6 +134,20 @@
       "range_type": "Python",
       "source_end": 109,
       "source_start": 105
+    },
+    {
+      "compiled_end": 198,
+      "compiled_start": 198,
+      "range_type": "Html",
+      "source_end": 121,
+      "source_start": 115
+    },
+    {
+      "compiled_end": 198,
+      "compiled_start": 198,
+      "range_type": "Html",
+      "source_end": 131,
+      "source_start": 124
     },
     {
       "compiled_end": 291,
@@ -127,6 +183,34 @@
       "range_type": "Python",
       "source_end": 283,
       "source_start": 278
+    },
+    {
+      "compiled_end": 471,
+      "compiled_start": 471,
+      "range_type": "Html",
+      "source_end": 299,
+      "source_start": 293
+    },
+    {
+      "compiled_end": 471,
+      "compiled_start": 471,
+      "range_type": "Html",
+      "source_end": 311,
+      "source_start": 304
+    },
+    {
+      "compiled_end": 573,
+      "compiled_start": 573,
+      "range_type": "Html",
+      "source_end": 359,
+      "source_start": 353
+    },
+    {
+      "compiled_end": 573,
+      "compiled_start": 573,
+      "range_type": "Html",
+      "source_end": 371,
+      "source_start": 364
     }
   ]
 }

@@ -20,6 +20,55 @@
       "start": 42,
       "suffix": "):\n\n    # Template string in class attribute\n    yield f\"\"\"<button class=\"btn btn-{escape(variant)}\">Click</button>\"\"\"\n\n    # Multiple expressions in one template attribute\n    yield f\"\"\"<div data-info=\"{escape(id)}-{escape(variant)}\">Info</div>\"\"\"\n\n    # Template with size\n    yield f\"\"\"<input class=\"input input-{escape(size)}\" type=\"text\" />\"\"\"\n\n    # Mixed static and template\n    yield f\"\"\"<a href=\"/users/{escape(id)}\" class=\"link link-{escape(variant)}\">Profile</a>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 131,
+      "prefix": "",
+      "start": 97,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 145,
+      "prefix": "",
+      "start": 136,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 228,
+      "prefix": "",
+      "start": 196,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 238,
+      "prefix": "",
+      "start": 232,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 309,
+      "prefix": "",
+      "start": 261,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 389,
+      "prefix": "",
+      "start": 339,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 400,
+      "prefix": "",
+      "start": 396,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -43,6 +92,55 @@
       "range_type": "Python",
       "source_end": 53,
       "source_start": 42
+    },
+    {
+      "compiled_end": 178,
+      "compiled_start": 178,
+      "range_type": "Html",
+      "source_end": 131,
+      "source_start": 97
+    },
+    {
+      "compiled_end": 178,
+      "compiled_start": 178,
+      "range_type": "Html",
+      "source_end": 145,
+      "source_start": 136
+    },
+    {
+      "compiled_end": 306,
+      "compiled_start": 306,
+      "range_type": "Html",
+      "source_end": 228,
+      "source_start": 196
+    },
+    {
+      "compiled_end": 306,
+      "compiled_start": 306,
+      "range_type": "Html",
+      "source_end": 238,
+      "source_start": 232
+    },
+    {
+      "compiled_end": 408,
+      "compiled_start": 408,
+      "range_type": "Html",
+      "source_end": 309,
+      "source_start": 261
+    },
+    {
+      "compiled_end": 515,
+      "compiled_start": 515,
+      "range_type": "Html",
+      "source_end": 389,
+      "source_start": 339
+    },
+    {
+      "compiled_end": 515,
+      "compiled_start": 515,
+      "range_type": "Html",
+      "source_end": 400,
+      "source_start": 396
     }
   ]
 }

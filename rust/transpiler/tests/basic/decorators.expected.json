@@ -8,9 +8,9 @@
       "type": "python"
     },
     {
-      "end": 99,
+      "end": 98,
       "prefix": "):\n\n    # Simple decorator\n\n    @fragment\n    def Badge(text: str):\n        yield f\"\"\"<span class=\"badge\">{escape(",
-      "start": 93,
+      "start": 94,
       "suffix": "",
       "type": "python"
     },
@@ -22,32 +22,102 @@
       "type": "python"
     },
     {
-      "end": 238,
+      "end": 237,
       "prefix": ":\n            yield f\"\"\"\\\n<li>{escape(",
-      "start": 232,
+      "start": 233,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 385,
+      "end": 384,
       "prefix": ")}</li>\n        \"\"\"\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    @fragment(name=\"card\")\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield f\"\"\"\\\n<h2>{escape(",
-      "start": 378,
+      "start": 379,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 461,
+      "end": 460,
       "prefix": ")}</h2>\n        \"\"\"\n        if _content is not None:\n            yield from _content\n\n        yield \"</div>\"\n\n\n    # Use decorated functions\n    yield f\"\"\"\\\n{escape(",
-      "start": 447,
+      "start": 448,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 481,
+      "end": 480,
       "prefix": ")}\n{escape(",
-      "start": 462,
+      "start": 463,
       "suffix": ")}\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 93,
+      "prefix": "",
+      "start": 73,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 106,
+      "prefix": "",
+      "start": 99,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 188,
+      "prefix": "",
+      "start": 184,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 232,
+      "prefix": "",
+      "start": 228,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 243,
+      "prefix": "",
+      "start": 238,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 265,
+      "prefix": "",
+      "start": 260,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 365,
+      "prefix": "",
+      "start": 347,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 378,
+      "prefix": "",
+      "start": 374,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 390,
+      "prefix": "",
+      "start": 385,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 415,
+      "prefix": "",
+      "start": 409,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -62,8 +132,22 @@
       "compiled_end": 262,
       "compiled_start": 258,
       "range_type": "Python",
-      "source_end": 99,
-      "source_start": 93
+      "source_end": 98,
+      "source_start": 94
+    },
+    {
+      "compiled_end": 225,
+      "compiled_start": 225,
+      "range_type": "Html",
+      "source_end": 93,
+      "source_start": 73
+    },
+    {
+      "compiled_end": 225,
+      "compiled_start": 225,
+      "range_type": "Html",
+      "source_end": 106,
+      "source_start": 99
     },
     {
       "compiled_end": 409,
@@ -76,29 +160,85 @@
       "compiled_end": 451,
       "compiled_start": 447,
       "range_type": "Python",
-      "source_end": 238,
-      "source_start": 232
+      "source_end": 237,
+      "source_start": 233
+    },
+    {
+      "compiled_end": 422,
+      "compiled_start": 422,
+      "range_type": "Html",
+      "source_end": 232,
+      "source_start": 228
+    },
+    {
+      "compiled_end": 422,
+      "compiled_start": 422,
+      "range_type": "Html",
+      "source_end": 243,
+      "source_start": 238
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 188,
+      "source_start": 184
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 265,
+      "source_start": 260
     },
     {
       "compiled_end": 656,
       "compiled_start": 651,
       "range_type": "Python",
-      "source_end": 385,
-      "source_start": 378
+      "source_end": 384,
+      "source_start": 379
+    },
+    {
+      "compiled_end": 630,
+      "compiled_start": 630,
+      "range_type": "Html",
+      "source_end": 378,
+      "source_start": 374
+    },
+    {
+      "compiled_end": 630,
+      "compiled_start": 630,
+      "range_type": "Html",
+      "source_end": 390,
+      "source_start": 385
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 365,
+      "source_start": 347
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 415,
+      "source_start": 409
     },
     {
       "compiled_end": 833,
       "compiled_start": 821,
       "range_type": "Python",
-      "source_end": 461,
-      "source_start": 447
+      "source_end": 460,
+      "source_start": 448
     },
     {
       "compiled_end": 861,
       "compiled_start": 844,
       "range_type": "Python",
-      "source_end": 481,
-      "source_start": 462
+      "source_end": 480,
+      "source_start": 463
     }
   ]
 }

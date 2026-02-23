@@ -33,7 +33,7 @@ def AttrEdgeCases(*, value: str):
     # Attribute with expression containing quotes
     yield f"""\
 <div title="{escape(value)} said 'hello'">Quotes</div>
-<div data-msg="{escape(value)} said "hi"">Double quotes</div>"""
+<div data-msg="{escape(value)} said &quot;hi&quot;">Double quotes</div>"""
 
     # Single vs double quotes
     yield """\

@@ -13,6 +13,27 @@
       "start": 42,
       "suffix": ")}>Submit</button>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 40,
+      "prefix": "",
+      "start": 24,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 55,
+      "prefix": "",
+      "start": 54,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 70,
+      "prefix": "",
+      "start": 61,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -29,6 +50,27 @@
       "range_type": "Python",
       "source_end": 53,
       "source_start": 42
+    },
+    {
+      "compiled_end": 91,
+      "compiled_start": 91,
+      "range_type": "Html",
+      "source_end": 40,
+      "source_start": 24
+    },
+    {
+      "compiled_end": 91,
+      "compiled_start": 91,
+      "range_type": "Html",
+      "source_end": 55,
+      "source_start": 54
+    },
+    {
+      "compiled_end": 91,
+      "compiled_start": 91,
+      "range_type": "Html",
+      "source_end": 70,
+      "source_start": 61
     }
   ]
 }

@@ -18,7 +18,7 @@
       "end": 37,
       "prefix": ", ",
       "start": 26,
-      "suffix": "):\n\n    # Simple self-closing\n\n    yield from Button()\n\n    # With attributes\n\n    yield from Button(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from Button(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from Button()\n\n    # Mixed\n\n    yield from Icon(name=\"star\", size=24, )\n\n",
+      "suffix": "):\n\n    # Simple self-closing\n\n    yield from Button()\n\n    # With attributes\n\n    yield from Button(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from Button(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from Button(**props)\n\n    # Mixed\n\n    yield from Icon(name=\"star\", size=24, **props)\n\n",
       "type": "python"
     }
   ],

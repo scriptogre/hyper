@@ -4,8 +4,36 @@
       "end": 65,
       "prefix": "from hyper import html, spread_attrs\n\n\n@html\ndef Spread(*, ",
       "start": 0,
-      "suffix": "):\n    yield f\"\"\"<a{spread_attrs(attrs)}>Link</a>\"\"\"\n",
+      "suffix": "",
       "type": "python"
+    },
+    {
+      "end": 81,
+      "prefix": "):\n    yield f\"\"\"<a{spread_attrs(",
+      "start": 76,
+      "suffix": ")}>Link</a>\"\"\"\n",
+      "type": "python"
+    },
+    {
+      "end": 75,
+      "prefix": "",
+      "start": 72,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 83,
+      "prefix": "",
+      "start": 82,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 91,
+      "prefix": "",
+      "start": 87,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -15,6 +43,34 @@
       "range_type": "Python",
       "source_end": 65,
       "source_start": 0
+    },
+    {
+      "compiled_end": 162,
+      "compiled_start": 157,
+      "range_type": "Python",
+      "source_end": 81,
+      "source_start": 76
+    },
+    {
+      "compiled_end": 139,
+      "compiled_start": 139,
+      "range_type": "Html",
+      "source_end": 75,
+      "source_start": 72
+    },
+    {
+      "compiled_end": 139,
+      "compiled_start": 139,
+      "range_type": "Html",
+      "source_end": 83,
+      "source_start": 82
+    },
+    {
+      "compiled_end": 139,
+      "compiled_start": 139,
+      "range_type": "Html",
+      "source_end": 91,
+      "source_start": 87
     }
   ]
 }

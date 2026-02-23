@@ -1,20 +1,468 @@
 {
   "injections": [
     {
-      "end": 526,
+      "end": 525,
       "prefix": "from hyper import html, escape\n\n\n@html\ndef HtmlEntities():\n    # Common entities\n    yield \"\"\"<p>&lt;script&gt; is escaped</p><p>Ampersand: &amp;</p><p>Non-breaking space: hello&nbsp;world</p><p>Copyright: &copy; 2024</p><p>Registered: &reg;</p><p>Trademark: &trade;</p>\"\"\"\n    # Currency\n    yield \"\"\"<p>Dollar: &#36;100</p><p>Euro: &euro;50</p><p>Pound: &pound;30</p><p>Yen: &yen;1000</p>\"\"\"\n    # Quotes\n    yield \"\"\"<p>&quot;quoted&quot;</p><p>&apos;single&apos;</p><p>&ldquo;smart quotes&rdquo;</p>\"\"\"\n    # Numeric entities\n    yield \"\"\"<p>&#60;angle brackets&#62;</p><p>&#x3C;hex entities&#x3E;</p>\"\"\"\n    # Mixed with expressions\n    yield f\"\"\"<p>&copy; {escape(",
-      "start": 520,
+      "start": 521,
       "suffix": ")} All rights reserved</p>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 21,
+      "prefix": "",
+      "start": 18,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 50,
+      "prefix": "",
+      "start": 46,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 54,
+      "prefix": "",
+      "start": 51,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 74,
+      "prefix": "",
+      "start": 70,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 78,
+      "prefix": "",
+      "start": 75,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 118,
+      "prefix": "",
+      "start": 114,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 122,
+      "prefix": "",
+      "start": 119,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 148,
+      "prefix": "",
+      "start": 144,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 152,
+      "prefix": "",
+      "start": 149,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 173,
+      "prefix": "",
+      "start": 169,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 177,
+      "prefix": "",
+      "start": 174,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 199,
+      "prefix": "",
+      "start": 195,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 215,
+      "prefix": "",
+      "start": 212,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 235,
+      "prefix": "",
+      "start": 231,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 239,
+      "prefix": "",
+      "start": 236,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 257,
+      "prefix": "",
+      "start": 253,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 261,
+      "prefix": "",
+      "start": 258,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 281,
+      "prefix": "",
+      "start": 277,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 285,
+      "prefix": "",
+      "start": 282,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 303,
+      "prefix": "",
+      "start": 299,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 317,
+      "prefix": "",
+      "start": 314,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 339,
+      "prefix": "",
+      "start": 335,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 343,
+      "prefix": "",
+      "start": 340,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 365,
+      "prefix": "",
+      "start": 361,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 369,
+      "prefix": "",
+      "start": 366,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 399,
+      "prefix": "",
+      "start": 395,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 423,
+      "prefix": "",
+      "start": 420,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 451,
+      "prefix": "",
+      "start": 447,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 455,
+      "prefix": "",
+      "start": 452,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 483,
+      "prefix": "",
+      "start": 479,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 513,
+      "prefix": "",
+      "start": 510,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 550,
+      "prefix": "",
+      "start": 546,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
     {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 21,
+      "source_start": 18
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 50,
+      "source_start": 46
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 54,
+      "source_start": 51
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 74,
+      "source_start": 70
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 78,
+      "source_start": 75
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 118,
+      "source_start": 114
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 122,
+      "source_start": 119
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 148,
+      "source_start": 144
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 152,
+      "source_start": 149
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 173,
+      "source_start": 169
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 177,
+      "source_start": 174
+    },
+    {
+      "compiled_end": 94,
+      "compiled_start": 94,
+      "range_type": "Html",
+      "source_end": 199,
+      "source_start": 195
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 215,
+      "source_start": 212
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 235,
+      "source_start": 231
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 239,
+      "source_start": 236
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 257,
+      "source_start": 253
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 261,
+      "source_start": 258
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 281,
+      "source_start": 277
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 285,
+      "source_start": 282
+    },
+    {
+      "compiled_end": 302,
+      "compiled_start": 302,
+      "range_type": "Html",
+      "source_end": 303,
+      "source_start": 299
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 317,
+      "source_start": 314
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 339,
+      "source_start": 335
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 343,
+      "source_start": 340
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 365,
+      "source_start": 361
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 369,
+      "source_start": 366
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 420,
+      "range_type": "Html",
+      "source_end": 399,
+      "source_start": 395
+    },
+    {
+      "compiled_end": 543,
+      "compiled_start": 543,
+      "range_type": "Html",
+      "source_end": 423,
+      "source_start": 420
+    },
+    {
+      "compiled_end": 543,
+      "compiled_start": 543,
+      "range_type": "Html",
+      "source_end": 451,
+      "source_start": 447
+    },
+    {
+      "compiled_end": 543,
+      "compiled_start": 543,
+      "range_type": "Html",
+      "source_end": 455,
+      "source_start": 452
+    },
+    {
+      "compiled_end": 543,
+      "compiled_start": 543,
+      "range_type": "Html",
+      "source_end": 483,
+      "source_start": 479
+    },
+    {
       "compiled_end": 674,
       "compiled_start": 670,
       "range_type": "Python",
-      "source_end": 526,
-      "source_start": 520
+      "source_end": 525,
+      "source_start": 521
+    },
+    {
+      "compiled_end": 652,
+      "compiled_start": 652,
+      "range_type": "Html",
+      "source_end": 513,
+      "source_start": 510
+    },
+    {
+      "compiled_end": 652,
+      "compiled_start": 652,
+      "range_type": "Html",
+      "source_end": 550,
+      "source_start": 546
     }
   ]
 }

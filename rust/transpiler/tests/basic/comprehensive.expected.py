@@ -16,8 +16,7 @@ def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: l
     <p>Count: {escape(count + 1)}</p>
     """
     if is_active:
-        yield """<span>Active</span>"""
-        # Trailing comment
+        yield """<span>Active</span>"""  # Trailing comment
 
     elif count > 0:
         yield """\

@@ -3,7 +3,7 @@ mod output;
 mod injection_analyzer;
 
 pub use python::PythonGenerator;
-pub use output::{Output, Mapping, Range, RangeType, Injection, compute_injections};
+pub use output::{Output, Mapping, Range, RangeType, Injection, compute_injections, validate_python_ranges};
 pub use injection_analyzer::InjectionAnalyzer;
 
 use crate::ast::Ast;

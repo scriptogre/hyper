@@ -1,0 +1,90 @@
+{
+  "injections": [
+    {
+      "end": 6,
+      "prefix": "",
+      "start": 0,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 13,
+      "prefix": "",
+      "start": 7,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 49,
+      "prefix": "",
+      "start": 14,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 84,
+      "prefix": "",
+      "start": 50,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 92,
+      "prefix": "",
+      "start": 85,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 101,
+      "prefix": "",
+      "start": 93,
+      "suffix": "",
+      "type": "html"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 6,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 13,
+      "source_start": 7
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 49,
+      "source_start": 14
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 84,
+      "source_start": 50
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 92,
+      "source_start": 85
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 101,
+      "source_start": 93
+    }
+  ]
+}

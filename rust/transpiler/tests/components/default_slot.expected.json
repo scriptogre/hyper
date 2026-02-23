@@ -8,11 +8,39 @@
       "type": "python"
     },
     {
-      "end": 51,
+      "end": 50,
       "prefix": "):\n\n    yield \"<div class=\\\"card\\\">\"\n    yield f\"\"\"\\\n<h2>{escape(",
-      "start": 44,
+      "start": 45,
       "suffix": ")}</h2>\n    \"\"\"\n    if _content is not None:\n        yield from _content\n\n    yield \"</div>\"\n\n",
       "type": "python"
+    },
+    {
+      "end": 35,
+      "prefix": "",
+      "start": 17,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 44,
+      "prefix": "",
+      "start": 40,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 56,
+      "prefix": "",
+      "start": 51,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 73,
+      "prefix": "",
+      "start": 67,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -27,8 +55,36 @@
       "compiled_end": 214,
       "compiled_start": 209,
       "range_type": "Python",
-      "source_end": 51,
-      "source_start": 44
+      "source_end": 50,
+      "source_start": 45
+    },
+    {
+      "compiled_end": 192,
+      "compiled_start": 192,
+      "range_type": "Html",
+      "source_end": 44,
+      "source_start": 40
+    },
+    {
+      "compiled_end": 192,
+      "compiled_start": 192,
+      "range_type": "Html",
+      "source_end": 56,
+      "source_start": 51
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 35,
+      "source_start": 17
+    },
+    {
+      "compiled_end": 76,
+      "compiled_start": 76,
+      "range_type": "Html",
+      "source_end": 73,
+      "source_start": 67
     }
   ]
 }
