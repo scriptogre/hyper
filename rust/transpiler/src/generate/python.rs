@@ -11,8 +11,8 @@ impl PythonGenerator {
     /// Convert reserved Python keywords to safe variable names
     fn safe_var_name(&self, name: &str) -> String {
         match name {
-            "class" => "_class".to_string(),
-            "type" => "_type".to_string(),
+            "class" => "class_".to_string(),
+            "type" => "type_".to_string(),
             _ => name.to_string(),
         }
     }
@@ -1012,13 +1012,19 @@ impl PythonGenerator {
         self.indent(output, indent);
 
         // Rename Python reserved keywords used as variable names in assignments.
-        // This matches how shorthand attributes rename {class} → _class, {type} → _type.
+        // This matches how shorthand attributes rename {class} → class_, {type} → type_.
         let owned_statement;
-        let statement = if stmt.stmt.starts_with("class ") || stmt.stmt.starts_with("class=") {
-            owned_statement = format!("_{}", &stmt.stmt);
+        let statement = if stmt.stmt.starts_with("class ") {
+            owned_statement = format!("class_{}", &stmt.stmt["class".len()..]);
             &owned_statement
-        } else if stmt.stmt.starts_with("type ") || stmt.stmt.starts_with("type=") {
-            owned_statement = format!("_{}", &stmt.stmt);
+        } else if stmt.stmt.starts_with("class=") {
+            owned_statement = format!("class_{}", &stmt.stmt["class".len()..]);
+            &owned_statement
+        } else if stmt.stmt.starts_with("type ") {
+            owned_statement = format!("type_{}", &stmt.stmt["type".len()..]);
+            &owned_statement
+        } else if stmt.stmt.starts_with("type=") {
+            owned_statement = format!("type_{}", &stmt.stmt["type".len()..]);
             &owned_statement
         } else {
             &stmt.stmt
