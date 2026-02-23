@@ -20,7 +20,6 @@ from hyper.helpers import (
     render_data,
     render_aria,
     spread_attrs,
-    replace_markers,
 )
 
 # Primary alias for transpiler - clear and readable
@@ -41,7 +40,6 @@ __all__ = [
     'render_data',
     'render_aria',
     'spread_attrs',
-    'replace_markers',
 ]
 
 # Content collections (optional, requires 'content' extra)
