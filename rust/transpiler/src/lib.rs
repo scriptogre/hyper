@@ -76,7 +76,7 @@ impl Pipeline {
         // transpiler renames `class` → `class_`, the source fragment would be a keyword).
         if options.include_ranges {
             generate::validate_python_ranges(source, &result.code, &mut result.ranges);
-            result.injections = generate::compute_injections(&result.code, &result.ranges);
+            result.injections = generate::compute_injections(&result.code, source, &result.ranges);
         }
 
         Ok(result)

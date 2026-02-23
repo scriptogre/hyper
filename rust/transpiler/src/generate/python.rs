@@ -314,6 +314,31 @@ impl PythonGenerator {
                     let gap_start = span.start.byte.saturating_sub(1);
                     expr_spans.push((gap_start, span.end.byte + 1));
                 }
+                AttributeKind::Template { name, value } => {
+                    // Walk value to find {expr} positions, exclude them from HTML ranges
+                    let value_start_byte = attr.span.start.byte + name.len() + 2;
+                    let mut byte_offset = 0;
+                    let mut chars = value.chars().peekable();
+                    while let Some(ch) = chars.next() {
+                        if ch == '{' {
+                            let gap_start = value_start_byte + byte_offset;
+                            byte_offset += ch.len_utf8();
+                            let mut depth = 1;
+                            while let Some(inner) = chars.next() {
+                                byte_offset += inner.len_utf8();
+                                if inner == '{' { depth += 1; }
+                                else if inner == '}' {
+                                    depth -= 1;
+                                    if depth == 0 { break; }
+                                }
+                            }
+                            let gap_end = value_start_byte + byte_offset;
+                            expr_spans.push((gap_start, gap_end));
+                        } else {
+                            byte_offset += ch.len_utf8();
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -646,8 +671,56 @@ impl PythonGenerator {
                     output.push(" ");
                     output.push(name);
                     output.push("=\"");
-                    // Parse and emit the template value, converting {expr} to {escape(expr)}
-                    output.push(&self.convert_template_expressions(value));
+                    // Emit template value with position tracking for each {expr}
+                    // value_start_byte: skip past `name="` in the source
+                    let value_start_byte = attr.span.start.byte + name.len() + 2;
+                    let mut byte_offset = 0;
+                    let mut chars = value.chars().peekable();
+                    while let Some(ch) = chars.next() {
+                        if ch == '{' {
+                            // Collect expression until closing }
+                            let expr_byte_start = byte_offset + 1; // past '{'
+                            byte_offset += ch.len_utf8();
+                            let mut expr = String::new();
+                            let mut depth = 1;
+                            while let Some(inner) = chars.next() {
+                                byte_offset += inner.len_utf8();
+                                if inner == '{' {
+                                    depth += 1;
+                                    expr.push(inner);
+                                } else if inner == '}' {
+                                    depth -= 1;
+                                    if depth == 0 {
+                                        break;
+                                    }
+                                    expr.push(inner);
+                                } else {
+                                    expr.push(inner);
+                                }
+                            }
+                            let expr_byte_end = byte_offset - 1; // before '}'
+                            let safe_expr = self.safe_var_name(expr.trim());
+                            output.push("{escape(");
+                            let start = output.position();
+                            output.push(&safe_expr);
+                            let end = output.position();
+                            output.push(")}");
+                            output.add_range(Range {
+                                range_type: RangeType::Python,
+                                source_start: value_start_byte + expr_byte_start,
+                                source_end: value_start_byte + expr_byte_end,
+                                compiled_start: start,
+                                compiled_end: end,
+                                needs_injection: true,
+                            });
+                        } else if ch == '"' {
+                            output.push("&quot;");
+                            byte_offset += ch.len_utf8();
+                        } else {
+                            output.push(&ch.to_string());
+                            byte_offset += ch.len_utf8();
+                        }
+                    }
                     output.push("\"");
                 }
             }
@@ -1638,7 +1711,7 @@ impl Generator for PythonGenerator {
             }).collect();
 
             let analyzer = super::InjectionAnalyzer::new();
-            analyzer.analyze(ast, &code, adjusted_ranges)
+            analyzer.analyze(ast, &code, &ast.source, adjusted_ranges)
         } else {
             (Vec::new(), Vec::new())
         };

@@ -15,8 +15,15 @@
       "type": "python"
     },
     {
+      "end": 150,
+      "prefix": ")}!</h1>\"\"\"\n    @html\n    def Badge(text: str, color: str = \"blue\"):\n        yield f\"\"\"<span class=\"badge badge-{escape(",
+      "start": 145,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 158,
-      "prefix": ")}!</h1>\"\"\"\n    @html\n    def Badge(text: str, color: str = \"blue\"):\n        yield f\"\"\"<span class=\"badge badge-{escape(color)}\">{escape(",
+      "prefix": ")}\">{escape(",
       "start": 154,
       "suffix": "",
       "type": "python"
@@ -71,9 +78,16 @@
       "type": "html"
     },
     {
-      "end": 153,
+      "end": 144,
       "prefix": "",
       "start": 119,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 153,
+      "prefix": "",
+      "start": 151,
       "suffix": "",
       "type": "html"
     },
@@ -185,6 +199,13 @@
       "source_start": 59
     },
     {
+      "compiled_end": 268,
+      "compiled_start": 263,
+      "range_type": "Python",
+      "source_end": 150,
+      "source_start": 145
+    },
+    {
       "compiled_end": 284,
       "compiled_start": 280,
       "range_type": "Python",
@@ -195,8 +216,15 @@
       "compiled_end": 230,
       "compiled_start": 230,
       "range_type": "Html",
-      "source_end": 153,
+      "source_end": 144,
       "source_start": 119
+    },
+    {
+      "compiled_end": 230,
+      "compiled_start": 230,
+      "range_type": "Html",
+      "source_end": 153,
+      "source_start": 151
     },
     {
       "compiled_end": 230,

@@ -53,6 +53,15 @@ class HyperSyntaxAnnotator : Annotator {
         var inString = false
         var stringChar = ' '
 
+        // Track "after structural" state to match the tokenizer's comment detection.
+        // A # is only an inline comment when:
+        //   1. after_structural is true (last structural element was a tag close, expression close, or line start)
+        //   2. All text since that structural element is whitespace
+        //   3. There is at least some whitespace (buffer is non-empty)
+        var afterStructural = true
+        var allWhitespaceSinceStructural = true
+        var hasTextSinceStructural = false
+
         while (i < len) {
             val ch = text[i]
 
@@ -71,6 +80,7 @@ class HyperSyntaxAnnotator : Annotator {
             if (ch == '"' || ch == '\'') {
                 inString = true
                 stringChar = ch
+                afterStructural = false
                 i++
                 continue
             }
@@ -101,6 +111,10 @@ class HyperSyntaxAnnotator : Annotator {
                 exprDepth--
                 if (exprDepth == 0) {
                     highlight(holder, base + i, base + i + 1, EXPRESSION_BRACE)
+                    // Expression close is a structural boundary
+                    afterStructural = true
+                    allWhitespaceSinceStructural = true
+                    hasTextSinceStructural = false
                 }
                 i++
                 continue
@@ -141,11 +155,17 @@ class HyperSyntaxAnnotator : Annotator {
                     j++
                 }
                 i = j
+                // Tag close is a structural boundary
+                afterStructural = true
+                allWhitespaceSinceStructural = true
+                hasTextSinceStructural = false
                 continue
             }
 
             // --- Inline comments: # ... ---
-            if (ch == '#') {
+            // Only treat # as comment when after a structural element and all
+            // intervening text is whitespace (matching the tokenizer's rule).
+            if (ch == '#' && afterStructural && allWhitespaceSinceStructural && hasTextSinceStructural) {
                 var lineEnd = len
                 for (k in i until len) {
                     if (text[k] == '\n' || text[k] == '\r') {
@@ -156,6 +176,13 @@ class HyperSyntaxAnnotator : Annotator {
                 highlight(holder, base + i, base + lineEnd, INLINE_COMMENT)
                 i = lineEnd
                 continue
+            }
+
+            // Track text accumulation for comment detection
+            if (ch.isWhitespace()) {
+                hasTextSinceStructural = true
+            } else {
+                afterStructural = false
             }
 
             i++

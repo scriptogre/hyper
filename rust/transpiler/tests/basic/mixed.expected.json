@@ -25,13 +25,111 @@
       "end": 45,
       "prefix": ", ",
       "start": 35,
-      "suffix": "):\n\n    # Static and dynamic mixed\n    yield f\"\"\"<div class=\"card {escape(theme)}\" id=\"card-{escape(id)}\">Content</div>\"\"\"\n\n    # Multiple dynamic parts\n    yield f\"\"\"<div class=\"{escape(theme)} {escape('active' if is_active else 'inactive')} size-{escape(count)}\">Content</div>\"\"\"\n\n    # Quotes inside expressions\n    yield f\"\"\"<div class=\"base {escape('special' if is_active else 'normal')}\">Content</div>\"\"\"\n\n    # Data attributes\n    yield f\"\"\"<div data-id=\"{escape(id)}\" data-count=\"{escape(count)}\" data-active=\"{escape(is_active)}\">Content</div>\"\"\"\n\n    # Aria attributes\n    yield f\"\"\"<div aria-label=\"Item {escape(id)}\" aria-hidden=\"{escape(not is_active)}\">Content</div>\"\"\"\n\n    # Event handlers (Alpine.js style)\n    yield f\"\"\"\\\n<button @click=\"handleClick({escape(id)})\">Click</button>\n<button x-on:click=\"toggle()\">Toggle</button>\"\"\"\n",
+      "suffix": "",
       "type": "python"
+    },
+    {
+      "end": 102,
+      "prefix": "):\n\n    # Static and dynamic mixed\n    yield f\"\"\"<div class=\"card {escape(",
+      "start": 97,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 117,
+      "prefix": ")}\" id=\"card-{escape(",
+      "start": 115,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 178,
+      "prefix": ")}\">Content</div>\"\"\"\n\n    # Multiple dynamic parts\n    yield f\"\"\"<div class=\"{escape(",
+      "start": 173,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 218,
+      "prefix": ")} {escape(",
+      "start": 181,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 231,
+      "prefix": ")} size-{escape(",
+      "start": 226,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 331,
+      "prefix": ")}\">Content</div>\"\"\"\n\n    # Quotes inside expressions\n    yield f\"\"\"<div class=\"base {escape(",
+      "start": 295,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 384,
+      "prefix": ")}\">Content</div>\"\"\"\n\n    # Data attributes\n    yield f\"\"\"<div data-id=\"{escape(",
+      "start": 382,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 405,
+      "prefix": ")}\" data-count=\"{escape(",
+      "start": 400,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 431,
+      "prefix": ")}\" data-active=\"{escape(",
+      "start": 422,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 492,
+      "prefix": ")}\">Content</div>\"\"\"\n\n    # Aria attributes\n    yield f\"\"\"<div aria-label=\"Item {escape(",
+      "start": 490,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 522,
+      "prefix": ")}\" aria-hidden=\"{escape(",
+      "start": 509,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 606,
+      "prefix": ")}\">Content</div>\"\"\"\n\n    # Event handlers (Alpine.js style)\n    yield f\"\"\"\\\n<button @click=\"handleClick({escape(",
+      "start": 604,
+      "suffix": ")})\">Click</button>\n<button x-on:click=\"toggle()\">Toggle</button>\"\"\"\n",
+      "type": "python"
+    },
+    {
+      "end": 96,
+      "prefix": "",
+      "start": 79,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 114,
+      "prefix": "",
+      "start": 103,
+      "suffix": "",
+      "type": "html"
     },
     {
       "end": 120,
       "prefix": "",
-      "start": 79,
+      "start": 118,
       "suffix": "",
       "type": "html"
     },
@@ -43,9 +141,30 @@
       "type": "html"
     },
     {
-      "end": 234,
+      "end": 172,
       "prefix": "",
       "start": 160,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 180,
+      "prefix": "",
+      "start": 179,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 225,
+      "prefix": "",
+      "start": 219,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 234,
+      "prefix": "",
+      "start": 232,
       "suffix": "",
       "type": "html"
     },
@@ -57,9 +176,16 @@
       "type": "html"
     },
     {
-      "end": 334,
+      "end": 294,
       "prefix": "",
       "start": 277,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 334,
+      "prefix": "",
+      "start": 332,
       "suffix": "",
       "type": "html"
     },
@@ -71,9 +197,30 @@
       "type": "html"
     },
     {
-      "end": 434,
+      "end": 381,
       "prefix": "",
       "start": 367,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 399,
+      "prefix": "",
+      "start": 385,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 421,
+      "prefix": "",
+      "start": 406,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 434,
+      "prefix": "",
+      "start": 432,
       "suffix": "",
       "type": "html"
     },
@@ -85,9 +232,23 @@
       "type": "html"
     },
     {
-      "end": 525,
+      "end": 489,
       "prefix": "",
       "start": 467,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 508,
+      "prefix": "",
+      "start": 493,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 525,
+      "prefix": "",
+      "start": 523,
       "suffix": "",
       "type": "html"
     },
@@ -99,9 +260,16 @@
       "type": "html"
     },
     {
-      "end": 610,
+      "end": 603,
       "prefix": "",
       "start": 575,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 610,
+      "prefix": "",
+      "start": 607,
       "suffix": "",
       "type": "html"
     },
@@ -157,11 +325,39 @@
       "source_start": 35
     },
     {
+      "compiled_end": 179,
+      "compiled_start": 174,
+      "range_type": "Python",
+      "source_end": 102,
+      "source_start": 97
+    },
+    {
+      "compiled_end": 202,
+      "compiled_start": 200,
+      "range_type": "Python",
+      "source_end": 117,
+      "source_start": 115
+    },
+    {
+      "compiled_end": 148,
+      "compiled_start": 148,
+      "range_type": "Html",
+      "source_end": 96,
+      "source_start": 79
+    },
+    {
+      "compiled_end": 148,
+      "compiled_start": 148,
+      "range_type": "Html",
+      "source_end": 114,
+      "source_start": 103
+    },
+    {
       "compiled_end": 148,
       "compiled_start": 148,
       "range_type": "Html",
       "source_end": 120,
-      "source_start": 79
+      "source_start": 118
     },
     {
       "compiled_end": 148,
@@ -171,11 +367,53 @@
       "source_start": 127
     },
     {
+      "compiled_end": 292,
+      "compiled_start": 287,
+      "range_type": "Python",
+      "source_end": 178,
+      "source_start": 173
+    },
+    {
+      "compiled_end": 340,
+      "compiled_start": 303,
+      "range_type": "Python",
+      "source_end": 218,
+      "source_start": 181
+    },
+    {
+      "compiled_end": 361,
+      "compiled_start": 356,
+      "range_type": "Python",
+      "source_end": 231,
+      "source_start": 226
+    },
+    {
+      "compiled_end": 266,
+      "compiled_start": 266,
+      "range_type": "Html",
+      "source_end": 172,
+      "source_start": 160
+    },
+    {
+      "compiled_end": 266,
+      "compiled_start": 266,
+      "range_type": "Html",
+      "source_end": 180,
+      "source_start": 179
+    },
+    {
+      "compiled_end": 266,
+      "compiled_start": 266,
+      "range_type": "Html",
+      "source_end": 225,
+      "source_start": 219
+    },
+    {
       "compiled_end": 266,
       "compiled_start": 266,
       "range_type": "Html",
       "source_end": 234,
-      "source_start": 160
+      "source_start": 232
     },
     {
       "compiled_end": 266,
@@ -185,11 +423,25 @@
       "source_start": 241
     },
     {
+      "compiled_end": 490,
+      "compiled_start": 454,
+      "range_type": "Python",
+      "source_end": 331,
+      "source_start": 295
+    },
+    {
+      "compiled_end": 428,
+      "compiled_start": 428,
+      "range_type": "Html",
+      "source_end": 294,
+      "source_start": 277
+    },
+    {
       "compiled_end": 428,
       "compiled_start": 428,
       "range_type": "Html",
       "source_end": 334,
-      "source_start": 277
+      "source_start": 332
     },
     {
       "compiled_end": 428,
@@ -199,11 +451,53 @@
       "source_start": 341
     },
     {
+      "compiled_end": 572,
+      "compiled_start": 570,
+      "range_type": "Python",
+      "source_end": 384,
+      "source_start": 382
+    },
+    {
+      "compiled_end": 601,
+      "compiled_start": 596,
+      "range_type": "Python",
+      "source_end": 405,
+      "source_start": 400
+    },
+    {
+      "compiled_end": 635,
+      "compiled_start": 626,
+      "range_type": "Python",
+      "source_end": 431,
+      "source_start": 422
+    },
+    {
+      "compiled_end": 547,
+      "compiled_start": 547,
+      "range_type": "Html",
+      "source_end": 381,
+      "source_start": 367
+    },
+    {
+      "compiled_end": 547,
+      "compiled_start": 547,
+      "range_type": "Html",
+      "source_end": 399,
+      "source_start": 385
+    },
+    {
+      "compiled_end": 547,
+      "compiled_start": 547,
+      "range_type": "Html",
+      "source_end": 421,
+      "source_start": 406
+    },
+    {
       "compiled_end": 547,
       "compiled_start": 547,
       "range_type": "Html",
       "source_end": 434,
-      "source_start": 367
+      "source_start": 432
     },
     {
       "compiled_end": 547,
@@ -213,11 +507,39 @@
       "source_start": 441
     },
     {
+      "compiled_end": 725,
+      "compiled_start": 723,
+      "range_type": "Python",
+      "source_end": 492,
+      "source_start": 490
+    },
+    {
+      "compiled_end": 763,
+      "compiled_start": 750,
+      "range_type": "Python",
+      "source_end": 522,
+      "source_start": 509
+    },
+    {
+      "compiled_end": 692,
+      "compiled_start": 692,
+      "range_type": "Html",
+      "source_end": 489,
+      "source_start": 467
+    },
+    {
+      "compiled_end": 692,
+      "compiled_start": 692,
+      "range_type": "Html",
+      "source_end": 508,
+      "source_start": 493
+    },
+    {
       "compiled_end": 692,
       "compiled_start": 692,
       "range_type": "Html",
       "source_end": 525,
-      "source_start": 467
+      "source_start": 523
     },
     {
       "compiled_end": 692,
@@ -227,11 +549,25 @@
       "source_start": 532
     },
     {
+      "compiled_end": 878,
+      "compiled_start": 876,
+      "range_type": "Python",
+      "source_end": 606,
+      "source_start": 604
+    },
+    {
+      "compiled_end": 839,
+      "compiled_start": 839,
+      "range_type": "Html",
+      "source_end": 603,
+      "source_start": 575
+    },
+    {
       "compiled_end": 839,
       "compiled_start": 839,
       "range_type": "Html",
       "source_end": 610,
-      "source_start": 575
+      "source_start": 607
     },
     {
       "compiled_end": 839,

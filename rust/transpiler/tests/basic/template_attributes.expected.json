@@ -18,13 +18,62 @@
       "end": 53,
       "prefix": ", ",
       "start": 42,
-      "suffix": "):\n\n    # Template string in class attribute\n    yield f\"\"\"<button class=\"btn btn-{escape(variant)}\">Click</button>\"\"\"\n\n    # Multiple expressions in one template attribute\n    yield f\"\"\"<div data-info=\"{escape(id)}-{escape(variant)}\">Info</div>\"\"\"\n\n    # Template with size\n    yield f\"\"\"<input class=\"input input-{escape(size)}\" type=\"text\" />\"\"\"\n\n    # Mixed static and template\n    yield f\"\"\"<a href=\"/users/{escape(id)}\" class=\"link link-{escape(variant)}\">Profile</a>\"\"\"\n",
+      "suffix": "",
       "type": "python"
+    },
+    {
+      "end": 128,
+      "prefix": "):\n\n    # Template string in class attribute\n    yield f\"\"\"<button class=\"btn btn-{escape(",
+      "start": 121,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 215,
+      "prefix": ")}\">Click</button>\"\"\"\n\n    # Multiple expressions in one template attribute\n    yield f\"\"\"<div data-info=\"{escape(",
+      "start": 213,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 225,
+      "prefix": ")}-{escape(",
+      "start": 218,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 292,
+      "prefix": ")}\">Info</div>\"\"\"\n\n    # Template with size\n    yield f\"\"\"<input class=\"input input-{escape(",
+      "start": 288,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 358,
+      "prefix": ")}\" type=\"text\" />\"\"\"\n\n    # Mixed static and template\n    yield f\"\"\"<a href=\"/users/{escape(",
+      "start": 356,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 386,
+      "prefix": ")}\" class=\"link link-{escape(",
+      "start": 379,
+      "suffix": ")}\">Profile</a>\"\"\"\n",
+      "type": "python"
+    },
+    {
+      "end": 120,
+      "prefix": "",
+      "start": 97,
+      "suffix": "",
+      "type": "html"
     },
     {
       "end": 131,
       "prefix": "",
-      "start": 97,
+      "start": 129,
       "suffix": "",
       "type": "html"
     },
@@ -36,9 +85,23 @@
       "type": "html"
     },
     {
-      "end": 228,
+      "end": 212,
       "prefix": "",
       "start": 196,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 217,
+      "prefix": "",
+      "start": 216,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 228,
+      "prefix": "",
+      "start": 226,
       "suffix": "",
       "type": "html"
     },
@@ -50,16 +113,37 @@
       "type": "html"
     },
     {
-      "end": 309,
+      "end": 287,
       "prefix": "",
       "start": 261,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 389,
+      "end": 309,
+      "prefix": "",
+      "start": 293,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 355,
       "prefix": "",
       "start": 339,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 378,
+      "prefix": "",
+      "start": 359,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 389,
+      "prefix": "",
+      "start": 387,
       "suffix": "",
       "type": "html"
     },
@@ -94,11 +178,25 @@
       "source_start": 42
     },
     {
+      "compiled_end": 217,
+      "compiled_start": 210,
+      "range_type": "Python",
+      "source_end": 128,
+      "source_start": 121
+    },
+    {
+      "compiled_end": 178,
+      "compiled_start": 178,
+      "range_type": "Html",
+      "source_end": 120,
+      "source_start": 97
+    },
+    {
       "compiled_end": 178,
       "compiled_start": 178,
       "range_type": "Html",
       "source_end": 131,
-      "source_start": 97
+      "source_start": 129
     },
     {
       "compiled_end": 178,
@@ -108,11 +206,39 @@
       "source_start": 136
     },
     {
+      "compiled_end": 333,
+      "compiled_start": 331,
+      "range_type": "Python",
+      "source_end": 215,
+      "source_start": 213
+    },
+    {
+      "compiled_end": 351,
+      "compiled_start": 344,
+      "range_type": "Python",
+      "source_end": 225,
+      "source_start": 218
+    },
+    {
+      "compiled_end": 306,
+      "compiled_start": 306,
+      "range_type": "Html",
+      "source_end": 212,
+      "source_start": 196
+    },
+    {
+      "compiled_end": 306,
+      "compiled_start": 306,
+      "range_type": "Html",
+      "source_end": 217,
+      "source_start": 216
+    },
+    {
       "compiled_end": 306,
       "compiled_start": 306,
       "range_type": "Html",
       "source_end": 228,
-      "source_start": 196
+      "source_start": 226
     },
     {
       "compiled_end": 306,
@@ -122,18 +248,60 @@
       "source_start": 232
     },
     {
+      "compiled_end": 447,
+      "compiled_start": 443,
+      "range_type": "Python",
+      "source_end": 292,
+      "source_start": 288
+    },
+    {
+      "compiled_end": 408,
+      "compiled_start": 408,
+      "range_type": "Html",
+      "source_end": 287,
+      "source_start": 261
+    },
+    {
       "compiled_end": 408,
       "compiled_start": 408,
       "range_type": "Html",
       "source_end": 309,
-      "source_start": 261
+      "source_start": 293
+    },
+    {
+      "compiled_end": 542,
+      "compiled_start": 540,
+      "range_type": "Python",
+      "source_end": 358,
+      "source_start": 356
+    },
+    {
+      "compiled_end": 578,
+      "compiled_start": 571,
+      "range_type": "Python",
+      "source_end": 386,
+      "source_start": 379
+    },
+    {
+      "compiled_end": 515,
+      "compiled_start": 515,
+      "range_type": "Html",
+      "source_end": 355,
+      "source_start": 339
+    },
+    {
+      "compiled_end": 515,
+      "compiled_start": 515,
+      "range_type": "Html",
+      "source_end": 378,
+      "source_start": 359
     },
     {
       "compiled_end": 515,
       "compiled_start": 515,
       "range_type": "Html",
       "source_end": 389,
-      "source_start": 339
+      "source_start": 387
     },
     {
       "compiled_end": 515,

@@ -4,7 +4,21 @@
       "end": 10,
       "prefix": "from hyper import html, escape\n\n\n@html\ndef AttrEdgeCases(*, ",
       "start": 0,
-      "suffix": "):\n\n    # Empty attribute value\n    yield \"\"\"\\\n<input value=\"\" />\n<div class=\"\">Empty class</div>\"\"\"\n\n    # Multiple classes (space-separated)\n    yield \"\"\"<div class=\"one two three four\">Multiple classes</div>\"\"\"\n\n    # Attribute with special characters\n    yield \"\"\"<div data-value=\"a&lt;b\">Encoded</div>\"\"\"\n\n    # XML namespace attributes\n    yield \"\"\"\\\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n    <use xlink:href=\"#icon\" />\n</svg>\"\"\"\n\n    # Boolean attributes (true = present, false = absent)\n    yield \"\"\"\\\n<input type=\"checkbox\" checked />\n<input type=\"checkbox\" disabled />\n<button disabled>Disabled</button>\"\"\"\n\n    # Very long attribute\n    yield \"\"\"<div data-config=\"this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output\">Long</div>\"\"\"\n\n    # Attribute with expression containing quotes\n    yield f\"\"\"\\\n<div title=\"{escape(value)} said 'hello'\">Quotes</div>\n<div data-msg=\"{escape(value)} said &quot;hi&quot;\">Double quotes</div>\"\"\"\n\n    # Single vs double quotes\n    yield \"\"\"\\\n<div class=\"single-quoted\">Single</div>\n<div class=\"double-quoted\">Double</div>\"\"\"\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 841,
+      "prefix": "):\n\n    # Empty attribute value\n    yield \"\"\"\\\n<input value=\"\" />\n<div class=\"\">Empty class</div>\"\"\"\n\n    # Multiple classes (space-separated)\n    yield \"\"\"<div class=\"one two three four\">Multiple classes</div>\"\"\"\n\n    # Attribute with special characters\n    yield \"\"\"<div data-value=\"a&lt;b\">Encoded</div>\"\"\"\n\n    # XML namespace attributes\n    yield \"\"\"\\\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n    <use xlink:href=\"#icon\" />\n</svg>\"\"\"\n\n    # Boolean attributes (true = present, false = absent)\n    yield \"\"\"\\\n<input type=\"checkbox\" checked />\n<input type=\"checkbox\" disabled />\n<button disabled>Disabled</button>\"\"\"\n\n    # Very long attribute\n    yield \"\"\"<div data-config=\"this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output\">Long</div>\"\"\"\n\n    # Attribute with expression containing quotes\n    yield f\"\"\"\\\n<div title=\"{escape(",
+      "start": 836,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 891,
+      "prefix": ")} said 'hello'\">Quotes</div>\n<div data-msg=\"{escape(",
+      "start": 886,
+      "suffix": ")} said &quot;hi&quot;\">Double quotes</div>\"\"\"\n\n    # Single vs double quotes\n    yield \"\"\"\\\n<div class=\"single-quoted\">Single</div>\n<div class=\"double-quoted\">Double</div>\"\"\"\n",
       "type": "python"
     },
     {
@@ -120,9 +134,16 @@
       "type": "html"
     },
     {
-      "end": 857,
+      "end": 835,
       "prefix": "",
       "start": 823,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 857,
+      "prefix": "",
+      "start": 842,
       "suffix": "",
       "type": "html"
     },
@@ -134,9 +155,16 @@
       "type": "html"
     },
     {
-      "end": 904,
+      "end": 885,
       "prefix": "",
       "start": 870,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 904,
+      "prefix": "",
+      "start": 892,
       "suffix": "",
       "type": "html"
     },
@@ -297,11 +325,25 @@
       "source_start": 769
     },
     {
+      "compiled_end": 1051,
+      "compiled_start": 1046,
+      "range_type": "Python",
+      "source_end": 841,
+      "source_start": 836
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 835,
+      "source_start": 823
+    },
+    {
       "compiled_end": 1025,
       "compiled_start": 1025,
       "range_type": "Html",
       "source_end": 857,
-      "source_start": 823
+      "source_start": 842
     },
     {
       "compiled_end": 1025,
@@ -311,11 +353,25 @@
       "source_start": 863
     },
     {
+      "compiled_end": 1109,
+      "compiled_start": 1104,
+      "range_type": "Python",
+      "source_end": 891,
+      "source_start": 886
+    },
+    {
+      "compiled_end": 1025,
+      "compiled_start": 1025,
+      "range_type": "Html",
+      "source_end": 885,
+      "source_start": 870
+    },
+    {
       "compiled_end": 1025,
       "compiled_start": 1025,
       "range_type": "Html",
       "source_end": 904,
-      "source_start": 870
+      "source_start": 892
     },
     {
       "compiled_end": 1025,
