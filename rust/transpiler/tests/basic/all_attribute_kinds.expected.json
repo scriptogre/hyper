@@ -22,8 +22,15 @@
       "type": "python"
     },
     {
+      "end": 74,
+      "prefix": "):\n    yield f\"\"\"\\\n<a href=\"/page\" class=\"link-{escape(",
+      "start": 71,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 90,
-      "prefix": "):\n    yield f\"\"\"\\\n<a href=\"/page\" class=\"link-{escape(url)}\" data-url=\"{escape(",
+      "prefix": ")}\" data-url=\"{escape(",
       "start": 87,
       "suffix": "",
       "type": "python"
@@ -43,9 +50,16 @@
       "type": "python"
     },
     {
-      "end": 85,
+      "end": 70,
       "prefix": "",
       "start": 42,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 85,
+      "prefix": "",
+      "start": 75,
       "suffix": "",
       "type": "html"
     },
@@ -101,6 +115,13 @@
       "source_start": 24
     },
     {
+      "compiled_end": 186,
+      "compiled_start": 183,
+      "range_type": "Python",
+      "source_end": 74,
+      "source_start": 71
+    },
+    {
       "compiled_end": 211,
       "compiled_start": 208,
       "range_type": "Python",
@@ -125,8 +146,15 @@
       "compiled_end": 145,
       "compiled_start": 145,
       "range_type": "Html",
-      "source_end": 85,
+      "source_end": 70,
       "source_start": 42
+    },
+    {
+      "compiled_end": 145,
+      "compiled_start": 145,
+      "range_type": "Html",
+      "source_end": 85,
+      "source_start": 75
     },
     {
       "compiled_end": 145,

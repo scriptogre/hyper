@@ -15,23 +15,23 @@
       "type": "python"
     },
     {
-      "end": 136,
+      "end": 128,
       "prefix": "):\n\n    # Emoji in content\n    yield \"\"\"\\\n<span>Hello 👋</span>\n<span>Stars: ⭐⭐⭐</span>\"\"\"\n\n    # Emoji in expressions\n    yield f\"\"\"\\\n<span>{escape(",
-      "start": 131,
+      "start": 123,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 161,
+      "end": 151,
       "prefix": ")}</span>\n<span>{escape(",
-      "start": 152,
+      "start": 144,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 419,
+      "end": 361,
       "prefix": ")}</span>\"\"\"\n\n    # CJK characters\n    yield \"\"\"\\\n<p lang=\"zh\">你好世界</p>\n<p lang=\"ja\">こんにちは</p>\n<p lang=\"ko\">안녕하세요</p>\"\"\"\n\n    # RTL text\n    yield \"\"\"\\\n<p dir=\"rtl\" lang=\"ar\">مرحبا بالعالم</p>\n<p dir=\"rtl\" lang=\"he\">שלום עולם</p>\"\"\"\n\n    # Mixed scripts\n    yield f\"\"\"<p>{escape(",
-      "start": 415,
+      "start": 357,
       "suffix": ")}: 你好, مرحبا, שלום</p>\"\"\"\n\n    # Special Unicode\n    yield \"\"\"\\\n<span>En dash: –</span>\n<span>Em dash: —</span>\n<span>Ellipsis: …</span>\n<span>Quotes: \"quoted\"</span>\n<span>Arrows: ← → ↑ ↓</span>\n<span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>\"\"\"\n",
       "type": "python"
     },
@@ -43,219 +43,219 @@
       "type": "html"
     },
     {
-      "end": 69,
+      "end": 67,
       "prefix": "",
-      "start": 62,
+      "start": 60,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 76,
+      "end": 74,
       "prefix": "",
-      "start": 70,
+      "start": 68,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 99,
+      "end": 91,
       "prefix": "",
-      "start": 92,
+      "start": 84,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 130,
+      "end": 122,
       "prefix": "",
-      "start": 124,
+      "start": 116,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 144,
+      "end": 136,
+      "prefix": "",
+      "start": 129,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 143,
       "prefix": "",
       "start": 137,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 151,
+      "end": 159,
       "prefix": "",
-      "start": 145,
+      "start": 152,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 169,
+      "end": 191,
       "prefix": "",
-      "start": 162,
+      "start": 178,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 201,
+      "end": 199,
       "prefix": "",
-      "start": 188,
+      "start": 195,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 217,
+      "end": 213,
       "prefix": "",
-      "start": 213,
+      "start": 200,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 231,
+      "end": 222,
       "prefix": "",
       "start": 218,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 250,
+      "end": 236,
       "prefix": "",
-      "start": 246,
+      "start": 223,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 264,
+      "end": 245,
       "prefix": "",
-      "start": 251,
+      "start": 241,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 283,
+      "end": 281,
       "prefix": "",
-      "start": 279,
+      "start": 258,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 319,
+      "end": 298,
       "prefix": "",
-      "start": 296,
+      "start": 294,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 348,
+      "end": 322,
       "prefix": "",
-      "start": 344,
+      "start": 299,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 372,
+      "end": 335,
       "prefix": "",
-      "start": 349,
+      "start": 331,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 393,
+      "end": 356,
       "prefix": "",
-      "start": 389,
+      "start": 353,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 414,
+      "end": 383,
       "prefix": "",
-      "start": 411,
+      "start": 379,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 454,
+      "end": 409,
       "prefix": "",
-      "start": 450,
+      "start": 403,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 480,
+      "end": 426,
       "prefix": "",
-      "start": 474,
+      "start": 419,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 499,
+      "end": 433,
       "prefix": "",
-      "start": 492,
+      "start": 427,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 506,
+      "end": 450,
       "prefix": "",
-      "start": 500,
+      "start": 443,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 525,
+      "end": 457,
       "prefix": "",
-      "start": 518,
+      "start": 451,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 532,
+      "end": 475,
       "prefix": "",
-      "start": 526,
+      "start": 468,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 552,
+      "end": 482,
       "prefix": "",
-      "start": 545,
+      "start": 476,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 559,
+      "end": 505,
       "prefix": "",
-      "start": 553,
+      "start": 498,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 582,
+      "end": 512,
       "prefix": "",
-      "start": 575,
+      "start": 506,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 589,
+      "end": 534,
       "prefix": "",
-      "start": 583,
+      "start": 527,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 619,
+      "end": 541,
       "prefix": "",
-      "start": 612,
+      "start": 535,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 626,
+      "end": 567,
       "prefix": "",
-      "start": 620,
-      "suffix": "",
-      "type": "html"
-    },
-    {
-      "end": 663,
-      "prefix": "",
-      "start": 656,
+      "start": 560,
       "suffix": "",
       "type": "html"
     }

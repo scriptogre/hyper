@@ -70,7 +70,13 @@ pub fn validate_python_ranges(source: &str, compiled: &str, ranges: &mut Vec<Ran
 /// For HTML: prefix/suffix are empty — the virtual HTML file is just the source HTML
 /// fragments concatenated. This gives JetBrains enough context for tag completion
 /// and attribute suggestions.
-pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
+///
+/// Source positions in ranges are byte offsets. This function converts them to UTF-16
+/// code unit offsets for the injection start/end fields, since JetBrains TextRange
+/// uses UTF-16 offsets.
+pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Injection> {
+    // Build byte-to-UTF-16 mapping for source string
+    let byte_to_utf16 = build_byte_to_utf16_map(source);
     let mut injections = Vec::new();
 
     // Process each type separately (python and html have independent virtual files)
@@ -84,8 +90,12 @@ pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
             .iter()
             .filter(|r| r.range_type == range_type && r.needs_injection)
             .collect();
-        // Sort by SOURCE position since we're creating injections for the source file
-        type_ranges.sort_by_key(|r| r.source_start);
+        // Python: sort by COMPILED position since prefix computation walks
+        // the compiled code sequentially. HTML: sort by source position.
+        match range_type {
+            RangeType::Python => type_ranges.sort_by_key(|r| r.compiled_start),
+            RangeType::Html => type_ranges.sort_by_key(|r| r.source_start),
+        }
 
         if type_ranges.is_empty() {
             continue;
@@ -109,8 +119,8 @@ pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
 
                     injections.push(Injection {
                         injection_type: type_str.to_string(),
-                        start: range.source_start,
-                        end: range.source_end,
+                        start: byte_to_utf16[range.source_start],
+                        end: byte_to_utf16[range.source_end],
                         prefix,
                         suffix,
                     });
@@ -123,8 +133,8 @@ pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
                 for range in &type_ranges {
                     injections.push(Injection {
                         injection_type: type_str.to_string(),
-                        start: range.source_start,
-                        end: range.source_end,
+                        start: byte_to_utf16[range.source_start],
+                        end: byte_to_utf16[range.source_end],
                         prefix: String::new(),
                         suffix: String::new(),
                     });
@@ -134,6 +144,19 @@ pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
     }
 
     injections
+}
+
+/// Build a mapping from byte offset → UTF-16 code unit offset for a string.
+/// The returned Vec has len = s.len() + 1 (to handle end-of-string positions).
+fn build_byte_to_utf16_map(s: &str) -> Vec<usize> {
+    let mut map = vec![0usize; s.len() + 1];
+    let mut utf16_pos = 0;
+    for (byte_pos, ch) in s.char_indices() {
+        map[byte_pos] = utf16_pos;
+        utf16_pos += ch.len_utf16();
+    }
+    map[s.len()] = utf16_pos;
+    map
 }
 
 /// Extract substring by UTF-16 positions
