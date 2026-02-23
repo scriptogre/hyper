@@ -247,7 +247,6 @@ impl<'a> Tokenizer<'a> {
         }
 
         // 4. Determine line type and tokenize accordingly
-        let _line_start = self.position;
         let line_content = self.peek_line();
 
         // Check for multi-line string start
