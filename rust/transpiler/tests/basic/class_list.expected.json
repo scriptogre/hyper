@@ -4,7 +4,7 @@
       "end": 15,
       "prefix": "from hyper import html, render_class\n\n\n@html\ndef ClassList(*, ",
       "start": 0,
-      "suffix": "):\n\n    _class = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    yield f\"\"\"<button class=\"{render_class(_class)}\">Click</button>\"\"\"\n",
+      "suffix": "):\n\n    class_ = [\"btn\", \"btn-primary\", {\"active\": is_active}]\n    yield f\"\"\"<button class=\"{render_class(class_)}\">Click</button>\"\"\"\n",
       "type": "python"
     }
   ],
