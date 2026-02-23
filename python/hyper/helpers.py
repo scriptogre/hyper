@@ -4,7 +4,6 @@ These functions are used by compiled templates to safely render HTML.
 """
 
 import re
-import ast
 
 __all__ = [
     'Safe',
@@ -16,19 +15,7 @@ __all__ = [
     'render_data',
     'render_aria',
     'spread_attrs',
-    'replace_markers',
 ]
-
-# Compiled regex for attribute markers in templates
-# Matches both:
-# - attrname=‹TYPE:value› (for BOOL, CLASS, STYLE, DATA, ARIA)
-# - ‹TYPE:value› (for SPREAD)
-_ATTR_MARKER_PATTERN = re.compile(r'(?:(\w+)=)?‹(\w+):(.+?)›')
-
-# Pattern for ESCAPE markers: ‹ESCAPE:{expr}›
-# These are standalone markers (not attributes) that need HTML escaping
-# When the f-string runs, {expr} is evaluated and we get ‹ESCAPE:value›
-_ESCAPE_MARKER_PATTERN = re.compile(r'‹ESCAPE:(.+?)›')
 
 
 class Safe(str):
@@ -277,90 +264,3 @@ def spread_attrs(attrs: dict) -> str:
     if not attrs:
         return ''
     return ''.join(render_attr(k, v) for k, v in attrs.items())
-
-
-def replace_markers(html: str) -> str:
-    """Replace attribute markers in compiled template HTML.
-
-    Processes markers like attrname=‹TYPE:value› and replaces them with
-    properly rendered attributes. This allows compiled templates to keep
-    the same structure as source .hyper files for better IDE mapping.
-
-    Supported marker types:
-    - BOOL: Boolean attributes (True → attr name only, False → removed entirely)
-    - CLASS: Class lists/dicts processed via render_class()
-    - STYLE: Style dicts processed via render_style()
-    - DATA: Data attribute dicts expanded to data-* attributes
-    - ARIA: ARIA attribute dicts expanded to aria-* attributes
-    - SPREAD: Dict spread as multiple attributes
-    - ESCAPE: Expressions that need HTML escaping
-
-    Args:
-        html: HTML string containing attribute markers.
-
-    Returns:
-        Processed HTML with markers replaced.
-
-    Example:
-        >>> replace_markers('<button disabled=‹BOOL:True›>')
-        '<button disabled>'
-        >>> replace_markers('<button disabled=‹BOOL:False›>')
-        '<button>'
-        >>> replace_markers('<div class=‹CLASS:["btn", "active"]›>')
-        '<div class="btn active">'
-        >>> replace_markers('<div data=‹DATA:{"user-id": 123}›>')
-        '<div data-user-id="123">'
-        >>> replace_markers('‹ESCAPE:{user_input}›')
-        '<escaped output>'
-    """
-    # First, process ESCAPE markers (standalone, not attributes)
-    def replace_escape(match):
-        # The f-string has already evaluated {expr}, so we get the actual value here
-        # E.g., source: {item} → compiled: ‹ESCAPE:{item}› → f-string evaluates to: ‹ESCAPE:actual_value›
-        value = match.group(1)
-        return escape_html(str(value))
-
-    html = _ESCAPE_MARKER_PATTERN.sub(replace_escape, html)
-
-    # Then process attribute markers
-    def replace(match):
-        attr_name, marker_type, value_str = match.groups()
-
-        # Parse the value using ast.literal_eval for safety
-        try:
-            value = ast.literal_eval(value_str)
-        except (ValueError, SyntaxError):
-            # If parsing fails, return original marker
-            return match.group(0)
-
-        # Process based on marker type
-        match marker_type:
-            case 'BOOL':
-                # Boolean: True → just attr name, False → remove entirely
-                return attr_name if value else ''
-
-            case 'CLASS':
-                # Class: render as class="..."
-                return f'{attr_name}="{render_class(value)}"'
-
-            case 'STYLE':
-                # Style: render as style="..."
-                return f'{attr_name}="{render_style(value)}"'
-
-            case 'DATA':
-                # Data: expand to data-* attributes (removes "data=" prefix)
-                return render_data(value).lstrip()
-
-            case 'ARIA':
-                # ARIA: expand to aria-* attributes (removes "aria=" prefix)
-                return render_aria(value).lstrip()
-
-            case 'SPREAD':
-                # Spread: expand dict to attributes (no attribute name in source)
-                return spread_attrs(value).lstrip()
-
-            case _:
-                # Unknown marker type, keep as-is
-                return match.group(0)
-
-    return _ATTR_MARKER_PATTERN.sub(replace, html)
