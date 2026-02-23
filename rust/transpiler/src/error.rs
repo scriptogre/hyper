@@ -44,6 +44,10 @@ pub struct ParseError {
     pub help: Option<String>,
 }
 
+/// Result type alias that boxes ParseError to keep Result sizes small.
+/// ParseError is 184+ bytes; boxing it avoids inflating every Ok variant.
+pub type ParseResult<T> = Result<T, Box<ParseError>>;
+
 impl ParseError {
     /// Create a new parse error
     pub fn new(kind: ErrorKind, message: impl Into<String>, span: Span) -> Self {
@@ -55,6 +59,11 @@ impl ParseError {
             related_label: None,
             help: None,
         }
+    }
+
+    /// Convert into a boxed error (for use in ParseResult)
+    pub fn boxed(self) -> Box<Self> {
+        Box::new(self)
     }
 
     /// Add a related span with a label (e.g., "opened here")
@@ -211,7 +220,7 @@ impl std::error::Error for ParseError {}
 /// Error during compilation (parsing or generation)
 #[derive(Debug)]
 pub enum CompileError {
-    Parse(ParseError),
+    Parse(Box<ParseError>),
     Generate(String),
 }
 
@@ -233,8 +242,8 @@ impl CompileError {
     }
 }
 
-impl From<ParseError> for CompileError {
-    fn from(err: ParseError) -> Self {
+impl From<Box<ParseError>> for CompileError {
+    fn from(err: Box<ParseError>) -> Self {
         CompileError::Parse(err)
     }
 }

@@ -1,6 +1,6 @@
 use super::tokenizer::{Token, Span, Position};
 use crate::ast::*;
-use crate::error::{ParseError, ErrorKind};
+use crate::error::{ParseError, ParseResult, ErrorKind};
 use crate::html;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -25,7 +25,7 @@ impl TreeBuilder {
         }
     }
 
-    pub fn build(&mut self) -> Result<Vec<Node>, ParseError> {
+    pub fn build(&mut self) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
@@ -54,7 +54,7 @@ impl TreeBuilder {
     }
 
     /// Require an 'end' token to close a block
-    fn expect_end(&mut self, block_keyword: &str, open_span: &Span) -> Result<(), ParseError> {
+    fn expect_end(&mut self, block_keyword: &str, open_span: &Span) -> ParseResult<()> {
         if let Some(Token::End { .. }) = self.peek() {
             self.advance();
             Ok(())
@@ -65,11 +65,12 @@ impl TreeBuilder {
                 self.current_span(),
             )
             .with_related(*open_span)
-            .with_help("Close with 'end'"))
+            .with_help("Close with 'end'")
+            .boxed())
         }
     }
 
-    fn parse_node(&mut self) -> Result<Option<Node>, ParseError> {
+    fn parse_node(&mut self) -> ParseResult<Option<Node>> {
         if self.is_at_end() {
             return Ok(None);
         }
@@ -187,7 +188,8 @@ impl TreeBuilder {
                         element_tag,
                         examples.iter().map(|e| format!("<{}>", e)).collect::<Vec<_>>().join(", "),
                         element_tag
-                    )));
+                    ))
+                    .boxed());
                 }
 
                 // Check for duplicate attributes
@@ -378,7 +380,7 @@ impl TreeBuilder {
         rest: &str,
         span: &Span,
         rest_span: &Span,
-    ) -> Result<Option<Node>, ParseError> {
+    ) -> ParseResult<Option<Node>> {
         match keyword {
             "if" => self.parse_if(rest, span, rest_span),
             "for" => self.parse_for(rest, span, rest_span, false),
@@ -394,11 +396,11 @@ impl TreeBuilder {
                 ErrorKind::InvalidSyntax,
                 format!("'{}' is not a recognized block keyword.", keyword),
                 *span,
-            )),
+            ).boxed()),
         }
     }
 
-    fn parse_if(&mut self, condition: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_if(&mut self, condition: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
         let condition_span = *rest_span;
         let if_span = *span;
 
@@ -442,7 +444,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_for(&mut self, rest: &str, span: &Span, rest_span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
+    fn parse_for(&mut self, rest: &str, span: &Span, rest_span: &Span, is_async: bool) -> ParseResult<Option<Node>> {
         // Parse "binding in iterable"
         let parts: Vec<&str> = rest.splitn(2, " in ").collect();
         if parts.len() != 2 {
@@ -455,7 +457,8 @@ impl TreeBuilder {
             .with_help(format!(
                 "Syntax: {} x in items:",
                 keyword
-            )));
+            ))
+            .boxed());
         }
 
         let binding = parts[0].trim().to_string();
@@ -489,7 +492,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_while(&mut self, condition: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_while(&mut self, condition: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
         let condition_span = *rest_span;
         let while_span = *span;
 
@@ -507,7 +510,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_match(&mut self, expr: &str, span: &Span, rest_span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_match(&mut self, expr: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
         let expr_span = *rest_span;
         let match_span = *span;
 
@@ -550,7 +553,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_with(&mut self, items: &str, span: &Span, rest_span: &Span, is_async: bool) -> Result<Option<Node>, ParseError> {
+    fn parse_with(&mut self, items: &str, span: &Span, rest_span: &Span, is_async: bool) -> ParseResult<Option<Node>> {
         let items_span = *rest_span;
         let with_span = *span;
 
@@ -570,7 +573,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_try(&mut self, span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_try(&mut self, span: &Span) -> ParseResult<Option<Node>> {
         let try_span = *span;
 
         self.advance();
@@ -627,7 +630,7 @@ impl TreeBuilder {
         keyword: &str,
         rest: &str,
         span: &Span,
-    ) -> Result<Option<Node>, ParseError> {
+    ) -> ParseResult<Option<Node>> {
         // Strip trailing colon from rest if present (parsing may include it)
         let rest_trimmed = rest.trim_end_matches(':').trim();
         let signature = format!("{} {}:", keyword, rest_trimmed);
@@ -652,7 +655,7 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_class(&mut self, rest: &str, span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_class(&mut self, rest: &str, span: &Span) -> ParseResult<Option<Node>> {
         // Strip trailing colon from rest if present (parsing may include it)
         let rest_trimmed = rest.trim_end_matches(':').trim();
         let signature = format!("class {}:", rest_trimmed);
@@ -680,7 +683,7 @@ impl TreeBuilder {
     /// Parse a block body in the header zone, ending by dedentation rather than 'end'.
     /// The block ends when we see a non-whitespace token at or before `base_col`,
     /// a separator, or EOF. Explicit 'end' is still accepted for backwards compat.
-    fn parse_header_block_body(&mut self, base_col: usize) -> Result<Vec<Node>, ParseError> {
+    fn parse_header_block_body(&mut self, base_col: usize) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
         // Track whether we've consumed an Indent token for the current line.
         // After a Newline resets this to false, a non-Indent token at the start
@@ -723,7 +726,7 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    fn parse_until_block_end(&mut self) -> Result<Vec<Node>, ParseError> {
+    fn parse_until_block_end(&mut self) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
@@ -740,7 +743,7 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    fn parse_until_case_end(&mut self) -> Result<Vec<Node>, ParseError> {
+    fn parse_until_case_end(&mut self) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
@@ -765,7 +768,7 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    fn parse_until_element_close(&mut self, tag: &str, open_span: &Span) -> Result<(Vec<Node>, Option<Span>), ParseError> {
+    fn parse_until_element_close(&mut self, tag: &str, open_span: &Span) -> ParseResult<(Vec<Node>, Option<Span>)> {
         self.element_stack.push(tag.to_string());
         let mut nodes = Vec::new();
 
@@ -796,14 +799,15 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Close with </{}> or <{} />", tag, tag)))
+        .with_help(format!("Close with </{}> or <{} />", tag, tag))
+        .boxed())
     }
 
     fn parse_until_component_close(
         &mut self,
         name: &str,
         open_span: &Span,
-    ) -> Result<(Vec<Node>, HashMap<String, Vec<Node>>), ParseError> {
+    ) -> ParseResult<(Vec<Node>, HashMap<String, Vec<Node>>)> {
         let mut children = Vec::new();
         let slots = HashMap::new(); // TODO: parse slots
 
@@ -829,10 +833,11 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Close with </{{{}}}> or <{{{}}} />", name, name)))
+        .with_help(format!("Close with </{{{}}}> or <{{{}}} />", name, name))
+        .boxed())
     }
 
-    fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> Result<Vec<Node>, ParseError> {
+    fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
@@ -858,7 +863,8 @@ impl TreeBuilder {
             self.current_span(),
         )
         .with_related(*open_span)
-        .with_help(format!("Close with </{{{}}}>", slot_name)))
+        .with_help(format!("Close with </{{{}}}>", slot_name))
+        .boxed())
     }
 
     fn convert_attributes(&self, token_attrs: &[super::tokenizer::Attribute]) -> Vec<Attribute> {
@@ -917,7 +923,7 @@ impl TreeBuilder {
             .collect()
     }
 
-    fn check_nesting(&self, child_tag: &str, child_span: &Span) -> Result<(), ParseError> {
+    fn check_nesting(&self, child_tag: &str, child_span: &Span) -> ParseResult<()> {
         if let Some(parent) = self.element_stack.last() {
             // Block elements cannot appear inside <p>
             if html::is_auto_close_element(parent) && html::is_block_element(child_tag) {
@@ -930,7 +936,8 @@ impl TreeBuilder {
                     "Browsers silently close <{}> when they encounter <{}>, so this renders\n\
                      as <{0}></{0}><{1}>...</{1}> — probably not what you want.",
                     parent, child_tag
-                )));
+                ))
+                .boxed());
             }
 
             // Interactive elements cannot nest inside themselves
@@ -940,13 +947,14 @@ impl TreeBuilder {
                     format!("<{}> cannot appear inside <{}>.", child_tag, parent),
                     *child_span,
                 )
-                .with_help("Nesting clickable elements is invalid HTML and causes unpredictable behavior across browsers."));
+                .with_help("Nesting clickable elements is invalid HTML and causes unpredictable behavior across browsers.")
+                .boxed());
             }
         }
         Ok(())
     }
 
-    fn check_duplicate_attributes(&self, attrs: &[Attribute], _element_span: &Span) -> Result<(), ParseError> {
+    fn check_duplicate_attributes(&self, attrs: &[Attribute], _element_span: &Span) -> ParseResult<()> {
         let mut seen = HashMap::new();
         for attr in attrs {
             let name = match &attr.kind {
@@ -965,7 +973,8 @@ impl TreeBuilder {
                         attr.span,
                     )
                     .with_related(*first_span)
-                    .with_related_label("first use"));
+                    .with_related_label("first use")
+                    .boxed());
                 }
                 seen.insert(name, attr.span);
             }
@@ -1175,7 +1184,7 @@ impl TreeBuilder {
         trimmed.starts_with("import ") || trimmed.starts_with("from ")
     }
 
-    fn parse_parameter(&mut self, code: &str, span: &Span) -> Result<Option<Node>, ParseError> {
+    fn parse_parameter(&mut self, code: &str, span: &Span) -> ParseResult<Option<Node>> {
         // Parse "name: type" or "name: type = default"
         let parts: Vec<&str> = code.splitn(2, ':').collect();
         if parts.len() != 2 {
@@ -1201,7 +1210,7 @@ impl TreeBuilder {
                 "Hyper components use keyword-only arguments, so *args (which captures \
                 positional arguments) doesn't make sense. If you want to accept extra \
                 keyword arguments, use **kwargs instead."
-            ));
+            ).boxed());
         }
 
         // Check if there's a default value

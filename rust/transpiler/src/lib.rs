@@ -85,7 +85,7 @@ impl Pipeline {
 
 // Re-export commonly used types
 pub use ast::{Ast, Node, Position, Span};
-pub use error::{CompileError, ParseError};
+pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{GenerateOptions, GenerateResult};
 pub use parser::Parser;
 pub use transform::{Transformer, Visitor};
