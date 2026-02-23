@@ -1,34 +1,12 @@
+mod common;
+
 use hyper_transpiler::{Pipeline, GenerateOptions};
-use hyper_transpiler::generate::RangeType;
-
-/// Helper to get Python-only injections
-fn python_injections(result: &hyper_transpiler::GenerateResult) -> Vec<&hyper_transpiler::generate::Injection> {
-    result.injections.iter().filter(|i| i.injection_type == "python").collect()
-}
-
-/// Helper to get Python-only ranges
-fn python_ranges(result: &hyper_transpiler::GenerateResult) -> Vec<&hyper_transpiler::generate::Range> {
-    result.ranges.iter().filter(|r| r.range_type == RangeType::Python).collect()
-}
-
-/// Helper to get HTML-only injections
-fn html_injections(result: &hyper_transpiler::GenerateResult) -> Vec<&hyper_transpiler::generate::Injection> {
-    result.injections.iter().filter(|i| i.injection_type == "html").collect()
-}
-
-/// Helper to get HTML-only ranges
-fn html_ranges(result: &hyper_transpiler::GenerateResult) -> Vec<&hyper_transpiler::generate::Range> {
-    result.ranges.iter().filter(|r| r.range_type == RangeType::Html).collect()
-}
+use common::{compile_with_ranges, python_injections, python_ranges, html_injections, html_ranges};
 
 #[test]
 fn test_expression_injection() {
     let source = "<button aria={x}>y</button>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     // Should have one Python injection for the {x} expression
     let py = python_injections(&result);
@@ -59,11 +37,7 @@ fn test_expression_injection() {
 #[test]
 fn test_parameter_injection() {
     let source = "x: str\n---\n<div>{x}</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(py.len() >= 1, "Expected at least 1 Python injection (expr)");
@@ -79,11 +53,7 @@ fn test_parameter_injection() {
 #[test]
 fn test_text_expression_injection() {
     let source = "<div>{name}</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     let py_ranges = python_ranges(&result);
@@ -102,11 +72,7 @@ fn test_text_expression_injection() {
 #[test]
 fn test_class_attribute_injection() {
     let source = r#"<div class={active and "active"}>Content</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
@@ -119,11 +85,7 @@ fn test_class_attribute_injection() {
 #[test]
 fn test_style_attribute_injection() {
     let source = r#"<div style={{"color": color}}>Text</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
@@ -137,11 +99,7 @@ fn test_style_attribute_injection() {
 #[test]
 fn test_spread_attribute_injection() {
     let source = r#"<button aria={aria_attrs}>Close</button>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
@@ -161,11 +119,7 @@ y: int
     {y}
     <span aria={z}>text</span>
 </div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     // x in class, y in text, z in aria + params
@@ -185,6 +139,8 @@ y: int
     assert!(!html.is_empty(), "Should have HTML ranges for element tags");
 }
 
+/// Tests that injection ranges are correct when the template uses an explicit `---`
+/// separator between parameters and body. Compare with `test_parameters_without_separator`.
 #[test]
 fn test_parameters_with_separator() {
     let source = r#"is_hidden: bool = False
@@ -194,11 +150,7 @@ fn test_parameters_with_separator() {
 aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
 
 <button aria={aria_attrs}>Close</button>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(py.len() >= 1, "Expected at least 1 Python injection");
@@ -209,6 +161,9 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
     }
 }
 
+/// Tests that injection ranges are correct when there is NO `---` separator.
+/// The parser must infer where parameters end and body begins.
+/// Compare with `test_parameters_with_separator`.
 #[test]
 fn test_parameters_without_separator() {
     let source = r#"is_hidden: bool = False
@@ -216,11 +171,7 @@ fn test_parameters_without_separator() {
 aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
 
 <button aria={aria_attrs}>Close</button>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(py.len() >= 1, "Expected at least 1 Python injection");
@@ -242,11 +193,7 @@ print("test")
 <button aria={x}>
     y
 </button>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(py.len() >= 2, "Expected at least 2 Python injections (statement + expression)");
@@ -273,11 +220,7 @@ print("test")
 #[test]
 fn test_shorthand_attribute_injection() {
     let source = r#"<div {disabled}>Content</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert_eq!(py.len(), 1, "Expected 1 Python injection for shorthand");
@@ -290,11 +233,7 @@ fn test_shorthand_attribute_injection() {
 #[test]
 fn test_spread_stars_attribute_injection() {
     let source = r#"<div {**props}>Content</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert_eq!(py.len(), 1, "Expected 1 Python injection for spread");
@@ -322,11 +261,7 @@ end
 while running:
     <p>Loading...</p>
 end"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py_ranges = python_ranges(&result);
 
@@ -373,11 +308,7 @@ end"#;
 #[test]
 fn test_text_expression_range_excludes_braces() {
     let source = "<div>Hello {name}!</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     // Find the range for the text expression
@@ -393,11 +324,7 @@ fn test_text_expression_range_excludes_braces() {
 #[test]
 fn test_complex_expression_range_excludes_braces() {
     let source = r#"<div>{count + 1}</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     let expr_range = py.iter().find(|r| {
@@ -467,11 +394,7 @@ fn test_error_has_position_for_duplicate_attribute() {
 #[test]
 fn test_html_range_source_text_simple() {
     let source = "<div>Hello</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     assert!(!html.is_empty());
@@ -488,11 +411,7 @@ fn test_html_range_source_text_simple() {
 #[test]
 fn test_html_range_source_text_with_attributes() {
     let source = r#"<div class={active} id="main">Content</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     // HTML ranges should split around the {active} expression
@@ -513,11 +432,7 @@ fn test_html_range_source_text_with_attributes() {
 #[test]
 fn test_html_ranges_void_element() {
     let source = r#"<img src={url} alt="photo" />"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     assert!(!html.is_empty(), "Void elements should have HTML ranges");
@@ -542,11 +457,7 @@ fn test_no_overlap_python_html_ranges() {
     ];
 
     for source in templates {
-        let mut pipeline = Pipeline::standard();
-        let result = pipeline.compile(source, &GenerateOptions {
-            function_name: Some("Test".to_string()),
-            include_ranges: true,
-        }).unwrap();
+        let result = compile_with_ranges(source, "Test");
 
         let py = python_ranges(&result);
         let html = html_ranges(&result);
@@ -569,11 +480,7 @@ fn test_no_overlap_python_html_ranges() {
 #[test]
 fn test_injection_reconstruction_produces_valid_python() {
     let source = "name: str\n---\n<div>{name}</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(!py.is_empty());
@@ -599,11 +506,7 @@ fn test_injection_reconstruction_produces_valid_python() {
 #[test]
 fn test_injection_reconstruction_with_multiple_expressions() {
     let source = r#"<div class={active}>Hello {name}!</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
     assert!(py.len() >= 2, "Should have at least 2 Python injections");
@@ -634,11 +537,7 @@ fn test_injection_reconstruction_with_multiple_expressions() {
 #[test]
 fn test_if_condition_has_python_range() {
     let source = "if active:\n    <div>yes</div>\nend";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     // Should have a range for the "active" condition
@@ -653,11 +552,7 @@ fn test_if_condition_has_python_range() {
 #[test]
 fn test_for_loop_has_python_range() {
     let source = "for item in items:\n    <li>{item}</li>\nend";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     // Should have ranges for "item in items" and "{item}"
@@ -672,11 +567,7 @@ fn test_for_loop_has_python_range() {
 #[test]
 fn test_while_condition_has_python_range() {
     let source = "while running:\n    <p>Loading</p>\nend";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     let has_condition = py.iter().any(|r| {
@@ -689,11 +580,7 @@ fn test_while_condition_has_python_range() {
 #[test]
 fn test_html_ranges_basic() {
     let source = "<div>Hello</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     assert!(!html.is_empty(), "Should have HTML ranges for static element");
@@ -714,11 +601,7 @@ fn test_html_ranges_basic() {
 #[test]
 fn test_html_ranges_with_expression() {
     let source = "<div class={x}>Hello {name}!</div>";
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     assert!(html.len() >= 2, "Should have multiple HTML ranges (split around expressions), got {}", html.len());
@@ -747,11 +630,7 @@ fn test_html_ranges_with_expression() {
 #[test]
 fn test_template_attribute_single_expression() {
     let source = r#"<button class="btn btn-{variant}">Click</button>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     // Should have a Python range for the {variant} expression
@@ -772,11 +651,7 @@ fn test_template_attribute_single_expression() {
 #[test]
 fn test_template_attribute_multiple_expressions() {
     let source = r#"<div data-info="{id}-{variant}">Info</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     let id_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "id");
@@ -792,11 +667,7 @@ fn test_template_attribute_multiple_expressions() {
 #[test]
 fn test_template_attribute_adjacent_expressions() {
     let source = r#"<span data-key="{a}{b}">text</span>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
     let a_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "a");
@@ -809,11 +680,7 @@ fn test_template_attribute_adjacent_expressions() {
 #[test]
 fn test_template_attribute_html_range_splits() {
     let source = r#"<a href="/users/{id}" class="link">Go</a>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
     let py = python_ranges(&result);
@@ -851,11 +718,7 @@ fn test_template_attribute_roundtrip() {
     let source = r#"name: str
 ---
 <div class="item-{name}">text</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let result = pipeline.compile(source, &GenerateOptions {
-        function_name: Some("Test".to_string()),
-        include_ranges: true,
-    }).unwrap();
+    let result = compile_with_ranges(source, "Test");
 
     // Reconstruct virtual Python from injections
     let py_injections: Vec<_> = result.injections.iter()
