@@ -284,45 +284,6 @@ print(Status(status="done"))     # <p>Ready</p>
 
 Use Python expressions directly inside `{}` for inline logic.
 
-### List Comprehensions
-
-> **⚠️ Not Yet Implemented**: HTML inside comprehensions requires a Python expression parser to detect and transform elements into f-strings. Use `for` loops as a workaround.
-
-Generate elements inline without a `for` block:
-
-```hyper
-items: list[str]
-
----
-
-<ul>
-    {[<li>{item}</li> for item in items]}
-</ul>
-```
-
-```python
-print(Template(items=["Apple", "Banana"]))
-```
-
-```html
-<ul>
-    <li>Apple</li>
-    <li>Banana</li>
-</ul>
-```
-
-Comprehensions work with any expression:
-
-```hyper
-users: list[User]
-
----
-
-<select>
-    {[<option value={u.id}>{u.name}</option> for u in users]}
-</select>
-```
-
 ### Conditional Expressions
 
 Use Python's ternary syntax for inline conditionals:
@@ -340,59 +301,7 @@ print(Template(count=1))  # <span>1 item</span>
 print(Template(count=5))  # <span>5 items</span>
 ```
 
-Render different elements:
-
-```hyper
-is_admin: bool
-
----
-
-<div>
-    {<span class="badge">Admin</span> if is_admin else <span>User</span>}
-</div>
-```
-
-**Shorthand for optional content**: Omit `else` when you want nothing:
-
-```hyper
-show_badge: bool
-
----
-
-<div>
-    {<span class="badge">New</span> if show_badge}
-</div>
-```
-
-```python
-print(Template(show_badge=True))   # <div><span class="badge">New</span></div>
-print(Template(show_badge=False))  # <div></div>
-```
-
-The compiler transforms `{x if cond}` to `{x if cond else ''}`.
-
-### Short-Circuit Evaluation
-
-Use `and` to conditionally render content:
-
-```hyper
-show_warning: bool
-message: str
-
----
-
-<div>
-    {show_warning and <p class="warning">{message}</p>}
-</div>
-```
-
-```python
-print(Template(show_warning=True, message="Error!"))
-# <div><p class="warning">Error!</p></div>
-
-print(Template(show_warning=False, message="Error!"))
-# <div></div>
-```
+### Fallback Values
 
 Use `or` for fallback values:
 
@@ -414,10 +323,8 @@ print(Template(title=None))     # <h1>Untitled</h1>
 | Pattern | Use Case |
 |---------|----------|
 | `for...end` block | Multiple elements, complex logic |
-| `{[... for ...]}` | Simple inline iteration |
 | `if...end` block | Multiple elements, else/elif branches |
 | `{x if cond else y}` | Inline choice between two values |
-| `{cond and x}` | Conditionally show one thing |
 | `{x or fallback}` | Provide default for falsy values |
 
 ---

@@ -300,7 +300,7 @@ end
 ```
 **Compiles to:**
 ```python
-yield replace_markers(f"""<div class="card ‹ESCAPE:{theme}›" data-id="‹ESCAPE:{id}›">""")
+yield f"""<div class="card {escape(theme)}" data-id="{escape(id)}">"""
 ```
 
 ---
@@ -339,5 +339,15 @@ def IconButton(icon: str, text: str):
     <button><i class={icon} />{text}</button>
 end
 ```
+
+---
+
+### 019: Direct Function Calls Replace Markers
+
+| | |
+|--|--|
+| **Context** | Markers (`‹ESCAPE:{expr}›`) round-tripped Python values through string serialization. `safe()` was broken (f-string stringified the Safe object before escape_html saw it). `ast.literal_eval` failed for non-literal reprs. |
+| **Decision** | Replace all markers with direct function calls in f-strings. `{escape(expr)}` for content, `{render_class(expr)}` for class, `{render_attr("name", expr)}` for booleans, etc. |
+| **Trade-off** | Generated output diverges slightly more from source HTML structure, but IDE injection mapping still works (prefix/suffix mechanism unchanged). Eliminates `replace_markers()`, regex patterns, and `ast.literal_eval`. |
 
 ---

@@ -23,19 +23,18 @@ count: int = 0
 Get this:
 
 ```python
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
 def Template(*, name: str, count: int = 0):
-    yield replace_markers(f"""\
+    yield f"""\
 <div>
-    <h1>Hello ‹ESCAPE:{name}›</h1>""")
+    <h1>Hello {escape(name)}</h1>"""
 
     if count > 0:
-        yield replace_markers(f"""\
-<p>You have ‹ESCAPE:{count}› items</p>
-    """)
+        yield f"""\
+<p>You have {escape(count)} items</p>"""
 
     yield "</div>"
 ```
@@ -63,12 +62,12 @@ count: int = 0
 ```
 
 ```python
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
 def Template(*, title: str, count: int = 0, **kwargs: dict):
-    yield replace_markers(f"""<div>‹ESCAPE:{title}›</div>""")
+    yield f"""<div>{escape(title)}</div>"""
 ```
 
 ### Below `---`: Function Body
@@ -97,9 +96,8 @@ def Template():
     yield "<ul>"
 
     for item in items:
-        yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+        yield f"""\
+<li>{escape(item)}</li>"""
 
     yield "</ul>"
 ```
@@ -183,7 +181,7 @@ def format_date(date):
 
 @html
 def Template(*, created_at: datetime):
-    yield replace_markers(f"""<p>Created: ‹ESCAPE:{format_date(created_at)}›</p>""")
+    yield f"""<p>Created: {escape(format_date(created_at))}</p>"""
 ```
 
 Pure Python helpers above `---` use normal Python scoping — no `end` needed.
@@ -210,14 +208,14 @@ items: list
 
 ```python
 from typing import Final
-from hyper import html, replace_markers
+from hyper import html, escape
 
 MAX_ITEMS: Final[int] = 100
 
 
 @html
 def Template(*, items: list):
-    yield replace_markers(f"""<p>Showing ‹ESCAPE:{len(items[:MAX_ITEMS])}› items</p>""")
+    yield f"""<p>Showing {escape(len(items[:MAX_ITEMS]))} items</p>"""
 ```
 
 Constants stay at module level.
@@ -273,9 +271,9 @@ Collects info: which helpers are used, async detection, slot parameters.
 
 ### Generator: Yield-Based Streaming
 
-The generator emits `yield` statements instead of appending to a list. Static HTML yields plain strings. Dynamic content yields f-strings processed by `replace_markers`.
+The generator emits `yield` statements instead of appending to a list. Static HTML yields plain strings. Dynamic content yields f-strings with direct function calls for escaping and attribute rendering.
 
-Special attributes use markers:
+Special attributes use helper functions:
 
 ```hyper
 class = ["btn", "active"]
@@ -283,11 +281,11 @@ class = ["btn", "active"]
 ```
 
 ```python
-_class = ["btn", "active"]
-yield replace_markers(f"""<div class=‹CLASS:{_class}›>""")
+class_ = ["btn", "active"]
+yield f"""<div class="{render_class(class_)}">"""
 ```
 
-**Why markers?** IDE sees `_class`, not `render_class(_class)`. Autocomplete works. `replace_markers` processes them at runtime.
+Content expressions use `escape()`, class attributes use `render_class()`, boolean attributes use `render_attr()`. All processing happens inline in f-strings with no post-processing step.
 
 ---
 
@@ -392,7 +390,7 @@ end
 ```
 ```python
 for item in items:
-    yield replace_markers(f"""<li>‹ESCAPE:{item.name}›</li>""")
+    yield f"""<li>{escape(item.name)}</li>"""
 ```
 
 Components → yield from:
@@ -436,16 +434,16 @@ hyper generate --stdin --json --injection
 
 ### Auto-Escaping
 
-All expressions are escaped via markers:
+All expressions are escaped via direct function calls:
 
 ```hyper
 <div>{user_input}</div>
 ```
 ```python
-yield replace_markers(f"""<div>‹ESCAPE:{user_input}›</div>""")
+yield f"""<div>{escape(user_input)}</div>"""
 ```
 
-`replace_markers` escapes values at runtime. Static HTML (no expressions) yields plain strings without processing.
+`escape()` converts values to strings and HTML-escapes them. Static HTML (no expressions) yields plain strings without processing.
 
 ### Raw HTML
 
@@ -493,7 +491,7 @@ Validates templates before code runs.
 - `.hyper` → `.py` at build time
 - Yield-based generators enable streaming
 - `@html` decorator handles `str()` conversion
-- Auto-escaping via markers prevents XSS
+- Auto-escaping via `escape()` prevents XSS
 - Source maps for IDE support
 - `end` keyword required in HTML-rendering contexts, not for pure Python above `---`
 
