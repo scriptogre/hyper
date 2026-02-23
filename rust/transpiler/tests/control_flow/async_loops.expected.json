@@ -22,9 +22,9 @@
       "type": "python"
     },
     {
-      "end": 98,
+      "end": 97,
       "prefix": ":\n        yield f\"\"\"<div>{escape(",
-      "start": 92,
+      "start": 93,
       "suffix": "",
       "type": "python"
     },
@@ -36,9 +36,9 @@
       "type": "python"
     },
     {
-      "end": 194,
+      "end": 193,
       "prefix": ":\n        yield f\"\"\"<span>Connected: {escape(",
-      "start": 185,
+      "start": 186,
       "suffix": "",
       "type": "python"
     },
@@ -57,11 +57,53 @@
       "type": "python"
     },
     {
-      "end": 313,
+      "end": 312,
       "prefix": ":\n            yield f\"\"\"\\\n<p>{escape(",
-      "start": 304,
+      "start": 305,
       "suffix": ")}</p>\n    \"\"\"\n\n\n",
       "type": "python"
+    },
+    {
+      "end": 92,
+      "prefix": "",
+      "start": 87,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 104,
+      "prefix": "",
+      "start": 98,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 174,
+      "prefix": "",
+      "start": 168,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 201,
+      "prefix": "",
+      "start": 194,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 304,
+      "prefix": "",
+      "start": 301,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 317,
+      "prefix": "",
+      "start": 313,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -90,8 +132,22 @@
       "compiled_end": 188,
       "compiled_start": 184,
       "range_type": "Python",
-      "source_end": 98,
-      "source_start": 92
+      "source_end": 97,
+      "source_start": 93
+    },
+    {
+      "compiled_end": 166,
+      "compiled_start": 166,
+      "range_type": "Html",
+      "source_end": 92,
+      "source_start": 87
+    },
+    {
+      "compiled_end": 166,
+      "compiled_start": 166,
+      "range_type": "Html",
+      "source_end": 104,
+      "source_start": 98
     },
     {
       "compiled_end": 262,
@@ -104,8 +160,22 @@
       "compiled_end": 314,
       "compiled_start": 307,
       "range_type": "Python",
-      "source_end": 194,
-      "source_start": 185
+      "source_end": 193,
+      "source_start": 186
+    },
+    {
+      "compiled_end": 277,
+      "compiled_start": 277,
+      "range_type": "Html",
+      "source_end": 174,
+      "source_start": 168
+    },
+    {
+      "compiled_end": 277,
+      "compiled_start": 277,
+      "range_type": "Html",
+      "source_end": 201,
+      "source_start": 194
     },
     {
       "compiled_end": 381,
@@ -125,8 +195,22 @@
       "compiled_end": 470,
       "compiled_start": 463,
       "range_type": "Python",
-      "source_end": 313,
-      "source_start": 304
+      "source_end": 312,
+      "source_start": 305
+    },
+    {
+      "compiled_end": 443,
+      "compiled_start": 443,
+      "range_type": "Html",
+      "source_end": 304,
+      "source_start": 301
+    },
+    {
+      "compiled_end": 443,
+      "compiled_start": 443,
+      "range_type": "Html",
+      "source_end": 317,
+      "source_start": 313
     }
   ]
 }

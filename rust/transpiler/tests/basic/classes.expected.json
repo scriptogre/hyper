@@ -15,16 +15,30 @@
       "type": "python"
     },
     {
-      "end": 205,
-      "prefix": "):\n\n    # Simple class\n\n    class Card:\n\n        def __init__(self, title: str):\n\n            self.title = title\n\n\n        def render(self):\n            yield f\"\"\"\\\n<div class=\"card\">\n            <h3>{escape(",
-      "start": 193,
+      "end": 118,
+      "prefix": "):\n\n    # Simple class\n\n    class Card:\n\n        def __init__(self, title: str):\n\n            ",
+      "start": 100,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 410,
-      "prefix": ")}</h3>\n        </div>\n    \"\"\"\n\n\n    # Class with multiple methods\n\n    class List:\n\n        def __init__(self, items: list):\n\n            self.items = items\n\n\n        def render_item(self, item: str):\n            yield f\"\"\"\\\n<li>{escape(",
-      "start": 404,
+      "end": 204,
+      "prefix": "\n\n\n        def render(self):\n            yield f\"\"\"\\\n<div class=\"card\">\n            <h3>{escape(",
+      "start": 194,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 344,
+      "prefix": ")}</h3>\n        </div>\n    \"\"\"\n\n\n    # Class with multiple methods\n\n    class List:\n\n        def __init__(self, items: list):\n\n            ",
+      "start": 326,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 409,
+      "prefix": "\n\n\n        def render_item(self, item: str):\n            yield f\"\"\"\\\n<li>{escape(",
+      "start": 405,
       "suffix": "",
       "type": "python"
     },
@@ -32,8 +46,85 @@
       "end": 494,
       "prefix": ")}</li>\n    \"\"\"\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for item in ",
       "start": 484,
-      "suffix": ":\n\n                self.render_item(item)\n\n\n            yield \"</ul>\"\n\n\n\n    # Instantiate and use\n\n    card = Card(title)\n\n    card.render()\n\n",
+      "suffix": "",
       "type": "python"
+    },
+    {
+      "end": 534,
+      "prefix": ":\n\n                ",
+      "start": 512,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 618,
+      "prefix": "\n\n\n            yield \"</ul>\"\n\n\n\n    # Instantiate and use\n\n    ",
+      "start": 600,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 632,
+      "prefix": "\n\n    ",
+      "start": 619,
+      "suffix": "\n\n",
+      "type": "python"
+    },
+    {
+      "end": 176,
+      "prefix": "",
+      "start": 158,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 193,
+      "prefix": "",
+      "start": 189,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 210,
+      "prefix": "",
+      "start": 205,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 225,
+      "prefix": "",
+      "start": 219,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 404,
+      "prefix": "",
+      "start": 400,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 415,
+      "prefix": "",
+      "start": 410,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 459,
+      "prefix": "",
+      "start": 455,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 564,
+      "prefix": "",
+      "start": 559,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -52,18 +143,74 @@
       "source_start": 11
     },
     {
+      "compiled_end": 189,
+      "compiled_start": 171,
+      "range_type": "Python",
+      "source_end": 118,
+      "source_start": 100
+    },
+    {
       "compiled_end": 295,
       "compiled_start": 285,
       "range_type": "Python",
-      "source_end": 205,
-      "source_start": 193
+      "source_end": 204,
+      "source_start": 194
+    },
+    {
+      "compiled_end": 233,
+      "compiled_start": 233,
+      "range_type": "Html",
+      "source_end": 193,
+      "source_start": 189
+    },
+    {
+      "compiled_end": 233,
+      "compiled_start": 233,
+      "range_type": "Html",
+      "source_end": 210,
+      "source_start": 205
+    },
+    {
+      "compiled_end": 233,
+      "compiled_start": 233,
+      "range_type": "Html",
+      "source_end": 176,
+      "source_start": 158
+    },
+    {
+      "compiled_end": 233,
+      "compiled_start": 233,
+      "range_type": "Html",
+      "source_end": 225,
+      "source_start": 219
+    },
+    {
+      "compiled_end": 452,
+      "compiled_start": 434,
+      "range_type": "Python",
+      "source_end": 344,
+      "source_start": 326
     },
     {
       "compiled_end": 537,
       "compiled_start": 533,
       "range_type": "Python",
-      "source_end": 410,
-      "source_start": 404
+      "source_end": 409,
+      "source_start": 405
+    },
+    {
+      "compiled_end": 512,
+      "compiled_start": 512,
+      "range_type": "Html",
+      "source_end": 404,
+      "source_start": 400
+    },
+    {
+      "compiled_end": 512,
+      "compiled_start": 512,
+      "range_type": "Html",
+      "source_end": 415,
+      "source_start": 410
     },
     {
       "compiled_end": 641,
@@ -71,6 +218,41 @@
       "range_type": "Python",
       "source_end": 494,
       "source_start": 484
+    },
+    {
+      "compiled_end": 682,
+      "compiled_start": 660,
+      "range_type": "Python",
+      "source_end": 534,
+      "source_start": 512
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 459,
+      "source_start": 455
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 564,
+      "source_start": 559
+    },
+    {
+      "compiled_end": 763,
+      "compiled_start": 745,
+      "range_type": "Python",
+      "source_end": 618,
+      "source_start": 600
+    },
+    {
+      "compiled_end": 782,
+      "compiled_start": 769,
+      "range_type": "Python",
+      "source_end": 632,
+      "source_start": 619
     }
   ]
 }

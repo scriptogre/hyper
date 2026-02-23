@@ -34,6 +34,48 @@
       "start": 127,
       "suffix": ":\n            yield \"\"\"<p>Ready</p>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 63,
+      "prefix": "",
+      "start": 60,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 77,
+      "prefix": "",
+      "start": 73,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 107,
+      "prefix": "",
+      "start": 104,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 117,
+      "prefix": "",
+      "start": 113,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 141,
+      "prefix": "",
+      "start": 138,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 150,
+      "prefix": "",
+      "start": 146,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -59,6 +101,20 @@
       "source_start": 41
     },
     {
+      "compiled_end": 115,
+      "compiled_start": 115,
+      "range_type": "Html",
+      "source_end": 63,
+      "source_start": 60
+    },
+    {
+      "compiled_end": 115,
+      "compiled_start": 115,
+      "range_type": "Html",
+      "source_end": 77,
+      "source_start": 73
+    },
+    {
       "compiled_end": 170,
       "compiled_start": 163,
       "range_type": "Python",
@@ -66,11 +122,39 @@
       "source_start": 87
     },
     {
+      "compiled_end": 186,
+      "compiled_start": 186,
+      "range_type": "Html",
+      "source_end": 107,
+      "source_start": 104
+    },
+    {
+      "compiled_end": 186,
+      "compiled_start": 186,
+      "range_type": "Html",
+      "source_end": 117,
+      "source_start": 113
+    },
+    {
       "compiled_end": 231,
       "compiled_start": 230,
       "range_type": "Python",
       "source_end": 128,
       "source_start": 127
+    },
+    {
+      "compiled_end": 245,
+      "compiled_start": 245,
+      "range_type": "Html",
+      "source_end": 141,
+      "source_start": 138
+    },
+    {
+      "compiled_end": 245,
+      "compiled_start": 245,
+      "range_type": "Html",
+      "source_end": 150,
+      "source_start": 146
     }
   ]
 }

@@ -13,6 +13,34 @@
       "start": 15,
       "suffix": "):\n\n    # Component from module\n\n    yield from module.Button(label=\"Click\")\n\n    # Component from dict\n\n    # <{components['Card']}>\n    def _components_card():\n        yield \"\"\"<p>Content</p>\"\"\"\n    yield from components['Card'](_components_card())\n    # </{components['Card']}>\n\n    # Empty component (not self-closing)\n\n    yield from Wrapper()\n\n    # Component with only whitespace\n\n    # <{Container}>\n    def _container():\n        pass\n    yield from Container(_container())\n    # </{Container}>\n\n    # Deeply nested components\n\n    # <{Outer}>\n    def _outer():\n\n        # <{Middle}>\n        def _middle():\n\n            # <{Inner}>\n            def _inner():\n                yield \"\"\"\\\n<span>Deep</span>\n        \"\"\"\n            yield from Inner(_inner())\n            # </{Inner}>\n\n        yield from Middle(_middle())\n        # </{Middle}>\n\n    yield from Outer(_outer())\n    # </{Outer}>\n\n",
       "type": "python"
+    },
+    {
+      "end": 149,
+      "prefix": "",
+      "start": 146,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 160,
+      "prefix": "",
+      "start": 156,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 400,
+      "prefix": "",
+      "start": 394,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 411,
+      "prefix": "",
+      "start": 404,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -29,6 +57,34 @@
       "range_type": "Python",
       "source_end": 31,
       "source_start": 15
+    },
+    {
+      "compiled_end": 254,
+      "compiled_start": 254,
+      "range_type": "Html",
+      "source_end": 149,
+      "source_start": 146
+    },
+    {
+      "compiled_end": 254,
+      "compiled_start": 254,
+      "range_type": "Html",
+      "source_end": 160,
+      "source_start": 156
+    },
+    {
+      "compiled_end": 760,
+      "compiled_start": 760,
+      "range_type": "Html",
+      "source_end": 400,
+      "source_start": 394
+    },
+    {
+      "compiled_end": 760,
+      "compiled_start": 760,
+      "range_type": "Html",
+      "source_end": 411,
+      "source_start": 404
     }
   ]
 }

@@ -1,0 +1,62 @@
+{
+  "injections": [
+    {
+      "end": 5,
+      "prefix": "",
+      "start": 0,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 37,
+      "prefix": "",
+      "start": 31,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 44,
+      "prefix": "",
+      "start": 38,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 63,
+      "prefix": "",
+      "start": 56,
+      "suffix": "",
+      "type": "html"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 5,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 37,
+      "source_start": 31
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 44,
+      "source_start": 38
+    },
+    {
+      "compiled_end": 63,
+      "compiled_start": 63,
+      "range_type": "Html",
+      "source_end": 63,
+      "source_start": 56
+    }
+  ]
+}

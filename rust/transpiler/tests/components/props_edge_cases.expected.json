@@ -1,8 +1,15 @@
 {
   "injections": [
     {
+      "end": 58,
+      "prefix": "from typing import Any\nfrom hyper import html, escape\n\n\n@html\ndef PropsEdgeCases(*, simple: str, with_default: str = \"default value\", none_default: str | None = None, empty_string: str = \"\", zero_default: int = 0, false_default: bool = False, empty_list: list = [], empty_dict: dict = {}, complex_default: dict = {\"key\": \"value\"}, **kwargs: Any):\n    # Docstring in header\n    ",
+      "start": 22,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 100,
-      "prefix": "from typing import Any\nfrom hyper import html, escape\n\n\n@html\ndef PropsEdgeCases(*, ",
+      "prefix": "",
       "start": 89,
       "suffix": "",
       "type": "python"
@@ -64,25 +71,81 @@
       "type": "python"
     },
     {
-      "end": 371,
+      "end": 370,
       "prefix": ", **kwargs: Any):\n    # Docstring in header\n    \"\"\"This is a component docstring.\"\"\"\n    # Various parameter patterns\n    yield f\"\"\"\\\n<div>\n    <span>{escape(",
-      "start": 363,
+      "start": 364,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 403,
+      "end": 402,
       "prefix": ")}</span>\n    <span>{escape(",
-      "start": 389,
+      "start": 390,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 445,
+      "end": 444,
       "prefix": ")}</span>\n    <span>{escape(",
-      "start": 421,
+      "start": 422,
       "suffix": ")}</span>\n</div>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 352,
+      "prefix": "",
+      "start": 347,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 363,
+      "prefix": "",
+      "start": 357,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 378,
+      "prefix": "",
+      "start": 371,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 389,
+      "prefix": "",
+      "start": 383,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 410,
+      "prefix": "",
+      "start": 403,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 421,
+      "prefix": "",
+      "start": 415,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 452,
+      "prefix": "",
+      "start": 445,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 459,
+      "prefix": "",
+      "start": 453,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -150,25 +213,88 @@
       "source_start": 286
     },
     {
+      "compiled_end": 413,
+      "compiled_start": 377,
+      "range_type": "Python",
+      "source_end": 58,
+      "source_start": 22
+    },
+    {
       "compiled_end": 493,
       "compiled_start": 487,
       "range_type": "Python",
-      "source_end": 371,
-      "source_start": 363
+      "source_end": 370,
+      "source_start": 364
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 363,
+      "source_start": 357
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 378,
+      "source_start": 371
     },
     {
       "compiled_end": 533,
       "compiled_start": 521,
       "range_type": "Python",
-      "source_end": 403,
-      "source_start": 389
+      "source_end": 402,
+      "source_start": 390
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 389,
+      "source_start": 383
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 410,
+      "source_start": 403
     },
     {
       "compiled_end": 583,
       "compiled_start": 561,
       "range_type": "Python",
-      "source_end": 445,
-      "source_start": 421
+      "source_end": 444,
+      "source_start": 422
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 421,
+      "source_start": 415
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 452,
+      "source_start": 445
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 352,
+      "source_start": 347
+    },
+    {
+      "compiled_end": 461,
+      "compiled_start": 461,
+      "range_type": "Html",
+      "source_end": 459,
+      "source_start": 453
     }
   ]
 }

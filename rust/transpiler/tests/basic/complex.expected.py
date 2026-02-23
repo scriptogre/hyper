@@ -42,6 +42,6 @@ def Complex(*, data: dict, items: list, count: int):
 
     # Format specifiers
     yield f"""\
-<span>{escape(count:03d)}</span>
-<span>{escape(3.14159:.2f)}</span>
-<span>{escape(data['name']:>20)}</span>"""
+<span>{count:03d}</span>
+<span>{3.14159:.2f}</span>
+<span>{data['name']:>20}</span>"""

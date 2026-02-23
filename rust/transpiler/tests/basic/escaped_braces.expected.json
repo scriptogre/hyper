@@ -8,11 +8,123 @@
       "type": "python"
     },
     {
-      "end": 190,
+      "end": 189,
       "prefix": "):\n\n    # Escaped braces for literal output\n    yield \"\"\"\\\n<p>Use {variable} for templates</p>\n<p>JSON: {\"key\": \"value\"}</p>\"\"\"\n\n    # Mixed escaped and dynamic\n    yield f\"\"\"<p>Static {{braces}} and dynamic {escape(",
-      "start": 184,
+      "start": 185,
       "suffix": ")}</p>\"\"\"\n\n    # In style blocks (CSS needs escaped braces)\n    yield \"\"\"\\\n<style>\n    .card { background: white; }\n    .card:hover { transform: scale(1.05); }\n</style>\"\"\"\n\n    # In script blocks (JS needs escaped braces)\n    yield \"\"\"\\\n<script>\n    const obj = { name: \"{name}\" };\n</script>\"\"\"\n\n    # Alpine.js x-data\n    yield \"\"\"\\\n<div x-data=\"{{ open: false }}\">\n    <button @click=\"open = !open\">Toggle</button>\n</div>\"\"\"\n\n    # Multiple consecutive\n    yield \"\"\"<p>{{nested}}</p>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 55,
+      "prefix": "",
+      "start": 52,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 89,
+      "prefix": "",
+      "start": 85,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 93,
+      "prefix": "",
+      "start": 90,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 121,
+      "prefix": "",
+      "start": 117,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 154,
+      "prefix": "",
+      "start": 151,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 194,
+      "prefix": "",
+      "start": 190,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 248,
+      "prefix": "",
+      "start": 241,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 338,
+      "prefix": "",
+      "start": 330,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 393,
+      "prefix": "",
+      "start": 385,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 441,
+      "prefix": "",
+      "start": 432,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 494,
+      "prefix": "",
+      "start": 462,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 529,
+      "prefix": "",
+      "start": 499,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 544,
+      "prefix": "",
+      "start": 535,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 551,
+      "prefix": "",
+      "start": 545,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 579,
+      "prefix": "",
+      "start": 576,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 597,
+      "prefix": "",
+      "start": 593,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -24,11 +136,123 @@
       "source_start": 0
     },
     {
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 55,
+      "source_start": 52
+    },
+    {
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 89,
+      "source_start": 85
+    },
+    {
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 93,
+      "source_start": 90
+    },
+    {
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 121,
+      "source_start": 117
+    },
+    {
       "compiled_end": 289,
       "compiled_start": 285,
       "range_type": "Python",
-      "source_end": 190,
-      "source_start": 184
+      "source_end": 189,
+      "source_start": 185
+    },
+    {
+      "compiled_end": 243,
+      "compiled_start": 243,
+      "range_type": "Html",
+      "source_end": 154,
+      "source_start": 151
+    },
+    {
+      "compiled_end": 243,
+      "compiled_start": 243,
+      "range_type": "Html",
+      "source_end": 194,
+      "source_start": 190
+    },
+    {
+      "compiled_end": 363,
+      "compiled_start": 363,
+      "range_type": "Html",
+      "source_end": 248,
+      "source_start": 241
+    },
+    {
+      "compiled_end": 363,
+      "compiled_start": 363,
+      "range_type": "Html",
+      "source_end": 338,
+      "source_start": 330
+    },
+    {
+      "compiled_end": 525,
+      "compiled_start": 525,
+      "range_type": "Html",
+      "source_end": 393,
+      "source_start": 385
+    },
+    {
+      "compiled_end": 525,
+      "compiled_start": 525,
+      "range_type": "Html",
+      "source_end": 441,
+      "source_start": 432
+    },
+    {
+      "compiled_end": 622,
+      "compiled_start": 622,
+      "range_type": "Html",
+      "source_end": 529,
+      "source_start": 499
+    },
+    {
+      "compiled_end": 622,
+      "compiled_start": 622,
+      "range_type": "Html",
+      "source_end": 544,
+      "source_start": 535
+    },
+    {
+      "compiled_end": 622,
+      "compiled_start": 622,
+      "range_type": "Html",
+      "source_end": 494,
+      "source_start": 462
+    },
+    {
+      "compiled_end": 622,
+      "compiled_start": 622,
+      "range_type": "Html",
+      "source_end": 551,
+      "source_start": 545
+    },
+    {
+      "compiled_end": 756,
+      "compiled_start": 756,
+      "range_type": "Html",
+      "source_end": 579,
+      "source_start": 576
+    },
+    {
+      "compiled_end": 756,
+      "compiled_start": 756,
+      "range_type": "Html",
+      "source_end": 597,
+      "source_start": 593
     }
   ]
 }

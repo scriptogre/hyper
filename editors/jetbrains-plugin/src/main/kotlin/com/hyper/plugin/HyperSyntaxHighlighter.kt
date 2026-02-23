@@ -19,7 +19,7 @@ class HyperSyntaxHighlighter : SyntaxHighlighterBase() {
     companion object {
         val KEYWORD = createTextAttributesKey("HYPER_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
         val COMMENT = createTextAttributesKey("HYPER_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
-        val SEPARATOR = createTextAttributesKey("HYPER_SEPARATOR", DefaultLanguageHighlighterColors.BRACES)
+        val SEPARATOR = createTextAttributesKey("HYPER_SEPARATOR", DefaultLanguageHighlighterColors.KEYWORD)
         val BAD_CHARACTER = createTextAttributesKey("HYPER_BAD_CHARACTER", com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER)
 
         private val KEYWORD_KEYS = arrayOf(KEYWORD)

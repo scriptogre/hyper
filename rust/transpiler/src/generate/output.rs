@@ -42,9 +42,34 @@ pub struct Injection {
     pub suffix: String,
 }
 
+/// Validate Python injection ranges by checking that source text matches compiled text.
+/// JetBrains inserts SOURCE text at each injection point. If source ≠ compiled,
+/// the virtual Python file is malformed (e.g. `render_class(class)` instead of
+/// `render_class(class_)`). Drop any mismatched ranges to prevent this.
+pub fn validate_python_ranges(source: &str, compiled: &str, ranges: &mut Vec<Range>) {
+    ranges.retain(|r| {
+        if r.range_type != RangeType::Python || !r.needs_injection {
+            return true;
+        }
+        let source_text = match source.get(r.source_start..r.source_end) {
+            Some(s) => s,
+            None => return false,
+        };
+        let compiled_text = substring_utf16(compiled, r.compiled_start, r.compiled_end);
+        source_text == compiled_text
+    });
+}
+
 /// Compute prefix/suffix injections from ranges + compiled code.
 /// JetBrains concatenates: prefix1 + source1 + suffix1 + prefix2 + source2 + suffix2...
 /// So we set suffix="" for all but the last injection per type.
+///
+/// For Python: prefix/suffix come from the compiled code, building a virtual Python file
+/// where source expressions are embedded in their compiled context.
+///
+/// For HTML: prefix/suffix are empty — the virtual HTML file is just the source HTML
+/// fragments concatenated. This gives JetBrains enough context for tag completion
+/// and attribute suggestions.
 pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
     let mut injections = Vec::new();
 
@@ -66,31 +91,45 @@ pub fn compute_injections(code: &str, ranges: &[Range]) -> Vec<Injection> {
             continue;
         }
 
-        let mut prev_end = 0;
-        let range_count = type_ranges.len();
+        match range_type {
+            RangeType::Python => {
+                // Python: prefix/suffix from compiled code for virtual Python file
+                let mut prev_end = 0;
+                let range_count = type_ranges.len();
 
-        for (index, range) in type_ranges.iter().enumerate() {
-            let is_last = index == range_count - 1;
+                for (index, range) in type_ranges.iter().enumerate() {
+                    let is_last = index == range_count - 1;
 
-            // prefix = code from previous end to current compiled_start
-            let prefix = substring_utf16(code, prev_end, range.compiled_start);
+                    let prefix = substring_utf16(code, prev_end, range.compiled_start);
+                    let suffix = if is_last {
+                        substring_utf16_to_end(code, range.compiled_end)
+                    } else {
+                        String::new()
+                    };
 
-            // suffix = "" for all but last, code from last compiled_end to end for last
-            let suffix = if is_last {
-                substring_utf16_to_end(code, range.compiled_end)
-            } else {
-                String::new()
-            };
+                    injections.push(Injection {
+                        injection_type: type_str.to_string(),
+                        start: range.source_start,
+                        end: range.source_end,
+                        prefix,
+                        suffix,
+                    });
 
-            injections.push(Injection {
-                injection_type: type_str.to_string(),
-                start: range.source_start,
-                end: range.source_end,
-                prefix,
-                suffix,
-            });
-
-            prev_end = range.compiled_end;
+                    prev_end = range.compiled_end;
+                }
+            }
+            RangeType::Html => {
+                // HTML: empty prefix/suffix — the source already contains HTML
+                for range in &type_ranges {
+                    injections.push(Injection {
+                        injection_type: type_str.to_string(),
+                        start: range.source_start,
+                        end: range.source_end,
+                        prefix: String::new(),
+                        suffix: String::new(),
+                    });
+                }
+            }
         }
     }
 

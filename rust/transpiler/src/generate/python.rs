@@ -63,9 +63,21 @@ impl PythonGenerator {
                     j += 1;
                 }
 
+                // Check if the next node is an inline comment (same source line as content)
+                let trailing_comment = if j < nodes.len() {
+                    if let Node::Comment(c) = nodes[j] {
+                        if c.inline { Some(c) } else { None }
+                    } else { None }
+                } else {
+                    None
+                };
+
                 // Emit combined nodes as a single string/f-string
-                self.emit_combined_nodes(&nodes[i..j], output, indent);
+                self.emit_combined_nodes(&nodes[i..j], output, indent, trailing_comment);
                 i = j;
+                if trailing_comment.is_some() {
+                    i += 1; // skip the comment we already emitted inline
+                }
             } else {
                 // Emit control flow or other non-combinable nodes individually
                 self.emit_node(nodes[i], output, indent);
@@ -89,8 +101,9 @@ impl PythonGenerator {
         }
     }
 
-    /// Emit consecutive text/expression/element nodes as a single yield statement
-    fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize) {
+    /// Emit consecutive text/expression/element nodes as a single yield statement.
+    /// If trailing_comment is Some, the comment is appended inline after the closing `"""`.
+    fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize, trailing_comment: Option<&CommentNode>) {
         // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
 
@@ -161,6 +174,10 @@ impl PythonGenerator {
         }
 
         output.push("\"\"\"");
+        if let Some(comment) = trailing_comment {
+            output.push("  ");
+            output.push(&comment.text);
+        }
         output.newline();
 
         // Emit preserved blank lines
@@ -182,7 +199,27 @@ impl PythonGenerator {
             }
             Node::Expression(expr) => {
                 if in_fstring {
-                    let (start, end) = if expr.escape {
+                    let has_format_extras = expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
+                    let (start, end) = if has_format_extras {
+                        // Format spec, conversion, or debug — emit raw (no escape wrapper)
+                        output.push("{");
+                        let start = output.position();
+                        output.push(&expr.expr);
+                        if expr.debug {
+                            output.push("=");
+                        }
+                        if let Some(conv) = expr.conversion {
+                            output.push("!");
+                            output.push(&conv.to_string());
+                        }
+                        if let Some(ref spec) = expr.format_spec {
+                            output.push(":");
+                            output.push(spec);
+                        }
+                        let end = output.position();
+                        output.push("}");
+                        (start, end)
+                    } else if expr.escape {
                         // Use direct escape() call inside f-string
                         // Track just the expression text for IDE highlighting
                         output.push("{escape(");
@@ -200,9 +237,9 @@ impl PythonGenerator {
                         (start, end)
                     };
 
-                    // For IDE injection, include the braces so they get f-string highlighting
-                    let content_start = expr.span.start.byte;
-                    let content_end = expr.span.end.byte;
+                    // Source range excludes braces — just the inner expression
+                    let content_start = expr.span.start.byte + 1; // skip '{'
+                    let content_end = expr.span.end.byte - 1;     // skip '}'
 
                     output.add_range(Range {
                         range_type: RangeType::Python,
@@ -245,6 +282,89 @@ impl PythonGenerator {
             output.push(&el.tag);
             output.push(">");
         }
+
+        // Add HTML injection ranges for this element's static HTML parts
+        self.add_html_ranges(el, output);
+    }
+
+    /// Add HTML ranges for an element's opening and closing tags.
+    /// The opening tag span (`el.span`) covers `<tag attrs>` or `<tag attrs />`.
+    /// The closing tag span (`el.close_span`) covers `</tag>`.
+    /// We create HTML ranges for the static parts, skipping over expression spans.
+    fn add_html_ranges(&self, el: &ElementNode, output: &mut Output) {
+        // Collect expression spans (exclusive end) within the opening tag.
+        // Dynamic spans already use exclusive end (past '}').
+        // Shorthand/Spread/SlotAssignment spans end AT '}', so we +1 for exclusive end.
+        let mut expr_spans = Vec::new();
+        for attr in &el.attributes {
+            match &attr.kind {
+                AttributeKind::Dynamic { expr_span, .. } => {
+                    // Include the = sign before { so virtual HTML sees a boolean attr
+                    let gap_start = expr_span.start.byte.saturating_sub(1);
+                    expr_spans.push((gap_start, expr_span.end.byte));
+                }
+                AttributeKind::Shorthand { expr_span, .. } => {
+                    expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
+                }
+                AttributeKind::Spread { expr_span, .. } => {
+                    expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
+                }
+                AttributeKind::SlotAssignment { expr_span: Some(span), .. } => {
+                    // Include the = sign before { so virtual HTML sees a boolean attr
+                    let gap_start = span.start.byte.saturating_sub(1);
+                    expr_spans.push((gap_start, span.end.byte + 1));
+                }
+                _ => {}
+            }
+        }
+
+        // Sort by start position
+        expr_spans.sort_by_key(|s| s.0);
+
+        // Create HTML ranges for the gaps between expressions within the opening tag
+        let tag_start = el.span.start.byte;
+        let tag_end = el.span.end.byte;
+        let mut pos = tag_start;
+
+        for (expr_start, expr_end) in &expr_spans {
+            if *expr_start > pos && *expr_start <= tag_end {
+                output.add_range(Range {
+                    range_type: RangeType::Html,
+                    source_start: pos,
+                    source_end: *expr_start,
+                    compiled_start: 0,
+                    compiled_end: 0,
+                    needs_injection: true,
+                });
+            }
+            if *expr_end > pos {
+                pos = *expr_end;
+            }
+        }
+
+        // Remaining static part of opening tag
+        if pos < tag_end {
+            output.add_range(Range {
+                range_type: RangeType::Html,
+                source_start: pos,
+                source_end: tag_end,
+                compiled_start: 0,
+                compiled_end: 0,
+                needs_injection: true,
+            });
+        }
+
+        // Closing tag range (e.g. </div>)
+        if let Some(close_span) = &el.close_span {
+            output.add_range(Range {
+                range_type: RangeType::Html,
+                source_start: close_span.start.byte,
+                source_end: close_span.end.byte,
+                compiled_start: 0,
+                compiled_end: 0,
+                needs_injection: true,
+            });
+        }
     }
 
     /// Check if an attribute name is a boolean HTML attribute
@@ -281,7 +401,7 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
                 output.push("=\"");
-                output.push(value);
+                output.push(&escape_html_attr_quotes(value));
                 output.push("\"");
             }
             AttributeKind::Dynamic { name, expr, expr_span } => {
@@ -345,7 +465,7 @@ impl PythonGenerator {
                     } else {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{");
+                        output.push("=\"{escape(");
                         let start = output.position();
                         output.push(&safe_expr);
                         let end = output.position();
@@ -357,7 +477,7 @@ impl PythonGenerator {
                             compiled_end: end,
                             needs_injection: true,
                         });
-                        output.push("}\"");
+                        output.push(")}\"");
                     }
                 }
             }
@@ -365,83 +485,156 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
             }
-            AttributeKind::Shorthand { name, .. } => {
+            AttributeKind::Shorthand { name, expr_span } => {
                 if in_fstring {
                     // Use safe variable name for reserved keywords
                     let var_name = self.safe_var_name(name);
-                    if name == "class" {
+                    // Shorthand expr_span.end points TO closing brace (not past it),
+                    // so content_end = end.byte gives exclusive end of the name content
+                    let content_start = expr_span.start.byte + 1;
+                    let content_end = expr_span.end.byte;
+
+                    let (start, end) = if name == "class" {
                         output.push(" ");
                         output.push(name);
                         output.push("=\"{render_class(");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}\"");
+                        (s, e)
                     } else if name == "style" {
                         output.push(" ");
                         output.push(name);
                         output.push("=\"{render_style(");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}\"");
+                        (s, e)
                     } else if name == "data" {
                         output.push("{render_data(");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}");
+                        (s, e)
                     } else if name == "aria" {
                         output.push("{render_aria(");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}");
+                        (s, e)
                     } else if self.is_boolean_attribute(name) {
                         output.push("{render_attr(\"");
                         output.push(name);
                         output.push("\", ");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}");
+                        (s, e)
                     } else {
                         // Generic attribute shorthand - treat as spread
                         output.push("{spread_attrs(");
+                        let s = output.position();
                         output.push(&var_name);
+                        let e = output.position();
                         output.push(")}");
-                    }
+                        (s, e)
+                    };
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: start,
+                        compiled_end: end,
+                        needs_injection: true,
+                    });
                 }
             }
-            AttributeKind::Spread { expr, .. } => {
+            AttributeKind::Spread { expr, expr_span } => {
                 if in_fstring {
                     // Detect special spread types by variable name
                     // Convert reserved keywords to safe variable names
                     let trimmed_expr = expr.trim();
                     let safe_expr = self.safe_var_name(trimmed_expr);
+                    // Spread expr_span.end points TO closing brace (not past it).
+                    // Spread syntax is {**expr}, so skip 3 chars for "{**"
+                    let content_start = expr_span.start.byte + 3;
+                    let content_end = expr_span.end.byte;
 
-                    if trimmed_expr == "class" {
+                    let (start, end) = if trimmed_expr == "class" {
                         output.push(" class=\"{render_class(");
+                        let s = output.position();
                         output.push(&safe_expr);
+                        let e = output.position();
                         output.push(")}\"");
+                        (s, e)
                     } else if trimmed_expr == "style" {
                         output.push(" style=\"{render_style(");
+                        let s = output.position();
                         output.push(&safe_expr);
+                        let e = output.position();
                         output.push(")}\"");
+                        (s, e)
                     } else if trimmed_expr == "data" {
                         output.push("{render_data(");
+                        let s = output.position();
                         output.push(&safe_expr);
+                        let e = output.position();
                         output.push(")}");
+                        (s, e)
                     } else if trimmed_expr == "aria" {
                         output.push("{render_aria(");
+                        let s = output.position();
                         output.push(&safe_expr);
+                        let e = output.position();
                         output.push(")}");
+                        (s, e)
                     } else {
                         // Generic spread
                         output.push("{spread_attrs(");
+                        let s = output.position();
                         output.push(&safe_expr);
+                        let e = output.position();
                         output.push(")}");
-                    }
+                        (s, e)
+                    };
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: start,
+                        compiled_end: end,
+                        needs_injection: true,
+                    });
                 }
             }
-            AttributeKind::SlotAssignment { name, expr, .. } => {
+            AttributeKind::SlotAssignment { name, expr, expr_span } => {
                 if let Some(e) = expr {
                     if in_fstring {
                         output.push(" slot:");
                         output.push(name);
                         output.push("=\"{");
+                        let start = output.position();
                         output.push(e);
+                        let end = output.position();
                         output.push("}\"");
+                        if let Some(span) = expr_span {
+                            // SlotAssignment expr_span.end points TO closing brace
+                            let content_start = span.start.byte + 1;
+                            let content_end = span.end.byte;
+                            output.add_range(Range {
+                                range_type: RangeType::Python,
+                                source_start: content_start,
+                                source_end: content_end,
+                                compiled_start: start,
+                                compiled_end: end,
+                                needs_injection: true,
+                            });
+                        }
                     }
                 } else {
                     output.push(" slot:");
@@ -461,7 +654,8 @@ impl PythonGenerator {
         }
     }
 
-    /// Convert {expr} in template string to {escape(expr)} for f-string output
+    /// Convert {expr} in template string to {escape(expr)} for f-string output.
+    /// Also escapes double quotes in static parts as &quot; for valid HTML attributes.
     fn convert_template_expressions(&self, template: &str) -> String {
         let mut result = String::new();
         let mut chars = template.chars().peekable();
@@ -489,6 +683,8 @@ impl PythonGenerator {
                 result.push_str("{escape(");
                 result.push_str(&expr);
                 result.push_str(")}");
+            } else if ch == '"' {
+                result.push_str("&quot;");
             } else {
                 result.push(ch);
             }
@@ -536,7 +732,24 @@ impl PythonGenerator {
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        if expr.escape {
+        let has_format_extras = expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
+        if has_format_extras {
+            // Format spec, conversion, or debug — emit as f-string
+            output.push("yield f\"{");
+            output.push(&expr.expr);
+            if expr.debug {
+                output.push("=");
+            }
+            if let Some(conv) = expr.conversion {
+                output.push("!");
+                output.push(&conv.to_string());
+            }
+            if let Some(ref spec) = expr.format_spec {
+                output.push(":");
+                output.push(spec);
+            }
+            output.push("}\"");
+        } else if expr.escape {
             output.push("yield escape(");
             output.push(&expr.expr);
             output.push(")");
@@ -549,8 +762,23 @@ impl PythonGenerator {
     }
 
     fn emit_element(&self, el: &ElementNode, output: &mut Output, indent: usize) {
+        // Check if any attribute requires f-string interpolation
+        let needs_fstring = el.attributes.iter().any(|attr| {
+            matches!(
+                attr.kind,
+                AttributeKind::Dynamic { .. }
+                    | AttributeKind::Template { .. }
+                    | AttributeKind::Shorthand { .. }
+                    | AttributeKind::Spread { .. }
+            )
+        });
+
         self.indent(output, indent);
-        output.push("yield \"<");
+        if needs_fstring {
+            output.push("yield f\"<");
+        } else {
+            output.push("yield \"<");
+        }
         output.push(&el.tag);
 
         // Emit attributes
@@ -576,6 +804,9 @@ impl PythonGenerator {
             output.push(">\"");
             output.newline();
         }
+
+        // Add HTML injection ranges for this element
+        self.add_html_ranges(el, output);
     }
 
     fn emit_attribute(&self, attr: &Attribute, output: &mut Output) {
@@ -584,15 +815,15 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
                 output.push("=\\\"");
-                output.push(&escape_string(value));
+                output.push(&escape_string(&escape_html_attr_quotes(value)));
                 output.push("\\\"");
             }
             AttributeKind::Dynamic { name, expr, .. } => {
                 output.push(" ");
                 output.push(name);
-                output.push("=\\\"{");
+                output.push("=\\\"{escape(");
                 output.push(expr);
-                output.push("}\\\"");
+                output.push(")}\\\"");
             }
             AttributeKind::Boolean { name } => {
                 output.push(" ");
@@ -696,20 +927,7 @@ impl PythonGenerator {
             // Emit attributes as keyword arguments
             for attr in &c.attributes {
                 output.push(", ");
-                match &attr.kind {
-                    AttributeKind::Static { name, value } => {
-                        output.push(name);
-                        output.push("=\"");
-                        output.push(&escape_string(value));
-                        output.push("\"");
-                    }
-                    AttributeKind::Dynamic { name, expr, .. } => {
-                        output.push(name);
-                        output.push("=");
-                        output.push(expr);
-                    }
-                    _ => {}
-                }
+                self.emit_component_attr(attr, output);
             }
 
             output.push(")");
@@ -735,24 +953,50 @@ impl PythonGenerator {
                     output.push(", ");
                 }
                 first = false;
-                match &attr.kind {
-                    AttributeKind::Static { name, value } => {
-                        output.push(name);
-                        output.push("=\"");
-                        output.push(&escape_string(value));
-                        output.push("\"");
-                    }
-                    AttributeKind::Dynamic { name, expr, .. } => {
-                        output.push(name);
-                        output.push("=");
-                        output.push(expr);
-                    }
-                    _ => {}
-                }
+                self.emit_component_attr(attr, output);
             }
 
             output.push(")");
             output.newline();
+        }
+    }
+
+    /// Emit a single attribute as a Python keyword argument in a component call
+    fn emit_component_attr(&self, attr: &Attribute, output: &mut Output) {
+        match &attr.kind {
+            AttributeKind::Static { name, value } => {
+                output.push(name);
+                output.push("=\"");
+                output.push(&escape_string(value));
+                output.push("\"");
+            }
+            AttributeKind::Dynamic { name, expr, .. } => {
+                output.push(name);
+                output.push("=");
+                output.push(expr);
+            }
+            AttributeKind::Boolean { name } => {
+                output.push(name);
+                output.push("=True");
+            }
+            AttributeKind::Shorthand { name, .. } => {
+                let var_name = self.safe_var_name(name);
+                output.push("**");
+                output.push(&var_name);
+            }
+            AttributeKind::Spread { expr, .. } => {
+                output.push("**");
+                output.push(expr.trim());
+            }
+            AttributeKind::Template { name, value } => {
+                output.push(name);
+                output.push("=f\"");
+                output.push(&self.convert_template_expressions(value));
+                output.push("\"");
+            }
+            AttributeKind::SlotAssignment { .. } => {
+                // Slot assignments are handled separately by the slot mechanism
+            }
         }
     }
 
@@ -1030,6 +1274,11 @@ impl PythonGenerator {
             &stmt.stmt
         };
 
+        // Only create injection range for non-renamed statements
+        let is_renamed = statement != &stmt.stmt;
+
+        let start = output.position();
+
         // For multiline statements, add indent to each continuation line
         if statement.contains('\n') {
             let indent_str = "    ".repeat(indent);
@@ -1046,6 +1295,20 @@ impl PythonGenerator {
         } else {
             output.push(statement);
         }
+
+        let end = output.position();
+
+        if !is_renamed {
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: stmt.span.start.byte,
+                source_end: stmt.span.end.byte,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+            });
+        }
+
         output.newline();
     }
 
@@ -1394,6 +1657,12 @@ fn escape_string(s: &str) -> String {
         .replace('\"', "\\\"")
         .replace('\n', "\\n")
         .replace('\t', "\\t")
+}
+
+/// Escape double quotes as &quot; for HTML attribute values.
+/// This is needed when single-quoted source values contain double quotes.
+fn escape_html_attr_quotes(s: &str) -> String {
+    s.replace('"', "&quot;")
 }
 
 fn to_pascal_case(s: &str) -> String {

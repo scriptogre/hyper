@@ -15,25 +15,277 @@
       "type": "python"
     },
     {
-      "end": 605,
-      "prefix": "):\n\n    # Full-line comment (stripped)\n    yield \"\"\"<div>Content</div>\"\"\"\n\n    # Another full-line comment\n    yield \"\"\"<span>Text</span>\"\"\"\n    # trailing comment after close tag\n\n    # Hash in table header (not a comment)\n    yield \"\"\"<th scope=\"col\">#</th>\"\"\"\n\n    # Hash in URLs (not a comment)\n    yield \"\"\"\\\n<a href=\"#section\">Jump</a>\n<a href=\"/page#anchor\">Link</a>\"\"\"\n\n    # Hash in CSS colors (not a comment)\n    yield \"\"\"\\\n<div style=\"color: #ff0000\">Red</div>\n<div style=\"background: #fff\">White</div>\"\"\"\n\n    # HTML entities with hash\n    yield \"\"\"\\\n<span>&#35;</span>\n<span>&#x23;</span>\"\"\"\n\n    # Multiple hashes as content\n    yield \"\"\"\\\n<div>###</div>\n<th>##</th>\"\"\"\n\n    # Trailing comment after expression\n    yield f\"\"\"<span>{escape(",
-      "start": 599,
+      "end": 604,
+      "prefix": "):\n\n    # Full-line comment (stripped)\n    yield \"\"\"<div>Content</div>\"\"\"\n\n    # Another full-line comment\n    yield \"\"\"<span>Text</span>\"\"\"  # trailing comment after close tag\n\n    # Hash in table header (not a comment)\n    yield \"\"\"<th scope=\"col\">#</th>\"\"\"\n\n    # Hash in URLs (not a comment)\n    yield \"\"\"\\\n<a href=\"#section\">Jump</a>\n<a href=\"/page#anchor\">Link</a>\"\"\"\n\n    # Hash in CSS colors (not a comment)\n    yield \"\"\"\\\n<div style=\"color: #ff0000\">Red</div>\n<div style=\"background: #fff\">White</div>\"\"\"\n\n    # HTML entities with hash\n    yield \"\"\"\\\n<span>&#35;</span>\n<span>&#x23;</span>\"\"\"\n\n    # Multiple hashes as content\n    yield \"\"\"\\\n<div>###</div>\n<th>##</th>\"\"\"\n\n    # Trailing comment after expression\n    yield f\"\"\"<span>{escape(",
+      "start": 600,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 683,
-      "prefix": ")}</span>\"\"\"\n    # show name\n\n    # Hash in expression (not a comment)\n    yield f\"\"\"\\\n<span>{escape(",
-      "start": 670,
+      "end": 682,
+      "prefix": ")}</span>\"\"\"  # show name\n\n    # Hash in expression (not a comment)\n    yield f\"\"\"\\\n<span>{escape(",
+      "start": 671,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 709,
+      "end": 708,
       "prefix": ")}</span>\n<span>{escape(",
-      "start": 697,
-      "suffix": ")}</span>\"\"\"\n\n    # Hash inside paragraph content (not a comment)\n    yield \"\"\"<p>Text # with hash # multiple # times</p>\"\"\"\n\n    # No space before hash (not a comment)\n    yield \"\"\"<span>Item</span># kept as content\"\"\"\n\n    # Hash in attribute value (not a comment)\n    yield \"\"\"<div data-info=\"use # for comments\">Info</div>\"\"\"\n\n    # Trailing comment after self-closing tag\n    yield \"\"\"<br />\"\"\"\n    # self-closing\n\n    # Hash in value attr + trailing comment\n    yield \"\"\"<input value=\"#\" />\"\"\"\n    # input comment\n\n",
+      "start": 698,
+      "suffix": ")}</span>\"\"\"\n\n    # Hash inside paragraph content (not a comment)\n    yield \"\"\"<p>Text # with hash # multiple # times</p>\"\"\"\n\n    # No space before hash (not a comment)\n    yield \"\"\"<span>Item</span># kept as content\"\"\"\n\n    # Hash in attribute value (not a comment)\n    yield \"\"\"<div data-info=\"use # for comments\">Info</div>\"\"\"\n\n    # Trailing comment after self-closing tag\n    yield \"\"\"<br />\"\"\"  # self-closing\n\n    # Hash in value attr + trailing comment\n    yield \"\"\"<input value=\"#\" />\"\"\"  # input comment\n\n",
       "type": "python"
+    },
+    {
+      "end": 63,
+      "prefix": "",
+      "start": 58,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 76,
+      "prefix": "",
+      "start": 70,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 112,
+      "prefix": "",
+      "start": 106,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 123,
+      "prefix": "",
+      "start": 116,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 216,
+      "prefix": "",
+      "start": 200,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 222,
+      "prefix": "",
+      "start": 217,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 274,
+      "prefix": "",
+      "start": 255,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 282,
+      "prefix": "",
+      "start": 278,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 306,
+      "prefix": "",
+      "start": 283,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 314,
+      "prefix": "",
+      "start": 310,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 381,
+      "prefix": "",
+      "start": 353,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 390,
+      "prefix": "",
+      "start": 384,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 421,
+      "prefix": "",
+      "start": 391,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 432,
+      "prefix": "",
+      "start": 426,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 466,
+      "prefix": "",
+      "start": 460,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 478,
+      "prefix": "",
+      "start": 471,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 485,
+      "prefix": "",
+      "start": 479,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 498,
+      "prefix": "",
+      "start": 491,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 534,
+      "prefix": "",
+      "start": 529,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 543,
+      "prefix": "",
+      "start": 537,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 548,
+      "prefix": "",
+      "start": 544,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 555,
+      "prefix": "",
+      "start": 550,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 599,
+      "prefix": "",
+      "start": 593,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 612,
+      "prefix": "",
+      "start": 605,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 670,
+      "prefix": "",
+      "start": 664,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 690,
+      "prefix": "",
+      "start": 683,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 697,
+      "prefix": "",
+      "start": 691,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 716,
+      "prefix": "",
+      "start": 709,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 769,
+      "prefix": "",
+      "start": 766,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 808,
+      "prefix": "",
+      "start": 804,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 855,
+      "prefix": "",
+      "start": 849,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 866,
+      "prefix": "",
+      "start": 859,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 963,
+      "prefix": "",
+      "start": 927,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 973,
+      "prefix": "",
+      "start": 967,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 1023,
+      "prefix": "",
+      "start": 1017,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 1100,
+      "prefix": "",
+      "start": 1081,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -52,25 +304,277 @@
       "source_start": 10
     },
     {
-      "compiled_end": 833,
-      "compiled_start": 829,
-      "range_type": "Python",
-      "source_end": 605,
-      "source_start": 599
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 63,
+      "source_start": 58
     },
     {
-      "compiled_end": 945,
-      "compiled_start": 934,
-      "range_type": "Python",
-      "source_end": 683,
-      "source_start": 670
+      "compiled_end": 127,
+      "compiled_start": 127,
+      "range_type": "Html",
+      "source_end": 76,
+      "source_start": 70
     },
     {
-      "compiled_end": 979,
-      "compiled_start": 969,
+      "compiled_end": 195,
+      "compiled_start": 195,
+      "range_type": "Html",
+      "source_end": 112,
+      "source_start": 106
+    },
+    {
+      "compiled_end": 195,
+      "compiled_start": 195,
+      "range_type": "Html",
+      "source_end": 123,
+      "source_start": 116
+    },
+    {
+      "compiled_end": 309,
+      "compiled_start": 309,
+      "range_type": "Html",
+      "source_end": 216,
+      "source_start": 200
+    },
+    {
+      "compiled_end": 309,
+      "compiled_start": 309,
+      "range_type": "Html",
+      "source_end": 222,
+      "source_start": 217
+    },
+    {
+      "compiled_end": 386,
+      "compiled_start": 386,
+      "range_type": "Html",
+      "source_end": 274,
+      "source_start": 255
+    },
+    {
+      "compiled_end": 386,
+      "compiled_start": 386,
+      "range_type": "Html",
+      "source_end": 282,
+      "source_start": 278
+    },
+    {
+      "compiled_end": 386,
+      "compiled_start": 386,
+      "range_type": "Html",
+      "source_end": 306,
+      "source_start": 283
+    },
+    {
+      "compiled_end": 386,
+      "compiled_start": 386,
+      "range_type": "Html",
+      "source_end": 314,
+      "source_start": 310
+    },
+    {
+      "compiled_end": 506,
+      "compiled_start": 506,
+      "range_type": "Html",
+      "source_end": 381,
+      "source_start": 353
+    },
+    {
+      "compiled_end": 506,
+      "compiled_start": 506,
+      "range_type": "Html",
+      "source_end": 390,
+      "source_start": 384
+    },
+    {
+      "compiled_end": 506,
+      "compiled_start": 506,
+      "range_type": "Html",
+      "source_end": 421,
+      "source_start": 391
+    },
+    {
+      "compiled_end": 506,
+      "compiled_start": 506,
+      "range_type": "Html",
+      "source_end": 432,
+      "source_start": 426
+    },
+    {
+      "compiled_end": 635,
+      "compiled_start": 635,
+      "range_type": "Html",
+      "source_end": 466,
+      "source_start": 460
+    },
+    {
+      "compiled_end": 635,
+      "compiled_start": 635,
+      "range_type": "Html",
+      "source_end": 478,
+      "source_start": 471
+    },
+    {
+      "compiled_end": 635,
+      "compiled_start": 635,
+      "range_type": "Html",
+      "source_end": 485,
+      "source_start": 479
+    },
+    {
+      "compiled_end": 635,
+      "compiled_start": 635,
+      "range_type": "Html",
+      "source_end": 498,
+      "source_start": 491
+    },
+    {
+      "compiled_end": 726,
+      "compiled_start": 726,
+      "range_type": "Html",
+      "source_end": 534,
+      "source_start": 529
+    },
+    {
+      "compiled_end": 726,
+      "compiled_start": 726,
+      "range_type": "Html",
+      "source_end": 543,
+      "source_start": 537
+    },
+    {
+      "compiled_end": 726,
+      "compiled_start": 726,
+      "range_type": "Html",
+      "source_end": 548,
+      "source_start": 544
+    },
+    {
+      "compiled_end": 726,
+      "compiled_start": 726,
+      "range_type": "Html",
+      "source_end": 555,
+      "source_start": 550
+    },
+    {
+      "compiled_end": 830,
+      "compiled_start": 826,
       "range_type": "Python",
-      "source_end": 709,
-      "source_start": 697
+      "source_end": 604,
+      "source_start": 600
+    },
+    {
+      "compiled_end": 811,
+      "compiled_start": 811,
+      "range_type": "Html",
+      "source_end": 599,
+      "source_start": 593
+    },
+    {
+      "compiled_end": 811,
+      "compiled_start": 811,
+      "range_type": "Html",
+      "source_end": 612,
+      "source_start": 605
+    },
+    {
+      "compiled_end": 939,
+      "compiled_start": 928,
+      "range_type": "Python",
+      "source_end": 682,
+      "source_start": 671
+    },
+    {
+      "compiled_end": 913,
+      "compiled_start": 913,
+      "range_type": "Html",
+      "source_end": 670,
+      "source_start": 664
+    },
+    {
+      "compiled_end": 913,
+      "compiled_start": 913,
+      "range_type": "Html",
+      "source_end": 690,
+      "source_start": 683
+    },
+    {
+      "compiled_end": 973,
+      "compiled_start": 963,
+      "range_type": "Python",
+      "source_end": 708,
+      "source_start": 698
+    },
+    {
+      "compiled_end": 913,
+      "compiled_start": 913,
+      "range_type": "Html",
+      "source_end": 697,
+      "source_start": 691
+    },
+    {
+      "compiled_end": 913,
+      "compiled_start": 913,
+      "range_type": "Html",
+      "source_end": 716,
+      "source_start": 709
+    },
+    {
+      "compiled_end": 1051,
+      "compiled_start": 1051,
+      "range_type": "Html",
+      "source_end": 769,
+      "source_start": 766
+    },
+    {
+      "compiled_end": 1051,
+      "compiled_start": 1051,
+      "range_type": "Html",
+      "source_end": 808,
+      "source_start": 804
+    },
+    {
+      "compiled_end": 1154,
+      "compiled_start": 1154,
+      "range_type": "Html",
+      "source_end": 855,
+      "source_start": 849
+    },
+    {
+      "compiled_end": 1154,
+      "compiled_start": 1154,
+      "range_type": "Html",
+      "source_end": 866,
+      "source_start": 859
+    },
+    {
+      "compiled_end": 1252,
+      "compiled_start": 1252,
+      "range_type": "Html",
+      "source_end": 963,
+      "source_start": 927
+    },
+    {
+      "compiled_end": 1252,
+      "compiled_start": 1252,
+      "range_type": "Html",
+      "source_end": 973,
+      "source_start": 967
+    },
+    {
+      "compiled_end": 1362,
+      "compiled_start": 1362,
+      "range_type": "Html",
+      "source_end": 1023,
+      "source_start": 1017
+    },
+    {
+      "compiled_end": 1446,
+      "compiled_start": 1446,
+      "range_type": "Html",
+      "source_end": 1100,
+      "source_start": 1081
     }
   ]
 }

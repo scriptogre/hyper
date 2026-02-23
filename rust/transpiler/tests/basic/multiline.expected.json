@@ -15,39 +15,109 @@
       "type": "python"
     },
     {
-      "end": 146,
+      "end": 145,
       "prefix": "):\n\n    # Multiline dict literal\n\n    config = {\n        \"key1\": \"value1\",\n        \"key2\": \"value2\",\n        \"key3\": \"value3\"\n    }\n    yield f\"\"\"<span>{escape(",
-      "start": 138,
+      "start": 139,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 245,
+      "end": 244,
       "prefix": ")}</span>\"\"\"\n\n    # Multiline list literal\n\n    values = [\n        \"item1\",\n        \"item2\",\n        \"item3\"\n    ]\n    yield f\"\"\"<span>{escape(",
-      "start": 237,
+      "start": 238,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 376,
+      "end": 375,
       "prefix": ")}</span>\"\"\"\n\n    # Multiline function call\n\n    result = some_function(\n        arg1=\"value1\",\n        arg2=\"value2\",\n        arg3=\"value3\"\n    )\n    yield f\"\"\"<span>{escape(",
-      "start": 368,
+      "start": 369,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 497,
+      "end": 496,
       "prefix": ")}</span>\"\"\"\n\n    # Multiline list comprehension\n\n    squares = [\n        x ** 2\n        for x in range(10)\n        if x % 2 == 0\n    ]\n    yield f\"\"\"<span>{escape(",
-      "start": 488,
+      "start": 489,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 619,
+      "end": 618,
       "prefix": ")}</span>\"\"\"\n\n    # Chained method calls (each on own line)\n\n    processed = (data\n        .get('items', [])\n        .copy()\n    )\n    yield f\"\"\"<span>{escape(",
-      "start": 608,
+      "start": 609,
       "suffix": ")}</span>\"\"\"\n",
       "type": "python"
+    },
+    {
+      "end": 138,
+      "prefix": "",
+      "start": 132,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 153,
+      "prefix": "",
+      "start": 146,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 237,
+      "prefix": "",
+      "start": 231,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 252,
+      "prefix": "",
+      "start": 245,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 368,
+      "prefix": "",
+      "start": 362,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 383,
+      "prefix": "",
+      "start": 376,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 488,
+      "prefix": "",
+      "start": 482,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 504,
+      "prefix": "",
+      "start": 497,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 608,
+      "prefix": "",
+      "start": 602,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 626,
+      "prefix": "",
+      "start": 619,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -69,36 +139,106 @@
       "compiled_end": 245,
       "compiled_start": 239,
       "range_type": "Python",
-      "source_end": 146,
-      "source_start": 138
+      "source_end": 145,
+      "source_start": 139
+    },
+    {
+      "compiled_end": 224,
+      "compiled_start": 224,
+      "range_type": "Html",
+      "source_end": 138,
+      "source_start": 132
+    },
+    {
+      "compiled_end": 224,
+      "compiled_start": 224,
+      "range_type": "Html",
+      "source_end": 153,
+      "source_start": 146
     },
     {
       "compiled_end": 394,
       "compiled_start": 388,
       "range_type": "Python",
-      "source_end": 245,
-      "source_start": 237
+      "source_end": 244,
+      "source_start": 238
+    },
+    {
+      "compiled_end": 373,
+      "compiled_start": 373,
+      "range_type": "Html",
+      "source_end": 237,
+      "source_start": 231
+    },
+    {
+      "compiled_end": 373,
+      "compiled_start": 373,
+      "range_type": "Html",
+      "source_end": 252,
+      "source_start": 245
     },
     {
       "compiled_end": 575,
       "compiled_start": 569,
       "range_type": "Python",
-      "source_end": 376,
-      "source_start": 368
+      "source_end": 375,
+      "source_start": 369
+    },
+    {
+      "compiled_end": 554,
+      "compiled_start": 554,
+      "range_type": "Html",
+      "source_end": 368,
+      "source_start": 362
+    },
+    {
+      "compiled_end": 554,
+      "compiled_start": 554,
+      "range_type": "Html",
+      "source_end": 383,
+      "source_start": 376
     },
     {
       "compiled_end": 746,
       "compiled_start": 739,
       "range_type": "Python",
-      "source_end": 497,
-      "source_start": 488
+      "source_end": 496,
+      "source_start": 489
+    },
+    {
+      "compiled_end": 724,
+      "compiled_start": 724,
+      "range_type": "Html",
+      "source_end": 488,
+      "source_start": 482
+    },
+    {
+      "compiled_end": 724,
+      "compiled_start": 724,
+      "range_type": "Html",
+      "source_end": 504,
+      "source_start": 497
     },
     {
       "compiled_end": 914,
       "compiled_start": 905,
       "range_type": "Python",
-      "source_end": 619,
-      "source_start": 608
+      "source_end": 618,
+      "source_start": 609
+    },
+    {
+      "compiled_end": 890,
+      "compiled_start": 890,
+      "range_type": "Html",
+      "source_end": 608,
+      "source_start": 602
+    },
+    {
+      "compiled_end": 890,
+      "compiled_start": 890,
+      "range_type": "Html",
+      "source_end": 626,
+      "source_start": 619
     }
   ]
 }
