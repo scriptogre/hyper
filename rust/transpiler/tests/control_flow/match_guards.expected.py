@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -8,19 +8,19 @@ def MatchGuards(*, value: int, data: dict):
 
     match value:
         case x if x < 0:
-            yield replace_markers(f"""\
-<span>Negative: ‹ESCAPE:{x}›</span>
-    """)
+            yield f"""\
+<span>Negative: {escape(x)}</span>
+    """
         case x if x == 0:
             yield """\
 <span>Zero</span>
     """
         case x if x > 100:
-            yield replace_markers(f"""\
-<span>Large: ‹ESCAPE:{x}›</span>
-    """)
+            yield f"""\
+<span>Large: {escape(x)}</span>
+    """
         case x:
-            yield replace_markers(f"""<span>Normal: ‹ESCAPE:{x}›</span>""")
+            yield f"""<span>Normal: {escape(x)}</span>"""
 
     # Match with pattern guards
 
@@ -34,9 +34,9 @@ def MatchGuards(*, value: int, data: dict):
 <span>Regular user</span>
     """
         case {"type": t} if t.startswith("system"):
-            yield replace_markers(f"""\
-<span>System: ‹ESCAPE:{t}›</span>
-    """)
+            yield f"""\
+<span>System: {escape(t)}</span>
+    """
         case _:
             yield """<span>Unknown</span>"""
 

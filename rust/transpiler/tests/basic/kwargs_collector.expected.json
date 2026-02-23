@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from typing import Any\nfrom hyper import html, replace_markers\n\n\n@html\ndef KwargsCollector(*, ",
+      "prefix": "from typing import Any\nfrom hyper import html, escape, replace_markers\n\n\n@html\ndef KwargsCollector(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 72,
-      "prefix": ", **attrs: Any):\n    yield replace_markers(f\"\"\"\\\n<div class=\"card\" attrs=‹SPREAD:{attrs}›>\n    <h1>‹ESCAPE:",
+      "prefix": ", **attrs: Any):\n    yield replace_markers(f\"\"\"\\\n<div class=\"card\" attrs=‹SPREAD:{attrs}›>\n    <h1>{escape(",
       "start": 65,
-      "suffix": "›</h1>\n</div>\"\"\")\n",
+      "suffix": ")}</h1>\n</div>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 104,
-      "compiled_start": 94,
+      "compiled_end": 112,
+      "compiled_start": 102,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 218,
-      "compiled_start": 211,
+      "compiled_end": 224,
+      "compiled_start": 219,
       "range_type": "Python",
       "source_end": 72,
       "source_start": 65

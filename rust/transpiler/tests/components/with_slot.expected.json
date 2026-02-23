@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef WithSlot(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef WithSlot(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 41,
-      "prefix": "):\n\n    # <{Card}>\n    def _card():\n        yield replace_markers(f\"\"\"\\\n<h2>‹ESCAPE:",
+      "prefix": "):\n\n    # <{Card}>\n    def _card():\n        yield f\"\"\"\\\n<h2>{escape(",
       "start": 34,
-      "suffix": "›</h2>\n    <p>Card content goes here</p>\"\"\")\n    yield from Card(_card())\n    # </{Card}>\n\n",
+      "suffix": ")}</h2>\n    <p>Card content goes here</p>\"\"\"\n    yield from Card(_card())\n    # </{Card}>\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 74,
-      "compiled_start": 64,
+      "compiled_end": 65,
+      "compiled_start": 55,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 165,
-      "compiled_start": 158,
+      "compiled_end": 138,
+      "compiled_start": 133,
       "range_type": "Python",
       "source_end": 41,
       "source_start": 34

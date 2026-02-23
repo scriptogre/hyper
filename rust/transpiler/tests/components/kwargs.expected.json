@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from typing import Any\nfrom hyper import html, replace_markers\n\n\n@html\ndef Kwargs(*, ",
+      "prefix": "from typing import Any\nfrom hyper import html, escape, replace_markers\n\n\n@html\ndef Kwargs(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 53,
-      "prefix": ", **attrs: Any):\n    yield replace_markers(f\"\"\"<button attrs=‹SPREAD:{attrs}›>‹ESCAPE:",
+      "prefix": ", **attrs: Any):\n    yield replace_markers(f\"\"\"<button attrs=‹SPREAD:{attrs}›>{escape(",
       "start": 46,
-      "suffix": "›</button>\"\"\")\n",
+      "suffix": ")}</button>\"\"\")\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 95,
-      "compiled_start": 85,
+      "compiled_end": 103,
+      "compiled_start": 93,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 188,
-      "compiled_start": 181,
+      "compiled_end": 194,
+      "compiled_start": 189,
       "range_type": "Python",
       "source_end": 53,
       "source_start": 46

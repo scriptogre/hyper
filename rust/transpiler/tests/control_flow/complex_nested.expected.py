@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -10,15 +10,15 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
 
         for section in sections:
 
-            yield "<section id=\"section-‹ESCAPE:{section['id']}›\">"
+            yield "<section id=\"section-{escape(section['id'])}\">"
 
             if section.get('visible', True):
 
                 match section['type']:
                     case "header":
-                        yield replace_markers(f"""\
-<h1>‹ESCAPE:{section['title']}›</h1>
-                        """)
+                        yield f"""\
+<h1>{escape(section['title'])}</h1>
+                        """
                     case "list":
 
                         yield "<ul>"
@@ -26,21 +26,21 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
                         for item in section['items']:
 
                             if item.get('active'):
-                                yield replace_markers(f"""\
-<li class="active">‹ESCAPE:{item['name']}›</li>
-                                    """)
+                                yield f"""\
+<li class="active">{escape(item['name'])}</li>
+                                    """
                             else:
-                                yield replace_markers(f"""\
-<li>‹ESCAPE:{item['name']}›</li>
-                                    """)
+                                yield f"""\
+<li>{escape(item['name'])}</li>
+                                    """
 
 
                         yield "</ul>"
 
                     case "text":
-                        yield replace_markers(f"""\
-<p>‹ESCAPE:{section['content']}›</p>
-                        """)
+                        yield f"""\
+<p>{escape(section['content'])}</p>
+                        """
                     case _:
                         yield """\
 <div>Unknown type</div>

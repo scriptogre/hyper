@@ -1,12 +1,12 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
 async def AwaitExpressions(*, user_id: int):
 
     result = await fetch_user(user_id)
-    yield replace_markers(f"""\
+    yield f"""\
 <div>
-    <h1>‹ESCAPE:{result.name}›</h1>
-    <p>‹ESCAPE:{await get_bio(user_id)}›</p>
-</div>""")
+    <h1>{escape(result.name)}</h1>
+    <p>{escape(await get_bio(user_id))}</p>
+</div>"""

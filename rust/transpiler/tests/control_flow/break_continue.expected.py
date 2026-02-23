@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -14,9 +14,9 @@ def BreakContinue(*, items: list, limit: int):
 
             break
 
-        yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+        yield f"""\
+<li>{escape(item)}</li>
+    """
 
     yield "</ul>"
 
@@ -30,9 +30,9 @@ def BreakContinue(*, items: list, limit: int):
 
             continue
 
-        yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+        yield f"""\
+<li>{escape(item)}</li>
+    """
 
     yield "</ul>"
 
@@ -46,9 +46,9 @@ def BreakContinue(*, items: list, limit: int):
 
             break
 
-        yield replace_markers(f"""\
-<span>‹ESCAPE:{count}›</span>
-    """)
+        yield f"""\
+<span>{escape(count)}</span>
+    """
         count = count + 1
 
 
@@ -62,8 +62,8 @@ def BreakContinue(*, items: list, limit: int):
 
                 break
 
-            yield replace_markers(f"""\
-<span>‹ESCAPE:{outer}›-‹ESCAPE:{inner}›</span>
-    """)
+            yield f"""\
+<span>{escape(outer)}-{escape(inner)}</span>
+    """
 
 

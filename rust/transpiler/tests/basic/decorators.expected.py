@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -9,7 +9,7 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
 
     @fragment
     def Badge(text: str):
-        yield replace_markers(f"""<span class="badge">‹ESCAPE:{text}›</span>""")
+        yield f"""<span class="badge">{escape(text)}</span>"""
 
     # Multiple decorators
 
@@ -20,9 +20,9 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
         yield "<ul>"
 
         for item in items:
-            yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-        """)
+            yield f"""\
+<li>{escape(item)}</li>
+        """
 
         yield "</ul>"
 
@@ -33,9 +33,9 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
     def Card(title: str):
 
         yield "<div class=\"card\">"
-        yield replace_markers(f"""\
-<h2>‹ESCAPE:{title}›</h2>
-        """)
+        yield f"""\
+<h2>{escape(title)}</h2>
+        """
         if _content is not None:
             yield from _content
 
@@ -43,6 +43,6 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
 
 
     # Use decorated functions
-    yield replace_markers(f"""\
-‹ESCAPE:{Badge("New")}›
-‹ESCAPE:{CachedList(items)}›""")
+    yield f"""\
+{escape(Badge("New"))}
+{escape(CachedList(items))}"""

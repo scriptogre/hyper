@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Simple(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Simple(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,44 +16,44 @@
     },
     {
       "end": 49,
-      "prefix": "):\n    yield replace_markers(f\"\"\"\\\n<div>\n    <h1>‹ESCAPE:",
+      "prefix": "):\n    yield f\"\"\"\\\n<div>\n    <h1>{escape(",
       "start": 42,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 76,
-      "prefix": "›</h1>\n    <p>Count: ‹ESCAPE:",
+      "prefix": ")}</h1>\n    <p>Count: {escape(",
       "start": 69,
-      "suffix": "›</p>\n</div>\"\"\")\n",
+      "suffix": ")}</p>\n</div>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 72,
-      "compiled_start": 62,
+      "compiled_end": 63,
+      "compiled_start": 53,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 84,
-      "compiled_start": 74,
+      "compiled_end": 75,
+      "compiled_start": 65,
       "range_type": "Python",
       "source_end": 21,
       "source_start": 11
     },
     {
-      "compiled_end": 148,
-      "compiled_start": 141,
+      "compiled_end": 121,
+      "compiled_start": 116,
       "range_type": "Python",
       "source_end": 49,
       "source_start": 42
     },
     {
-      "compiled_end": 184,
-      "compiled_start": 177,
+      "compiled_end": 156,
+      "compiled_start": 151,
       "range_type": "Python",
       "source_end": 76,
       "source_start": 69

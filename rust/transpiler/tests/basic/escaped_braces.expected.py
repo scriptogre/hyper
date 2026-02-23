@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -10,7 +10,7 @@ def EscapedBraces(*, name: str):
 <p>JSON: {"key": "value"}</p>"""
 
     # Mixed escaped and dynamic
-    yield replace_markers(f"""<p>Static {{braces}} and dynamic ‹ESCAPE:{name}›</p>""")
+    yield f"""<p>Static {{braces}} and dynamic {escape(name)}</p>"""
 
     # In style blocks (CSS needs escaped braces)
     yield """\

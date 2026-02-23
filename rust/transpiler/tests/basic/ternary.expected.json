@@ -2,44 +2,44 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Ternary(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Ternary(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 30,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "):\n    yield f\"\"\"<span>{escape(",
       "start": 23,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 66,
-      "prefix": "› ‹ESCAPE:",
+      "prefix": ")} {escape(",
       "start": 31,
-      "suffix": "›</span>\"\"\")\n",
+      "suffix": ")}</span>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 73,
-      "compiled_start": 63,
+      "compiled_end": 64,
+      "compiled_start": 54,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 127,
-      "compiled_start": 120,
+      "compiled_end": 100,
+      "compiled_start": 95,
       "range_type": "Python",
       "source_end": 30,
       "source_start": 23
     },
     {
-      "compiled_end": 172,
-      "compiled_start": 137,
+      "compiled_end": 144,
+      "compiled_start": 111,
       "range_type": "Python",
       "source_end": 66,
       "source_start": 31

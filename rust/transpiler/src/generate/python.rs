@@ -99,16 +99,16 @@ impl PythonGenerator {
         false
     }
 
-    /// Check if a single node contains markers
+    /// Check if a single node contains attribute markers (CLASS, BOOL, STYLE, SPREAD, etc.)
     fn node_has_markers(&self, node: &Node) -> bool {
         match node {
-            Node::Expression(expr) => expr.escape, // Escaped expressions use markers
+            Node::Expression(_) => false, // Escaped expressions now use direct escape() calls, not markers
             Node::Element(el) => {
                 // Check attributes for markers (class, style, bool, spread, template)
                 el.attributes.iter().any(|attr| {
                     matches!(attr.kind,
                         AttributeKind::Dynamic { ref name, .. } if name == "class" || name == "style" || self.is_boolean_attribute(name))
-                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. } | AttributeKind::Template { .. })
+                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. })
                 }) || el.children.iter().any(|child| self.node_has_markers(child))
             }
             _ => false,
@@ -222,15 +222,13 @@ impl PythonGenerator {
             Node::Expression(expr) => {
                 if in_fstring {
                     let (start, end) = if expr.escape {
-                        // Use ‹ESCAPE:{expr}› marker, handled by runtime replace_markers()
-                        // Track {expr} including braces for IDE highlighting
-                        output.push("‹ESCAPE:");
+                        // Use direct escape() call inside f-string
+                        // Track just the expression text for IDE highlighting
+                        output.push("{escape(");
                         let start = output.position();
-                        output.push("{");
                         output.push(&expr.expr);
-                        output.push("}");
                         let end = output.position();
-                        output.push("›");
+                        output.push(")}");
                         (start, end)
                     } else {
                         let start = output.position();
@@ -486,7 +484,7 @@ impl PythonGenerator {
                     output.push(" ");
                     output.push(name);
                     output.push("=\"");
-                    // Parse and emit the template value, converting {expr} to ‹ESCAPE:{expr}›
+                    // Parse and emit the template value, converting {expr} to {escape(expr)}
                     output.push(&self.convert_template_expressions(value));
                     output.push("\"");
                 }
@@ -494,7 +492,7 @@ impl PythonGenerator {
         }
     }
 
-    /// Convert {expr} in template string to ‹ESCAPE:{expr}› for runtime processing
+    /// Convert {expr} in template string to {escape(expr)} for f-string output
     fn convert_template_expressions(&self, template: &str) -> String {
         let mut result = String::new();
         let mut chars = template.chars().peekable();
@@ -518,10 +516,10 @@ impl PythonGenerator {
                         expr.push(inner);
                     }
                 }
-                // Emit as ESCAPE marker
-                result.push_str("‹ESCAPE:{");
+                // Emit as direct escape() call
+                result.push_str("{escape(");
                 result.push_str(&expr);
-                result.push_str("}›");
+                result.push_str(")}");
             } else {
                 result.push(ch);
             }
@@ -1305,13 +1303,17 @@ impl Generator for PythonGenerator {
         // Build imports
         let mut hyper_imports = vec!["html"];
 
-        // Add replace_markers if markers are present
+        // Add escape if any escaped expressions exist (direct escape() calls in f-strings)
+        if code.contains("{escape(") {
+            hyper_imports.push("escape");
+        }
+
+        // Add replace_markers if attribute markers are present (CLASS, BOOL, STYLE, SPREAD, etc.)
         if code.contains('‹') {
             hyper_imports.push("replace_markers");
         }
 
-        // Add other helpers based on metadata (only if actually called in code)
-        // Note: escape() is never directly called - we use ‹ESCAPE:...› markers
+        // Add other helpers based on metadata
         if metadata.helpers_used.contains("safe") {
             hyper_imports.push("safe");
         }

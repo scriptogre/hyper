@@ -2,100 +2,100 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from collections.abc import Iterable\nfrom hyper import html, replace_markers\n\n\n@html\ndef Decorators(_content: Iterable[str] | None = None, *, ",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import html, escape\n\n\n@html\ndef Decorators(_content: Iterable[str] | None = None, *, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 99,
-      "prefix": "):\n\n    # Simple decorator\n\n    @fragment\n    def Badge(text: str):\n        yield replace_markers(f\"\"\"<span class=\"badge\">‹ESCAPE:",
+      "prefix": "):\n\n    # Simple decorator\n\n    @fragment\n    def Badge(text: str):\n        yield f\"\"\"<span class=\"badge\">{escape(",
       "start": 93,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 214,
-      "prefix": "›</span>\"\"\")\n\n    # Multiple decorators\n\n    @cache\n    @fragment\n    def CachedList(items: list):\n\n        yield \"<ul>\"\n\n        for item in ",
+      "prefix": ")}</span>\"\"\"\n\n    # Multiple decorators\n\n    @cache\n    @fragment\n    def CachedList(items: list):\n\n        yield \"<ul>\"\n\n        for item in ",
       "start": 209,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 238,
-      "prefix": ":\n            yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
+      "prefix": ":\n            yield f\"\"\"\\\n<li>{escape(",
       "start": 232,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 385,
-      "prefix": "›</li>\n        \"\"\")\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    @fragment(name=\"card\")\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield replace_markers(f\"\"\"\\\n<h2>‹ESCAPE:",
+      "prefix": ")}</li>\n        \"\"\"\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    @fragment(name=\"card\")\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield f\"\"\"\\\n<h2>{escape(",
       "start": 378,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 461,
-      "prefix": "›</h2>\n        \"\"\")\n        if _content is not None:\n            yield from _content\n\n        yield \"</div>\"\n\n\n    # Use decorated functions\n    yield replace_markers(f\"\"\"\\\n‹ESCAPE:",
+      "prefix": ")}</h2>\n        \"\"\"\n        if _content is not None:\n            yield from _content\n\n        yield \"</div>\"\n\n\n    # Use decorated functions\n    yield f\"\"\"\\\n{escape(",
       "start": 447,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 481,
-      "prefix": "›\n‹ESCAPE:",
+      "prefix": ")}\n{escape(",
       "start": 462,
-      "suffix": "›\"\"\")\n",
+      "suffix": ")}\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 153,
-      "compiled_start": 142,
+      "compiled_end": 144,
+      "compiled_start": 133,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 289,
-      "compiled_start": 283,
+      "compiled_end": 262,
+      "compiled_start": 258,
       "range_type": "Python",
       "source_end": 99,
       "source_start": 93
     },
     {
-      "compiled_end": 436,
-      "compiled_start": 431,
+      "compiled_end": 409,
+      "compiled_start": 404,
       "range_type": "Python",
       "source_end": 214,
       "source_start": 209
     },
     {
-      "compiled_end": 496,
-      "compiled_start": 490,
+      "compiled_end": 451,
+      "compiled_start": 447,
       "range_type": "Python",
       "source_end": 238,
       "source_start": 232
     },
     {
-      "compiled_end": 719,
-      "compiled_start": 712,
+      "compiled_end": 656,
+      "compiled_start": 651,
       "range_type": "Python",
       "source_end": 385,
       "source_start": 378
     },
     {
-      "compiled_end": 914,
-      "compiled_start": 900,
+      "compiled_end": 833,
+      "compiled_start": 821,
       "range_type": "Python",
       "source_end": 461,
       "source_start": 447
     },
     {
-      "compiled_end": 943,
-      "compiled_start": 924,
+      "compiled_end": 861,
+      "compiled_start": 844,
       "range_type": "Python",
       "source_end": 481,
       "source_start": 462

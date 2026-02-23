@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from collections.abc import Iterable\nfrom hyper import html, replace_markers\n\n\n@html\ndef DefaultSlot(_content: Iterable[str] | None = None, *, ",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import html, escape\n\n\n@html\ndef DefaultSlot(_content: Iterable[str] | None = None, *, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 51,
-      "prefix": "):\n\n    yield \"<div class=\\\"card\\\">\"\n    yield replace_markers(f\"\"\"\\\n<h2>‹ESCAPE:",
+      "prefix": "):\n\n    yield \"<div class=\\\"card\\\">\"\n    yield f\"\"\"\\\n<h2>{escape(",
       "start": 44,
-      "suffix": "›</h2>\n    \"\"\")\n    if _content is not None:\n        yield from _content\n\n    yield \"</div>\"\n\n",
+      "suffix": ")}</h2>\n    \"\"\"\n    if _content is not None:\n        yield from _content\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 153,
-      "compiled_start": 143,
+      "compiled_end": 144,
+      "compiled_start": 134,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 241,
-      "compiled_start": 234,
+      "compiled_end": 214,
+      "compiled_start": 209,
       "range_type": "Python",
       "source_end": 51,
       "source_start": 44

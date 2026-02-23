@@ -1,5 +1,5 @@
 from typing import Any
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -7,9 +7,9 @@ def PropsEdgeCases(*, simple: str, with_default: str = "default value", none_def
     # Docstring in header
     """This is a component docstring."""
     # Various parameter patterns
-    yield replace_markers(f"""\
+    yield f"""\
 <div>
-    <span>‹ESCAPE:{simple}›</span>
-    <span>‹ESCAPE:{with_default}›</span>
-    <span>‹ESCAPE:{none_default or "none"}›</span>
-</div>""")
+    <span>{escape(simple)}</span>
+    <span>{escape(with_default)}</span>
+    <span>{escape(none_default or "none")}</span>
+</div>"""

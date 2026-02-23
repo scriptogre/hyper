@@ -22,8 +22,8 @@ fn test_expression() {
     let source = r#"<div>{name}</div>"#;
     let output = compile_v2(source);
 
-    // Should use ESCAPE marker instead of escape() function
-    assert!(output.contains("‹ESCAPE:{name}›"));
+    // Should use direct escape() call in f-string
+    assert!(output.contains("{escape(name)}"));
 }
 
 #[test]

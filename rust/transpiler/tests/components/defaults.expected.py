@@ -1,8 +1,8 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
 def Defaults(*, name: str = "World", count: int = 0):
-    yield replace_markers(f"""\
-<h1>Hello ‹ESCAPE:{name}›</h1>
-<p>Count: ‹ESCAPE:{count}›</p>""")
+    yield f"""\
+<h1>Hello {escape(name)}</h1>
+<p>Count: {escape(count)}</p>"""
