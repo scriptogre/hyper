@@ -1,7 +1,7 @@
-from hyper import html, replace_markers
+from hyper import html, render_style
 
 
 @html
 def StyleDict():
     style = {"color": "red", "font-weight": "bold"}
-    yield replace_markers(f"""<p style=‹STYLE:{style}›>Important</p>""")
+    yield f"""<p style="{render_style(style)}">Important</p>"""

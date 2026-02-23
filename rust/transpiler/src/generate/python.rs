@@ -89,38 +89,10 @@ impl PythonGenerator {
         }
     }
 
-    /// Check if content contains markers that need replace_markers()
-    fn content_has_markers(&self, nodes: &[&Node]) -> bool {
-        for node in nodes {
-            if self.node_has_markers(node) {
-                return true;
-            }
-        }
-        false
-    }
-
-    /// Check if a single node contains attribute markers (CLASS, BOOL, STYLE, SPREAD, etc.)
-    fn node_has_markers(&self, node: &Node) -> bool {
-        match node {
-            Node::Expression(_) => false, // Escaped expressions now use direct escape() calls, not markers
-            Node::Element(el) => {
-                // Check attributes for markers (class, style, bool, spread, template)
-                el.attributes.iter().any(|attr| {
-                    matches!(attr.kind,
-                        AttributeKind::Dynamic { ref name, .. } if name == "class" || name == "style" || self.is_boolean_attribute(name))
-                    || matches!(attr.kind, AttributeKind::Shorthand { .. } | AttributeKind::Spread { .. })
-                }) || el.children.iter().any(|child| self.node_has_markers(child))
-            }
-            _ => false,
-        }
-    }
-
     /// Emit consecutive text/expression/element nodes as a single yield statement
     fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize) {
         // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
-        // Check if content has markers that need replace_markers()
-        let has_markers = self.content_has_markers(nodes);
 
         // Collect content to a temporary buffer to analyze it and capture ranges
         let mut content_output = Output::new();
@@ -155,14 +127,7 @@ impl PythonGenerator {
         let is_multiline = trimmed.contains('\n');
 
         // Build the yield statement
-        if has_markers {
-            if is_multiline {
-                output.push("yield replace_markers(f\"\"\"\\");
-                output.newline();
-            } else {
-                output.push("yield replace_markers(f\"\"\"");
-            }
-        } else if has_expressions {
+        if has_expressions {
             if is_multiline {
                 output.push("yield f\"\"\"\\");
                 output.newline();
@@ -195,11 +160,7 @@ impl PythonGenerator {
             output.add_range(range);
         }
 
-        if has_markers {
-            output.push("\"\"\")");
-        } else {
-            output.push("\"\"\"");
-        }
+        output.push("\"\"\"");
         output.newline();
 
         // Emit preserved blank lines
@@ -325,19 +286,17 @@ impl PythonGenerator {
             }
             AttributeKind::Dynamic { name, expr, expr_span } => {
                 if in_fstring {
-                    output.push(" ");
-                    output.push(name);
-
                     // expr_span includes {expr}, skip braces for injection
                     let content_start = expr_span.start.byte + 1;
                     let content_end = expr_span.end.byte - 1;
 
-                    // Use markers for special attribute types
                     // Convert reserved keywords in expressions to safe variable names
                     let safe_expr = self.safe_var_name(expr.trim());
 
                     if name == "class" {
-                        output.push("=‹CLASS:{");
+                        output.push(" ");
+                        output.push(name);
+                        output.push("=\"{render_class(");
                         let start = output.position();
                         output.push(&safe_expr);
                         let end = output.position();
@@ -349,9 +308,11 @@ impl PythonGenerator {
                             compiled_end: end,
                             needs_injection: true,
                         });
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if name == "style" {
-                        output.push("=‹STYLE:{");
+                        output.push(" ");
+                        output.push(name);
+                        output.push("=\"{render_style(");
                         let start = output.position();
                         output.push(&safe_expr);
                         let end = output.position();
@@ -363,9 +324,12 @@ impl PythonGenerator {
                             compiled_end: end,
                             needs_injection: true,
                         });
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if self.is_boolean_attribute(name) {
-                        output.push("=‹BOOL:{");
+                        // Boolean attrs: entire attribute is conditional
+                        output.push("{render_attr(\"");
+                        output.push(name);
+                        output.push("\", ");
                         let start = output.position();
                         output.push(&safe_expr);
                         let end = output.position();
@@ -377,8 +341,10 @@ impl PythonGenerator {
                             compiled_end: end,
                             needs_injection: true,
                         });
-                        output.push("}›");
+                        output.push(")}");
                     } else {
+                        output.push(" ");
+                        output.push(name);
                         output.push("=\"{");
                         let start = output.position();
                         output.push(&safe_expr);
@@ -401,36 +367,39 @@ impl PythonGenerator {
             }
             AttributeKind::Shorthand { name, .. } => {
                 if in_fstring {
-                    output.push(" ");
-                    output.push(name);
-                    // Use markers for special attribute types
-                    // Use safe variable name for reserved keywords inside markers
+                    // Use safe variable name for reserved keywords
                     let var_name = self.safe_var_name(name);
                     if name == "class" {
-                        output.push("=‹CLASS:{");
+                        output.push(" ");
+                        output.push(name);
+                        output.push("=\"{render_class(");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if name == "style" {
-                        output.push("=‹STYLE:{");
+                        output.push(" ");
+                        output.push(name);
+                        output.push("=\"{render_style(");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if name == "data" {
-                        output.push("=‹DATA:{");
+                        output.push("{render_data(");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}");
                     } else if name == "aria" {
-                        output.push("=‹ARIA:{");
+                        output.push("{render_aria(");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}");
                     } else if self.is_boolean_attribute(name) {
-                        output.push("=‹BOOL:{");
+                        output.push("{render_attr(\"");
+                        output.push(name);
+                        output.push("\", ");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}");
                     } else {
-                        // Generic attribute shorthand - treat as spread to support dict expansion
-                        output.push("=‹SPREAD:{");
+                        // Generic attribute shorthand - treat as spread
+                        output.push("{spread_attrs(");
                         output.push(&var_name);
-                        output.push("}›");
+                        output.push(")}");
                     }
                 }
             }
@@ -442,26 +411,26 @@ impl PythonGenerator {
                     let safe_expr = self.safe_var_name(trimmed_expr);
 
                     if trimmed_expr == "class" {
-                        output.push(" class=‹CLASS:{");
+                        output.push(" class=\"{render_class(");
                         output.push(&safe_expr);
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if trimmed_expr == "style" {
-                        output.push(" style=‹STYLE:{");
+                        output.push(" style=\"{render_style(");
                         output.push(&safe_expr);
-                        output.push("}›");
+                        output.push(")}\"");
                     } else if trimmed_expr == "data" {
-                        output.push(" data=‹DATA:{");
+                        output.push("{render_data(");
                         output.push(&safe_expr);
-                        output.push("}›");
+                        output.push(")}");
                     } else if trimmed_expr == "aria" {
-                        output.push(" aria=‹ARIA:{");
+                        output.push("{render_aria(");
                         output.push(&safe_expr);
-                        output.push("}›");
+                        output.push(")}");
                     } else {
-                        // Generic spread - also use safe name for reserved keywords
-                        output.push(" ‹SPREAD:{");
+                        // Generic spread
+                        output.push("{spread_attrs(");
                         output.push(&safe_expr);
-                        output.push("}›");
+                        output.push(")}");
                     }
                 }
             }
@@ -1300,17 +1269,29 @@ impl Generator for PythonGenerator {
         let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
         let needs_iterable = has_default_slot || has_named_slots;
 
-        // Build imports
+        // Build imports based on what helpers are actually used in the generated code
         let mut hyper_imports = vec!["html"];
 
-        // Add escape if any escaped expressions exist (direct escape() calls in f-strings)
         if code.contains("{escape(") {
             hyper_imports.push("escape");
         }
-
-        // Add replace_markers if attribute markers are present (CLASS, BOOL, STYLE, SPREAD, etc.)
-        if code.contains('‹') {
-            hyper_imports.push("replace_markers");
+        if code.contains("{render_class(") {
+            hyper_imports.push("render_class");
+        }
+        if code.contains("{render_attr(") {
+            hyper_imports.push("render_attr");
+        }
+        if code.contains("{render_style(") {
+            hyper_imports.push("render_style");
+        }
+        if code.contains("{render_data(") {
+            hyper_imports.push("render_data");
+        }
+        if code.contains("{render_aria(") {
+            hyper_imports.push("render_aria");
+        }
+        if code.contains("{spread_attrs(") {
+            hyper_imports.push("spread_attrs");
         }
 
         // Add other helpers based on metadata

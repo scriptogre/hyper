@@ -1,10 +1,10 @@
 from typing import Any
-from hyper import html, escape, replace_markers
+from hyper import html, escape, spread_attrs
 
 
 @html
 def KwargsCollector(*, title: str, **attrs: Any):
-    yield replace_markers(f"""\
-<div class="card" attrs=‹SPREAD:{attrs}›>
+    yield f"""\
+<div class="card"{spread_attrs(attrs)}>
     <h1>{escape(title)}</h1>
-</div>""")
+</div>"""

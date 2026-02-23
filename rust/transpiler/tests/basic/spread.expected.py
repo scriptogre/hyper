@@ -1,6 +1,6 @@
-from hyper import html, replace_markers
+from hyper import html, spread_attrs
 
 
 @html
 def Spread(*, attrs: dict = {"href": "https://example.com", "target": "_blank"}):
-    yield replace_markers(f"""<a attrs=‹SPREAD:{attrs}›>Link</a>""")
+    yield f"""<a{spread_attrs(attrs)}>Link</a>"""
