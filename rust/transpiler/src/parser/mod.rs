@@ -5,12 +5,12 @@ pub use tokenizer::{Token, tokenize, Position, Span};
 use tree_builder::TreeBuilder;
 
 use crate::ast::Ast;
-use crate::error::ParseError;
+use crate::error::ParseResult;
 use std::sync::Arc;
 
 /// Parser trait - converts source code to AST
 pub trait Parser {
-    fn parse(&self, source: &str) -> Result<Ast, ParseError>;
+    fn parse(&self, source: &str) -> ParseResult<Ast>;
 }
 
 /// Hyper template parser
@@ -31,7 +31,7 @@ impl Default for HyperParser {
 }
 
 impl Parser for HyperParser {
-    fn parse(&self, source: &str) -> Result<Ast, ParseError> {
+    fn parse(&self, source: &str) -> ParseResult<Ast> {
         // Tokenize
         let tokens = tokenize(source);
 
