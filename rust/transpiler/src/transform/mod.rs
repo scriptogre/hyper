@@ -35,6 +35,7 @@ impl Transformer {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add<V: Visitor + 'static>(mut self, visitor: V) -> Self {
         self.plugins.push(Box::new(visitor));
         self

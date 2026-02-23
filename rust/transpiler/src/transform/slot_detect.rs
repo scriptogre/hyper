@@ -9,7 +9,7 @@ impl Visitor for SlotDetectionPlugin {
         match node {
             Node::Slot(slot) => {
                 // Default slot uses empty string, named slots use their name
-                let slot_name = slot.name.clone().unwrap_or_else(|| String::new());
+                let slot_name = slot.name.clone().unwrap_or_default();
                 metadata.slots_used.insert(slot_name);
             }
             Node::Expression(expr) => {

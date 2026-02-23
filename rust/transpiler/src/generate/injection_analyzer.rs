@@ -6,6 +6,12 @@ use super::output::{Range, Injection, compute_injections};
 /// Analyzes AST and generated code to produce injection ranges for IDE support
 pub struct InjectionAnalyzer;
 
+impl Default for InjectionAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InjectionAnalyzer {
     pub fn new() -> Self {
         Self

@@ -5,6 +5,8 @@ use crate::html;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+type ComponentChildren = (Vec<Node>, HashMap<String, Vec<Node>>);
+
 /// Builds an AST from a token stream
 pub struct TreeBuilder {
     tokens: Vec<Token>,
@@ -756,12 +758,8 @@ impl TreeBuilder {
                 break;
             }
 
-            match self.peek() {
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        nodes.push(node);
-                    }
-                }
+            if let Some(node) = self.parse_node()? {
+                nodes.push(node);
             }
         }
 
@@ -807,7 +805,7 @@ impl TreeBuilder {
         &mut self,
         name: &str,
         open_span: &Span,
-    ) -> ParseResult<(Vec<Node>, HashMap<String, Vec<Node>>)> {
+    ) -> ParseResult<ComponentChildren> {
         let mut children = Vec::new();
         let slots = HashMap::new(); // TODO: parse slots
 

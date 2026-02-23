@@ -116,7 +116,7 @@ impl PythonGenerator {
         let (content, _, _) = content_output.finish();
 
         // Calculate how much leading content we're trimming (needed for range adjustment)
-        let trimmed = content.trim_start_matches(|c| c == '\n' || c == ' ');
+        let trimmed = content.trim_start_matches(['\n', ' ']);
         let leading_trimmed = content.len() - trimmed.len();
         let leading_trimmed_utf16 = content[..leading_trimmed].encode_utf16().count();
         // Only trim ONE trailing newline (the line ending), preserve any extras (blank lines)
@@ -147,13 +147,11 @@ impl PythonGenerator {
             } else {
                 output.push("yield f\"\"\"");
             }
+        } else if is_multiline {
+            output.push("yield \"\"\"\\");
+            output.newline();
         } else {
-            if is_multiline {
-                output.push("yield \"\"\"\\");
-                output.newline();
-            } else {
-                output.push("yield \"\"\"");
-            }
+            output.push("yield \"\"\"");
         }
 
         // Get position before emitting content (for range offset calculation)
@@ -319,6 +317,7 @@ impl PythonGenerator {
                     let value_start_byte = attr.span.start.byte + name.len() + 2;
                     let mut byte_offset = 0;
                     let mut chars = value.chars().peekable();
+                    #[allow(clippy::while_let_on_iterator)]
                     while let Some(ch) = chars.next() {
                         if ch == '{' {
                             let gap_start = value_start_byte + byte_offset;
@@ -676,6 +675,7 @@ impl PythonGenerator {
                     let value_start_byte = attr.span.start.byte + name.len() + 2;
                     let mut byte_offset = 0;
                     let mut chars = value.chars().peekable();
+                    #[allow(clippy::while_let_on_iterator)]
                     while let Some(ch) = chars.next() {
                         if ch == '{' {
                             // Collect expression until closing }
@@ -733,6 +733,7 @@ impl PythonGenerator {
         let mut result = String::new();
         let mut chars = template.chars().peekable();
 
+        #[allow(clippy::while_let_on_iterator)]
         while let Some(ch) = chars.next() {
             if ch == '{' {
                 // Found start of expression, collect until closing }
@@ -1331,16 +1332,10 @@ impl PythonGenerator {
         // Rename Python reserved keywords used as variable names in assignments.
         // This matches how shorthand attributes rename {class} → class_, {type} → type_.
         let owned_statement;
-        let statement = if stmt.stmt.starts_with("class ") {
+        let statement = if stmt.stmt.starts_with("class ") || stmt.stmt.starts_with("class=") {
             owned_statement = format!("class_{}", &stmt.stmt["class".len()..]);
             &owned_statement
-        } else if stmt.stmt.starts_with("class=") {
-            owned_statement = format!("class_{}", &stmt.stmt["class".len()..]);
-            &owned_statement
-        } else if stmt.stmt.starts_with("type ") {
-            owned_statement = format!("type_{}", &stmt.stmt["type".len()..]);
-            &owned_statement
-        } else if stmt.stmt.starts_with("type=") {
+        } else if stmt.stmt.starts_with("type ") || stmt.stmt.starts_with("type=") {
             owned_statement = format!("type_{}", &stmt.stmt["type".len()..]);
             &owned_statement
         } else {
@@ -1448,6 +1443,7 @@ impl Generator for PythonGenerator {
                 // Mark whitespace text nodes between this decorator and the next
                 // decorator/definition as part of the decorator chain (suppress them)
                 if found_def {
+                    #[allow(clippy::needless_range_loop)]
                     for j in (i + 1)..ast.nodes.len() {
                         match &ast.nodes[j] {
                             Node::Text(t) if t.content.trim().is_empty() => {
@@ -1490,7 +1486,7 @@ impl Generator for PythonGenerator {
 
         // Emit function signature with parameters
         let func_name = options.function_name.as_deref()
-            .map(|name| to_pascal_case(name))
+            .map(to_pascal_case)
             .unwrap_or_else(|| "Render".to_string());
 
         // Add async if needed

@@ -16,6 +16,12 @@ impl Position {
     }
 }
 
+impl Default for Position {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Span in source code (a range from start position to end position)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span {
@@ -334,11 +340,8 @@ impl<'a> Tokenizer<'a> {
         }
         // 7.6. Parameter declarations (*args: type, **kwargs: type, name: type)
         // These aren't valid Python statements but are valid in header zone
-        else if self.is_parameter_declaration(&line_content) {
-            self.tokenize_python_statement(tokens);
-        }
         // 8. Check if it's a Python statement using tree-sitter
-        else if self.is_python_statement(&line_content) {
+        else if self.is_parameter_declaration(&line_content) || self.is_python_statement(&line_content) {
             self.tokenize_python_statement(tokens);
         }
         // 9. Default: treat as content
@@ -398,8 +401,7 @@ impl<'a> Tokenizer<'a> {
         }
 
         // class: must be followed by identifier (not `=`), and end with `:`
-        if trimmed.starts_with("class ") {
-            let rest = &trimmed[6..];
+        if let Some(rest) = trimmed.strip_prefix("class ") {
             if let Some(first_char) = rest.chars().next() {
                 if (first_char.is_alphabetic() || first_char == '_') && effective.ends_with(':') {
                     return true;
@@ -739,15 +741,15 @@ impl<'a> Tokenizer<'a> {
         let effective = self.strip_trailing_comment(trimmed);
 
         // Handle compound keywords (async for, async with, async def)
-        let (keyword, rest, rest_offset_in_effective) = if effective.starts_with("async for ") {
-            let rest_start = 10 + effective[10..].len() - effective[10..].trim_start().len();
-            ("async for".to_string(), effective[10..].trim_start().to_string(), rest_start)
-        } else if effective.starts_with("async with ") {
-            let rest_start = 11 + effective[11..].len() - effective[11..].trim_start().len();
-            ("async with".to_string(), effective[11..].trim_start().to_string(), rest_start)
-        } else if effective.starts_with("async def ") {
-            let rest_start = 10 + effective[10..].len() - effective[10..].trim_start().len();
-            ("async def".to_string(), effective[10..].trim_start().to_string(), rest_start)
+        let (keyword, rest, rest_offset_in_effective) = if let Some(after) = effective.strip_prefix("async for ") {
+            let rest_start = 10 + after.len() - after.trim_start().len();
+            ("async for".to_string(), after.trim_start().to_string(), rest_start)
+        } else if let Some(after) = effective.strip_prefix("async with ") {
+            let rest_start = 11 + after.len() - after.trim_start().len();
+            ("async with".to_string(), after.trim_start().to_string(), rest_start)
+        } else if let Some(after) = effective.strip_prefix("async def ") {
+            let rest_start = 10 + after.len() - after.trim_start().len();
+            ("async def".to_string(), after.trim_start().to_string(), rest_start)
         } else if let Some(idx) = effective.find(|c: char| c.is_whitespace() || c == ':') {
             let after_kw = &effective[idx..];
             let rest_start = idx + after_kw.len() - after_kw.trim_start().len();
@@ -1211,8 +1213,8 @@ impl<'a> Tokenizer<'a> {
 
         // Convert children placeholder {...} to {children} or {...name} to {children_name}
         let trimmed = expr.trim();
-        let final_expr = if trimmed.starts_with("...") {
-            let slot_name = trimmed[3..].trim();
+        let final_expr = if let Some(after) = trimmed.strip_prefix("...") {
+            let slot_name = after.trim();
             if slot_name.is_empty() {
                 "children".to_string()
             } else {
@@ -1826,11 +1828,11 @@ impl IncrementalTokenizer {
 
         // Fill in gaps - empty lines should map to the next token
         let mut last_end = 0;
-        for i in 0..map.len() {
-            if map[i].0 == map[i].1 {
-                map[i] = (last_end, last_end);
+        for item in &mut map {
+            if item.0 == item.1 {
+                *item = (last_end, last_end);
             } else {
-                last_end = map[i].1;
+                last_end = item.1;
             }
         }
 
@@ -1856,8 +1858,8 @@ impl IncrementalTokenizer {
         let mut new_lines: Vec<String> = Vec::new();
 
         // Lines before the change
-        for i in 0..change.start_line.min(lines.len()) {
-            new_lines.push(lines[i].to_string());
+        for line in lines.iter().take(change.start_line) {
+            new_lines.push(line.to_string());
         }
 
         // New lines from the change
@@ -1870,8 +1872,8 @@ impl IncrementalTokenizer {
         }
 
         // Lines after the change
-        for i in change.end_line..lines.len() {
-            new_lines.push(lines[i].to_string());
+        for line in lines.iter().skip(change.end_line) {
+            new_lines.push(line.to_string());
         }
 
         // Build new source
