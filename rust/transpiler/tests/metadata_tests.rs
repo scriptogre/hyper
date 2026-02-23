@@ -2,15 +2,18 @@ use hyper_transpiler::{Pipeline, GenerateOptions};
 
 #[test]
 fn test_selective_helper_imports() {
-    // Template that uses class marker
+    // Template that uses class attribute with dynamic expression
     let source = r#"<div class={active and "active"}>Hello</div>"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should import html and replace_markers for class markers
-    assert!(result.code.contains("from hyper import html, replace_markers"));
-    assert!(result.code.contains("‹CLASS:"));
+    // Should import html and render_class for class attributes
+    assert!(result.code.contains("from hyper import html, render_class"));
+    assert!(result.code.contains("render_class("));
+    // Should NOT contain old markers
+    assert!(!result.code.contains("replace_markers"));
+    assert!(!result.code.contains('‹'));
 }
 
 #[test]
@@ -62,17 +65,19 @@ fn test_content_slot_parameter() {
 }
 
 #[test]
-fn test_multiple_markers() {
-    // Template that uses multiple markers
+fn test_multiple_helpers() {
+    // Template that uses multiple attribute helpers
     let source = r#"<div class={cls} style={{"color": "red"}}>Hello</div>"#;
 
     let mut pipeline = Pipeline::standard();
     let result = pipeline.compile(source, &GenerateOptions::default()).unwrap();
 
-    // Should import replace_markers for both class and style
-    assert!(result.code.contains("replace_markers"));
-    assert!(result.code.contains("‹CLASS:"));
-    assert!(result.code.contains("‹STYLE:"));
+    // Should import render_class and render_style
+    assert!(result.code.contains("render_class"));
+    assert!(result.code.contains("render_style"));
+    // Should NOT contain old markers
+    assert!(!result.code.contains("replace_markers"));
+    assert!(!result.code.contains('‹'));
 }
 
 #[test]

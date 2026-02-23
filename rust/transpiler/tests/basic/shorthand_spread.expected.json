@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef ShorthandSpread(*, ",
+      "prefix": "from hyper import html, render_attr, spread_attrs\n\n\n@html\ndef ShorthandSpread(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -25,35 +25,35 @@
       "end": 47,
       "prefix": ", ",
       "start": 36,
-      "suffix": "):\n\n    # Shorthand attributes\n    yield replace_markers(f\"\"\"<input name=‹SPREAD:{name}› value=‹SPREAD:{value}› disabled=‹BOOL:{disabled}› />\"\"\")\n\n    # Spread attributes\n    yield replace_markers(f\"\"\"<div props=‹SPREAD:{props}›>Content</div>\"\"\")\n\n    # Mixed shorthand and spread\n    yield replace_markers(f\"\"\"<button name=‹SPREAD:{name}› props=‹SPREAD:{props}› disabled=‹BOOL:{disabled}›>Click</button>\"\"\")\n\n    # Spread with other attributes\n    yield replace_markers(f\"\"\"<input type=\"text\" props=‹SPREAD:{props}› class=\"input\" />\"\"\")\n",
+      "suffix": "):\n\n    # Shorthand attributes\n    yield f\"\"\"<input{spread_attrs(name)}{spread_attrs(value)}{render_attr(\"disabled\", disabled)} />\"\"\"\n\n    # Spread attributes\n    yield f\"\"\"<div{spread_attrs(props)}>Content</div>\"\"\"\n\n    # Mixed shorthand and spread\n    yield f\"\"\"<button{spread_attrs(name)}{spread_attrs(props)}{render_attr(\"disabled\", disabled)}>Click</button>\"\"\"\n\n    # Spread with other attributes\n    yield f\"\"\"<input type=\"text\"{spread_attrs(props)} class=\"input\" />\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 80,
-      "compiled_start": 71,
+      "compiled_end": 90,
+      "compiled_start": 81,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 92,
-      "compiled_start": 82,
+      "compiled_end": 102,
+      "compiled_start": 92,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 10
     },
     {
-      "compiled_end": 108,
-      "compiled_start": 94,
+      "compiled_end": 118,
+      "compiled_start": 104,
       "range_type": "Python",
       "source_end": 35,
       "source_start": 21
     },
     {
-      "compiled_end": 121,
-      "compiled_start": 110,
+      "compiled_end": 131,
+      "compiled_start": 120,
       "range_type": "Python",
       "source_end": 47,
       "source_start": 36

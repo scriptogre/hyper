@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 15,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef DataAria(*, ",
+      "prefix": "from hyper import html, render_data, render_aria\n\n\n@html\ndef DataAria(*, ",
       "start": 0,
-      "suffix": "):\n\n    data = {\"user-id\": 123, \"role\": \"admin\"}\n\n    aria = {\"label\": \"Close\", \"hidden\": is_hidden}\n    yield replace_markers(f\"\"\"<div data=‹DATA:{data}› aria=‹ARIA:{aria}›>Content</div>\"\"\")\n",
+      "suffix": "):\n\n    data = {\"user-id\": 123, \"role\": \"admin\"}\n\n    aria = {\"label\": \"Close\", \"hidden\": is_hidden}\n    yield f\"\"\"<div{render_data(data)}{render_aria(aria)}>Content</div>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 79,
-      "compiled_start": 64,
+      "compiled_end": 88,
+      "compiled_start": 73,
       "range_type": "Python",
       "source_end": 15,
       "source_start": 0

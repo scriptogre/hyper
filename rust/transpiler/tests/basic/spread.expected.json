@@ -2,16 +2,16 @@
   "injections": [
     {
       "end": 65,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Spread(*, ",
+      "prefix": "from hyper import html, spread_attrs\n\n\n@html\ndef Spread(*, ",
       "start": 0,
-      "suffix": "):\n    yield replace_markers(f\"\"\"<a attrs=‹SPREAD:{attrs}›>Link</a>\"\"\")\n",
+      "suffix": "):\n    yield f\"\"\"<a{spread_attrs(attrs)}>Link</a>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 127,
-      "compiled_start": 62,
+      "compiled_end": 124,
+      "compiled_start": 59,
       "range_type": "Python",
       "source_end": 65,
       "source_start": 0

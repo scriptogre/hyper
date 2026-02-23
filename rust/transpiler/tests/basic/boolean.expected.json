@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 17,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Boolean(*, ",
+      "prefix": "from hyper import html, render_attr\n\n\n@html\ndef Boolean(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 53,
-      "prefix": "):\n    yield replace_markers(f\"\"\"<button disabled=‹BOOL:{",
+      "prefix": "):\n    yield f\"\"\"<button{render_attr(\"disabled\", ",
       "start": 42,
-      "suffix": "}›>Submit</button>\"\"\")\n",
+      "suffix": ")}>Submit</button>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 80,
-      "compiled_start": 63,
+      "compiled_end": 76,
+      "compiled_start": 59,
       "range_type": "Python",
       "source_end": 17,
       "source_start": 0
     },
     {
-      "compiled_end": 148,
-      "compiled_start": 137,
+      "compiled_end": 136,
+      "compiled_start": 125,
       "range_type": "Python",
       "source_end": 53,
       "source_start": 42
