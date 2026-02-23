@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef LoopPatterns(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef LoopPatterns(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -44,70 +44,70 @@
     },
     {
       "end": 157,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li data-index=\"‹ESCAPE:{i}›\">‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<li data-index=\"{escape(i)}\">{escape(",
       "start": 151,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 252,
-      "prefix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n\n    # Enumerate with start\n\n    yield \"<ol>\"\n\n    for num, item in ",
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Enumerate with start\n\n    yield \"<ol>\"\n\n    for num, item in ",
       "start": 227,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 286,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li value=\"‹ESCAPE:{num}›\">‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<li value=\"{escape(num)}\">{escape(",
       "start": 280,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 357,
-      "prefix": "›</li>\n    \"\"\")\n\n    yield \"</ol>\"\n\n    # Tuple unpacking\n\n    yield \"<dl>\"\n\n    for key, value in ",
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ol>\"\n\n    # Tuple unpacking\n\n    yield \"<dl>\"\n\n    for key, value in ",
       "start": 352,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 376,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<dt>‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<dt>{escape(",
       "start": 371,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 401,
-      "prefix": "›</dt>\n        <dd>‹ESCAPE:",
+      "prefix": ")}</dt>\n        <dd>{escape(",
       "start": 394,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 477,
-      "prefix": "›</dd>\n    \"\"\")\n\n    yield \"</dl>\"\n\n    # Zip\n\n    yield \"<table>\"\n\n    for name, score in ",
+      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Zip\n\n    yield \"<table>\"\n\n    for name, score in ",
       "start": 459,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 514,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<tr>\n            <td>‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<tr>\n            <td>{escape(",
       "start": 508,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 543,
-      "prefix": "›</td>\n            <td>‹ESCAPE:",
+      "prefix": ")}</td>\n            <td>{escape(",
       "start": 536,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 625,
-      "prefix": "›</td>\n        </tr>\n    \"\"\")\n\n    yield \"</table>\"\n\n    # Nested loops\n\n    yield \"<table>\"\n\n    for row in ",
+      "prefix": ")}</td>\n        </tr>\n    \"\"\"\n\n    yield \"</table>\"\n\n    # Nested loops\n\n    yield \"<table>\"\n\n    for row in ",
       "start": 619,
       "suffix": "",
       "type": "python"
@@ -121,233 +121,233 @@
     },
     {
       "end": 695,
-      "prefix": ":\n            yield replace_markers(f\"\"\"\\\n<td>‹ESCAPE:",
+      "prefix": ":\n            yield f\"\"\"\\\n<td>{escape(",
       "start": 689,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 796,
-      "prefix": "›</td>\n            \"\"\")\n\n        yield \"</tr>\"\n\n\n    yield \"</table>\"\n\n    # Dict items\n\n    yield \"<dl>\"\n\n    for k, v in ",
+      "prefix": ")}</td>\n            \"\"\"\n\n        yield \"</tr>\"\n\n\n    yield \"</table>\"\n\n    # Dict items\n\n    yield \"<dl>\"\n\n    for k, v in ",
       "start": 783,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 813,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<dt>‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<dt>{escape(",
       "start": 810,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 834,
-      "prefix": "›</dt>\n        <dd>‹ESCAPE:",
+      "prefix": ")}</dt>\n        <dd>{escape(",
       "start": 831,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 889,
-      "prefix": "›</dd>\n    \"\"\")\n\n    yield \"</dl>\"\n\n    # Range\n\n    yield \"<ul>\"\n\n    for i in ",
+      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Range\n\n    yield \"<ul>\"\n\n    for i in ",
       "start": 881,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 911,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>Item ‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<li>Item {escape(",
       "start": 908,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 979,
-      "prefix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n\n    # Reversed\n\n    yield \"<ul>\"\n\n    for item in ",
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Reversed\n\n    yield \"<ul>\"\n\n    for item in ",
       "start": 964,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 999,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<li>{escape(",
       "start": 993,
-      "suffix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n\n",
+      "suffix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 79,
-      "compiled_start": 68,
+      "compiled_end": 70,
+      "compiled_start": 59,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 92,
-      "compiled_start": 81,
+      "compiled_end": 83,
+      "compiled_start": 72,
       "range_type": "Python",
       "source_end": 23,
       "source_start": 12
     },
     {
-      "compiled_end": 105,
-      "compiled_start": 94,
+      "compiled_end": 96,
+      "compiled_start": 85,
       "range_type": "Python",
       "source_end": 35,
       "source_start": 24
     },
     {
-      "compiled_end": 119,
-      "compiled_start": 107,
+      "compiled_end": 110,
+      "compiled_start": 98,
       "range_type": "Python",
       "source_end": 48,
       "source_start": 36
     },
     {
-      "compiled_end": 133,
-      "compiled_start": 121,
+      "compiled_end": 124,
+      "compiled_start": 112,
       "range_type": "Python",
       "source_end": 61,
       "source_start": 49
     },
     {
-      "compiled_end": 207,
-      "compiled_start": 191,
+      "compiled_end": 198,
+      "compiled_start": 182,
       "range_type": "Python",
       "source_end": 120,
       "source_start": 104
     },
     {
-      "compiled_end": 289,
-      "compiled_start": 283,
+      "compiled_end": 261,
+      "compiled_start": 257,
       "range_type": "Python",
       "source_end": 157,
       "source_start": 151
     },
     {
-      "compiled_end": 417,
-      "compiled_start": 392,
+      "compiled_end": 389,
+      "compiled_start": 364,
       "range_type": "Python",
       "source_end": 252,
       "source_start": 227
     },
     {
-      "compiled_end": 496,
-      "compiled_start": 490,
+      "compiled_end": 449,
+      "compiled_start": 445,
       "range_type": "Python",
       "source_end": 286,
       "source_start": 280
     },
     {
-      "compiled_end": 600,
-      "compiled_start": 595,
+      "compiled_end": 553,
+      "compiled_start": 548,
       "range_type": "Python",
       "source_end": 357,
       "source_start": 352
     },
     {
-      "compiled_end": 655,
-      "compiled_start": 650,
+      "compiled_end": 590,
+      "compiled_start": 587,
       "range_type": "Python",
       "source_end": 376,
       "source_start": 371
     },
     {
-      "compiled_end": 689,
-      "compiled_start": 682,
+      "compiled_end": 623,
+      "compiled_start": 618,
       "range_type": "Python",
       "source_end": 401,
       "source_start": 394
     },
     {
-      "compiled_end": 798,
-      "compiled_start": 780,
+      "compiled_end": 732,
+      "compiled_start": 714,
       "range_type": "Python",
       "source_end": 477,
       "source_start": 459
     },
     {
-      "compiled_end": 871,
-      "compiled_start": 865,
+      "compiled_end": 787,
+      "compiled_start": 783,
       "range_type": "Python",
       "source_end": 514,
       "source_start": 508
     },
     {
-      "compiled_end": 909,
-      "compiled_start": 902,
+      "compiled_end": 824,
+      "compiled_start": 819,
       "range_type": "Python",
       "source_end": 543,
       "source_start": 536
     },
     {
-      "compiled_end": 1024,
-      "compiled_start": 1018,
+      "compiled_end": 939,
+      "compiled_start": 933,
       "range_type": "Python",
       "source_end": 625,
       "source_start": 619
     },
     {
-      "compiled_end": 1072,
-      "compiled_start": 1069,
+      "compiled_end": 987,
+      "compiled_start": 984,
       "range_type": "Python",
       "source_end": 667,
       "source_start": 664
     },
     {
-      "compiled_end": 1132,
-      "compiled_start": 1126,
+      "compiled_end": 1029,
+      "compiled_start": 1025,
       "range_type": "Python",
       "source_end": 695,
       "source_start": 689
     },
     {
-      "compiled_end": 1268,
-      "compiled_start": 1255,
+      "compiled_end": 1165,
+      "compiled_start": 1152,
       "range_type": "Python",
       "source_end": 796,
       "source_start": 783
     },
     {
-      "compiled_end": 1321,
-      "compiled_start": 1318,
+      "compiled_end": 1200,
+      "compiled_start": 1199,
       "range_type": "Python",
       "source_end": 813,
       "source_start": 810
     },
     {
-      "compiled_end": 1351,
-      "compiled_start": 1348,
+      "compiled_end": 1229,
+      "compiled_start": 1228,
       "range_type": "Python",
       "source_end": 834,
       "source_start": 831
     },
     {
-      "compiled_end": 1439,
-      "compiled_start": 1431,
+      "compiled_end": 1317,
+      "compiled_start": 1309,
       "range_type": "Python",
       "source_end": 889,
       "source_start": 881
     },
     {
-      "compiled_end": 1497,
-      "compiled_start": 1494,
+      "compiled_end": 1357,
+      "compiled_start": 1356,
       "range_type": "Python",
       "source_end": 911,
       "source_start": 908
     },
     {
-      "compiled_end": 1598,
-      "compiled_start": 1583,
+      "compiled_end": 1458,
+      "compiled_start": 1443,
       "range_type": "Python",
       "source_end": 979,
       "source_start": 964
     },
     {
-      "compiled_end": 1654,
-      "compiled_start": 1648,
+      "compiled_end": 1496,
+      "compiled_start": 1492,
       "range_type": "Python",
       "source_end": 999,
       "source_start": 993

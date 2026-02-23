@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 18,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef ShortCircuit(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef ShortCircuit(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -23,37 +23,37 @@
     },
     {
       "end": 101,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<p class=\"warning\">‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<p class=\"warning\">{escape(",
       "start": 92,
-      "suffix": "›</p>\n    \"\"\")\n\n    yield \"</div>\"\n\n",
+      "suffix": ")}</p>\n    \"\"\"\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 86,
-      "compiled_start": 68,
+      "compiled_end": 77,
+      "compiled_start": 59,
       "range_type": "Python",
       "source_end": 18,
       "source_start": 0
     },
     {
-      "compiled_end": 100,
-      "compiled_start": 88,
+      "compiled_end": 91,
+      "compiled_start": 79,
       "range_type": "Python",
       "source_end": 31,
       "source_start": 19
     },
     {
-      "compiled_end": 142,
-      "compiled_start": 130,
+      "compiled_end": 133,
+      "compiled_start": 121,
       "range_type": "Python",
       "source_end": 63,
       "source_start": 51
     },
     {
-      "compiled_end": 216,
-      "compiled_start": 207,
+      "compiled_end": 189,
+      "compiled_start": 182,
       "range_type": "Python",
       "source_end": 101,
       "source_start": 92

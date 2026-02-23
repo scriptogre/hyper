@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from typing import Any, Callable\nfrom hyper import html, replace_markers\n\n\n@html\ndef ComplexTypes(*, ",
+      "prefix": "from typing import Any, Callable\nfrom hyper import html, escape\n\n\n@html\ndef ComplexTypes(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -51,121 +51,121 @@
     },
     {
       "end": 215,
-      "prefix": ", **kwargs: Any):\n    yield replace_markers(f\"\"\"\\\n<div>\n    <span>‹ESCAPE:",
+      "prefix": ", **kwargs: Any):\n    yield f\"\"\"\\\n<div>\n    <span>{escape(",
       "start": 207,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 247,
-      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "prefix": ")}</span>\n    <span>{escape(",
       "start": 233,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 285,
-      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "prefix": ")}</span>\n    <span>{escape(",
       "start": 265,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 315,
-      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "prefix": ")}</span>\n    <span>{escape(",
       "start": 303,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 347,
-      "prefix": "›</span>\n    <span>‹ESCAPE:",
+      "prefix": ")}</span>\n    <span>{escape(",
       "start": 333,
-      "suffix": "›</span>\n</div>\"\"\")\n",
+      "suffix": ")}</span>\n</div>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 112,
-      "compiled_start": 101,
+      "compiled_end": 103,
+      "compiled_start": 92,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 143,
-      "compiled_start": 114,
+      "compiled_end": 134,
+      "compiled_start": 105,
       "range_type": "Python",
       "source_end": 41,
       "source_start": 12
     },
     {
-      "compiled_end": 172,
-      "compiled_start": 145,
+      "compiled_end": 163,
+      "compiled_start": 136,
       "range_type": "Python",
       "source_end": 69,
       "source_start": 42
     },
     {
-      "compiled_end": 190,
-      "compiled_start": 174,
+      "compiled_end": 181,
+      "compiled_start": 165,
       "range_type": "Python",
       "source_end": 86,
       "source_start": 70
     },
     {
-      "compiled_end": 215,
-      "compiled_start": 192,
+      "compiled_end": 206,
+      "compiled_start": 183,
       "range_type": "Python",
       "source_end": 110,
       "source_start": 87
     },
     {
-      "compiled_end": 245,
-      "compiled_start": 217,
+      "compiled_end": 236,
+      "compiled_start": 208,
       "range_type": "Python",
       "source_end": 139,
       "source_start": 111
     },
     {
-      "compiled_end": 277,
-      "compiled_start": 247,
+      "compiled_end": 268,
+      "compiled_start": 238,
       "range_type": "Python",
       "source_end": 170,
       "source_start": 140
     },
     {
-      "compiled_end": 359,
-      "compiled_start": 351,
+      "compiled_end": 332,
+      "compiled_start": 326,
       "range_type": "Python",
       "source_end": 215,
       "source_start": 207
     },
     {
-      "compiled_end": 400,
-      "compiled_start": 386,
+      "compiled_end": 372,
+      "compiled_start": 360,
       "range_type": "Python",
       "source_end": 247,
       "source_start": 233
     },
     {
-      "compiled_end": 447,
-      "compiled_start": 427,
+      "compiled_end": 418,
+      "compiled_start": 400,
       "range_type": "Python",
       "source_end": 285,
       "source_start": 265
     },
     {
-      "compiled_end": 486,
-      "compiled_start": 474,
+      "compiled_end": 456,
+      "compiled_start": 446,
       "range_type": "Python",
       "source_end": 315,
       "source_start": 303
     },
     {
-      "compiled_end": 527,
-      "compiled_start": 513,
+      "compiled_end": 496,
+      "compiled_start": 484,
       "range_type": "Python",
       "source_end": 347,
       "source_start": 333

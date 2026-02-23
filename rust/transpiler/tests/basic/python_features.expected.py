@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -7,44 +7,44 @@ def PythonFeatures(*, items: list, data: dict, value: int):
     # Walrus operator
 
     if (n := len(items)) > 0:
-        yield replace_markers(f"""<span>Found ‹ESCAPE:{n}› items</span>""")
+        yield f"""<span>Found {escape(n)} items</span>"""
 
     # Lambda (assigned to variable first)
 
     sorter = lambda x: x.lower()
 
     sorted_items = sorted(items, key=sorter)
-    yield replace_markers(f"""<span>‹ESCAPE:{sorted_items}›</span>""")
+    yield f"""<span>{escape(sorted_items)}</span>"""
 
     # Unpacking in expression
 
     first, *rest = items
-    yield replace_markers(f"""<span>First: ‹ESCAPE:{first}›, Rest: ‹ESCAPE:{rest}›</span>""")
+    yield f"""<span>First: {escape(first)}, Rest: {escape(rest)}</span>"""
 
     # Dictionary merge (Python 3.9+)
 
     merged = {**data, "extra": "value"}
-    yield replace_markers(f"""<span>‹ESCAPE:{merged}›</span>""")
+    yield f"""<span>{escape(merged)}</span>"""
 
     # Conditional expression (ternary)
-    yield replace_markers(f"""<span>‹ESCAPE:{value if value > 0 else -value}›</span>""")
+    yield f"""<span>{escape(value if value > 0 else -value)}</span>"""
 
     # Nested ternary
-    yield replace_markers(f"""<span>‹ESCAPE:{"positive" if value > 0 else "zero" if value == 0 else "negative"}›</span>""")
+    yield f"""<span>{escape("positive" if value > 0 else "zero" if value == 0 else "negative")}</span>"""
 
     # F-string style expressions
-    yield replace_markers(f"""\
-<span>‹ESCAPE:{value=}›</span>
-<span>‹ESCAPE:{items!r}›</span>""")
+    yield f"""\
+<span>{escape(value=)}</span>
+<span>{escape(items!r)}</span>"""
 
     # Star unpacking in function call
 
     args = [1, 2, 3]
-    yield replace_markers(f"""<span>‹ESCAPE:{max(*args)}›</span>""")
+    yield f"""<span>{escape(max(*args))}</span>"""
 
     # Keyword unpacking
 
     kwargs = {"sep": ", ", "end": "!"}
 
     result = "hello"
-    yield replace_markers(f"""<span>‹ESCAPE:{result}›</span>""")
+    yield f"""<span>{escape(result)}</span>"""

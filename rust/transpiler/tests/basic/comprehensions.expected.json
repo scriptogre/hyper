@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 11,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Comprehensions(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Comprehensions(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,86 +16,86 @@
     },
     {
       "end": 84,
-      "prefix": "):\n\n    # List comprehensions\n    yield replace_markers(f\"\"\"\\\n<span>‹ESCAPE:",
+      "prefix": "):\n\n    # List comprehensions\n    yield f\"\"\"\\\n<span>{escape(",
       "start": 57,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 140,
-      "prefix": "›</span>\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\n<span>{escape(",
       "start": 98,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 195,
-      "prefix": "›</span>\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\n<span>{escape(",
       "start": 154,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 495,
-      "prefix": "›</span>\"\"\")\n\n    # Dict comprehensions (doubled braces for literal braces in f-string)\n    yield \"\"\"\\\n<span>{k: v.upper() for k, v in data.items()}</span>\n<span>{k: v for k, v in data.items() if v}</span>\"\"\"\n\n    # Set comprehensions\n    yield \"\"\"<span>{x for x in items}</span>\"\"\"\n\n    # Generator expressions\n    yield replace_markers(f\"\"\"\\\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\"\"\"\n\n    # Dict comprehensions (doubled braces for literal braces in f-string)\n    yield \"\"\"\\\n<span>{k: v.upper() for k, v in data.items()}</span>\n<span>{k: v for k, v in data.items() if v}</span>\"\"\"\n\n    # Set comprehensions\n    yield \"\"\"<span>{x for x in items}</span>\"\"\"\n\n    # Generator expressions\n    yield f\"\"\"\\\n<span>{escape(",
       "start": 468,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 542,
-      "prefix": "›</span>\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\n<span>{escape(",
       "start": 509,
-      "suffix": "›</span>\"\"\")\n",
+      "suffix": ")}</span>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 81,
-      "compiled_start": 70,
+      "compiled_end": 72,
+      "compiled_start": 61,
       "range_type": "Python",
       "source_end": 11,
       "source_start": 0
     },
     {
-      "compiled_end": 93,
-      "compiled_start": 83,
+      "compiled_end": 84,
+      "compiled_start": 74,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 12
     },
     {
-      "compiled_end": 196,
-      "compiled_start": 169,
+      "compiled_end": 169,
+      "compiled_start": 144,
       "range_type": "Python",
       "source_end": 84,
       "source_start": 57
     },
     {
-      "compiled_end": 261,
-      "compiled_start": 219,
+      "compiled_end": 233,
+      "compiled_start": 193,
       "range_type": "Python",
       "source_end": 140,
       "source_start": 98
     },
     {
-      "compiled_end": 325,
-      "compiled_start": 284,
+      "compiled_end": 296,
+      "compiled_start": 257,
       "range_type": "Python",
       "source_end": 195,
       "source_start": 154
     },
     {
-      "compiled_end": 710,
-      "compiled_start": 683,
+      "compiled_end": 663,
+      "compiled_start": 638,
       "range_type": "Python",
       "source_end": 495,
       "source_start": 468
     },
     {
-      "compiled_end": 766,
-      "compiled_start": 733,
+      "compiled_end": 718,
+      "compiled_start": 687,
       "range_type": "Python",
       "source_end": 542,
       "source_start": 509

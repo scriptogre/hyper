@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -10,11 +10,11 @@ def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: l
     yield "<div class=\"container\">"
 
     # Indented comment
-    yield replace_markers(f"""\
+    yield f"""\
 <span>Plain text</span>
-    <p>‹ESCAPE:{name}›</p>
-    <p>Count: ‹ESCAPE:{count + 1}›</p>
-    """)
+    <p>{escape(name)}</p>
+    <p>Count: {escape(count + 1)}</p>
+    """
     if is_active:
         yield """<span>Active</span>"""
         # Trailing comment
@@ -29,9 +29,9 @@ def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: l
     """
 
     for item in items:
-        yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+        yield f"""\
+<li>{escape(item)}</li>
+    """
 
     yield "</div>"
 

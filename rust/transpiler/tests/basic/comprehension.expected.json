@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 16,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Comprehension(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Comprehension(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 69,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<li>{escape(",
       "start": 63,
-      "suffix": "›</li>\n    \"\"\")\n\n    yield \"</ul>\"\n\n",
+      "suffix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 85,
-      "compiled_start": 69,
+      "compiled_end": 76,
+      "compiled_start": 60,
       "range_type": "Python",
       "source_end": 16,
       "source_start": 0
     },
     {
-      "compiled_end": 128,
-      "compiled_start": 123,
+      "compiled_end": 119,
+      "compiled_start": 114,
       "range_type": "Python",
       "source_end": 49,
       "source_start": 44
     },
     {
-      "compiled_end": 184,
-      "compiled_start": 178,
+      "compiled_end": 157,
+      "compiled_start": 153,
       "range_type": "Python",
       "source_end": 69,
       "source_start": 63

@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -10,9 +10,9 @@ def Unicode(*, emoji: str, name: str):
 <span>Stars: ⭐⭐⭐</span>"""
 
     # Emoji in expressions
-    yield replace_markers(f"""\
-<span>‹ESCAPE:{emoji}›</span>
-<span>‹ESCAPE:{'⭐' * 5}›</span>""")
+    yield f"""\
+<span>{escape(emoji)}</span>
+<span>{escape('⭐' * 5)}</span>"""
 
     # CJK characters
     yield """\
@@ -26,7 +26,7 @@ def Unicode(*, emoji: str, name: str):
 <p dir="rtl" lang="he">שלום עולם</p>"""
 
     # Mixed scripts
-    yield replace_markers(f"""<p>‹ESCAPE:{name}›: 你好, مرحبا, שלום</p>""")
+    yield f"""<p>{escape(name)}: 你好, مرحبا, שלום</p>"""
 
     # Special Unicode
     yield """\

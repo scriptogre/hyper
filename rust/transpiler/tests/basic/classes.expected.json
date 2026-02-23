@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Classes(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Classes(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,21 +16,21 @@
     },
     {
       "end": 205,
-      "prefix": "):\n\n    # Simple class\n\n    class Card:\n\n        def __init__(self, title: str):\n\n            self.title = title\n\n\n        def render(self):\n            yield replace_markers(f\"\"\"\\\n<div class=\"card\">\n            <h3>‹ESCAPE:",
+      "prefix": "):\n\n    # Simple class\n\n    class Card:\n\n        def __init__(self, title: str):\n\n            self.title = title\n\n\n        def render(self):\n            yield f\"\"\"\\\n<div class=\"card\">\n            <h3>{escape(",
       "start": 193,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 410,
-      "prefix": "›</h3>\n        </div>\n    \"\"\")\n\n\n    # Class with multiple methods\n\n    class List:\n\n        def __init__(self, items: list):\n\n            self.items = items\n\n\n        def render_item(self, item: str):\n            yield replace_markers(f\"\"\"\\\n<li>‹ESCAPE:",
+      "prefix": ")}</h3>\n        </div>\n    \"\"\"\n\n\n    # Class with multiple methods\n\n    class List:\n\n        def __init__(self, items: list):\n\n            self.items = items\n\n\n        def render_item(self, item: str):\n            yield f\"\"\"\\\n<li>{escape(",
       "start": 404,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 494,
-      "prefix": "›</li>\n    \"\"\")\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for item in ",
+      "prefix": ")}</li>\n    \"\"\"\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for item in ",
       "start": 484,
       "suffix": ":\n\n                self.render_item(item)\n\n\n            yield \"</ul>\"\n\n\n\n    # Instantiate and use\n\n    card = Card(title)\n\n    card.render()\n\n",
       "type": "python"
@@ -38,36 +38,36 @@
   ],
   "ranges": [
     {
-      "compiled_end": 73,
-      "compiled_start": 63,
+      "compiled_end": 64,
+      "compiled_start": 54,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 86,
-      "compiled_start": 75,
+      "compiled_end": 77,
+      "compiled_start": 66,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 11
     },
     {
-      "compiled_end": 322,
-      "compiled_start": 310,
+      "compiled_end": 295,
+      "compiled_start": 285,
       "range_type": "Python",
       "source_end": 205,
       "source_start": 193
     },
     {
-      "compiled_end": 582,
-      "compiled_start": 576,
+      "compiled_end": 537,
+      "compiled_start": 533,
       "range_type": "Python",
       "source_end": 410,
       "source_start": 404
     },
     {
-      "compiled_end": 686,
-      "compiled_start": 676,
+      "compiled_end": 641,
+      "compiled_start": 631,
       "range_type": "Python",
       "source_end": 494,
       "source_start": 484

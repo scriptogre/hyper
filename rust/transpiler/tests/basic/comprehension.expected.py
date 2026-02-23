@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -7,9 +7,9 @@ def Comprehension(*, items: list[str]):
     yield "<ul>"
 
     for item in items:
-        yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+        yield f"""\
+<li>{escape(item)}</li>
+    """
 
     yield "</ul>"
 

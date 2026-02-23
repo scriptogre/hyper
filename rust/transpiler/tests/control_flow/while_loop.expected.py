@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -7,9 +7,9 @@ def WhileLoop(*, count: int):
     yield "<div>"
 
     while count > 0:
-        yield replace_markers(f"""\
-<p>Count: ‹ESCAPE:{count}›</p>
-    """)
+        yield f"""\
+<p>Count: {escape(count)}</p>
+    """
 
     yield "</div>"
 

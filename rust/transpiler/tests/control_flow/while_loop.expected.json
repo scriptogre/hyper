@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef WhileLoop(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef WhileLoop(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,30 +16,30 @@
     },
     {
       "end": 69,
-      "prefix": ":\n        yield replace_markers(f\"\"\"\\\n<p>Count: ‹ESCAPE:",
+      "prefix": ":\n        yield f\"\"\"\\\n<p>Count: {escape(",
       "start": 62,
-      "suffix": "›</p>\n    \"\"\")\n\n    yield \"</div>\"\n\n",
+      "suffix": ")}</p>\n    \"\"\"\n\n    yield \"</div>\"\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 75,
-      "compiled_start": 65,
+      "compiled_end": 66,
+      "compiled_start": 56,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 117,
-      "compiled_start": 108,
+      "compiled_end": 108,
+      "compiled_start": 99,
       "range_type": "Python",
       "source_end": 42,
       "source_start": 33
     },
     {
-      "compiled_end": 180,
-      "compiled_start": 173,
+      "compiled_end": 153,
+      "compiled_start": 148,
       "range_type": "Python",
       "source_end": 69,
       "source_start": 62

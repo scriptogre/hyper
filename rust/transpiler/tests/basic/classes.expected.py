@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -14,11 +14,11 @@ def Classes(*, title: str, items: list):
 
 
         def render(self):
-            yield replace_markers(f"""\
+            yield f"""\
 <div class="card">
-            <h3>‹ESCAPE:{self.title}›</h3>
+            <h3>{escape(self.title)}</h3>
         </div>
-    """)
+    """
 
 
     # Class with multiple methods
@@ -31,9 +31,9 @@ def Classes(*, title: str, items: list):
 
 
         def render_item(self, item: str):
-            yield replace_markers(f"""\
-<li>‹ESCAPE:{item}›</li>
-    """)
+            yield f"""\
+<li>{escape(item)}</li>
+    """
 
         def render(self):
 

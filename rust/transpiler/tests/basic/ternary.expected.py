@@ -1,6 +1,6 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
 def Ternary(*, count: int):
-    yield replace_markers(f"""<span>‹ESCAPE:{count}› ‹ESCAPE:{"item" if count == 1 else "items"}›</span>""")
+    yield f"""<span>{escape(count)} {escape("item" if count == 1 else "items")}</span>"""

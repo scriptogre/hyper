@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -35,13 +35,13 @@ def Comments(*, name: str, color: str):
 <th>##</th>"""
 
     # Trailing comment after expression
-    yield replace_markers(f"""<span>‹ESCAPE:{name}›</span>""")
+    yield f"""<span>{escape(name)}</span>"""
     # show name
 
     # Hash in expression (not a comment)
-    yield replace_markers(f"""\
-<span>‹ESCAPE:{name or '#'}›</span>
-<span>‹ESCAPE:{"#" + name}›</span>""")
+    yield f"""\
+<span>{escape(name or '#')}</span>
+<span>{escape("#" + name)}</span>"""
 
     # Hash inside paragraph content (not a comment)
     yield """<p>Text # with hash # multiple # times</p>"""

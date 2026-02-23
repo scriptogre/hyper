@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -31,9 +31,9 @@ def AttrEdgeCases(*, value: str):
     yield """<div data-config="this is a very long attribute value that goes on and on and contains lots of text to test how the transpiler handles long attribute values in the output">Long</div>"""
 
     # Attribute with expression containing quotes
-    yield replace_markers(f"""\
-<div title="‹ESCAPE:{value}› said 'hello'">Quotes</div>
-<div data-msg="‹ESCAPE:{value}› said "hi"">Double quotes</div>""")
+    yield f"""\
+<div title="{escape(value)} said 'hello'">Quotes</div>
+<div data-msg="{escape(value)} said "hi"">Double quotes</div>"""
 
     # Single vs double quotes
     yield """\

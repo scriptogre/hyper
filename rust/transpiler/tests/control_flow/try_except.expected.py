@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -7,20 +7,20 @@ def TryExcept(*, data: dict, risky_func: object):
     # Simple try/except
 
     try:
-        yield replace_markers(f"""<span>‹ESCAPE:{data['missing']}›</span>""")
+        yield f"""<span>{escape(data['missing'])}</span>"""
     except KeyError:
         yield """<span>Key not found</span>"""
 
     # Try with multiple except
 
     try:
-        yield replace_markers(f"""<span>‹ESCAPE:{risky_func()}›</span>""")
+        yield f"""<span>{escape(risky_func())}</span>"""
     except ValueError as e:
-        yield replace_markers(f"""<span>Value error: ‹ESCAPE:{e}›</span>""")
+        yield f"""<span>Value error: {escape(e)}</span>"""
     except TypeError as e:
-        yield replace_markers(f"""<span>Type error: ‹ESCAPE:{e}›</span>""")
+        yield f"""<span>Type error: {escape(e)}</span>"""
     except Exception as e:
-        yield replace_markers(f"""<span>Unknown error: ‹ESCAPE:{e}›</span>""")
+        yield f"""<span>Unknown error: {escape(e)}</span>"""
 
     # Try/except/else
 
@@ -31,12 +31,12 @@ def TryExcept(*, data: dict, risky_func: object):
     except KeyError:
         yield """<span>Missing</span>"""
     else:
-        yield replace_markers(f"""<span>Found: ‹ESCAPE:{result}›</span>""")
+        yield f"""<span>Found: {escape(result)}</span>"""
 
     # Try/except/finally
 
     try:
-        yield replace_markers(f"""<span>‹ESCAPE:{data['value']}›</span>""")
+        yield f"""<span>{escape(data['value'])}</span>"""
     except:
         yield """<span>Error</span>"""
     finally:
@@ -57,5 +57,5 @@ def TryExcept(*, data: dict, risky_func: object):
     else:
         yield """<span>Success</span>"""
     finally:
-        yield replace_markers(f"""<span>Done: ‹ESCAPE:{value}›</span>""")
+        yield f"""<span>Done: {escape(value)}</span>"""
 

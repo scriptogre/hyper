@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -11,7 +11,7 @@ def Multiline(*, data: dict, items: list):
         "key2": "value2",
         "key3": "value3"
     }
-    yield replace_markers(f"""<span>‹ESCAPE:{config}›</span>""")
+    yield f"""<span>{escape(config)}</span>"""
 
     # Multiline list literal
 
@@ -20,7 +20,7 @@ def Multiline(*, data: dict, items: list):
         "item2",
         "item3"
     ]
-    yield replace_markers(f"""<span>‹ESCAPE:{values}›</span>""")
+    yield f"""<span>{escape(values)}</span>"""
 
     # Multiline function call
 
@@ -29,7 +29,7 @@ def Multiline(*, data: dict, items: list):
         arg2="value2",
         arg3="value3"
     )
-    yield replace_markers(f"""<span>‹ESCAPE:{result}›</span>""")
+    yield f"""<span>{escape(result)}</span>"""
 
     # Multiline list comprehension
 
@@ -38,7 +38,7 @@ def Multiline(*, data: dict, items: list):
         for x in range(10)
         if x % 2 == 0
     ]
-    yield replace_markers(f"""<span>‹ESCAPE:{squares}›</span>""")
+    yield f"""<span>{escape(squares)}</span>"""
 
     # Chained method calls (each on own line)
 
@@ -46,4 +46,4 @@ def Multiline(*, data: dict, items: list):
         .get('items', [])
         .copy()
     )
-    yield replace_markers(f"""<span>‹ESCAPE:{processed}›</span>""")
+    yield f"""<span>{escape(processed)}</span>"""

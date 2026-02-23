@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Comments(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Comments(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -16,58 +16,58 @@
     },
     {
       "end": 605,
-      "prefix": "):\n\n    # Full-line comment (stripped)\n    yield \"\"\"<div>Content</div>\"\"\"\n\n    # Another full-line comment\n    yield \"\"\"<span>Text</span>\"\"\"\n    # trailing comment after close tag\n\n    # Hash in table header (not a comment)\n    yield \"\"\"<th scope=\"col\">#</th>\"\"\"\n\n    # Hash in URLs (not a comment)\n    yield \"\"\"\\\n<a href=\"#section\">Jump</a>\n<a href=\"/page#anchor\">Link</a>\"\"\"\n\n    # Hash in CSS colors (not a comment)\n    yield \"\"\"\\\n<div style=\"color: #ff0000\">Red</div>\n<div style=\"background: #fff\">White</div>\"\"\"\n\n    # HTML entities with hash\n    yield \"\"\"\\\n<span>&#35;</span>\n<span>&#x23;</span>\"\"\"\n\n    # Multiple hashes as content\n    yield \"\"\"\\\n<div>###</div>\n<th>##</th>\"\"\"\n\n    # Trailing comment after expression\n    yield replace_markers(f\"\"\"<span>‹ESCAPE:",
+      "prefix": "):\n\n    # Full-line comment (stripped)\n    yield \"\"\"<div>Content</div>\"\"\"\n\n    # Another full-line comment\n    yield \"\"\"<span>Text</span>\"\"\"\n    # trailing comment after close tag\n\n    # Hash in table header (not a comment)\n    yield \"\"\"<th scope=\"col\">#</th>\"\"\"\n\n    # Hash in URLs (not a comment)\n    yield \"\"\"\\\n<a href=\"#section\">Jump</a>\n<a href=\"/page#anchor\">Link</a>\"\"\"\n\n    # Hash in CSS colors (not a comment)\n    yield \"\"\"\\\n<div style=\"color: #ff0000\">Red</div>\n<div style=\"background: #fff\">White</div>\"\"\"\n\n    # HTML entities with hash\n    yield \"\"\"\\\n<span>&#35;</span>\n<span>&#x23;</span>\"\"\"\n\n    # Multiple hashes as content\n    yield \"\"\"\\\n<div>###</div>\n<th>##</th>\"\"\"\n\n    # Trailing comment after expression\n    yield f\"\"\"<span>{escape(",
       "start": 599,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 683,
-      "prefix": "›</span>\"\"\")\n    # show name\n\n    # Hash in expression (not a comment)\n    yield replace_markers(f\"\"\"\\\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\"\"\"\n    # show name\n\n    # Hash in expression (not a comment)\n    yield f\"\"\"\\\n<span>{escape(",
       "start": 670,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 709,
-      "prefix": "›</span>\n<span>‹ESCAPE:",
+      "prefix": ")}</span>\n<span>{escape(",
       "start": 697,
-      "suffix": "›</span>\"\"\")\n\n    # Hash inside paragraph content (not a comment)\n    yield \"\"\"<p>Text # with hash # multiple # times</p>\"\"\"\n\n    # No space before hash (not a comment)\n    yield \"\"\"<span>Item</span># kept as content\"\"\"\n\n    # Hash in attribute value (not a comment)\n    yield \"\"\"<div data-info=\"use # for comments\">Info</div>\"\"\"\n\n    # Trailing comment after self-closing tag\n    yield \"\"\"<br />\"\"\"\n    # self-closing\n\n    # Hash in value attr + trailing comment\n    yield \"\"\"<input value=\"#\" />\"\"\"\n    # input comment\n\n",
+      "suffix": ")}</span>\"\"\"\n\n    # Hash inside paragraph content (not a comment)\n    yield \"\"\"<p>Text # with hash # multiple # times</p>\"\"\"\n\n    # No space before hash (not a comment)\n    yield \"\"\"<span>Item</span># kept as content\"\"\"\n\n    # Hash in attribute value (not a comment)\n    yield \"\"\"<div data-info=\"use # for comments\">Info</div>\"\"\"\n\n    # Trailing comment after self-closing tag\n    yield \"\"\"<br />\"\"\"\n    # self-closing\n\n    # Hash in value attr + trailing comment\n    yield \"\"\"<input value=\"#\" />\"\"\"\n    # input comment\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 73,
-      "compiled_start": 64,
+      "compiled_end": 64,
+      "compiled_start": 55,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 85,
-      "compiled_start": 75,
+      "compiled_end": 76,
+      "compiled_start": 66,
       "range_type": "Python",
       "source_end": 20,
       "source_start": 10
     },
     {
-      "compiled_end": 860,
-      "compiled_start": 854,
+      "compiled_end": 833,
+      "compiled_start": 829,
       "range_type": "Python",
       "source_end": 605,
       "source_start": 599
     },
     {
-      "compiled_end": 990,
-      "compiled_start": 977,
+      "compiled_end": 945,
+      "compiled_start": 934,
       "range_type": "Python",
       "source_end": 683,
       "source_start": 670
     },
     {
-      "compiled_end": 1025,
-      "compiled_start": 1013,
+      "compiled_end": 979,
+      "compiled_start": 969,
       "range_type": "Python",
       "source_end": 709,
       "source_start": 697

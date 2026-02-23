@@ -2,35 +2,35 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef Functions(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Functions(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 58,
-      "prefix": "):\n    @html\n    def Greet(who: str):\n        yield replace_markers(f\"\"\"<h1>Hello, ‹ESCAPE:",
+      "prefix": "):\n    @html\n    def Greet(who: str):\n        yield f\"\"\"<h1>Hello, {escape(",
       "start": 53,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 159,
-      "prefix": "›!</h1>\"\"\")\n    @html\n    def Badge(text: str, color: str = \"blue\"):\n        yield replace_markers(f\"\"\"<span class=\"badge badge-‹ESCAPE:{color}›\">‹ESCAPE:",
+      "prefix": ")}!</h1>\"\"\"\n    @html\n    def Badge(text: str, color: str = \"blue\"):\n        yield f\"\"\"<span class=\"badge badge-{escape(color)}\">{escape(",
       "start": 153,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 271,
-      "prefix": "›</span>\"\"\")\n    @html\n    def List(items: list, title: str = \"Items\"):\n        yield \"<div class=\\\"list-container\\\">\"\n        yield replace_markers(f\"\"\"<h2>‹ESCAPE:",
+      "prefix": ")}</span>\"\"\"\n    @html\n    def List(items: list, title: str = \"Items\"):\n        yield \"<div class=\\\"list-container\\\">\"\n        yield f\"\"\"<h2>{escape(",
       "start": 264,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 293,
-      "prefix": "›</h2>\"\"\")\n        if ",
+      "prefix": ")}</h2>\"\"\"\n        if ",
       "start": 288,
       "suffix": "",
       "type": "python"
@@ -44,58 +44,58 @@
     },
     {
       "end": 377,
-      "prefix": ":\n                yield replace_markers(f\"\"\"<li>‹ESCAPE:",
+      "prefix": ":\n                yield f\"\"\"<li>{escape(",
       "start": 371,
-      "suffix": "›</li>\"\"\")\n            yield \"</ul>\"\n        else:\n            yield \"\"\"<p>No items</p>\"\"\"\n        yield \"</div>\"\n    def format_name(n: str) -> str:\n        return n.upper()\n\n    yield from Greet(who=format_name(name))\n\n    yield from Badge(text=\"Admin\", color=\"red\")\n\n",
+      "suffix": ")}</li>\"\"\"\n            yield \"</ul>\"\n        else:\n            yield \"\"\"<p>No items</p>\"\"\"\n        yield \"</div>\"\n    def format_name(n: str) -> str:\n        return n.upper()\n\n    yield from Greet(who=format_name(name))\n\n    yield from Badge(text=\"Admin\", color=\"red\")\n\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 74,
-      "compiled_start": 65,
+      "compiled_end": 65,
+      "compiled_start": 56,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 170,
-      "compiled_start": 165,
+      "compiled_end": 143,
+      "compiled_start": 140,
       "range_type": "Python",
       "source_end": 58,
       "source_start": 53
     },
     {
-      "compiled_end": 330,
-      "compiled_start": 324,
+      "compiled_end": 284,
+      "compiled_start": 280,
       "range_type": "Python",
       "source_end": 159,
       "source_start": 153
     },
     {
-      "compiled_end": 502,
-      "compiled_start": 495,
+      "compiled_end": 438,
+      "compiled_start": 433,
       "range_type": "Python",
       "source_end": 271,
       "source_start": 264
     },
     {
-      "compiled_end": 529,
-      "compiled_start": 524,
+      "compiled_end": 465,
+      "compiled_start": 460,
       "range_type": "Python",
       "source_end": 293,
       "source_start": 288
     },
     {
-      "compiled_end": 585,
-      "compiled_start": 580,
+      "compiled_end": 521,
+      "compiled_start": 516,
       "range_type": "Python",
       "source_end": 345,
       "source_start": 340
     },
     {
-      "compiled_end": 647,
-      "compiled_start": 641,
+      "compiled_end": 565,
+      "compiled_start": 561,
       "range_type": "Python",
       "source_end": 377,
       "source_start": 371

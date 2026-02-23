@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 24,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef TemplateAttributes(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef TemplateAttributes(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -18,28 +18,28 @@
       "end": 53,
       "prefix": ", ",
       "start": 42,
-      "suffix": "):\n\n    # Template string in class attribute\n    yield replace_markers(f\"\"\"<button class=\"btn btn-‹ESCAPE:{variant}›\">Click</button>\"\"\")\n\n    # Multiple expressions in one template attribute\n    yield replace_markers(f\"\"\"<div data-info=\"‹ESCAPE:{id}›-‹ESCAPE:{variant}›\">Info</div>\"\"\")\n\n    # Template with size\n    yield replace_markers(f\"\"\"<input class=\"input input-‹ESCAPE:{size}›\" type=\"text\" />\"\"\")\n\n    # Mixed static and template\n    yield replace_markers(f\"\"\"<a href=\"/users/‹ESCAPE:{id}›\" class=\"link link-‹ESCAPE:{variant}›\">Profile</a>\"\"\")\n",
+      "suffix": "):\n\n    # Template string in class attribute\n    yield f\"\"\"<button class=\"btn btn-{escape(variant)}\">Click</button>\"\"\"\n\n    # Multiple expressions in one template attribute\n    yield f\"\"\"<div data-info=\"{escape(id)}-{escape(variant)}\">Info</div>\"\"\"\n\n    # Template with size\n    yield f\"\"\"<input class=\"input input-{escape(size)}\" type=\"text\" />\"\"\"\n\n    # Mixed static and template\n    yield f\"\"\"<a href=\"/users/{escape(id)}\" class=\"link link-{escape(variant)}\">Profile</a>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 98,
-      "compiled_start": 74,
+      "compiled_end": 89,
+      "compiled_start": 65,
       "range_type": "Python",
       "source_end": 24,
       "source_start": 0
     },
     {
-      "compiled_end": 116,
-      "compiled_start": 100,
+      "compiled_end": 107,
+      "compiled_start": 91,
       "range_type": "Python",
       "source_end": 41,
       "source_start": 25
     },
     {
-      "compiled_end": 129,
-      "compiled_start": 118,
+      "compiled_end": 120,
+      "compiled_start": 109,
       "range_type": "Python",
       "source_end": 53,
       "source_start": 42

@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -11,9 +11,9 @@ def Nested(*, title: str, items: list):
 
         # <{CardHeader}>
         def _card_header():
-            yield replace_markers(f"""\
-<h2>‹ESCAPE:{title}›</h2>
-    """)
+            yield f"""\
+<h2>{escape(title)}</h2>
+    """
         yield from CardHeader(_card_header())
         # </{CardHeader}>
 
@@ -27,9 +27,9 @@ def Nested(*, title: str, items: list):
 
                     # <{ListItem}>
                     def _list_item():
-                        yield replace_markers(f"""\
-‹ESCAPE:{item}›
-                """)
+                        yield f"""\
+{escape(item)}
+                """
                     yield from ListItem(_list_item())
                     # </{ListItem}>
 
@@ -49,9 +49,9 @@ def Nested(*, title: str, items: list):
 
         # <{Alert}>
         def _alert():
-            yield replace_markers(f"""\
-<span>‹ESCAPE:{title}›</span>
-    """)
+            yield f"""\
+<span>{escape(title)}</span>
+    """
         yield from Alert(_alert(), type="info")
         # </{Alert}>
 
@@ -62,9 +62,9 @@ def Nested(*, title: str, items: list):
 
         # <{Badge}>
         def _badge():
-            yield replace_markers(f"""\
-‹ESCAPE:{item}›
-    """)
+            yield f"""\
+{escape(item)}
+    """
         yield from Badge(_badge(), color="blue")
         # </{Badge}>
 

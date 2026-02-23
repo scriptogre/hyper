@@ -1,4 +1,4 @@
-from hyper import html, replace_markers
+from hyper import html, escape
 
 
 @html
@@ -12,4 +12,4 @@ def HtmlEntities():
     # Numeric entities
     yield """<p>&#60;angle brackets&#62;</p><p>&#x3C;hex entities&#x3E;</p>"""
     # Mixed with expressions
-    yield replace_markers(f"""<p>&copy; ‹ESCAPE:{2024}› All rights reserved</p>""")
+    yield f"""<p>&copy; {escape(2024)} All rights reserved</p>"""

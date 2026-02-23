@@ -2,30 +2,30 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import html, replace_markers\n\n\n@html\ndef EscapedBraces(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef EscapedBraces(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 190,
-      "prefix": "):\n\n    # Escaped braces for literal output\n    yield \"\"\"\\\n<p>Use {variable} for templates</p>\n<p>JSON: {\"key\": \"value\"}</p>\"\"\"\n\n    # Mixed escaped and dynamic\n    yield replace_markers(f\"\"\"<p>Static {{braces}} and dynamic ‹ESCAPE:",
+      "prefix": "):\n\n    # Escaped braces for literal output\n    yield \"\"\"\\\n<p>Use {variable} for templates</p>\n<p>JSON: {\"key\": \"value\"}</p>\"\"\"\n\n    # Mixed escaped and dynamic\n    yield f\"\"\"<p>Static {{braces}} and dynamic {escape(",
       "start": 184,
-      "suffix": "›</p>\"\"\")\n\n    # In style blocks (CSS needs escaped braces)\n    yield \"\"\"\\\n<style>\n    .card { background: white; }\n    .card:hover { transform: scale(1.05); }\n</style>\"\"\"\n\n    # In script blocks (JS needs escaped braces)\n    yield \"\"\"\\\n<script>\n    const obj = { name: \"{name}\" };\n</script>\"\"\"\n\n    # Alpine.js x-data\n    yield \"\"\"\\\n<div x-data=\"{{ open: false }}\">\n    <button @click=\"open = !open\">Toggle</button>\n</div>\"\"\"\n\n    # Multiple consecutive\n    yield \"\"\"<p>{{nested}}</p>\"\"\"\n",
+      "suffix": ")}</p>\"\"\"\n\n    # In style blocks (CSS needs escaped braces)\n    yield \"\"\"\\\n<style>\n    .card { background: white; }\n    .card:hover { transform: scale(1.05); }\n</style>\"\"\"\n\n    # In script blocks (JS needs escaped braces)\n    yield \"\"\"\\\n<script>\n    const obj = { name: \"{name}\" };\n</script>\"\"\"\n\n    # Alpine.js x-data\n    yield \"\"\"\\\n<div x-data=\"{{ open: false }}\">\n    <button @click=\"open = !open\">Toggle</button>\n</div>\"\"\"\n\n    # Multiple consecutive\n    yield \"\"\"<p>{{nested}}</p>\"\"\"\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 78,
-      "compiled_start": 69,
+      "compiled_end": 69,
+      "compiled_start": 60,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 316,
-      "compiled_start": 310,
+      "compiled_end": 289,
+      "compiled_start": 285,
       "range_type": "Python",
       "source_end": 190,
       "source_start": 184
