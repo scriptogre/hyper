@@ -68,7 +68,7 @@ pub enum Token {
     /// Python statement (assignment, call, import, etc.)
     PythonStatement { code: String, span: Span },
     /// Comment (including the # prefix)
-    Comment { text: String, span: Span },
+    Comment { text: String, span: Span, inline: bool },
     /// Decorator (@something)
     Decorator { code: String, span: Span },
 
@@ -697,6 +697,7 @@ impl<'a> Tokenizer<'a> {
         tokens.push(Token::Comment {
             text,
             span: Span { start, end: self.position },
+            inline: false,
         });
     }
 
@@ -1024,6 +1025,7 @@ impl<'a> Tokenizer<'a> {
                     tokens.push(Token::Comment {
                         text: comment,
                         span: Span { start: comment_start, end: self.position },
+                        inline: true,
                     });
                     return; // Line is done
                 }

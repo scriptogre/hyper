@@ -3,6 +3,7 @@ user_id: int
 ---
 
 result = await fetch_user(user_id)
+
 <div>
     <h1>{result.name}</h1>
     <p>{await get_bio(user_id)}</p>

@@ -60,6 +60,7 @@ pub struct TextNode {
 pub struct CommentNode {
     pub text: String, // includes the # prefix
     pub span: Span,
+    pub inline: bool, // true if comment follows content on the same source line
 }
 
 /// Python expression
@@ -68,6 +69,9 @@ pub struct ExpressionNode {
     pub expr: String,
     pub span: Span,
     pub escape: bool, // true = escape HTML, false = raw
+    pub format_spec: Option<String>,  // e.g. "03d", ".2f", ">20"
+    pub conversion: Option<char>,     // 'r', 's', or 'a'
+    pub debug: bool,                  // true if {value=}
 }
 
 /// HTML element
@@ -79,6 +83,7 @@ pub struct ElementNode {
     pub children: Vec<Node>,
     pub self_closing: bool,
     pub span: Span,
+    pub close_span: Option<Span>, // Span of </tag> closing tag in source
 }
 
 /// Component invocation

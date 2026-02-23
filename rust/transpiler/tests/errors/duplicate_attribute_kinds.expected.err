@@ -1,0 +1,9 @@
+
+ file: duplicate_attribute_kinds.hyper:4:6
+error: "class" is set twice on this element.
+   |
+ 4 | <div class="foo" class={url}>Content</div>
+   |                  ^^^^^^^^^^^
+ 4 | <div class="foo" class={url}>Content</div>
+   |      ^^^^^^^^^^^ first use
+

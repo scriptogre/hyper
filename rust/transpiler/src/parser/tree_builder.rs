@@ -138,10 +138,14 @@ impl TreeBuilder {
                     self.advance();
                     Ok(Some(node))
                 } else {
+                    let (expr, format_spec, conversion, debug) = Self::parse_expression_parts(code);
                     let node = Node::Expression(ExpressionNode {
-                        expr: code.clone(),
+                        expr,
                         span: *span,
                         escape: true, // Default to escaping
+                        format_spec,
+                        conversion,
+                        debug,
                     });
                     self.advance();
                     Ok(Some(node))
@@ -191,8 +195,8 @@ impl TreeBuilder {
 
                 self.advance();
 
-                let children = if is_self_closing {
-                    Vec::new()
+                let (children, close_span) = if is_self_closing {
+                    (Vec::new(), None)
                 } else {
                     self.parse_until_element_close(&element_tag, &element_span)?
                 };
@@ -204,6 +208,7 @@ impl TreeBuilder {
                     children,
                     self_closing: is_self_closing,
                     span: element_span,
+                    close_span,
                 })))
             }
 
@@ -293,10 +298,11 @@ impl TreeBuilder {
                 Ok(Some(node))
             }
 
-            Token::Comment { text, span } => {
+            Token::Comment { text, span, inline } => {
                 let node = Node::Comment(CommentNode {
                     text: text.clone(),
                     span: *span,
+                    inline: *inline,
                 });
                 self.advance();
                 Ok(Some(node))
@@ -759,18 +765,21 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    fn parse_until_element_close(&mut self, tag: &str, open_span: &Span) -> Result<Vec<Node>, ParseError> {
+    fn parse_until_element_close(&mut self, tag: &str, open_span: &Span) -> Result<(Vec<Node>, Option<Span>), ParseError> {
         self.element_stack.push(tag.to_string());
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::HtmlElementClose {
-                    tag: close_tag, ..
+                    tag: close_tag,
+                    span: close_span,
+                    ..
                 }) if close_tag == tag => {
+                    let close_span = *close_span;
                     self.advance();
                     self.element_stack.pop();
-                    return Ok(nodes);
+                    return Ok((nodes, Some(close_span)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {
@@ -993,6 +1002,135 @@ impl TreeBuilder {
                 _ => break,
             }
         }
+    }
+
+    /// Parse an expression string into (expr, format_spec, conversion, debug).
+    /// Handles `{count:03d}`, `{items!r}`, `{value=}` syntax.
+    fn parse_expression_parts(code: &str) -> (String, Option<String>, Option<char>, bool) {
+        let mut expr = code.to_string();
+        let mut format_spec = None;
+        let mut conversion = None;
+        let mut debug = false;
+
+        // 1. Check for debug format: trailing `=` (but not ==, !=, <=, >=)
+        let trimmed = expr.trim_end();
+        if trimmed.ends_with('=') && !trimmed.ends_with("==") && !trimmed.ends_with("!=")
+            && !trimmed.ends_with("<=") && !trimmed.ends_with(">=")
+        {
+            debug = true;
+            expr = trimmed[..trimmed.len() - 1].to_string();
+            // Debug format skips escape and uses Python's = format directly
+            return (expr, format_spec, conversion, debug);
+        }
+
+        // 2. Check for conversion flag: !r, !s, !a at end (at depth 0)
+        //    Must be at the very end of the expression
+        let trimmed = expr.trim_end();
+        if trimmed.len() >= 2 {
+            let last_two = &trimmed[trimmed.len() - 2..];
+            if matches!(last_two, "!r" | "!s" | "!a") {
+                // Verify the '!' is at depth 0
+                let bang_pos = trimmed.len() - 2;
+                if Self::depth_at_position(trimmed, bang_pos) == 0 {
+                    conversion = Some(trimmed.as_bytes()[trimmed.len() - 1] as char);
+                    expr = trimmed[..trimmed.len() - 2].to_string();
+                    return (expr, format_spec, conversion, debug);
+                }
+            }
+        }
+
+        // 3. Check for format spec: `:` at depth 0 (scanning from right)
+        //    Must not be inside brackets, parens, strings, or dict literals
+        if let Some(colon_pos) = Self::find_format_colon(&expr) {
+            format_spec = Some(expr[colon_pos + 1..].trim_end().to_string());
+            expr = expr[..colon_pos].to_string();
+        }
+
+        (expr, format_spec, conversion, debug)
+    }
+
+    /// Calculate nesting depth at a given byte position in an expression.
+    fn depth_at_position(expr: &str, target: usize) -> usize {
+        let mut depth: usize = 0;
+        let mut in_string = false;
+        let mut string_char = ' ';
+        let bytes = expr.as_bytes();
+        let mut i = 0;
+
+        while i < target && i < bytes.len() {
+            let ch = bytes[i] as char;
+            if in_string {
+                if ch == '\\' {
+                    i += 1; // skip escaped char
+                } else if ch == string_char {
+                    in_string = false;
+                }
+            } else {
+                match ch {
+                    '"' | '\'' => { in_string = true; string_char = ch; }
+                    '(' | '[' | '{' => { depth += 1; }
+                    ')' | ']' | '}' => { depth = depth.saturating_sub(1); }
+                    _ => {}
+                }
+            }
+            i += 1;
+        }
+        depth
+    }
+
+    /// Find the position of the format spec colon (`:` at depth 0).
+    /// Scans from right to left to find the last `:` at depth 0.
+    /// Returns None if no format spec colon is found.
+    fn find_format_colon(expr: &str) -> Option<usize> {
+        // Scan left-to-right tracking depth, record the last `:` at depth 0
+        let mut depth: usize = 0;
+        let mut in_string = false;
+        let mut string_char = ' ';
+        let mut last_colon_at_depth_0 = None;
+        let bytes = expr.as_bytes();
+        let mut i = 0;
+
+        while i < bytes.len() {
+            let ch = bytes[i] as char;
+            if in_string {
+                if ch == '\\' {
+                    i += 2; // skip escaped char
+                    continue;
+                }
+                if ch == string_char {
+                    in_string = false;
+                }
+            } else {
+                match ch {
+                    '"' | '\'' => { in_string = true; string_char = ch; }
+                    '(' | '[' | '{' => { depth += 1; }
+                    ')' | ']' | '}' => { depth = depth.saturating_sub(1); }
+                    ':' if depth == 0 => {
+                        last_colon_at_depth_0 = Some(i);
+                    }
+                    _ => {}
+                }
+            }
+            i += 1;
+        }
+
+        // Validate: the part after `:` should look like a format spec
+        // (not like a dict value or slice). Format specs are typically short
+        // and contain format characters like d, f, s, >, <, ^, 0, etc.
+        if let Some(pos) = last_colon_at_depth_0 {
+            let after = expr[pos + 1..].trim();
+            // Reject if empty or if it looks like a dict/ternary (contains spaces with keywords)
+            if after.is_empty() {
+                return None;
+            }
+            // Simple heuristic: format specs don't contain unquoted spaces or start with keywords
+            // Format specs: "03d", ".2f", ">20", "#x", ",", "+.2f"
+            if !after.contains(' ') && !after.contains('\t') {
+                return Some(pos);
+            }
+        }
+
+        None
     }
 
     fn is_parameter_declaration(&self, code: &str) -> bool {
