@@ -7,5 +7,5 @@ is_active: bool = True
 
 # Simple if
 if is_active:
-    <span>Active</span>  # Comment
+    <span>Active {count}</span>  # Comment
 end
