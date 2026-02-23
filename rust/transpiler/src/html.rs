@@ -1,5 +1,4 @@
 /// HTML element classification for compile-time validation.
-
 /// Void elements: cannot have children or a closing tag.
 /// https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 const VOID_ELEMENTS: &[&str] = &[

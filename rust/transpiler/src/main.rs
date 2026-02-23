@@ -74,12 +74,10 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
         Err(e) => {
             if json_output {
                 println!("{}", error_to_json(&e));
+            } else if io::stderr().is_terminal() {
+                eprint!("{}", e.render_color(&source, "stdin"));
             } else {
-                if io::stderr().is_terminal() {
-                    eprint!("{}", e.render_color(&source, "stdin"));
-                } else {
-                    eprint!("{}", e.render(&source, "stdin"));
-                }
+                eprint!("{}", e.render(&source, "stdin"));
             }
             std::process::exit(1);
         }
@@ -211,7 +209,7 @@ fn discover_hyper_files(dir: &str) -> Vec<String> {
     WalkDir::new(dir)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map_or(false, |ext| ext == "hyper"))
+        .filter(|e| e.path().extension().is_some_and(|ext| ext == "hyper"))
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()
 }
