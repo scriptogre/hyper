@@ -810,7 +810,9 @@ impl PythonGenerator {
         if has_format_extras {
             // Format spec, conversion, or debug — emit as f-string
             output.push("yield f\"{");
+            let start = output.position();
             output.push(&expr.expr);
+            let end = output.position();
             if expr.debug {
                 output.push("=");
             }
@@ -823,14 +825,43 @@ impl PythonGenerator {
                 output.push(spec);
             }
             output.push("}\"");
+            // Source range excludes braces: span.start + 1 to span.end - 1
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: expr.span.start.byte + 1,
+                source_end: expr.span.end.byte - 1,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+            });
         } else if expr.escape {
             output.push("yield escape(");
+            let start = output.position();
             output.push(&expr.expr);
+            let end = output.position();
             output.push(")");
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: expr.span.start.byte + 1,
+                source_end: expr.span.end.byte - 1,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+            });
         } else {
             output.push("yield str(");
+            let start = output.position();
             output.push(&expr.expr);
+            let end = output.position();
             output.push(")");
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: expr.span.start.byte + 1,
+                source_end: expr.span.end.byte - 1,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+            });
         }
         output.newline();
     }
@@ -1394,20 +1425,50 @@ impl PythonGenerator {
 
     fn emit_definition(&self, def: &DefinitionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
+        let start = output.position();
         output.push(&def.signature);
+        let end = output.position();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: def.signature_span.start.byte,
+            source_end: def.signature_span.end.byte,
+            compiled_start: start,
+            compiled_end: end,
+            needs_injection: true,
+        });
         output.newline();
 
         self.emit_body_or_pass(&def.body, output, indent + 1);
     }
 
     fn emit_import(&self, import: &ImportNode, output: &mut Output, _indent: usize) {
+        let start = output.position();
         output.push(&import.stmt);
+        let end = output.position();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: import.span.start.byte,
+            source_end: import.span.end.byte,
+            compiled_start: start,
+            compiled_end: end,
+            needs_injection: true,
+        });
         output.newline();
     }
 
     fn emit_decorator(&self, dec: &DecoratorNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
+        let start = output.position();
         output.push(&dec.decorator);
+        let end = output.position();
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: dec.span.start.byte,
+            source_end: dec.span.end.byte,
+            compiled_start: start,
+            compiled_end: end,
+            needs_injection: true,
+        });
         output.newline();
     }
 

@@ -781,3 +781,60 @@ fn test_template_attribute_roundtrip() {
     assert_eq!(virtual_python, result.code,
                "Virtual Python from injections should match compiled code");
 }
+
+// ========================================================================
+// Decorator injection ranges
+// ========================================================================
+
+#[test]
+fn test_decorator_has_python_range() {
+    let source = "@fragment\ndef Badge(text: str):\n    <span>{text}</span>\nend";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let has_decorator = py.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "@fragment"
+    });
+    assert!(has_decorator,
+        "Should have Python range for @fragment decorator. Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+}
+
+// ========================================================================
+// Definition signature injection ranges
+// ========================================================================
+
+#[test]
+fn test_def_signature_has_python_range() {
+    let source = "def Badge(text: str):\n    <span>{text}</span>\nend";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let has_def = py.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text.contains("def Badge(text: str):")
+    });
+    assert!(has_def,
+        "Should have Python range for def signature. Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+}
+
+// ========================================================================
+// Standalone expression injection ranges
+// ========================================================================
+
+#[test]
+fn test_standalone_expression_has_python_range() {
+    let source = "def Badge(text: str):\n    <span>{text}</span>\nend\n{Badge(\"New\")}";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let has_call = py.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "Badge(\"New\")"
+    });
+    assert!(has_call,
+        "Should have Python range for standalone expression Badge(\"New\"). Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+}

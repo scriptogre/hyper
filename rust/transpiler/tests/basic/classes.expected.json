@@ -15,36 +15,85 @@
       "type": "python"
     },
     {
+      "end": 55,
+      "prefix": "):\n\n    # Simple class\n\n    ",
+      "start": 44,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 91,
+      "prefix": "\n\n        ",
+      "start": 60,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 118,
-      "prefix": "):\n\n    # Simple class\n\n    class Card:\n\n        def __init__(self, title: str):\n\n            ",
+      "prefix": "\n\n            ",
       "start": 100,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 149,
+      "prefix": "\n\n\n        ",
+      "start": 132,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 204,
-      "prefix": "\n\n\n        def render(self):\n            yield f\"\"\"\\\n<div class=\"card\">\n            <h3>{escape(",
+      "prefix": "\n            yield f\"\"\"\\\n<div class=\"card\">\n            <h3>{escape(",
       "start": 194,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 280,
+      "prefix": ")}</h3>\n        </div>\n    \"\"\"\n\n\n    # Class with multiple methods\n\n    ",
+      "start": 269,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 317,
+      "prefix": "\n\n        ",
+      "start": 285,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 344,
-      "prefix": ")}</h3>\n        </div>\n    \"\"\"\n\n\n    # Class with multiple methods\n\n    class List:\n\n        def __init__(self, items: list):\n\n            ",
+      "prefix": "\n\n            ",
       "start": 326,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 391,
+      "prefix": "\n\n\n        ",
+      "start": 358,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 409,
-      "prefix": "\n\n\n        def render_item(self, item: str):\n            yield f\"\"\"\\\n<li>{escape(",
+      "prefix": "\n            yield f\"\"\"\\\n<li>{escape(",
       "start": 405,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 446,
+      "prefix": ")}</li>\n    \"\"\"\n\n        ",
+      "start": 429,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 494,
-      "prefix": ")}</li>\n    \"\"\"\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for ",
+      "prefix": "\n\n            yield \"<ul>\"\n\n            for ",
       "start": 476,
       "suffix": "",
       "type": "python"
@@ -143,11 +192,32 @@
       "source_start": 11
     },
     {
+      "compiled_end": 116,
+      "compiled_start": 105,
+      "range_type": "Python",
+      "source_end": 55,
+      "source_start": 44
+    },
+    {
+      "compiled_end": 157,
+      "compiled_start": 126,
+      "range_type": "Python",
+      "source_end": 91,
+      "source_start": 60
+    },
+    {
       "compiled_end": 189,
       "compiled_start": 171,
       "range_type": "Python",
       "source_end": 118,
       "source_start": 100
+    },
+    {
+      "compiled_end": 217,
+      "compiled_start": 200,
+      "range_type": "Python",
+      "source_end": 149,
+      "source_start": 132
     },
     {
       "compiled_end": 295,
@@ -185,11 +255,32 @@
       "source_start": 219
     },
     {
+      "compiled_end": 378,
+      "compiled_start": 367,
+      "range_type": "Python",
+      "source_end": 280,
+      "source_start": 269
+    },
+    {
+      "compiled_end": 420,
+      "compiled_start": 388,
+      "range_type": "Python",
+      "source_end": 317,
+      "source_start": 285
+    },
+    {
       "compiled_end": 452,
       "compiled_start": 434,
       "range_type": "Python",
       "source_end": 344,
       "source_start": 326
+    },
+    {
+      "compiled_end": 496,
+      "compiled_start": 463,
+      "range_type": "Python",
+      "source_end": 391,
+      "source_start": 358
     },
     {
       "compiled_end": 537,
@@ -211,6 +302,13 @@
       "range_type": "Html",
       "source_end": 415,
       "source_start": 410
+    },
+    {
+      "compiled_end": 579,
+      "compiled_start": 562,
+      "range_type": "Python",
+      "source_end": 446,
+      "source_start": 429
     },
     {
       "compiled_end": 641,
