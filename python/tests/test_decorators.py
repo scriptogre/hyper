@@ -69,3 +69,4 @@ def test_html_is_not_a_class():
 
     assert not isinstance(MyComponent, type)
     assert callable(MyComponent)
+
