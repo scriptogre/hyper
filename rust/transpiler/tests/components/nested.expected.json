@@ -23,8 +23,8 @@
     },
     {
       "end": 185,
-      "prefix": ")}</h2>\n    \"\"\"\n        yield from CardHeader(_card_header())\n        # </{CardHeader}>\n\n        # <{CardBody}>\n        def _card_body():\n\n            # <{List}>\n            def _list():\n\n                for item in ",
-      "start": 180,
+      "prefix": ")}</h2>\n    \"\"\"\n        yield from CardHeader(_card_header())\n        # </{CardHeader}>\n\n        # <{CardBody}>\n        def _card_body():\n\n            # <{List}>\n            def _list():\n\n                for ",
+      "start": 172,
       "suffix": "",
       "type": "python"
     },
@@ -51,8 +51,8 @@
     },
     {
       "end": 487,
-      "prefix": ")}</span>\n    \"\"\"\n        yield from Alert(_alert(), type=\"info\")\n        # </{Alert}>\n\n\n    # Components in loop\n\n    for item in ",
-      "start": 482,
+      "prefix": ")}</span>\n    \"\"\"\n        yield from Alert(_alert(), type=\"info\")\n        # </{Alert}>\n\n\n    # Components in loop\n\n    for ",
+      "start": 474,
       "suffix": "",
       "type": "python"
     },
@@ -130,10 +130,10 @@
     },
     {
       "compiled_end": 453,
-      "compiled_start": 448,
+      "compiled_start": 440,
       "range_type": "Python",
       "source_end": 185,
-      "source_start": 180
+      "source_start": 172
     },
     {
       "compiled_end": 577,
@@ -172,10 +172,10 @@
     },
     {
       "compiled_end": 1136,
-      "compiled_start": 1131,
+      "compiled_start": 1123,
       "range_type": "Python",
       "source_end": 487,
-      "source_start": 482
+      "source_start": 474
     },
     {
       "compiled_end": 1217,

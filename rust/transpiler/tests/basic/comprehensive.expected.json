@@ -58,8 +58,8 @@
     },
     {
       "end": 418,
-      "prefix": ":\n        yield \"\"\"\\\n<span>Has count</span>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<span>Inactive</span>\n    \"\"\"\n\n    for item in ",
-      "start": 413,
+      "prefix": ":\n        yield \"\"\"\\\n<span>Has count</span>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<span>Inactive</span>\n    \"\"\"\n\n    for ",
+      "start": 405,
       "suffix": "",
       "type": "python"
     },
@@ -326,10 +326,10 @@
     },
     {
       "compiled_end": 581,
-      "compiled_start": 576,
+      "compiled_start": 568,
       "range_type": "Python",
       "source_end": 418,
-      "source_start": 413
+      "source_start": 405
     },
     {
       "compiled_end": 619,

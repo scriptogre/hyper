@@ -1170,21 +1170,20 @@ impl PythonGenerator {
         } else {
             output.push("for ");
         }
-        output.push(&for_node.binding);
-        output.push(" in ");
-
         // Remove trailing colon from iterable if present (parsing includes it)
         let iterable = for_node.iterable.trim_end_matches(':').trim();
-        let iter_start = output.position();
+        let binding_start = output.position();
+        output.push(&for_node.binding);
+        output.push(" in ");
         output.push(iterable);
-        let iter_end = output.position();
+        let range_end = output.position();
         let source_end = for_node.iterable_span.start.byte + iterable.len();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: for_node.iterable_span.start.byte,
+            source_start: for_node.binding_span.start.byte,
             source_end,
-            compiled_start: iter_start,
-            compiled_end: iter_end,
+            compiled_start: binding_start,
+            compiled_end: range_end,
             needs_injection: true,
         });
         output.push(":");

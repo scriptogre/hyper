@@ -16,8 +16,8 @@
     },
     {
       "end": 81,
-      "prefix": "):\n\n    # Async for loop\n\n    async for item in ",
-      "start": 75,
+      "prefix": "):\n\n    # Async for loop\n\n    async for ",
+      "start": 67,
       "suffix": "",
       "type": "python"
     },
@@ -51,8 +51,8 @@
     },
     {
       "end": 291,
-      "prefix": ":\n\n        async for message in ",
-      "start": 278,
+      "prefix": ":\n\n        async for ",
+      "start": 267,
       "suffix": "",
       "type": "python"
     },
@@ -123,10 +123,10 @@
     },
     {
       "compiled_end": 151,
-      "compiled_start": 145,
+      "compiled_start": 137,
       "range_type": "Python",
       "source_end": 81,
-      "source_start": 75
+      "source_start": 67
     },
     {
       "compiled_end": 188,
@@ -186,10 +186,10 @@
     },
     {
       "compiled_end": 426,
-      "compiled_start": 413,
+      "compiled_start": 402,
       "range_type": "Python",
       "source_end": 291,
-      "source_start": 278
+      "source_start": 267
     },
     {
       "compiled_end": 470,
