@@ -18,8 +18,8 @@ Monorepo with 3 components:
 just build transpiler          # Release build
 just test transpiler           # Run all tests (or: cd rust && cargo test)
 just compile <files-or-dirs>   # Build + run in one step (debug, suppresses warnings)
-just test-update               # Accept all pending snapshots (cargo insta test --accept)
-just test-review               # Review snapshots interactively (cargo insta review)
+just test-accept               # Regenerate all .expected.* files from current output
+just test-accept basic         # Regenerate only files matching "basic"
 
 # Plugin
 just build plugin              # Build transpiler + bundle binary + build plugin
@@ -65,21 +65,21 @@ Validation uses an `element_stack` in `TreeBuilder` for parent context.
 
 ## Testing
 
-**Snapshot tests** using `insta` crate (`rust/transpiler/tests/golden_tests.rs`):
+**Expected output tests** (`rust/transpiler/tests/expected_tests.rs`):
 - Test files: `rust/transpiler/tests/<category>/<name>.hyper`
-- Snapshots: `rust/transpiler/snapshots/<category>@<name>@<suffix>.snap`
-- Three test functions: `test_transpile_output`, `test_transpile_injections`, `test_transpile_errors`
+- Expected output: `<name>.expected.py` (compiled Python), `<name>.expected.json` (injection ranges/injections), `<name>.expected.err` (error messages)
 - Error tests live in `tests/errors/` and are auto-detected
 
-**Snapshot workflow:**
+**Expected output workflow:**
 ```bash
-cargo test                      # Run tests, see failures
-cargo insta accept              # Accept all pending snapshots
-cargo insta review              # Review interactively
-just test-update                # Shortcut for accept-all
+cargo test                              # Run tests, see failures
+cargo run --bin accept_expected         # Regenerate all .expected.* files from current compiler output
+cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
 ```
 
-**IMPORTANT — expected output review:** `cargo run --bin accept_expected` and `cargo insta accept` blindly stamp the compiler's current output as correct. Never run these after a change without manually reviewing the diffs (`git diff`) to confirm the new output is actually what you expect. A bug in the compiler will silently become the blessed expected output otherwise. When changing parser or codegen logic, always spot-check at least the directly affected `.expected.py` files before considering the change done.
+**IMPORTANT — expected output review:** `cargo run --bin accept_expected` blindly stamps the compiler's current output as correct. Never run it after a change without manually reviewing the diffs (`git diff`) to confirm the new output is actually what you expect. A bug in the compiler will silently become the blessed expected output otherwise. When changing parser or codegen logic, always spot-check at least the directly affected `.expected.py` and `.expected.json` files before considering the change done.
+
+**CRITICAL — injection range validation:** Every Python injection range `source[start:end]` must extract to meaningful text from the source file (not mid-word garbage). After accepting expected output, verify that source positions in `.expected.json` files map to the correct source text. The test suite includes semantic validation (range text extraction checks) — if these fail, the ranges are wrong, do NOT blindly accept. Common mistakes: off-by-one in span calculations, stale expected files accepted without review, substring-matching tests that pass accidentally.
 
 ## CLI Modes (`main.rs`)
 
@@ -92,7 +92,7 @@ just test-update                # Shortcut for accept-all
 
 - Transpiler binary must be rebuilt and re-bundled for plugin changes: `just build`
 - Plugin requires JDK 17+
-- Snapshot tests use `insta` — never edit `.snap` files by hand, use `cargo insta accept`
+- Expected output files (`.expected.py`, `.expected.json`, `.expected.err`) are managed by `cargo run --bin accept_expected` — never edit them by hand
 - The tokenizer is line-based; multiline Python expressions (paren/bracket spanning lines) are a known limitation
 - `is_control_flow()` uses trailing `:` heuristic — content text that starts with a Python keyword and ends with `:` inside an element is an edge case
 
