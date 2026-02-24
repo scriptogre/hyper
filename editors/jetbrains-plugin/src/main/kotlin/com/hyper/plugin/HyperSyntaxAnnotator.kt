@@ -16,11 +16,11 @@ import com.intellij.psi.PsiElement
  * The Hyper lexer is line-based (each line = one token), so the lexer-based
  * syntax highlighter can only color entire lines. This annotator adds
  * fine-grained highlighting for:
- *   - Expression braces { }
+ *   - Control flow keywords (for, in, if, elif, else, etc.)
  *   - Inline comments (# after code on the same line)
  *
- * HTML tag highlighting is intentionally NOT done here — it's handled by
- * the HTML language injection via HyperLanguageInjector.
+ * Expression brace highlighting is handled by HyperExternalAnnotator using
+ * transpiler data. HTML tag highlighting is handled by HyperLanguageInjector.
  */
 class HyperSyntaxAnnotator : Annotator {
 
@@ -31,6 +31,17 @@ class HyperSyntaxAnnotator : Annotator {
         val INLINE_COMMENT = createTextAttributesKey(
             "HYPER_INLINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT
         )
+
+        // Keywords that start a control line, matched at the beginning (after indent)
+        private val CONTROL_KEYWORDS = listOf(
+            "async for ", "async with ",
+            "for ", "if ", "elif ", "else:", "while ", "match ", "with ",
+            "try:", "except:", "except ", "finally:",
+        )
+
+        // Secondary keywords within control lines
+        private val FOR_IN_REGEX = Regex("""(?<=\s)in\s""")
+        private val CASE_REGEX = Regex("""^\s*case\s""")
     }
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -47,6 +58,11 @@ class HyperSyntaxAnnotator : Annotator {
         val text = element.text
         val base = element.textRange.startOffset
         val len = text.length
+
+        // Highlight control flow keywords on CONTROL_LINE tokens
+        if (elementType == HyperTypes.CONTROL_LINE) {
+            highlightControlKeywords(text, base, holder)
+        }
 
         var i = 0
         var exprDepth = 0
@@ -85,7 +101,7 @@ class HyperSyntaxAnnotator : Annotator {
                 continue
             }
 
-            // --- Escaped braces {{ and }} ---
+            // --- Track expression depth (for comment detection) ---
             if (ch == '{' && i + 1 < len && text[i + 1] == '{') {
                 i += 2
                 continue
@@ -94,15 +110,7 @@ class HyperSyntaxAnnotator : Annotator {
                 i += 2
                 continue
             }
-
-            // --- Expression braces ---
-            if (ch == '{' && exprDepth == 0) {
-                highlight(holder, base + i, base + i + 1, EXPRESSION_BRACE)
-                exprDepth++
-                i++
-                continue
-            }
-            if (ch == '{' && exprDepth > 0) {
+            if (ch == '{') {
                 exprDepth++
                 i++
                 continue
@@ -110,7 +118,6 @@ class HyperSyntaxAnnotator : Annotator {
             if (ch == '}' && exprDepth > 0) {
                 exprDepth--
                 if (exprDepth == 0) {
-                    highlight(holder, base + i, base + i + 1, EXPRESSION_BRACE)
                     // Expression close is a structural boundary
                     afterStructural = true
                     allWhitespaceSinceStructural = true
@@ -126,9 +133,8 @@ class HyperSyntaxAnnotator : Annotator {
                 continue
             }
 
-            // --- Skip HTML tags (don't interfere with HTML language injection) ---
+            // --- Skip HTML tags ---
             if (ch == '<') {
-                // Advance past the tag entirely
                 var j = i + 1
                 var d = 0
                 var inStr = false
@@ -142,15 +148,8 @@ class HyperSyntaxAnnotator : Annotator {
                         continue
                     }
                     if (c == '"' || c == '\'') { inStr = true; strCh = c; j++; continue }
-                    if (c == '{') {
-                        if (d == 0) highlight(holder, base + j, base + j + 1, EXPRESSION_BRACE)
-                        d++; j++; continue
-                    }
-                    if (c == '}') {
-                        d--
-                        if (d == 0) highlight(holder, base + j, base + j + 1, EXPRESSION_BRACE)
-                        j++; continue
-                    }
+                    if (c == '{') { d++; j++; continue }
+                    if (c == '}') { d--; j++; continue }
                     if (c == '>' && d <= 0) { j++; break }
                     j++
                 }
@@ -186,6 +185,48 @@ class HyperSyntaxAnnotator : Annotator {
             }
 
             i++
+        }
+    }
+
+    /**
+     * Highlight Python keywords within a control line.
+     * The lexer gives us the whole line as one token; this picks out
+     * just the keyword portions (for, in, if, elif, else, while, etc.).
+     */
+    private fun highlightControlKeywords(text: String, base: Int, holder: AnnotationHolder) {
+        val trimmed = text.trimStart()
+        val indent = text.length - trimmed.length
+
+        // Match the leading keyword
+        for (kw in CONTROL_KEYWORDS) {
+            if (trimmed.startsWith(kw)) {
+                // Highlight just the keyword part (without trailing space/colon)
+                val kwText = kw.trimEnd(' ', ':')
+                highlight(holder, base + indent, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD)
+
+                // For "async for" / "async with", also highlight the second keyword
+                if (kwText == "async for" || kwText == "async with") {
+                    highlight(holder, base + indent, base + indent + 5, HyperSyntaxHighlighter.KEYWORD) // "async"
+                    highlight(holder, base + indent + 6, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD) // "for"/"with"
+                }
+
+                break
+            }
+        }
+
+        // "for ... in ..." — highlight the "in" keyword
+        if (trimmed.startsWith("for ") || trimmed.startsWith("async for ")) {
+            val match = FOR_IN_REGEX.find(text)
+            if (match != null) {
+                val inStart = match.range.first
+                highlight(holder, base + inStart, base + inStart + 2, HyperSyntaxHighlighter.KEYWORD)
+            }
+        }
+
+        // "case ..." inside match blocks
+        val caseMatch = CASE_REGEX.find(text)
+        if (caseMatch != null) {
+            highlight(holder, base + indent, base + indent + 4, HyperSyntaxHighlighter.KEYWORD) // "case"
         }
     }
 

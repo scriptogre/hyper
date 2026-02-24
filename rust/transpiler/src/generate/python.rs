@@ -1,4 +1,4 @@
-use super::{GenerateOptions, GenerateResult, Generator, Output, Range, RangeType};
+use super::{GenerateOptions, GenerateResult, Generator, Output, Range, RangeType, convert_braces_to_utf16};
 use crate::ast::*;
 
 pub struct PythonGenerator;
@@ -1698,7 +1698,7 @@ impl Generator for PythonGenerator {
         };
 
         // Compute injection ranges and injections using the analyzer (if requested)
-        let (ranges, injections) = if options.include_ranges {
+        let (ranges, injections, expression_braces) = if options.include_ranges {
             // Adjust tracked ranges by the import line offset
             let adjusted_ranges: Vec<crate::generate::Range> = tracked_ranges.into_iter().map(|mut r| {
                 r.compiled_start += import_offset;
@@ -1707,9 +1707,15 @@ impl Generator for PythonGenerator {
             }).collect();
 
             let analyzer = super::InjectionAnalyzer::new();
-            analyzer.analyze(ast, &code, &ast.source, adjusted_ranges)
+            let (ranges, injections) = analyzer.analyze(ast, &code, &ast.source, adjusted_ranges);
+
+            // Collect expression brace positions from the AST
+            let byte_braces = collect_expression_braces(ast);
+            let expression_braces = convert_braces_to_utf16(&ast.source, &byte_braces);
+
+            (ranges, injections, expression_braces)
         } else {
-            (Vec::new(), Vec::new())
+            (Vec::new(), Vec::new(), Vec::new())
         };
 
         GenerateResult {
@@ -1717,7 +1723,167 @@ impl Generator for PythonGenerator {
             mappings,
             ranges,
             injections,
+            expression_braces,
         }
+    }
+}
+
+/// Collect all expression brace positions (byte offsets) from the AST.
+/// Returns (open_byte, close_byte) pairs for each expression brace pair.
+fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
+    let mut braces = Vec::new();
+    for node in &ast.nodes {
+        collect_braces_node(node, &mut braces);
+    }
+    braces
+}
+
+fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
+    match node {
+        Node::Expression(expr) => {
+            // span covers {expr} with exclusive end
+            braces.push((expr.span.start.byte, expr.span.end.byte - 1));
+        }
+        Node::Element(el) => {
+            for attr in &el.attributes {
+                collect_braces_attr(attr, braces);
+            }
+            for child in &el.children {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::Component(c) => {
+            for attr in &c.attributes {
+                collect_braces_attr(attr, braces);
+            }
+            for child in &c.children {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::Fragment(f) => {
+            for child in &f.children {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::Slot(s) => {
+            for child in &s.fallback {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::If(if_node) => {
+            for child in &if_node.then_branch {
+                collect_braces_node(child, braces);
+            }
+            for (_, _, body) in &if_node.elif_branches {
+                for child in body {
+                    collect_braces_node(child, braces);
+                }
+            }
+            if let Some(else_branch) = &if_node.else_branch {
+                for child in else_branch {
+                    collect_braces_node(child, braces);
+                }
+            }
+        }
+        Node::For(for_node) => {
+            for child in &for_node.body {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::Match(match_node) => {
+            for case in &match_node.cases {
+                for child in &case.body {
+                    collect_braces_node(child, braces);
+                }
+            }
+        }
+        Node::While(while_node) => {
+            for child in &while_node.body {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::With(with_node) => {
+            for child in &with_node.body {
+                collect_braces_node(child, braces);
+            }
+        }
+        Node::Try(try_node) => {
+            for child in &try_node.body {
+                collect_braces_node(child, braces);
+            }
+            for except in &try_node.except_clauses {
+                for child in &except.body {
+                    collect_braces_node(child, braces);
+                }
+            }
+            if let Some(else_clause) = &try_node.else_clause {
+                for child in else_clause {
+                    collect_braces_node(child, braces);
+                }
+            }
+            if let Some(finally_clause) = &try_node.finally_clause {
+                for child in finally_clause {
+                    collect_braces_node(child, braces);
+                }
+            }
+        }
+        Node::Definition(def) => {
+            for child in &def.body {
+                collect_braces_node(child, braces);
+            }
+        }
+        _ => {} // Text, Comment, Statement, Import, Parameter, Decorator
+    }
+}
+
+#[allow(clippy::while_let_on_iterator)]
+fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
+    match &attr.kind {
+        AttributeKind::Dynamic { expr_span, .. } => {
+            // expr_span covers {expr} with exclusive end
+            braces.push((expr_span.start.byte, expr_span.end.byte - 1));
+        }
+        AttributeKind::Shorthand { expr_span, .. } => {
+            // expr_span.end points TO closing brace (not past it)
+            braces.push((expr_span.start.byte, expr_span.end.byte));
+        }
+        AttributeKind::Spread { expr_span, .. } => {
+            // expr_span.end points TO closing brace (not past it)
+            braces.push((expr_span.start.byte, expr_span.end.byte));
+        }
+        AttributeKind::SlotAssignment { expr_span: Some(span), .. } => {
+            // expr_span.end points TO closing brace
+            braces.push((span.start.byte, span.end.byte));
+        }
+        AttributeKind::Template { name, value } => {
+            // Walk value to find {expr} brace positions
+            let value_start_byte = attr.span.start.byte + name.len() + 2; // skip `name="`
+            let mut byte_offset = 0;
+            let mut chars = value.chars().peekable();
+            while let Some(ch) = chars.next() {
+                if ch == '{' {
+                    let open_byte = value_start_byte + byte_offset;
+                    byte_offset += ch.len_utf8();
+                    let mut depth = 1;
+                    while let Some(inner) = chars.next() {
+                        byte_offset += inner.len_utf8();
+                        if inner == '{' {
+                            depth += 1;
+                        } else if inner == '}' {
+                            depth -= 1;
+                            if depth == 0 {
+                                let close_byte = value_start_byte + byte_offset - 1;
+                                braces.push((open_byte, close_byte));
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    byte_offset += ch.len_utf8();
+                }
+            }
+        }
+        _ => {}
     }
 }
 

@@ -33,7 +33,7 @@ class HyperSyntaxHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> {
         return when (tokenType) {
-            HyperTypes.CONTROL_LINE_TOKEN, HyperTypes.END_LINE_TOKEN -> KEYWORD_KEYS
+            HyperTypes.END_LINE_TOKEN -> KEYWORD_KEYS
             HyperTypes.COMMENT_TOKEN -> COMMENT_KEYS
             HyperTypes.SEPARATOR_TOKEN -> SEPARATOR_KEYS
             com.intellij.psi.TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS

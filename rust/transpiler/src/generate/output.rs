@@ -42,6 +42,25 @@ pub struct Injection {
     pub suffix: String,
 }
 
+/// Expression brace position in source (UTF-16 offsets)
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ExpressionBrace {
+    pub open: usize,
+    pub close: usize,
+}
+
+/// Convert byte offset pairs to UTF-16 offsets for expression braces.
+pub fn convert_braces_to_utf16(source: &str, byte_braces: &[(usize, usize)]) -> Vec<ExpressionBrace> {
+    let byte_to_utf16 = build_byte_to_utf16_map(source);
+    byte_braces
+        .iter()
+        .map(|(open, close)| ExpressionBrace {
+            open: byte_to_utf16[*open],
+            close: byte_to_utf16[*close],
+        })
+        .collect()
+}
+
 /// Validate Python injection ranges by checking that source text matches compiled text.
 /// JetBrains inserts SOURCE text at each injection point. If source ≠ compiled,
 /// the virtual Python file is malformed (e.g. `render_class(class)` instead of
