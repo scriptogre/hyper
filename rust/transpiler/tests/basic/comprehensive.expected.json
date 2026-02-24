@@ -1,184 +1,184 @@
 {
   "injections": [
     {
-      "end": 31,
+      "end": 32,
       "prefix": "from hyper import html, escape\n\n\n@html\ndef Comprehensive(*, ",
-      "start": 22,
+      "start": 23,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 46,
+      "end": 47,
       "prefix": ", ",
-      "start": 32,
+      "start": 33,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 69,
+      "end": 70,
       "prefix": ", ",
-      "start": 47,
+      "start": 48,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 86,
+      "end": 87,
       "prefix": ", ",
-      "start": 70,
+      "start": 71,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 193,
+      "end": 196,
       "prefix": "):\n    # Frontmatter comment\n\n    # Body comment\n\n    yield \"<div class=\\\"container\\\">\"\n\n    # Indented comment\n    yield f\"\"\"\\\n<span>Plain text</span>\n    <p>{escape(",
-      "start": 189,
+      "start": 192,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 223,
+      "end": 226,
       "prefix": ")}</p>\n    <p>Count: {escape(",
-      "start": 214,
+      "start": 217,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 245,
+      "end": 248,
       "prefix": ")}</p>\n    \"\"\"\n    if ",
-      "start": 236,
+      "start": 239,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 313,
+      "end": 316,
       "prefix": ":\n        yield \"\"\"<span>Active</span>\"\"\"  # Trailing comment\n\n    elif ",
-      "start": 304,
+      "start": 307,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 415,
+      "end": 418,
       "prefix": ":\n        yield \"\"\"\\\n<span>Has count</span>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<span>Inactive</span>\n    \"\"\"\n\n    for item in ",
-      "start": 410,
+      "start": 413,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 434,
+      "end": 437,
       "prefix": ":\n        yield f\"\"\"\\\n<li>{escape(",
-      "start": 430,
+      "start": 433,
       "suffix": ")}</li>\n    \"\"\"\n\n    yield \"</div>\"\n\n",
       "type": "python"
     },
     {
-      "end": 129,
+      "end": 132,
       "prefix": "",
-      "start": 106,
+      "start": 109,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 163,
+      "end": 166,
       "prefix": "",
-      "start": 157,
+      "start": 160,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 180,
+      "end": 183,
       "prefix": "",
-      "start": 173,
+      "start": 176,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 188,
+      "end": 191,
       "prefix": "",
-      "start": 185,
+      "start": 188,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 198,
+      "end": 201,
       "prefix": "",
-      "start": 194,
+      "start": 197,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 206,
+      "end": 209,
       "prefix": "",
-      "start": 203,
+      "start": 206,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 228,
+      "end": 231,
       "prefix": "",
-      "start": 224,
+      "start": 227,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 261,
+      "end": 264,
       "prefix": "",
-      "start": 255,
+      "start": 258,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 274,
+      "end": 277,
       "prefix": "",
-      "start": 267,
+      "start": 270,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 329,
+      "end": 332,
       "prefix": "",
-      "start": 323,
+      "start": 326,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 345,
+      "end": 348,
       "prefix": "",
-      "start": 338,
+      "start": 341,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 370,
+      "end": 373,
       "prefix": "",
-      "start": 364,
+      "start": 367,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 385,
+      "end": 388,
       "prefix": "",
-      "start": 378,
+      "start": 381,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 429,
+      "end": 432,
       "prefix": "",
-      "start": 425,
+      "start": 428,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 440,
+      "end": 443,
       "prefix": "",
-      "start": 435,
+      "start": 438,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 455,
+      "end": 458,
       "prefix": "",
-      "start": 449,
+      "start": 452,
       "suffix": "",
       "type": "html"
     }
@@ -188,183 +188,183 @@
       "compiled_end": 69,
       "compiled_start": 60,
       "range_type": "Python",
-      "source_end": 31,
-      "source_start": 22
+      "source_end": 32,
+      "source_start": 23
     },
     {
       "compiled_end": 85,
       "compiled_start": 71,
       "range_type": "Python",
-      "source_end": 46,
-      "source_start": 32
+      "source_end": 47,
+      "source_start": 33
     },
     {
       "compiled_end": 109,
       "compiled_start": 87,
       "range_type": "Python",
-      "source_end": 69,
-      "source_start": 47
+      "source_end": 70,
+      "source_start": 48
     },
     {
       "compiled_end": 127,
       "compiled_start": 111,
       "range_type": "Python",
-      "source_end": 86,
-      "source_start": 70
+      "source_end": 87,
+      "source_start": 71
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 163,
-      "source_start": 157
+      "source_end": 166,
+      "source_start": 160
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 180,
-      "source_start": 173
+      "source_end": 183,
+      "source_start": 176
     },
     {
       "compiled_end": 298,
       "compiled_start": 294,
       "range_type": "Python",
-      "source_end": 193,
-      "source_start": 189
+      "source_end": 196,
+      "source_start": 192
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 188,
-      "source_start": 185
+      "source_end": 191,
+      "source_start": 188
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 198,
-      "source_start": 194
+      "source_end": 201,
+      "source_start": 197
     },
     {
       "compiled_end": 336,
       "compiled_start": 327,
       "range_type": "Python",
-      "source_end": 223,
-      "source_start": 214
+      "source_end": 226,
+      "source_start": 217
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 206,
-      "source_start": 203
+      "source_end": 209,
+      "source_start": 206
     },
     {
       "compiled_end": 250,
       "compiled_start": 250,
       "range_type": "Html",
-      "source_end": 228,
-      "source_start": 224
+      "source_end": 231,
+      "source_start": 227
     },
     {
       "compiled_end": 367,
       "compiled_start": 358,
       "range_type": "Python",
-      "source_end": 245,
-      "source_start": 236
+      "source_end": 248,
+      "source_start": 239
     },
     {
       "compiled_end": 377,
       "compiled_start": 377,
       "range_type": "Html",
-      "source_end": 261,
-      "source_start": 255
+      "source_end": 264,
+      "source_start": 258
     },
     {
       "compiled_end": 377,
       "compiled_start": 377,
       "range_type": "Html",
-      "source_end": 274,
-      "source_start": 267
+      "source_end": 277,
+      "source_start": 270
     },
     {
       "compiled_end": 448,
       "compiled_start": 439,
       "range_type": "Python",
-      "source_end": 313,
-      "source_start": 304
+      "source_end": 316,
+      "source_start": 307
     },
     {
       "compiled_end": 460,
       "compiled_start": 460,
       "range_type": "Html",
-      "source_end": 329,
-      "source_start": 323
+      "source_end": 332,
+      "source_start": 326
     },
     {
       "compiled_end": 460,
       "compiled_start": 460,
       "range_type": "Html",
-      "source_end": 345,
-      "source_start": 338
+      "source_end": 348,
+      "source_start": 341
     },
     {
       "compiled_end": 520,
       "compiled_start": 520,
       "range_type": "Html",
-      "source_end": 370,
-      "source_start": 364
+      "source_end": 373,
+      "source_start": 367
     },
     {
       "compiled_end": 520,
       "compiled_start": 520,
       "range_type": "Html",
-      "source_end": 385,
-      "source_start": 378
+      "source_end": 388,
+      "source_start": 381
     },
     {
       "compiled_end": 581,
       "compiled_start": 576,
       "range_type": "Python",
-      "source_end": 415,
-      "source_start": 410
+      "source_end": 418,
+      "source_start": 413
     },
     {
       "compiled_end": 619,
       "compiled_start": 615,
       "range_type": "Python",
-      "source_end": 434,
-      "source_start": 430
+      "source_end": 437,
+      "source_start": 433
     },
     {
       "compiled_end": 594,
       "compiled_start": 594,
       "range_type": "Html",
-      "source_end": 429,
-      "source_start": 425
+      "source_end": 432,
+      "source_start": 428
     },
     {
       "compiled_end": 594,
       "compiled_start": 594,
       "range_type": "Html",
-      "source_end": 440,
-      "source_start": 435
+      "source_end": 443,
+      "source_start": 438
     },
     {
       "compiled_end": 39,
       "compiled_start": 39,
       "range_type": "Html",
-      "source_end": 129,
-      "source_start": 106
+      "source_end": 132,
+      "source_start": 109
     },
     {
       "compiled_end": 39,
       "compiled_start": 39,
       "range_type": "Html",
-      "source_end": 455,
-      "source_start": 449
+      "source_end": 458,
+      "source_start": 452
     }
   ]
 }
