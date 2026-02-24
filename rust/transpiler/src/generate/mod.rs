@@ -3,7 +3,7 @@ mod output;
 mod injection_analyzer;
 
 pub use python::PythonGenerator;
-pub use output::{Output, Mapping, Range, RangeType, Injection, compute_injections, validate_python_ranges};
+pub use output::{Output, Mapping, Range, RangeType, Injection, ExpressionBrace, compute_injections, validate_python_ranges, convert_braces_to_utf16};
 pub use injection_analyzer::InjectionAnalyzer;
 
 use crate::ast::Ast;
@@ -23,6 +23,7 @@ pub struct GenerateResult {
     pub mappings: Vec<Mapping>,
     pub ranges: Vec<Range>,
     pub injections: Vec<Injection>,
+    pub expression_braces: Vec<ExpressionBrace>,
 }
 
 /// Generator trait - converts AST to code

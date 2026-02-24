@@ -368,6 +368,14 @@ fn result_to_response(result: hyper_transpiler::GenerateResult, include_injectio
         } else {
             None
         },
+        expression_braces: if include_injections {
+            Some(result.expression_braces.into_iter().map(|b| DaemonExpressionBrace {
+                open: b.open,
+                close: b.close,
+            }).collect())
+        } else {
+            None
+        },
     }
 }
 
@@ -404,6 +412,8 @@ struct DaemonResponse {
     ranges: Option<Vec<DaemonRange>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     injections: Option<Vec<DaemonInjection>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    expression_braces: Option<Vec<DaemonExpressionBrace>>,
 }
 
 #[derive(serde::Serialize)]
@@ -432,4 +442,10 @@ struct DaemonInjection {
     end: usize,
     prefix: String,
     suffix: String,
+}
+
+#[derive(serde::Serialize)]
+struct DaemonExpressionBrace {
+    open: usize,
+    close: usize,
 }

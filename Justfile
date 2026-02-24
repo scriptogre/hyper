@@ -1,29 +1,32 @@
 # Default: build transpiler, bundle it in plugin, and build plugin
 default: build
 
-# Build everything: transpiler + bundle + plugin
-build target="":
+# Build transpiler
+build-transpiler:
+    cd {{justfile_directory()}}/rust && cargo build --release
+
+# Build plugin (always rebuilds + bundles transpiler first)
+build-plugin: build-transpiler _bundle
     #!/usr/bin/env bash
     set -e
     ROOT="{{justfile_directory()}}"
+    echo "Building JetBrains plugin..."
+    cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
+    cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
+    echo ""
+    echo "✅ Plugin built!"
+    echo "📦 Install: editors/jetbrains-plugin/hyper-plugin.zip"
 
-    if [ "{{target}}" = "transpiler" ] || [ "{{target}}" = "" ]; then
-        echo "Building transpiler..."
-        cd "$ROOT/rust" && cargo build --release
-    fi
-
-    if [ "{{target}}" = "plugin" ] || [ "{{target}}" = "" ]; then
-        if [ "{{target}}" = "" ]; then
-            echo "Bundling transpiler in plugin..."
-            just _bundle
-        fi
-        echo "Building JetBrains plugin..."
-        cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
-        cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
-        echo ""
-        echo "✅ Plugin built!"
-        echo "📦 Install: editors/jetbrains-plugin/hyper-plugin.zip"
-    fi
+# Build everything (or a specific target)
+build target="":
+    #!/usr/bin/env bash
+    set -e
+    case "{{target}}" in
+        transpiler) just build-transpiler ;;
+        plugin)     just build-plugin ;;
+        "")         just build-transpiler && just _bundle && just build-plugin ;;
+        *)          echo "Usage: just build [transpiler|plugin]"; exit 1 ;;
+    esac
 
 # Run transpiler or plugin
 run target *args:
@@ -36,6 +39,7 @@ run target *args:
             "$ROOT/rust/target/release/hyper" {{args}}
             ;;
         plugin)
+            just build-plugin
             cd "$ROOT/editors/jetbrains-plugin" && ./gradlew runIde
             ;;
         *)

@@ -82,6 +82,8 @@ kotlin {
 }
 
 intellijPlatform {
+    sandboxContainer = layout.projectDirectory.dir(".sandbox")
+
     pluginConfiguration {
         name = "Hyper"
         version = project.version.toString()

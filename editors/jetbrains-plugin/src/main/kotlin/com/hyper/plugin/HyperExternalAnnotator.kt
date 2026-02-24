@@ -30,8 +30,11 @@ class HyperExternalAnnotator : ExternalAnnotator<HyperExternalAnnotator.Info, Hy
         val endOffset: Int
     )
 
+    data class BraceAnnotation(val open: Int, val close: Int)
+
     data class Result(
-        val errors: List<ErrorAnnotation>
+        val errors: List<ErrorAnnotation>,
+        val braces: List<BraceAnnotation>
     )
 
     override fun collectInformation(file: PsiFile): Info? {
@@ -43,13 +46,20 @@ class HyperExternalAnnotator : ExternalAnnotator<HyperExternalAnnotator.Info, Hy
 
     override fun doAnnotate(info: Info): Result {
         val project = com.intellij.openapi.project.ProjectManager.getInstance().openProjects.firstOrNull()
-            ?: return Result(emptyList())
+            ?: return Result(emptyList(), emptyList())
 
         return try {
             val service = HyperTranspilerService.getInstance(project)
-            // Just compile — if it succeeds, no errors to show
-            service.transpile(info.content, includeInjection = false, functionName = info.fileName)
-            Result(emptyList())
+            // Use includeInjection=true to get expression brace positions.
+            // The result is cached by HyperTranspilerService, shared with the injector.
+            val transpileResult = service.transpile(info.content, includeInjection = true, functionName = info.fileName)
+
+            // Convert expression brace UTF-16 offsets to BraceAnnotations
+            val braces = transpileResult.expressionBraces.map { b ->
+                BraceAnnotation(open = b.open, close = b.close)
+            }
+
+            Result(emptyList(), braces)
         } catch (e: HyperTranspilerService.TranspileException) {
             val errors = mutableListOf<ErrorAnnotation>()
 
@@ -98,19 +108,35 @@ class HyperExternalAnnotator : ExternalAnnotator<HyperExternalAnnotator.Info, Hy
                 ))
             }
 
-            Result(errors)
+            Result(errors, emptyList())
         } catch (e: Exception) {
             LOG.debug("Unexpected error during annotation", e)
-            Result(emptyList())
+            Result(emptyList(), emptyList())
         }
     }
 
     override fun apply(file: PsiFile, result: Result, holder: AnnotationHolder) {
+        val docLength = file.textLength
+
         for (error in result.errors) {
             val range = TextRange(error.startOffset, error.endOffset)
             holder.newAnnotation(HighlightSeverity.ERROR, error.message)
                 .range(range)
                 .create()
         }
+
+        // Highlight expression braces from transpiler data
+        for (brace in result.braces) {
+            highlightBrace(holder, brace.open, docLength)
+            highlightBrace(holder, brace.close, docLength)
+        }
+    }
+
+    private fun highlightBrace(holder: AnnotationHolder, offset: Int, docLength: Int) {
+        if (offset < 0 || offset >= docLength) return
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            .range(TextRange(offset, offset + 1))
+            .textAttributes(HyperSyntaxAnnotator.EXPRESSION_BRACE)
+            .create()
     }
 }
