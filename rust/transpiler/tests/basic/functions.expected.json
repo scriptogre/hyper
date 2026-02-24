@@ -44,8 +44,8 @@
     },
     {
       "end": 345,
-      "prefix": ":\n            yield \"<ul>\"\n            for item in ",
-      "start": 340,
+      "prefix": ":\n            yield \"<ul>\"\n            for ",
+      "start": 332,
       "suffix": "",
       "type": "python"
     },
@@ -263,10 +263,10 @@
     },
     {
       "compiled_end": 521,
-      "compiled_start": 516,
+      "compiled_start": 508,
       "range_type": "Python",
       "source_end": 345,
-      "source_start": 340
+      "source_start": 332
     },
     {
       "compiled_end": 565,

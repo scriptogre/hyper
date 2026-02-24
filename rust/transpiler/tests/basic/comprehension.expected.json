@@ -9,8 +9,8 @@
     },
     {
       "end": 49,
-      "prefix": "):\n\n    yield \"<ul>\"\n\n    for item in ",
-      "start": 44,
+      "prefix": "):\n\n    yield \"<ul>\"\n\n    for ",
+      "start": 36,
       "suffix": "",
       "type": "python"
     },
@@ -60,10 +60,10 @@
     },
     {
       "compiled_end": 119,
-      "compiled_start": 114,
+      "compiled_start": 106,
       "range_type": "Python",
       "source_end": 49,
-      "source_start": 44
+      "source_start": 36
     },
     {
       "compiled_end": 157,

@@ -37,8 +37,8 @@
     },
     {
       "end": 120,
-      "prefix": "):\n\n    # Enumerate\n\n    yield \"<ul>\"\n\n    for i, item in ",
-      "start": 104,
+      "prefix": "):\n\n    # Enumerate\n\n    yield \"<ul>\"\n\n    for ",
+      "start": 93,
       "suffix": "",
       "type": "python"
     },
@@ -58,8 +58,8 @@
     },
     {
       "end": 252,
-      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Enumerate with start\n\n    yield \"<ol>\"\n\n    for num, item in ",
-      "start": 227,
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Enumerate with start\n\n    yield \"<ol>\"\n\n    for ",
+      "start": 214,
       "suffix": "",
       "type": "python"
     },
@@ -79,8 +79,8 @@
     },
     {
       "end": 357,
-      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ol>\"\n\n    # Tuple unpacking\n\n    yield \"<dl>\"\n\n    for key, value in ",
-      "start": 352,
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ol>\"\n\n    # Tuple unpacking\n\n    yield \"<dl>\"\n\n    for ",
+      "start": 338,
       "suffix": "",
       "type": "python"
     },
@@ -100,8 +100,8 @@
     },
     {
       "end": 477,
-      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Zip\n\n    yield \"<table>\"\n\n    for name, score in ",
-      "start": 459,
+      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Zip\n\n    yield \"<table>\"\n\n    for ",
+      "start": 444,
       "suffix": "",
       "type": "python"
     },
@@ -121,15 +121,15 @@
     },
     {
       "end": 625,
-      "prefix": ")}</td>\n        </tr>\n    \"\"\"\n\n    yield \"</table>\"\n\n    # Nested loops\n\n    yield \"<table>\"\n\n    for row in ",
-      "start": 619,
+      "prefix": ")}</td>\n        </tr>\n    \"\"\"\n\n    yield \"</table>\"\n\n    # Nested loops\n\n    yield \"<table>\"\n\n    for ",
+      "start": 612,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 667,
-      "prefix": ":\n\n        yield \"<tr>\"\n\n        for cell in ",
-      "start": 664,
+      "prefix": ":\n\n        yield \"<tr>\"\n\n        for ",
+      "start": 656,
       "suffix": "",
       "type": "python"
     },
@@ -142,8 +142,8 @@
     },
     {
       "end": 796,
-      "prefix": ")}</td>\n            \"\"\"\n\n        yield \"</tr>\"\n\n\n    yield \"</table>\"\n\n    # Dict items\n\n    yield \"<dl>\"\n\n    for k, v in ",
-      "start": 783,
+      "prefix": ")}</td>\n            \"\"\"\n\n        yield \"</tr>\"\n\n\n    yield \"</table>\"\n\n    # Dict items\n\n    yield \"<dl>\"\n\n    for ",
+      "start": 775,
       "suffix": "",
       "type": "python"
     },
@@ -163,8 +163,8 @@
     },
     {
       "end": 889,
-      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Range\n\n    yield \"<ul>\"\n\n    for i in ",
-      "start": 881,
+      "prefix": ")}</dd>\n    \"\"\"\n\n    yield \"</dl>\"\n\n    # Range\n\n    yield \"<ul>\"\n\n    for ",
+      "start": 876,
       "suffix": "",
       "type": "python"
     },
@@ -177,8 +177,8 @@
     },
     {
       "end": 979,
-      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Reversed\n\n    yield \"<ul>\"\n\n    for item in ",
-      "start": 964,
+      "prefix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n\n    # Reversed\n\n    yield \"<ul>\"\n\n    for ",
+      "start": 956,
       "suffix": "",
       "type": "python"
     },
@@ -536,10 +536,10 @@
     },
     {
       "compiled_end": 198,
-      "compiled_start": 182,
+      "compiled_start": 171,
       "range_type": "Python",
       "source_end": 120,
-      "source_start": 104
+      "source_start": 93
     },
     {
       "compiled_end": 245,
@@ -592,10 +592,10 @@
     },
     {
       "compiled_end": 389,
-      "compiled_start": 364,
+      "compiled_start": 351,
       "range_type": "Python",
       "source_end": 252,
-      "source_start": 227
+      "source_start": 214
     },
     {
       "compiled_end": 433,
@@ -648,10 +648,10 @@
     },
     {
       "compiled_end": 553,
-      "compiled_start": 548,
+      "compiled_start": 534,
       "range_type": "Python",
       "source_end": 357,
-      "source_start": 352
+      "source_start": 338
     },
     {
       "compiled_end": 590,
@@ -711,10 +711,10 @@
     },
     {
       "compiled_end": 732,
-      "compiled_start": 714,
+      "compiled_start": 699,
       "range_type": "Python",
       "source_end": 477,
-      "source_start": 459
+      "source_start": 444
     },
     {
       "compiled_end": 787,
@@ -788,17 +788,17 @@
     },
     {
       "compiled_end": 939,
-      "compiled_start": 933,
+      "compiled_start": 926,
       "range_type": "Python",
       "source_end": 625,
-      "source_start": 619
+      "source_start": 612
     },
     {
       "compiled_end": 987,
-      "compiled_start": 984,
+      "compiled_start": 976,
       "range_type": "Python",
       "source_end": 667,
-      "source_start": 664
+      "source_start": 656
     },
     {
       "compiled_end": 1029,
@@ -851,10 +851,10 @@
     },
     {
       "compiled_end": 1165,
-      "compiled_start": 1152,
+      "compiled_start": 1144,
       "range_type": "Python",
       "source_end": 796,
-      "source_start": 783
+      "source_start": 775
     },
     {
       "compiled_end": 1200,
@@ -914,10 +914,10 @@
     },
     {
       "compiled_end": 1317,
-      "compiled_start": 1309,
+      "compiled_start": 1304,
       "range_type": "Python",
       "source_end": 889,
-      "source_start": 881
+      "source_start": 876
     },
     {
       "compiled_end": 1357,
@@ -956,10 +956,10 @@
     },
     {
       "compiled_end": 1458,
-      "compiled_start": 1443,
+      "compiled_start": 1435,
       "range_type": "Python",
       "source_end": 979,
-      "source_start": 964
+      "source_start": 956
     },
     {
       "compiled_end": 1496,

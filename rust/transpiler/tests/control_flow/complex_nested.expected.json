@@ -30,8 +30,8 @@
     },
     {
       "end": 119,
-      "prefix": ":\n\n        for section in ",
-      "start": 111,
+      "prefix": ":\n\n        for ",
+      "start": 100,
       "suffix": "",
       "type": "python"
     },
@@ -72,8 +72,8 @@
     },
     {
       "end": 489,
-      "prefix": ":\n\n                        yield \"<ul>\"\n\n                        for item in ",
-      "start": 473,
+      "prefix": ":\n\n                        yield \"<ul>\"\n\n                        for ",
+      "start": 465,
       "suffix": "",
       "type": "python"
     },
@@ -298,10 +298,10 @@
     },
     {
       "compiled_end": 194,
-      "compiled_start": 186,
+      "compiled_start": 175,
       "range_type": "Python",
       "source_end": 119,
-      "source_start": 111
+      "source_start": 100
     },
     {
       "compiled_end": 311,
@@ -354,10 +354,10 @@
     },
     {
       "compiled_end": 612,
-      "compiled_start": 596,
+      "compiled_start": 588,
       "range_type": "Python",
       "source_end": 489,
-      "source_start": 473
+      "source_start": 465
     },
     {
       "compiled_end": 664,

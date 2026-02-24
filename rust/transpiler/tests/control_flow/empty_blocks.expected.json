@@ -30,8 +30,8 @@
     },
     {
       "end": 178,
-      "prefix": ":\n        yield \"\"\"<span>Yes</span>\"\"\"\n    else:\n        pass\n\n    # Empty for block\n\n    for item in ",
-      "start": 173,
+      "prefix": ":\n        yield \"\"\"<span>Yes</span>\"\"\"\n    else:\n        pass\n\n    # Empty for block\n\n    for ",
+      "start": 165,
       "suffix": "",
       "type": "python"
     },
@@ -151,10 +151,10 @@
     },
     {
       "compiled_end": 291,
-      "compiled_start": 286,
+      "compiled_start": 278,
       "range_type": "Python",
       "source_end": 178,
-      "source_start": 173
+      "source_start": 165
     },
     {
       "compiled_end": 346,

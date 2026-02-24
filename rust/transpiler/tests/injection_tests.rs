@@ -565,6 +565,22 @@ fn test_for_loop_has_python_range() {
 }
 
 #[test]
+fn test_for_loop_binding_in_range() {
+    let source = "for item in items:\n    <li>{item}</li>\nend";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    // The for-loop should have a range covering "item in items" (binding + iterable)
+    let loop_range = py.iter().find(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "item in items"
+    });
+    assert!(loop_range.is_some(),
+        "Should have Python range for 'item in items'. Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+}
+
+#[test]
 fn test_while_condition_has_python_range() {
     let source = "while running:\n    <p>Loading</p>\nend";
     let result = compile_with_ranges(source, "Test");

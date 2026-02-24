@@ -44,8 +44,8 @@
     },
     {
       "end": 494,
-      "prefix": ")}</li>\n    \"\"\"\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for item in ",
-      "start": 484,
+      "prefix": ")}</li>\n    \"\"\"\n\n        def render(self):\n\n            yield \"<ul>\"\n\n            for ",
+      "start": 476,
       "suffix": "",
       "type": "python"
     },
@@ -214,10 +214,10 @@
     },
     {
       "compiled_end": 641,
-      "compiled_start": 631,
+      "compiled_start": 623,
       "range_type": "Python",
       "source_end": 494,
-      "source_start": 484
+      "source_start": 476
     },
     {
       "compiled_end": 682,
