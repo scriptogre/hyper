@@ -127,6 +127,7 @@ pub struct IfNode {
 #[derive(Debug, Clone)]
 pub struct ForNode {
     pub binding: String,      // "item" or "i, item"
+    pub binding_span: Span,
     pub iterable: String,     // The Python expression
     pub iterable_span: Span,
     pub body: Vec<Node>,

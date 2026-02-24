@@ -465,6 +465,15 @@ impl TreeBuilder {
 
         let binding = parts[0].trim().to_string();
         let iterable = parts[1].trim().to_string();
+        // Calculate binding span: from rest_span start to end of binding text
+        let binding_span = Span {
+            start: rest_span.start,
+            end: Position {
+                line: rest_span.start.line,
+                col: rest_span.start.col + parts[0].len(),
+                byte: rest_span.start.byte + parts[0].len(),
+            },
+        };
         // Calculate iterable span: rest_span start + offset to "in " + "in ".len()
         let binding_and_in_len = parts[0].len() + " in ".len();
         let iterable_span = Span {
@@ -486,6 +495,7 @@ impl TreeBuilder {
 
         Ok(Some(Node::For(ForNode {
             binding,
+            binding_span,
             iterable,
             iterable_span,
             body,
