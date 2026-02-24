@@ -87,6 +87,14 @@ fn process_file(path: &Path) {
                 include_ranges: true,
             };
             if let Ok(result_with_ranges) = pipeline.compile(&source, &options_with_ranges) {
+                let warnings = validate_source_ranges(&source, &result_with_ranges);
+                if !warnings.is_empty() {
+                    eprintln!("  \u{26a0} Range warnings for {}:", path.display());
+                    for w in &warnings {
+                        eprintln!("{}", w);
+                    }
+                }
+
                 if !result_with_ranges.injections.is_empty()
                     || !result_with_ranges.ranges.is_empty()
                 {
@@ -123,4 +131,39 @@ fn process_file(path: &Path) {
             }
         }
     }
+}
+
+/// Validate that all source ranges extract to meaningful text.
+/// Returns warnings for any ranges that start/end mid-identifier.
+fn validate_source_ranges(source: &str, result: &hyper_transpiler::GenerateResult) -> Vec<String> {
+    let mut warnings = Vec::new();
+    for range in &result.ranges {
+        if range.source_start >= range.source_end || range.source_end > source.len() {
+            continue;
+        }
+        let text = &source[range.source_start..range.source_end];
+
+        if range.source_start > 0 {
+            let prev = source.as_bytes()[range.source_start - 1] as char;
+            let first = text.chars().next().unwrap_or(' ');
+            if prev.is_alphanumeric() && first.is_alphanumeric() {
+                warnings.push(format!(
+                    "  WARNING: range [{}, {}] starts mid-identifier: ...{}|{}...",
+                    range.source_start, range.source_end, prev, &text[..text.len().min(20)]
+                ));
+            }
+        }
+
+        if range.source_end < source.len() {
+            let last = text.chars().last().unwrap_or(' ');
+            let next = source.as_bytes()[range.source_end] as char;
+            if last.is_alphanumeric() && next.is_alphanumeric() {
+                warnings.push(format!(
+                    "  WARNING: range [{}, {}] ends mid-identifier: ...{}|{}...",
+                    range.source_start, range.source_end, &text[text.len().saturating_sub(20)..], next
+                ));
+            }
+        }
+    }
+    warnings
 }
