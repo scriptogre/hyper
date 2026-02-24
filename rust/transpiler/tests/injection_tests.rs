@@ -594,6 +594,21 @@ fn test_while_condition_has_python_range() {
 }
 
 #[test]
+fn test_except_clause_has_python_range() {
+    let source = "try:\n    {x}\nexcept ValueError as e:\n    {e}\nend";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let has_except = py.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "ValueError as e"
+    });
+    assert!(has_except,
+        "Should have Python range for except clause. Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+}
+
+#[test]
 fn test_html_ranges_basic() {
     let source = "<div>Hello</div>";
     let result = compile_with_ranges(source, "Test");
