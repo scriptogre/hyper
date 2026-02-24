@@ -60,7 +60,14 @@
       "end": 283,
       "prefix": ":\n            pass\n        case ",
       "start": 278,
-      "suffix": ":\n            yield \"\"\"<span>False</span>\"\"\"\n\n    # Empty try blocks\n\n    try:\n        pass\n    except:\n        yield \"\"\"<span>Error</span>\"\"\"\n\n    # Empty function\n\n    def empty():\n        pass\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 406,
+      "prefix": ":\n            yield \"\"\"<span>False</span>\"\"\"\n\n    # Empty try blocks\n\n    try:\n        pass\n    except:\n        yield \"\"\"<span>Error</span>\"\"\"\n\n    # Empty function\n\n    ",
+      "start": 394,
+      "suffix": "\n        pass\n\n",
       "type": "python"
     },
     {
@@ -211,6 +218,13 @@
       "range_type": "Html",
       "source_end": 371,
       "source_start": 364
+    },
+    {
+      "compiled_end": 639,
+      "compiled_start": 627,
+      "range_type": "Python",
+      "source_end": 406,
+      "source_start": 394
     }
   ]
 }

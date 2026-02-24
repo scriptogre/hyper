@@ -8,15 +8,50 @@
       "type": "python"
     },
     {
+      "end": 46,
+      "prefix": "):\n\n    # Simple decorator\n\n    ",
+      "start": 37,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 68,
+      "prefix": "\n    ",
+      "start": 47,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 98,
-      "prefix": "):\n\n    # Simple decorator\n\n    @fragment\n    def Badge(text: str):\n        yield f\"\"\"<span class=\"badge\">{escape(",
+      "prefix": "\n        yield f\"\"\"<span class=\"badge\">{escape(",
       "start": 94,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 140,
+      "prefix": ")}</span>\"\"\"\n\n    # Multiple decorators\n\n    ",
+      "start": 134,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 150,
+      "prefix": "\n    ",
+      "start": 141,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 179,
+      "prefix": "\n    ",
+      "start": 151,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 214,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiple decorators\n\n    @cache\n    @fragment\n    def CachedList(items: list):\n\n        yield \"<ul>\"\n\n        for ",
+      "prefix": "\n\n        yield \"<ul>\"\n\n        for ",
       "start": 201,
       "suffix": "",
       "type": "python"
@@ -29,8 +64,22 @@
       "type": "python"
     },
     {
+      "end": 320,
+      "prefix": ")}</li>\n        \"\"\"\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    ",
+      "start": 298,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 342,
+      "prefix": "\n    ",
+      "start": 321,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 384,
-      "prefix": ")}</li>\n        \"\"\"\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    @fragment(name=\"card\")\n    def Card(title: str):\n\n        yield \"<div class=\\\"card\\\">\"\n        yield f\"\"\"\\\n<h2>{escape(",
+      "prefix": "\n\n        yield \"<div class=\\\"card\\\">\"\n        yield f\"\"\"\\\n<h2>{escape(",
       "start": 379,
       "suffix": "",
       "type": "python"
@@ -129,6 +178,20 @@
       "source_start": 0
     },
     {
+      "compiled_end": 185,
+      "compiled_start": 176,
+      "range_type": "Python",
+      "source_end": 46,
+      "source_start": 37
+    },
+    {
+      "compiled_end": 211,
+      "compiled_start": 190,
+      "range_type": "Python",
+      "source_end": 68,
+      "source_start": 47
+    },
+    {
       "compiled_end": 262,
       "compiled_start": 258,
       "range_type": "Python",
@@ -148,6 +211,27 @@
       "range_type": "Html",
       "source_end": 106,
       "source_start": 99
+    },
+    {
+      "compiled_end": 313,
+      "compiled_start": 307,
+      "range_type": "Python",
+      "source_end": 140,
+      "source_start": 134
+    },
+    {
+      "compiled_end": 327,
+      "compiled_start": 318,
+      "range_type": "Python",
+      "source_end": 150,
+      "source_start": 141
+    },
+    {
+      "compiled_end": 360,
+      "compiled_start": 332,
+      "range_type": "Python",
+      "source_end": 179,
+      "source_start": 151
     },
     {
       "compiled_end": 409,
@@ -190,6 +274,20 @@
       "range_type": "Html",
       "source_end": 265,
       "source_start": 260
+    },
+    {
+      "compiled_end": 554,
+      "compiled_start": 532,
+      "range_type": "Python",
+      "source_end": 320,
+      "source_start": 298
+    },
+    {
+      "compiled_end": 580,
+      "compiled_start": 559,
+      "range_type": "Python",
+      "source_end": 342,
+      "source_start": 321
     },
     {
       "compiled_end": 656,
