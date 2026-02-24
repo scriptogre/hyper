@@ -555,13 +555,21 @@ fn test_for_loop_has_python_range() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
-    // Should have ranges for "item in items" and "{item}"
-    let has_loop = py.iter().any(|r| {
+    // Must have a range that covers the binding AND iterable together
+    let has_binding_and_iterable = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
-        text.contains("item in items") || text.contains("item") && text.contains("items")
+        text.contains("item in items")
     });
-    assert!(has_loop, "Should have Python range for for loop. Ranges: {:?}",
-            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+    assert!(has_binding_and_iterable,
+        "Should have Python range for 'item in items' (not just iterable). Ranges: {:?}",
+        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+
+    // Must also have a range for the {item} expression inside the body
+    let has_item_expr = py.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text == "item" && r.source_start > source.find('{').unwrap()
+    });
+    assert!(has_item_expr, "Should have Python range for {{item}} expression");
 }
 
 #[test]
