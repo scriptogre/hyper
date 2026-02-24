@@ -22,29 +22,57 @@
       "type": "python"
     },
     {
+      "end": 111,
+      "prefix": ")}</span>\"\"\"\n    except ",
+      "start": 103,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 204,
-      "prefix": ")}</span>\"\"\"\n    except KeyError:\n        yield \"\"\"<span>Key not found</span>\"\"\"\n\n    # Try with multiple except\n\n    try:\n        yield f\"\"\"<span>{escape(",
+      "prefix": ":\n        yield \"\"\"<span>Key not found</span>\"\"\"\n\n    # Try with multiple except\n\n    try:\n        yield f\"\"\"<span>{escape(",
       "start": 192,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 235,
+      "prefix": ")}</span>\"\"\"\n    except ",
+      "start": 220,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 262,
-      "prefix": ")}</span>\"\"\"\n    except ValueError as e:\n        yield f\"\"\"<span>Value error: {escape(",
+      "prefix": ":\n        yield f\"\"\"<span>Value error: {escape(",
       "start": 261,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 292,
+      "prefix": ")}</span>\"\"\"\n    except ",
+      "start": 278,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 318,
-      "prefix": ")}</span>\"\"\"\n    except TypeError as e:\n        yield f\"\"\"<span>Type error: {escape(",
+      "prefix": ":\n        yield f\"\"\"<span>Type error: {escape(",
       "start": 317,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 348,
+      "prefix": ")}</span>\"\"\"\n    except ",
+      "start": 334,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 377,
-      "prefix": ")}</span>\"\"\"\n    except Exception as e:\n        yield f\"\"\"<span>Unknown error: {escape(",
+      "prefix": ":\n        yield f\"\"\"<span>Unknown error: {escape(",
       "start": 376,
       "suffix": "",
       "type": "python"
@@ -57,8 +85,15 @@
       "type": "python"
     },
     {
+      "end": 454,
+      "prefix": "\n\n    except ",
+      "start": 446,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 511,
-      "prefix": "\n\n    except KeyError:\n        yield \"\"\"<span>Missing</span>\"\"\"\n    else:\n        yield f\"\"\"<span>Found: {escape(",
+      "prefix": ":\n        yield \"\"\"<span>Missing</span>\"\"\"\n    else:\n        yield f\"\"\"<span>Found: {escape(",
       "start": 505,
       "suffix": "",
       "type": "python"
@@ -78,8 +113,15 @@
       "type": "python"
     },
     {
+      "end": 738,
+      "prefix": "\n\n    except ",
+      "start": 730,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 788,
-      "prefix": "\n\n    except KeyError:\n        yield \"\"\"\\\n<span>Not found</span>\n    \"\"\"\n        ",
+      "prefix": ":\n        yield \"\"\"\\\n<span>Not found</span>\n    \"\"\"\n        ",
       "start": 771,
       "suffix": "",
       "type": "python"
@@ -325,6 +367,13 @@
       "source_start": 88
     },
     {
+      "compiled_end": 203,
+      "compiled_start": 195,
+      "range_type": "Python",
+      "source_end": 111,
+      "source_start": 103
+    },
+    {
       "compiled_end": 217,
       "compiled_start": 217,
       "range_type": "Html",
@@ -360,6 +409,13 @@
       "source_start": 205
     },
     {
+      "compiled_end": 377,
+      "compiled_start": 362,
+      "range_type": "Python",
+      "source_end": 235,
+      "source_start": 220
+    },
+    {
       "compiled_end": 425,
       "compiled_start": 424,
       "range_type": "Python",
@@ -381,6 +437,13 @@
       "source_start": 263
     },
     {
+      "compiled_end": 463,
+      "compiled_start": 449,
+      "range_type": "Python",
+      "source_end": 292,
+      "source_start": 278
+    },
+    {
       "compiled_end": 510,
       "compiled_start": 509,
       "range_type": "Python",
@@ -400,6 +463,13 @@
       "range_type": "Html",
       "source_end": 326,
       "source_start": 319
+    },
+    {
+      "compiled_end": 548,
+      "compiled_start": 534,
+      "range_type": "Python",
+      "source_end": 348,
+      "source_start": 334
     },
     {
       "compiled_end": 598,
@@ -428,6 +498,13 @@
       "range_type": "Python",
       "source_end": 438,
       "source_start": 418
+    },
+    {
+      "compiled_end": 694,
+      "compiled_start": 686,
+      "range_type": "Python",
+      "source_end": 454,
+      "source_start": 446
     },
     {
       "compiled_end": 708,
@@ -519,6 +596,13 @@
       "range_type": "Python",
       "source_end": 722,
       "source_start": 703
+    },
+    {
+      "compiled_end": 1108,
+      "compiled_start": 1100,
+      "range_type": "Python",
+      "source_end": 738,
+      "source_start": 730
     },
     {
       "compiled_end": 1124,

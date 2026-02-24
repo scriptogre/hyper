@@ -1300,7 +1300,20 @@ impl PythonGenerator {
             if let Some(exception) = &except.exception {
                 output.push(" ");
                 let exception = exception.trim_end_matches(':').trim();
+                let start = output.position();
                 output.push(exception);
+                let end = output.position();
+                if let Some(ref exc_span) = except.exception_span {
+                    let source_end = exc_span.start.byte + exception.len();
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: exc_span.start.byte,
+                        source_end,
+                        compiled_start: start,
+                        compiled_end: end,
+                        needs_injection: true,
+                    });
+                }
             }
             output.push(":");
             output.newline();
