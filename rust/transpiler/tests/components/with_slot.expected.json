@@ -15,6 +15,20 @@
       "type": "python"
     },
     {
+      "end": 18,
+      "prefix": "",
+      "start": 17,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 25,
+      "prefix": "",
+      "start": 24,
+      "suffix": "",
+      "type": "html"
+    },
+    {
       "end": 34,
       "prefix": "",
       "start": 30,
@@ -39,6 +53,20 @@
       "end": 80,
       "prefix": "",
       "start": 76,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 83,
+      "prefix": "",
+      "start": 81,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 90,
+      "prefix": "",
+      "start": 89,
       "suffix": "",
       "type": "html"
     }
@@ -85,6 +113,34 @@
       "range_type": "Html",
       "source_end": 80,
       "source_start": 76
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 18,
+      "source_start": 17
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 25,
+      "source_start": 24
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 83,
+      "source_start": 81
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 90,
+      "source_start": 89
     }
   ]
 }

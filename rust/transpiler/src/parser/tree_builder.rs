@@ -5,7 +5,7 @@ use crate::html;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-type ComponentChildren = (Vec<Node>, HashMap<String, Vec<Node>>);
+type ComponentChildren = (Vec<Node>, HashMap<String, Vec<Node>>, Option<Span>);
 
 /// Builds an AST from a token stream
 pub struct TreeBuilder {
@@ -137,6 +137,7 @@ impl TreeBuilder {
                         name: slot_name,
                         fallback: Vec::new(),
                         span: *span,
+                        close_span: None,
                     });
                     self.advance();
                     Ok(Some(node))
@@ -239,8 +240,8 @@ impl TreeBuilder {
 
                 self.advance();
 
-                let (children, slots) = if is_self_closing {
-                    (Vec::new(), HashMap::new())
+                let (children, slots, close_span) = if is_self_closing {
+                    (Vec::new(), HashMap::new(), None)
                 } else {
                     self.parse_until_component_close(&component_name, &component_span)?
                 };
@@ -252,6 +253,7 @@ impl TreeBuilder {
                     children,
                     slots,
                     span: component_span,
+                    close_span,
                 })))
             }
 
@@ -325,16 +327,17 @@ impl TreeBuilder {
 
                 self.advance();
 
-                let fallback = if slot_name.is_some() {
+                let (fallback, close_span) = if slot_name.is_some() {
                     self.parse_until_slot_close(&slot_name, &slot_span)?
                 } else {
-                    Vec::new()
+                    (Vec::new(), None)
                 };
 
                 Ok(Some(Node::Slot(SlotNode {
                     name: slot_name,
                     fallback,
                     span: slot_span,
+                    close_span,
                 })))
             }
 
@@ -822,10 +825,11 @@ impl TreeBuilder {
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::ComponentClose {
-                    name: close_name, ..
+                    name: close_name, span: close_span, ..
                 }) if close_name == name => {
+                    let close_span = *close_span;
                     self.advance();
-                    return Ok((children, slots));
+                    return Ok((children, slots, Some(close_span)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {
@@ -845,16 +849,17 @@ impl TreeBuilder {
         .boxed())
     }
 
-    fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> ParseResult<Vec<Node>> {
+    fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> ParseResult<(Vec<Node>, Option<Span>)> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::SlotClose {
-                    name: close_name, ..
+                    name: close_name, span: close_span, ..
                 }) if close_name == name => {
+                    let close_span = *close_span;
                     self.advance();
-                    return Ok(nodes);
+                    return Ok((nodes, Some(close_span)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {

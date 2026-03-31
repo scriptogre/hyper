@@ -15,36 +15,71 @@
       "type": "python"
     },
     {
+      "end": 131,
+      "prefix": "):\n\n    # Multiline dict literal\n\n    ",
+      "start": 54,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 145,
-      "prefix": "):\n\n    # Multiline dict literal\n\n    config = {\n        \"key1\": \"value1\",\n        \"key2\": \"value2\",\n        \"key3\": \"value3\"\n    }\n    yield f\"\"\"<span>{escape(",
+      "prefix": "\n    yield f\"\"\"<span>{escape(",
       "start": 139,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 230,
+      "prefix": ")}</span>\"\"\"\n\n    # Multiline list literal\n\n    ",
+      "start": 180,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 244,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline list literal\n\n    values = [\n        \"item1\",\n        \"item2\",\n        \"item3\"\n    ]\n    yield f\"\"\"<span>{escape(",
+      "prefix": "\n    yield f\"\"\"<span>{escape(",
       "start": 238,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 361,
+      "prefix": ")}</span>\"\"\"\n\n    # Multiline function call\n\n    ",
+      "start": 280,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 375,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline function call\n\n    result = some_function(\n        arg1=\"value1\",\n        arg2=\"value2\",\n        arg3=\"value3\"\n    )\n    yield f\"\"\"<span>{escape(",
+      "prefix": "\n    yield f\"\"\"<span>{escape(",
       "start": 369,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 481,
+      "prefix": ")}</span>\"\"\"\n\n    # Multiline list comprehension\n\n    ",
+      "start": 416,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 496,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline list comprehension\n\n    squares = [\n        x ** 2\n        for x in range(10)\n        if x % 2 == 0\n    ]\n    yield f\"\"\"<span>{escape(",
+      "prefix": "\n    yield f\"\"\"<span>{escape(",
       "start": 489,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 601,
+      "prefix": ")}</span>\"\"\"\n\n    # Chained method calls (each on own line)\n\n    ",
+      "start": 548,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 618,
-      "prefix": ")}</span>\"\"\"\n\n    # Chained method calls (each on own line)\n\n    processed = (data\n        .get('items', [])\n        .copy()\n    )\n    yield f\"\"\"<span>{escape(",
+      "prefix": "\n    yield f\"\"\"<span>{escape(",
       "start": 609,
       "suffix": ")}</span>\"\"\"\n",
       "type": "python"
@@ -136,6 +171,13 @@
       "source_start": 11
     },
     {
+      "compiled_end": 210,
+      "compiled_start": 117,
+      "range_type": "Python",
+      "source_end": 131,
+      "source_start": 54
+    },
+    {
       "compiled_end": 245,
       "compiled_start": 239,
       "range_type": "Python",
@@ -155,6 +197,13 @@
       "range_type": "Html",
       "source_end": 153,
       "source_start": 146
+    },
+    {
+      "compiled_end": 359,
+      "compiled_start": 293,
+      "range_type": "Python",
+      "source_end": 230,
+      "source_start": 180
     },
     {
       "compiled_end": 394,
@@ -178,6 +227,13 @@
       "source_start": 245
     },
     {
+      "compiled_end": 540,
+      "compiled_start": 443,
+      "range_type": "Python",
+      "source_end": 361,
+      "source_start": 280
+    },
+    {
       "compiled_end": 575,
       "compiled_start": 569,
       "range_type": "Python",
@@ -199,6 +255,13 @@
       "source_start": 376
     },
     {
+      "compiled_end": 710,
+      "compiled_start": 629,
+      "range_type": "Python",
+      "source_end": 481,
+      "source_start": 416
+    },
+    {
       "compiled_end": 746,
       "compiled_start": 739,
       "range_type": "Python",
@@ -218,6 +281,13 @@
       "range_type": "Html",
       "source_end": 504,
       "source_start": 497
+    },
+    {
+      "compiled_end": 876,
+      "compiled_start": 811,
+      "range_type": "Python",
+      "source_end": 601,
+      "source_start": 548
     },
     {
       "compiled_end": 914,

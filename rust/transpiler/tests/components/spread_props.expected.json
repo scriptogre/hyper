@@ -13,6 +13,48 @@
       "start": 12,
       "suffix": "):\n\n    yield from Button(**props)\n\n    yield from Button(label=label, **props)\n\n    yield from Button(disabled=True, **props)\n\n",
       "type": "python"
+    },
+    {
+      "end": 29,
+      "prefix": "",
+      "start": 28,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 48,
+      "prefix": "",
+      "start": 37,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 50,
+      "prefix": "",
+      "start": 49,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 83,
+      "prefix": "",
+      "start": 58,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 85,
+      "prefix": "",
+      "start": 84,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 113,
+      "prefix": "",
+      "start": 93,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -29,6 +71,48 @@
       "range_type": "Python",
       "source_end": 22,
       "source_start": 12
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 29,
+      "source_start": 28
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 48,
+      "source_start": 37
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 50,
+      "source_start": 49
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 83,
+      "source_start": 58
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 85,
+      "source_start": 84
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 113,
+      "source_start": 93
     }
   ]
 }

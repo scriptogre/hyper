@@ -20,6 +20,76 @@
       "start": 26,
       "suffix": "):\n\n    # Simple self-closing\n\n    yield from Button()\n\n    # With attributes\n\n    yield from Button(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from Button(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from Button(**props)\n\n    # Mixed\n\n    yield from Icon(name=\"star\", size=24, **props)\n\n",
       "type": "python"
+    },
+    {
+      "end": 67,
+      "prefix": "",
+      "start": 66,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 78,
+      "prefix": "",
+      "start": 75,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 99,
+      "prefix": "",
+      "start": 98,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 127,
+      "prefix": "",
+      "start": 107,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 159,
+      "prefix": "",
+      "start": 158,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 201,
+      "prefix": "",
+      "start": 167,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 218,
+      "prefix": "",
+      "start": 217,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 237,
+      "prefix": "",
+      "start": 226,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 248,
+      "prefix": "",
+      "start": 247,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 287,
+      "prefix": "",
+      "start": 254,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -43,6 +113,76 @@
       "range_type": "Python",
       "source_end": 37,
       "source_start": 26
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 67,
+      "source_start": 66
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 78,
+      "source_start": 75
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 99,
+      "source_start": 98
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 127,
+      "source_start": 107
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 159,
+      "source_start": 158
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 201,
+      "source_start": 167
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 218,
+      "source_start": 217
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 237,
+      "source_start": 226
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 248,
+      "source_start": 247
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Html",
+      "source_end": 287,
+      "source_start": 254
     }
   ]
 }

@@ -2,14 +2,14 @@
   "injections": [
     {
       "end": 65,
-      "prefix": "from hyper import html, spread_attrs\n\n\n@html\ndef Spread(*, ",
+      "prefix": "from hyper import html, render_attr\n\n\n@html\ndef Spread(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 81,
-      "prefix": "):\n    yield f\"\"\"<a{spread_attrs(",
+      "prefix": "):\n    yield f\"\"\"<a{render_attr(\"attrs\", ",
       "start": 76,
       "suffix": ")}>Link</a>\"\"\"\n",
       "type": "python"
@@ -38,36 +38,36 @@
   ],
   "ranges": [
     {
-      "compiled_end": 124,
-      "compiled_start": 59,
+      "compiled_end": 123,
+      "compiled_start": 58,
       "range_type": "Python",
       "source_end": 65,
       "source_start": 0
     },
     {
-      "compiled_end": 162,
-      "compiled_start": 157,
+      "compiled_end": 169,
+      "compiled_start": 164,
       "range_type": "Python",
       "source_end": 81,
       "source_start": 76
     },
     {
-      "compiled_end": 139,
-      "compiled_start": 139,
+      "compiled_end": 138,
+      "compiled_start": 138,
       "range_type": "Html",
       "source_end": 75,
       "source_start": 72
     },
     {
-      "compiled_end": 139,
-      "compiled_start": 139,
+      "compiled_end": 138,
+      "compiled_start": 138,
       "range_type": "Html",
       "source_end": 83,
       "source_start": 82
     },
     {
-      "compiled_end": 139,
-      "compiled_start": 139,
+      "compiled_end": 138,
+      "compiled_start": 138,
       "range_type": "Html",
       "source_end": 91,
       "source_start": 87
