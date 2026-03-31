@@ -171,7 +171,7 @@ impl<'a> Tokenizer<'a> {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(&tree_sitter_python::LANGUAGE.into())
-            .expect("Failed to load Python grammar");
+            .expect("tree-sitter-python grammar is statically linked");
 
         Self {
             source,
@@ -505,7 +505,7 @@ impl<'a> Tokenizer<'a> {
             return true;
         }
 
-        let first_char = trimmed.chars().next().unwrap();
+        let Some(first_char) = trimmed.chars().next() else { return true };
 
         // Triple-quoted strings are Python docstrings, not content
         if trimmed.starts_with("\"\"\"") || trimmed.starts_with("'''") {
@@ -657,7 +657,7 @@ impl<'a> Tokenizer<'a> {
 
                 // Check it's a valid identifier
                 if !identifier.is_empty() {
-                    let first = identifier.chars().next().unwrap();
+                    let Some(first) = identifier.chars().next() else { return false };
                     if (first.is_alphabetic() || first == '_')
                         && identifier.chars().all(|c| c.is_alphanumeric() || c == '_') {
                         return true;
@@ -860,8 +860,8 @@ impl<'a> Tokenizer<'a> {
             // Consume indentation
             while !self.at_eof() && !self.at_newline() {
                 match self.peek_char() {
-                    Some(' ') | Some('\t') => {
-                        code.push(self.peek_char().unwrap());
+                    Some(c @ (' ' | '\t')) => {
+                        code.push(c);
                         self.advance();
                     }
                     _ => break,
@@ -968,7 +968,7 @@ impl<'a> Tokenizer<'a> {
         let mut after_structural = true;
 
         while !self.at_eof() && !self.at_newline() {
-            let ch = self.peek_char().unwrap();
+            let Some(ch) = self.peek_char() else { break };
 
             match (quote_ctx, ch) {
                 // Quote tracking
@@ -1165,7 +1165,7 @@ impl<'a> Tokenizer<'a> {
         let mut string_char = ' ';
 
         while !self.at_eof() && depth > 0 {
-            let ch = self.peek_char().unwrap();
+            let Some(ch) = self.peek_char() else { break };
 
             if in_string {
                 if ch == '\\' {
@@ -1347,7 +1347,7 @@ impl<'a> Tokenizer<'a> {
                 break;
             }
 
-            let ch = self.peek_char().unwrap();
+            let Some(ch) = self.peek_char() else { break };
 
             // Check for /> or >
             if ch == '/' && self.peek_next_char() == Some('>') {
@@ -1550,7 +1550,7 @@ impl<'a> Tokenizer<'a> {
                 break;
             }
 
-            let ch = self.peek_char().unwrap();
+            let Some(ch) = self.peek_char() else { break };
 
             // Check for /> or >
             if ch == '/' && self.peek_next_char() == Some('>') {
@@ -1666,8 +1666,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn advance(&mut self) {
-        if self.at_eof() { return; }
-        let ch = self.peek_char().unwrap();
+        let Some(ch) = self.peek_char() else { return };
         let char_len = ch.len_utf8();
 
         self.position.byte += char_len;
@@ -1728,7 +1727,7 @@ impl<'a> Tokenizer<'a> {
         let start = self.position.byte;
         let mut depth = 0;
         while !self.at_eof() {
-            let ch = self.peek_char().unwrap();
+            let Some(ch) = self.peek_char() else { break };
             if ch == '{' { depth += 1; }
             if ch == '}' {
                 if depth == 0 && stop == '}' { break; }

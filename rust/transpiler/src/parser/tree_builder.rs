@@ -130,7 +130,7 @@ impl TreeBuilder {
                     let slot_name = if trimmed == "children" {
                         None
                     } else {
-                        Some(trimmed.strip_prefix("children_").unwrap().to_string())
+                        Some(trimmed["children_".len()..].to_string())
                     };
 
                     let node = Node::Slot(SlotNode {
