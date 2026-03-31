@@ -47,20 +47,41 @@
     "keywords": {
       "patterns": [
         {
-          "match": "\\b(if|elif|else|for|match|case)\\b",
-          "name": "keyword.control.flow.python"
+          "comment": "Control flow keywords: must be at line start and line must end with ':'",
+          "match": "^\\s*(if|elif|for|while|with|try|match)\\b(.+)(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "3": { "name": "punctuation.section.block.python" }
+          }
         },
         {
-          "match": "\\b(in)\\b",
-          "name": "keyword.operator.python"
+          "comment": "Bare block continuations: keyword + colon only",
+          "match": "^\\s*(else|finally)\\s*(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "2": { "name": "punctuation.section.block.python" }
+          }
         },
         {
-          "match": "\\b(end)\\b",
-          "name": "keyword.control.flow.python"
+          "comment": "except/case: keyword at line start, line ends with ':'",
+          "match": "^\\s*(except|case)\\b(.+)(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "3": { "name": "punctuation.section.block.python" }
+          }
         },
         {
-          "match": "\\b(True|False|None)\\b",
-          "name": "constant.language.python"
+          "comment": "for..in: highlight 'in' only within a for-loop line",
+          "match": "^\\s*for\\b.+\\b(in)\\b.+:\\s*$",
+          "captures": {
+            "1": { "name": "keyword.operator.python" }
+          }
+        },
+        {
+          "match": "^\\s*(end)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" }
+          }
         }
       ]
     },
@@ -76,6 +97,60 @@
     "component-tag": {
       "patterns": [
         {
+          "comment": "Opening named slot: <{...name}>",
+          "begin": "(<)(\\{)(\\.\\.\\.)(\\w+)(\\})",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "keyword.operator.spread.python" },
+            "4": { "name": "entity.name.tag.slot.hyper" },
+            "5": { "name": "punctuation.section.interpolation.end" }
+          },
+          "end": "(>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Closing named slot: </{...name}>",
+          "match": "(</)(\\{)(\\.\\.\\.)(\\w+)(\\})(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "keyword.operator.spread.python" },
+            "4": { "name": "entity.name.tag.slot.hyper" },
+            "5": { "name": "punctuation.section.interpolation.end" },
+            "6": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Opening component: <{Name}> or <{Name} attrs...>",
+          "begin": "(<)(\\{)([A-Z][a-zA-Z0-9]*)(\\})",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "support.class.component.html" },
+            "4": { "name": "punctuation.section.interpolation.end" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          },
+          "patterns": [{ "include": "#tag-attributes" }]
+        },
+        {
+          "comment": "Closing component: </{Name}>",
+          "match": "(</)(\\{)([A-Z][a-zA-Z0-9]*)(\\})(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "support.class.component.html" },
+            "4": { "name": "punctuation.section.interpolation.end" },
+            "5": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Opening plain component: <Component>",
           "begin": "(<)([A-Z][a-zA-Z0-9]*)",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.html" },
@@ -88,6 +163,7 @@
           "patterns": [{ "include": "#tag-attributes" }]
         },
         {
+          "comment": "Closing plain component: </Component>",
           "match": "(</)([A-Z][a-zA-Z0-9]*)(>)",
           "captures": {
             "1": { "name": "punctuation.definition.tag.begin.html" },
