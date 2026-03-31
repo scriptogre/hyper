@@ -1063,6 +1063,8 @@ impl PythonGenerator {
 
     fn emit_component(&self, c: &ComponentNode, output: &mut Output, indent: usize) {
         let has_children = !c.children.is_empty();
+        let name_compiled_start;
+        let name_compiled_end;
 
         if has_children {
             // Generate inner function name from component name
@@ -1088,7 +1090,9 @@ impl PythonGenerator {
             // Emit yield from with component call
             self.indent(output, indent);
             output.push("yield from ");
+            name_compiled_start = output.position();
             output.push(&c.name);
+            name_compiled_end = output.position();
             output.push("(");
             output.push(&func_name);
             output.push("()");
@@ -1112,7 +1116,9 @@ impl PythonGenerator {
             // No children - simple yield from
             self.indent(output, indent);
             output.push("yield from ");
+            name_compiled_start = output.position();
             output.push(&c.name);
+            name_compiled_end = output.position();
             output.push("(");
 
             // Emit attributes as keyword arguments
@@ -1127,6 +1133,36 @@ impl PythonGenerator {
 
             output.push(")");
             output.newline();
+        }
+
+        // Add Python range for the component name in the opening tag
+        // This enables go-to-definition and highlighting for the name
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: c.name_span.start.byte,
+            source_end: c.name_span.end.byte,
+            compiled_start: name_compiled_start,
+            compiled_end: name_compiled_end,
+            needs_injection: true,
+        });
+
+        // Add Python range for the component name in the closing tag.
+        // needs_injection: false — this is for highlighting only, not for
+        // building the virtual Python file (which would duplicate the name).
+        if let Some(ref cs) = c.close_span {
+            // Closing tag is </{Name}> — name starts at byte+3 (skip "</{"), ends at byte-2 (skip "}>")
+            let close_name_start = cs.start.byte + 3;
+            let close_name_end = cs.end.byte - 2;
+            if close_name_end > close_name_start {
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: close_name_start,
+                    source_end: close_name_end,
+                    compiled_start: 0,
+                    compiled_end: 0,
+                    needs_injection: false,
+                });
+            }
         }
 
         // Add HTML ranges for component tag angle brackets

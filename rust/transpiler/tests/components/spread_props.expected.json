@@ -11,7 +11,28 @@
       "end": 22,
       "prefix": ", ",
       "start": 12,
-      "suffix": "):\n\n    yield from Button(**props)\n\n    yield from Button(label=label, **props)\n\n    yield from Button(disabled=True, **props)\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 36,
+      "prefix": "):\n\n    yield from ",
+      "start": 30,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 57,
+      "prefix": "(**props)\n\n    yield from ",
+      "start": 51,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 92,
+      "prefix": "(label=label, **props)\n\n    yield from ",
+      "start": 86,
+      "suffix": "(disabled=True, **props)\n\n",
       "type": "python"
     },
     {
@@ -73,6 +94,13 @@
       "source_start": 12
     },
     {
+      "compiled_end": 98,
+      "compiled_start": 92,
+      "range_type": "Python",
+      "source_end": 36,
+      "source_start": 30
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -87,6 +115,13 @@
       "source_start": 37
     },
     {
+      "compiled_end": 130,
+      "compiled_start": 124,
+      "range_type": "Python",
+      "source_end": 57,
+      "source_start": 51
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -99,6 +134,13 @@
       "range_type": "Html",
       "source_end": 83,
       "source_start": 58
+    },
+    {
+      "compiled_end": 175,
+      "compiled_start": 169,
+      "range_type": "Python",
+      "source_end": 92,
+      "source_start": 86
     },
     {
       "compiled_end": 31,

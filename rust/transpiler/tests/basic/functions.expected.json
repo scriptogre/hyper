@@ -109,7 +109,21 @@
       "end": 539,
       "prefix": "\n        ",
       "start": 523,
-      "suffix": "\n\n    yield from Greet(who=format_name(name))\n\n    yield from Badge(text=\"Admin\", color=\"red\")\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 553,
+      "prefix": "\n\n    yield from ",
+      "start": 548,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 589,
+      "prefix": "(who=format_name(name))\n\n    yield from ",
+      "start": 584,
+      "suffix": "(text=\"Admin\", color=\"red\")\n\n",
       "type": "python"
     },
     {
@@ -465,6 +479,13 @@
       "source_start": 523
     },
     {
+      "compiled_end": 761,
+      "compiled_start": 756,
+      "range_type": "Python",
+      "source_end": 553,
+      "source_start": 548
+    },
+    {
       "compiled_end": 39,
       "compiled_start": 39,
       "range_type": "Html",
@@ -477,6 +498,13 @@
       "range_type": "Html",
       "source_end": 581,
       "source_start": 554
+    },
+    {
+      "compiled_end": 806,
+      "compiled_start": 801,
+      "range_type": "Python",
+      "source_end": 589,
+      "source_start": 584
     },
     {
       "compiled_end": 39,

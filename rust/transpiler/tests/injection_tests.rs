@@ -937,3 +937,44 @@ fn test_slot_tag_angle_brackets_have_html_ranges() {
         "'</' of </{{...header}}> should be in an HTML range. HTML ranges: {:?}",
         html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
 }
+
+#[test]
+fn test_component_name_has_python_range() {
+    // The component name inside braces should have a Python injection range
+    // so the IDE can resolve it (go-to-definition, highlighting)
+    let source = "<{Badge} text=\"Sale\" />";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let name_start = source.find("Badge").unwrap();
+    let name_end = name_start + "Badge".len();
+    let has_name = py.iter().any(|r| {
+        r.source_start == name_start && r.source_end == name_end
+    });
+    assert!(has_name,
+        "Component name 'Badge' at [{},{}] should have a Python range. Ranges: {:?}",
+        name_start, name_end,
+        py.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+}
+
+#[test]
+fn test_component_close_name_has_python_range() {
+    // The closing tag component name should also have a Python range
+    let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let close_name_start = source.rfind("Card").unwrap();
+    let close_name_end = close_name_start + "Card".len();
+    let has_close_name = py.iter().any(|r| {
+        r.source_start == close_name_start && r.source_end == close_name_end
+    });
+    assert!(has_close_name,
+        "Closing tag component name 'Card' at [{},{}] should have a Python range. Ranges: {:?}",
+        close_name_start, close_name_end,
+        py.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+}
+
+// Note: slot names (e.g. "header" in <{...header}>) are Hyper syntax, not Python
+// expressions. They compile to _header, not header. No Python injection range
+// is emitted — styling comes from the TextMate grammar / annotator instead.

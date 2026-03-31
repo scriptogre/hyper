@@ -414,8 +414,29 @@
       "type": "python"
     },
     {
+      "end": 2333,
+      "prefix": ")}\"\"\"\n\n    # -- Components --\n\n    yield from ",
+      "start": 2328,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 2380,
+      "prefix": "(text=\"Sale\", variant=\"danger\")\n\n    # <{CachedList}>\n    def _cached_list():\n        yield \"\"\"<p>Fallback content</p>\"\"\"\n    yield from ",
+      "start": 2370,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 2493,
+      "prefix": "(_cached_list(), entries=items)\n    # </{CachedList}>\n\n    # -- Component with expression name --\n\n    yield from ",
+      "start": 2485,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 2774,
-      "prefix": ")}\"\"\"\n\n    # -- Components --\n\n    yield from Badge(text=\"Sale\", variant=\"danger\")\n\n    # <{CachedList}>\n    def _cached_list():\n        yield \"\"\"<p>Fallback content</p>\"\"\"\n    yield from CachedList(_cached_list(), entries=items)\n    # </{CachedList}>\n\n    # -- Component with expression name --\n\n    yield from callback()\n\n    # -- Named slots with fallback --\n\n    if _header is not None:\n        yield from _header\n    else:\n        yield \"\"\"<h2>Default Header</h2>\"\"\"\n\n    if _sidebar is not None:\n        yield from _sidebar\n    else:\n        yield \"\"\"<nav>Default Nav</nav>\"\"\"\n\n    # -- Default slot --\n\n    if _content is not None:\n        yield from _content\n\n    # -- Deeply nested: components inside control flow inside elements --\n\n    yield \"<section>\"\n\n    if ",
+      "prefix": "()\n\n    # -- Named slots with fallback --\n\n    if _header is not None:\n        yield from _header\n    else:\n        yield \"\"\"<h2>Default Header</h2>\"\"\"\n\n    if _sidebar is not None:\n        yield from _sidebar\n    else:\n        yield \"\"\"<nav>Default Nav</nav>\"\"\"\n\n    # -- Default slot --\n\n    if _content is not None:\n        yield from _content\n\n    # -- Deeply nested: components inside control flow inside elements --\n\n    yield \"<section>\"\n\n    if ",
       "start": 2765,
       "suffix": "",
       "type": "python"
@@ -428,8 +449,15 @@
       "type": "python"
     },
     {
+      "end": 2822,
+      "prefix": ":\n\n            yield from ",
+      "start": 2817,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 2899,
-      "prefix": ":\n\n            yield from Badge(text=item)\n\n            yield \"<div class=\\\"wrapper\\\">\"\n\n            match ",
+      "prefix": "(text=item)\n\n            yield \"<div class=\\\"wrapper\\\">\"\n\n            match ",
       "start": 2895,
       "suffix": "",
       "type": "python"
@@ -442,8 +470,15 @@
       "type": "python"
     },
     {
+      "end": 2973,
+      "prefix": ":\n\n                    yield from ",
+      "start": 2963,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 3027,
-      "prefix": ":\n\n                    yield from CachedList(entries=[item, item])\n\n                case ",
+      "prefix": "(entries=[item, item])\n\n                case ",
       "start": 3026,
       "suffix": "",
       "type": "python"
@@ -2229,6 +2264,13 @@
       "source_start": 2287
     },
     {
+      "compiled_end": 3407,
+      "compiled_start": 3402,
+      "range_type": "Python",
+      "source_end": 2333,
+      "source_start": 2328
+    },
+    {
       "compiled_end": 89,
       "compiled_start": 89,
       "range_type": "Html",
@@ -2257,6 +2299,20 @@
       "source_start": 2422
     },
     {
+      "compiled_end": 3554,
+      "compiled_start": 3544,
+      "range_type": "Python",
+      "source_end": 2380,
+      "source_start": 2370
+    },
+    {
+      "compiled_end": 89,
+      "compiled_start": 89,
+      "range_type": "Python",
+      "source_end": 2440,
+      "source_start": 2430
+    },
+    {
       "compiled_end": 89,
       "compiled_start": 89,
       "range_type": "Html",
@@ -2283,6 +2339,13 @@
       "range_type": "Html",
       "source_end": 2442,
       "source_start": 2441
+    },
+    {
+      "compiled_end": 3676,
+      "compiled_start": 3668,
+      "range_type": "Python",
+      "source_end": 2493,
+      "source_start": 2485
     },
     {
       "compiled_end": 89,
@@ -2397,6 +2460,13 @@
       "source_start": 2788
     },
     {
+      "compiled_end": 4197,
+      "compiled_start": 4192,
+      "range_type": "Python",
+      "source_end": 2822,
+      "source_start": 2817
+    },
+    {
       "compiled_end": 89,
       "compiled_start": 89,
       "range_type": "Html",
@@ -2423,6 +2493,13 @@
       "range_type": "Python",
       "source_end": 2935,
       "source_start": 2926
+    },
+    {
+      "compiled_end": 4353,
+      "compiled_start": 4343,
+      "range_type": "Python",
+      "source_end": 2973,
+      "source_start": 2963
     },
     {
       "compiled_end": 89,

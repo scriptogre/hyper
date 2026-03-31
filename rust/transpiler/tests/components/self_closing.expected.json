@@ -18,7 +18,42 @@
       "end": 37,
       "prefix": ", ",
       "start": 26,
-      "suffix": "):\n\n    # Simple self-closing\n\n    yield from Button()\n\n    # With attributes\n\n    yield from Button(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from Button(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from Button(**props)\n\n    # Mixed\n\n    yield from Icon(name=\"star\", size=24, **props)\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 74,
+      "prefix": "):\n\n    # Simple self-closing\n\n    yield from ",
+      "start": 68,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 106,
+      "prefix": "()\n\n    # With attributes\n\n    yield from ",
+      "start": 100,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 166,
+      "prefix": "(label=\"Click me\")\n\n    # With expression attributes\n\n    yield from ",
+      "start": 160,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 225,
+      "prefix": "(label=name, onClick=onClick)\n\n    # With spread\n\n    yield from ",
+      "start": 219,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 253,
+      "prefix": "(**props)\n\n    # Mixed\n\n    yield from ",
+      "start": 249,
+      "suffix": "(name=\"star\", size=24, **props)\n\n",
       "type": "python"
     },
     {
@@ -115,6 +150,13 @@
       "source_start": 26
     },
     {
+      "compiled_end": 141,
+      "compiled_start": 135,
+      "range_type": "Python",
+      "source_end": 74,
+      "source_start": 68
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -127,6 +169,13 @@
       "range_type": "Html",
       "source_end": 78,
       "source_start": 75
+    },
+    {
+      "compiled_end": 189,
+      "compiled_start": 183,
+      "range_type": "Python",
+      "source_end": 106,
+      "source_start": 100
     },
     {
       "compiled_end": 31,
@@ -143,6 +192,13 @@
       "source_start": 107
     },
     {
+      "compiled_end": 264,
+      "compiled_start": 258,
+      "range_type": "Python",
+      "source_end": 166,
+      "source_start": 160
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -157,6 +213,13 @@
       "source_start": 167
     },
     {
+      "compiled_end": 335,
+      "compiled_start": 329,
+      "range_type": "Python",
+      "source_end": 225,
+      "source_start": 219
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -169,6 +232,13 @@
       "range_type": "Html",
       "source_end": 237,
       "source_start": 226
+    },
+    {
+      "compiled_end": 378,
+      "compiled_start": 374,
+      "range_type": "Python",
+      "source_end": 253,
+      "source_start": 249
     },
     {
       "compiled_end": 31,
