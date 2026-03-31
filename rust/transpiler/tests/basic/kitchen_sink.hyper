@@ -1,0 +1,178 @@
+# Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
+# Open this file in JetBrains after any injection change and verify highlighting.
+
+name: str
+count: int = 0
+is_active: bool = True
+items: list = []
+metadata: dict = {}
+callback: object = None
+style: str = "default"
+
+---
+
+# -- Standalone Python statements --
+result = name.upper()
+values = [x * 2 for x in range(count)]
+lookup = {k: v for k, v in metadata.items()}
+
+# -- Basic elements with expressions --
+<div class="container" id="main-{count}" data-name={name}>
+    <h1>{name}</h1>
+    <p>Count is {count + 1} and active is {is_active}</p>
+    <span>{f"Hello, {name}!"}</span>
+</div>
+
+# -- Void / self-closing elements --
+<div>
+    <img src="/img/{name}.png" alt={name} />
+    <input type="text" value={name} disabled={is_active} />
+</div>
+
+# -- All attribute kinds --
+<div class="static" id="s-{count}" data-val={name} {is_active} {metadata}>
+    Mixed attributes
+</div>
+
+# -- If / elif / else --
+if is_active:
+    <span class="active">Active</span>
+elif count > 0:
+    <span class="partial">Partial ({count})</span>
+else:
+    <span class="inactive">Inactive</span>
+end
+
+# -- For loop --
+for item in items:
+    <li class="item">{item}</li>
+end
+
+# -- For loop with destructuring --
+for key, value in metadata.items():
+    <dt>{key}</dt>
+    <dd>{value}</dd>
+end
+
+# -- While loop --
+while count > 0:
+    <p>Counting down: {count}</p>
+    count = count - 1
+end
+
+# -- Match / case --
+match style:
+    case "bold":
+        <strong>{name}</strong>
+    case "italic":
+        <em>{name}</em>
+    case _:
+        <span>{name}</span>
+end
+
+# -- Try / except / else / finally --
+try:
+    <span>{metadata['key']}</span>
+except KeyError as e:
+    <span>Missing: {e}</span>
+except ValueError:
+    <span>Bad value</span>
+else:
+    <span>Success</span>
+finally:
+    <span>Done</span>
+end
+
+# -- With statement --
+with open("/dev/null") as f:
+    <pre>{f.read()}</pre>
+end
+
+# -- Decorators and nested definitions --
+@fragment
+def Badge(text: str, variant: str = "info"):
+    <span class="badge badge-{variant}">{text}</span>
+end
+
+@cache
+@fragment
+def CachedList(entries: list):
+    <ul>
+        for entry in entries:
+            <li>{entry}</li>
+        end
+    </ul>
+end
+
+# -- Using decorated functions --
+{Badge("New")}
+{CachedList(items)}
+
+# -- Components --
+<{Badge} text="Sale" variant="danger" />
+
+<{CachedList} entries={items}>
+    <p>Fallback content</p>
+</{CachedList}>
+
+# -- Component with expression name --
+<{callback} />
+
+# -- Named slots with fallback --
+<{...header}>
+    <h2>Default Header</h2>
+</{...header}>
+
+<{...sidebar}>
+    <nav>Default Nav</nav>
+</{...sidebar}>
+
+# -- Default slot --
+{...}
+
+# -- Deeply nested: components inside control flow inside elements --
+<section>
+    if is_active:
+        for item in items:
+            <{Badge} text={item} />
+            <div class="wrapper">
+                match item:
+                    case "special":
+                        <{CachedList} entries={[item, item]} />
+                    case _:
+                        <span>{item}</span>
+                end
+            </div>
+        end
+    end
+</section>
+
+# -- Adjacent expressions --
+<p>{name}{count}{is_active}</p>
+
+# -- Escaped braces --
+<code>Use {{braces}} in templates</code>
+
+# -- Nested elements --
+<div>
+    <ul>
+        <li>
+            <a href="/item/{name}">
+                <span class="label">{name}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+# -- Expressions with complex Python --
+<p>{", ".join(str(x) for x in items)}</p>
+<p>{name if is_active else "anonymous"}</p>
+<p>{metadata.get("title", "Untitled")}</p>
+<p>{len(items)}</p>
+
+# -- Comments: body, trailing, indented --
+# Top-level comment
+<div>
+    # Indented comment
+    <span>Text</span>  # Trailing comment
+</div>
