@@ -83,9 +83,14 @@ cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
 
 **Invariant tests** (`rust/transpiler/tests/invariants/`):
 - Property-based checks that run across ALL `.hyper` test files automatically
-- Each module validates one structural invariant (roundtrip, monotonicity, bounds, etc.)
+- Each module validates one structural invariant (roundtrip, monotonicity, bounds, html_completeness, etc.)
 - New invariants go in their own module file under `invariants/`
 - Adding a new `.hyper` test file automatically gets invariant coverage with zero extra work
+
+**Kitchen sink smoke test** (`tests/basic/kitchen_sink.hyper`):
+- Exercises every syntax construct in one file (elements, components, slots, control flow, decorators, attributes, expressions, comments)
+- After any injection change, open this file in JetBrains and visually verify highlighting
+- All 8 invariants run against it automatically
 
 ## CLI Modes (`main.rs`)
 

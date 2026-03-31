@@ -11,6 +11,7 @@ mod bounds;
 mod semantic;
 mod completeness;
 mod braces;
+mod html_completeness;
 
 use libtest_mimic::{Arguments, Trial};
 use std::path::Path;
@@ -88,6 +89,13 @@ fn collect_tests() -> Vec<Trial> {
         tests.push(Trial::test(
             format!("braces::{}", test_name),
             move || braces::run(&p),
+        ));
+
+        // Test H: Every HTML element/component/slot tag has HTML injection ranges
+        let p = path.clone();
+        tests.push(Trial::test(
+            format!("html_completeness::{}", test_name),
+            move || html_completeness::run(&p),
         ));
     }
 
