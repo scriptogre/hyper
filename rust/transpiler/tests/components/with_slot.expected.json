@@ -11,7 +11,14 @@
       "end": 40,
       "prefix": "):\n\n    # <{Card}>\n    def _card():\n        yield f\"\"\"\\\n<h2>{escape(",
       "start": 35,
-      "suffix": ")}</h2>\n    <p>Card content goes here</p>\"\"\"\n    yield from Card(_card())\n    # </{Card}>\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 23,
+      "prefix": ")}</h2>\n    <p>Card content goes here</p>\"\"\"\n    yield from ",
+      "start": 19,
+      "suffix": "(_card())\n    # </{Card}>\n\n",
       "type": "python"
     },
     {
@@ -113,6 +120,20 @@
       "range_type": "Html",
       "source_end": 80,
       "source_start": 76
+    },
+    {
+      "compiled_end": 202,
+      "compiled_start": 198,
+      "range_type": "Python",
+      "source_end": 23,
+      "source_start": 19
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Python",
+      "source_end": 88,
+      "source_start": 84
     },
     {
       "compiled_end": 39,

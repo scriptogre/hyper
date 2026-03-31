@@ -11,7 +11,56 @@
       "end": 31,
       "prefix": ", ",
       "start": 15,
-      "suffix": "):\n\n    # Component from module\n\n    yield from module.Button(label=\"Click\")\n\n    # Component from dict\n\n    # <{components['Card']}>\n    def _components_card():\n        yield \"\"\"<p>Content</p>\"\"\"\n    yield from components['Card'](_components_card())\n    # </{components['Card']}>\n\n    # Empty component (not self-closing)\n\n    yield from Wrapper()\n\n    # Component with only whitespace\n\n    # <{Container}>\n    def _container():\n        pass\n    yield from Container(_container())\n    # </{Container}>\n\n    # Deeply nested components\n\n    # <{Outer}>\n    def _outer():\n\n        # <{Middle}>\n        def _middle():\n\n            # <{Inner}>\n            def _inner():\n                yield \"\"\"\\\n<span>Deep</span>\n        \"\"\"\n            yield from Inner(_inner())\n            # </{Inner}>\n\n        yield from Middle(_middle())\n        # </{Middle}>\n\n    yield from Outer(_outer())\n    # </{Outer}>\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 77,
+      "prefix": "):\n\n    # Component from module\n\n    yield from ",
+      "start": 64,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 139,
+      "prefix": "(label=\"Click\")\n\n    # Component from dict\n\n    # <{components['Card']}>\n    def _components_card():\n        yield \"\"\"<p>Content</p>\"\"\"\n    yield from ",
+      "start": 121,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 232,
+      "prefix": "(_components_card())\n    # </{components['Card']}>\n\n    # Empty component (not self-closing)\n\n    yield from ",
+      "start": 225,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 292,
+      "prefix": "()\n\n    # Component with only whitespace\n\n    # <{Container}>\n    def _container():\n        pass\n    yield from ",
+      "start": 283,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 379,
+      "prefix": "(_container())\n    # </{Container}>\n\n    # Deeply nested components\n\n    # <{Outer}>\n    def _outer():\n\n        # <{Middle}>\n        def _middle():\n\n            # <{Inner}>\n            def _inner():\n                yield \"\"\"\\\n<span>Deep</span>\n        \"\"\"\n            yield from ",
+      "start": 374,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 361,
+      "prefix": "(_inner())\n            # </{Inner}>\n\n        yield from ",
+      "start": 355,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 346,
+      "prefix": "(_middle())\n        # </{Middle}>\n\n    yield from ",
+      "start": 341,
+      "suffix": "(_outer())\n    # </{Outer}>\n\n",
       "type": "python"
     },
     {
@@ -241,6 +290,13 @@
       "source_start": 15
     },
     {
+      "compiled_end": 141,
+      "compiled_start": 128,
+      "range_type": "Python",
+      "source_end": 77,
+      "source_start": 64
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -267,6 +323,20 @@
       "range_type": "Html",
       "source_end": 160,
       "source_start": 156
+    },
+    {
+      "compiled_end": 310,
+      "compiled_start": 292,
+      "range_type": "Python",
+      "source_end": 139,
+      "source_start": 121
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 182,
+      "source_start": 164
     },
     {
       "compiled_end": 31,
@@ -297,6 +367,20 @@
       "source_start": 183
     },
     {
+      "compiled_end": 426,
+      "compiled_start": 419,
+      "range_type": "Python",
+      "source_end": 232,
+      "source_start": 225
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 244,
+      "source_start": 237
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -323,6 +407,20 @@
       "range_type": "Html",
       "source_end": 246,
       "source_start": 245
+    },
+    {
+      "compiled_end": 547,
+      "compiled_start": 538,
+      "range_type": "Python",
+      "source_end": 292,
+      "source_start": 283
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 308,
+      "source_start": 299
     },
     {
       "compiled_end": 31,
@@ -367,6 +465,20 @@
       "source_start": 404
     },
     {
+      "compiled_end": 831,
+      "compiled_start": 826,
+      "range_type": "Python",
+      "source_end": 379,
+      "source_start": 374
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 428,
+      "source_start": 423
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -395,6 +507,20 @@
       "source_start": 429
     },
     {
+      "compiled_end": 893,
+      "compiled_start": 887,
+      "range_type": "Python",
+      "source_end": 361,
+      "source_start": 355
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 444,
+      "source_start": 438
+    },
+    {
       "compiled_end": 31,
       "compiled_start": 31,
       "range_type": "Html",
@@ -421,6 +547,20 @@
       "range_type": "Html",
       "source_end": 446,
       "source_start": 445
+    },
+    {
+      "compiled_end": 948,
+      "compiled_start": 943,
+      "range_type": "Python",
+      "source_end": 346,
+      "source_start": 341
+    },
+    {
+      "compiled_end": 31,
+      "compiled_start": 31,
+      "range_type": "Python",
+      "source_end": 455,
+      "source_start": 450
     },
     {
       "compiled_end": 31,

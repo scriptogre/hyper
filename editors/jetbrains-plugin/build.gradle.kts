@@ -89,7 +89,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "253.*"
+            untilBuild = provider { null }
         }
     }
 }
