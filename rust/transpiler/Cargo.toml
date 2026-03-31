@@ -34,5 +34,6 @@ name = "expected_tests"
 harness = false
 
 [[test]]
-name = "injection_validation_tests"
+name = "invariants"
+path = "tests/invariants/main.rs"
 harness = false
