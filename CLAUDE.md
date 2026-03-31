@@ -81,6 +81,12 @@ cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
 
 **CRITICAL — injection range validation:** Every Python injection range `source[start:end]` must extract to meaningful text from the source file (not mid-word garbage). After accepting expected output, verify that source positions in `.expected.json` files map to the correct source text. The test suite includes semantic validation (range text extraction checks) — if these fail, the ranges are wrong, do NOT blindly accept. Common mistakes: off-by-one in span calculations, stale expected files accepted without review, substring-matching tests that pass accidentally.
 
+**Invariant tests** (`rust/transpiler/tests/invariants/`):
+- Property-based checks that run across ALL `.hyper` test files automatically
+- Each module validates one structural invariant (roundtrip, monotonicity, bounds, etc.)
+- New invariants go in their own module file under `invariants/`
+- Adding a new `.hyper` test file automatically gets invariant coverage with zero extra work
+
 ## CLI Modes (`main.rs`)
 
 - `hyper generate <files|dirs>` — Compile to `.py` files, walks directories
@@ -95,4 +101,8 @@ cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
 - Expected output files (`.expected.py`, `.expected.json`, `.expected.err`) are managed by `cargo run --bin accept_expected` — never edit them by hand
 - The tokenizer is line-based; multiline Python expressions (paren/bracket spanning lines) are a known limitation
 - `is_control_flow()` uses trailing `:` heuristic — content text that starts with a Python keyword and ends with `:` inside an element is an edge case
+
+## Bug Fix Workflow
+
+When the user reports a bug, visual issue, or incorrect behavior — especially phrases like "not highlighted", "looks wrong", "should be X but is Y", "missing", "broken" — invoke the `/red-green-fix` skill before making any code changes. Never fix a bug without first writing a failing test that captures the expected behavior.
 
