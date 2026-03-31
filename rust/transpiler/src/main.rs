@@ -61,7 +61,10 @@ fn main() {
 
 fn generate_stdin(json_output: bool, include_injections: bool, name: Option<String>) {
     let mut source = String::new();
-    io::stdin().read_to_string(&mut source).expect("Failed to read stdin");
+    if let Err(e) = io::stdin().read_to_string(&mut source) {
+        eprintln!("error: failed to read stdin: {}", e);
+        std::process::exit(1);
+    }
 
     let options = GenerateOptions {
         function_name: name,
