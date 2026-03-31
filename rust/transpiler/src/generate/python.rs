@@ -391,6 +391,78 @@ impl PythonGenerator {
         }
     }
 
+    /// Add HTML ranges for component/slot tag angle brackets.
+    /// For a tag like `<{Card}>`, creates ranges for `<` and `>`, skipping `{Card}`.
+    /// For closing tag `</{Card}>`, creates ranges for `</` and `>`, skipping `{Card}`.
+    fn add_component_html_ranges(
+        &self,
+        open_span: &Span,
+        close_span: Option<&Span>,
+        brace_open: usize,
+        brace_close: usize,
+        output: &mut Output,
+    ) {
+        // Opening tag: "<" before the brace
+        let lt_start = open_span.start.byte;
+        if brace_open > lt_start {
+            output.add_range(Range {
+                range_type: RangeType::Html,
+                source_start: lt_start,
+                source_end: brace_open,
+                compiled_start: 0,
+                compiled_end: 0,
+                needs_injection: true,
+            });
+        }
+
+        // Opening tag: ">" after the brace
+        let gt_pos = open_span.end.byte - 1;
+        if gt_pos > brace_close {
+            output.add_range(Range {
+                range_type: RangeType::Html,
+                source_start: brace_close + 1,
+                source_end: open_span.end.byte,
+                compiled_start: 0,
+                compiled_end: 0,
+                needs_injection: true,
+            });
+        }
+
+        // Closing tag
+        if let Some(cs) = close_span {
+            // Find the brace positions in the closing tag
+            // Closing tag is like </{Card}> or </{...header}>
+            // "</" is at cs.start.byte..cs.start.byte+2
+            // "{" is at cs.start.byte+2
+            // "}" is at cs.end.byte-2
+            // ">" is at cs.end.byte-1
+            let close_brace_open = cs.start.byte + 2;
+            let close_brace_close = cs.end.byte - 2;
+
+            // "</" before brace
+            output.add_range(Range {
+                range_type: RangeType::Html,
+                source_start: cs.start.byte,
+                source_end: close_brace_open,
+                compiled_start: 0,
+                compiled_end: 0,
+                needs_injection: true,
+            });
+
+            // ">" after brace
+            if cs.end.byte > close_brace_close + 1 {
+                output.add_range(Range {
+                    range_type: RangeType::Html,
+                    source_start: close_brace_close + 1,
+                    source_end: cs.end.byte,
+                    compiled_start: 0,
+                    compiled_end: 0,
+                    needs_injection: true,
+                });
+            }
+        }
+    }
+
     /// Check if an attribute name is a boolean HTML attribute
     fn is_boolean_attribute(&self, name: &str) -> bool {
         matches!(
@@ -550,18 +622,10 @@ impl PythonGenerator {
                         let e = output.position();
                         output.push(")}");
                         (s, e)
-                    } else if self.is_boolean_attribute(name) {
+                    } else {
                         output.push("{render_attr(\"");
                         output.push(name);
                         output.push("\", ");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
-                    } else {
-                        // Generic attribute shorthand - treat as spread
-                        output.push("{spread_attrs(");
                         let s = output.position();
                         output.push(&var_name);
                         let e = output.position();
@@ -935,11 +999,11 @@ impl PythonGenerator {
                 output.push(name);
             }
             AttributeKind::Shorthand { name, .. } => {
-                output.push(" ");
+                output.push("{render_attr(\"");
                 output.push(name);
-                output.push("=\\\"{");
+                output.push("\", ");
                 output.push(name);
-                output.push("}\\\"");
+                output.push(")}");
             }
             AttributeKind::Spread { expr, .. } => {
                 output.push(" {");
@@ -1064,6 +1128,17 @@ impl PythonGenerator {
             output.push(")");
             output.newline();
         }
+
+        // Add HTML ranges for component tag angle brackets
+        let brace_open = c.name_span.start.byte - 1;
+        let brace_close = c.name_span.end.byte;
+        self.add_component_html_ranges(
+            &c.span,
+            c.close_span.as_ref(),
+            brace_open,
+            brace_close,
+            output,
+        );
     }
 
     /// Emit a single attribute as a Python keyword argument in a component call
@@ -1136,6 +1211,19 @@ impl PythonGenerator {
 
             let refs: Vec<&Node> = s.fallback.iter().collect();
             self.emit_nodes(&refs, output, indent + 1);
+        }
+
+        // Add HTML ranges for tag-form slot angle brackets (<{...name}> / </{...name}>)
+        if s.close_span.is_some() {
+            let brace_open = s.span.start.byte + 1;
+            let brace_close = s.span.end.byte - 2;
+            self.add_component_html_ranges(
+                &s.span,
+                s.close_span.as_ref(),
+                brace_open,
+                brace_close,
+                output,
+            );
         }
     }
 
@@ -1826,6 +1914,12 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
             }
         }
         Node::Component(c) => {
+            // Opening tag <{Name}>: { is before name_span, } is at name_span.end
+            braces.push((c.name_span.start.byte - 1, c.name_span.end.byte));
+            // Closing tag </{Name}>: { at start+2, } at end-2
+            if let Some(ref cs) = c.close_span {
+                braces.push((cs.start.byte + 2, cs.end.byte - 2));
+            }
             for attr in &c.attributes {
                 collect_braces_attr(attr, braces);
             }
@@ -1839,6 +1933,17 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
             }
         }
         Node::Slot(s) => {
+            if s.close_span.is_some() {
+                // Tag-form slot <{...name}>: { at start+1, } at end-2
+                braces.push((s.span.start.byte + 1, s.span.end.byte - 2));
+                // Closing tag </{...name}>: { at start+2, } at end-2
+                if let Some(ref cs) = s.close_span {
+                    braces.push((cs.start.byte + 2, cs.end.byte - 2));
+                }
+            } else {
+                // Inline slot {...}: span covers {..} with exclusive end
+                braces.push((s.span.start.byte, s.span.end.byte - 1));
+            }
             for child in &s.fallback {
                 collect_braces_node(child, braces);
             }

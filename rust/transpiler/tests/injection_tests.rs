@@ -838,3 +838,102 @@ fn test_standalone_expression_has_python_range() {
         "Should have Python range for standalone expression Badge(\"New\"). Ranges: {:?}",
         py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
 }
+
+#[test]
+fn test_component_tag_braces_in_expression_braces() {
+    // <{Card}> opening and </{Card}> closing braces should be in expression_braces
+    let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
+    let result = compile_with_ranges(source, "Test");
+
+    let braces = &result.expression_braces;
+
+    // Opening tag <{Card}>: { at byte 1, } at byte 6
+    let has_open = braces.iter().any(|b| b.open == 1 && b.close == 6);
+    assert!(has_open,
+        "Opening component tag braces <{{Card}}> should be tracked. Got: {:?}", braces);
+
+    // Closing tag </{Card}>: { at byte 24, } at byte 29
+    let close_brace_open = source.rfind("/{").unwrap() + 1;
+    let close_brace_close = source.rfind("}").unwrap();
+    let has_close = braces.iter().any(|b| b.open == close_brace_open && b.close == close_brace_close);
+    assert!(has_close,
+        "Closing component tag braces </{{Card}}> should be tracked at ({}, {}). Got: {:?}",
+        close_brace_open, close_brace_close, braces);
+}
+
+#[test]
+fn test_named_slot_tag_braces_in_expression_braces() {
+    // <{...header}> and </{...header}> braces should be in expression_braces
+    let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
+    let result = compile_with_ranges(source, "Test");
+
+    let braces = &result.expression_braces;
+
+    // Opening tag <{...header}>: { at byte 1, } at byte 11
+    let open_brace = source.find('{').unwrap();
+    let open_close = source.find('}').unwrap();
+    let has_open = braces.iter().any(|b| b.open == open_brace && b.close == open_close);
+    assert!(has_open,
+        "Opening named slot tag braces <{{...header}}> should be tracked at ({}, {}). Got: {:?}",
+        open_brace, open_close, braces);
+
+    // Closing tag </{...header}>: find the closing { and }
+    let close_brace_open = source.rfind("/{").unwrap() + 1;
+    let close_brace_close = source.rfind('}').unwrap();
+    let has_close = braces.iter().any(|b| b.open == close_brace_open && b.close == close_brace_close);
+    assert!(has_close,
+        "Closing named slot tag braces </{{...header}}> should be tracked at ({}, {}). Got: {:?}",
+        close_brace_open, close_brace_close, braces);
+}
+
+#[test]
+fn test_component_tag_angle_brackets_have_html_ranges() {
+    // <{Card}> and </{Card}> angle brackets should have HTML injection ranges
+    // so JetBrains colors them like regular HTML tag punctuation
+    let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
+    let result = compile_with_ranges(source, "Test");
+
+    let html = html_ranges(&result);
+
+    // Opening tag: "<" at byte 0 should be in an HTML range
+    let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
+    assert!(has_open_lt,
+        "Opening '<' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
+        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+
+    // Opening tag: ">" at byte 7 should be in an HTML range
+    let gt_pos = source.find('>').unwrap();
+    let has_open_gt = html.iter().any(|r| r.source_start <= gt_pos && r.source_end > gt_pos);
+    assert!(has_open_gt,
+        "Closing '>' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
+        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+
+    // Closing tag: "</" and ">" of </{Card}> should be in HTML range(s)
+    let close_lt = source.find("</").unwrap();
+    let has_close_lt = html.iter().any(|r| r.source_start <= close_lt && r.source_end > close_lt);
+    assert!(has_close_lt,
+        "'</' of </{{Card}}> should be in an HTML range. HTML ranges: {:?}",
+        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+}
+
+#[test]
+fn test_slot_tag_angle_brackets_have_html_ranges() {
+    // <{...header}> and </{...header}> angle brackets should have HTML injection ranges
+    let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
+    let result = compile_with_ranges(source, "Test");
+
+    let html = html_ranges(&result);
+
+    // Opening tag: "<" at byte 0
+    let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
+    assert!(has_open_lt,
+        "Opening '<' of <{{...header}}> should be in an HTML range. HTML ranges: {:?}",
+        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+
+    // Closing tag: "</" of </{...header}>
+    let close_lt = source.find("</").unwrap();
+    let has_close_lt = html.iter().any(|r| r.source_start <= close_lt && r.source_end > close_lt);
+    assert!(has_close_lt,
+        "'</' of </{{...header}}> should be in an HTML range. HTML ranges: {:?}",
+        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+}

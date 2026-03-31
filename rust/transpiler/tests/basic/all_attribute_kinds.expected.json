@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 8,
-      "prefix": "from hyper import html, escape, render_attr, spread_attrs\n\n\n@html\ndef AllAttributeKinds(*, ",
+      "prefix": "from hyper import html, escape, render_attr\n\n\n@html\ndef AllAttributeKinds(*, ",
       "start": 0,
       "suffix": "",
       "type": "python"
@@ -44,7 +44,7 @@
     },
     {
       "end": 109,
-      "prefix": ")}{spread_attrs(",
+      "prefix": ")}{render_attr(\"props\", ",
       "start": 104,
       "suffix": ")} target=\"_blank\">\n    Link\n</a>\"\"\"\n",
       "type": "python"
@@ -94,92 +94,92 @@
   ],
   "ranges": [
     {
-      "compiled_end": 99,
-      "compiled_start": 91,
+      "compiled_end": 85,
+      "compiled_start": 77,
       "range_type": "Python",
       "source_end": 8,
       "source_start": 0
     },
     {
-      "compiled_end": 115,
-      "compiled_start": 101,
+      "compiled_end": 101,
+      "compiled_start": 87,
       "range_type": "Python",
       "source_end": 23,
       "source_start": 9
     },
     {
-      "compiled_end": 128,
-      "compiled_start": 117,
+      "compiled_end": 114,
+      "compiled_start": 103,
       "range_type": "Python",
       "source_end": 35,
       "source_start": 24
     },
     {
-      "compiled_end": 186,
-      "compiled_start": 183,
+      "compiled_end": 172,
+      "compiled_start": 169,
       "range_type": "Python",
       "source_end": 74,
       "source_start": 71
     },
     {
-      "compiled_end": 211,
-      "compiled_start": 208,
+      "compiled_end": 197,
+      "compiled_start": 194,
       "range_type": "Python",
       "source_end": 90,
       "source_start": 87
     },
     {
-      "compiled_end": 247,
-      "compiled_start": 239,
+      "compiled_end": 233,
+      "compiled_start": 225,
       "range_type": "Python",
       "source_end": 101,
       "source_start": 93
     },
     {
-      "compiled_end": 268,
-      "compiled_start": 263,
+      "compiled_end": 262,
+      "compiled_start": 257,
       "range_type": "Python",
       "source_end": 109,
       "source_start": 104
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 70,
       "source_start": 42
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 85,
       "source_start": 75
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 92,
       "source_start": 91
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 103,
       "source_start": 102
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 127,
       "source_start": 110
     },
     {
-      "compiled_end": 145,
-      "compiled_start": 145,
+      "compiled_end": 131,
+      "compiled_start": 131,
       "range_type": "Html",
       "source_end": 141,
       "source_start": 137

@@ -95,6 +95,7 @@ pub struct ComponentNode {
     pub children: Vec<Node>,
     pub slots: HashMap<String, Vec<Node>>,
     pub span: Span,
+    pub close_span: Option<Span>,
 }
 
 /// Fragment (bare children without wrapper)
@@ -110,6 +111,7 @@ pub struct SlotNode {
     pub name: Option<String>,
     pub fallback: Vec<Node>,
     pub span: Span,
+    pub close_span: Option<Span>,
 }
 
 /// If/elif/else

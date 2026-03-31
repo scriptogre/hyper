@@ -1,6 +1,6 @@
-from hyper import html, spread_attrs
+from hyper import html, render_attr
 
 
 @html
 def Spread(*, attrs: dict = {"href": "https://example.com", "target": "_blank"}):
-    yield f"""<a{spread_attrs(attrs)}>Link</a>"""
+    yield f"""<a{render_attr("attrs", attrs)}>Link</a>"""

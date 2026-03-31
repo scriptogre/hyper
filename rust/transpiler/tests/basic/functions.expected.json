@@ -216,6 +216,34 @@
       "start": 479,
       "suffix": "",
       "type": "html"
+    },
+    {
+      "end": 547,
+      "prefix": "",
+      "start": 546,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 581,
+      "prefix": "",
+      "start": 554,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 583,
+      "prefix": "",
+      "start": 582,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 618,
+      "prefix": "",
+      "start": 590,
+      "suffix": "",
+      "type": "html"
     }
   ],
   "ranges": [
@@ -435,6 +463,34 @@
       "range_type": "Python",
       "source_end": 539,
       "source_start": 523
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 547,
+      "source_start": 546
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 581,
+      "source_start": 554
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 583,
+      "source_start": 582
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 618,
+      "source_start": 590
     }
   ]
 }
