@@ -75,8 +75,17 @@ pub fn validate_python_ranges(source: &str, compiled: &str, ranges: &mut Vec<Ran
             None => return false,
         };
         let compiled_text = substring_utf16(compiled, r.compiled_start, r.compiled_end);
-        source_text == compiled_text
+        // Normalize: strip leading whitespace from each line for comparison.
+        // This allows multiline statements where only indentation differs.
+        normalize_indent(source_text) == normalize_indent(&compiled_text)
     });
+}
+
+fn normalize_indent(s: &str) -> String {
+    s.lines()
+        .map(|line| line.trim_start())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Compute prefix/suffix injections from ranges + compiled code.
