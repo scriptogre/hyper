@@ -69,7 +69,7 @@ test target:
 
 # Update all expected test files from current transpiler output
 test-accept *filter:
-    cd {{justfile_directory()}}/rust && cargo run --bin accept_expected -- {{filter}}
+    cd {{justfile_directory()}}/rust/transpiler && cargo run --example accept_expected -- {{filter}}
 
 # Show diff between expected and actual transpiler output
 test-diff *filter:
