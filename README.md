@@ -20,34 +20,37 @@ uvx hyper .
 **1. Write a template.** Props go above the `---`, template body below.
 
 ```hyper
-# app/components/Greeting.hyper
+# app/components/Button.hyper
 
-name: str                    # required
-greeting: str = "Hello"      # optional
+label: str
+disabled: bool = False
+variant: str = "primary"
 
 ---
 
-<h1>{greeting}, {name}!</h1>
+<button class={["btn", f"btn-{variant}"]} {disabled}>
+    {label}
+</button>
 ```
 
 **2. Compile it.**
 
 ```
 uvx hyper .
-# ✓ app/components/Greeting.py
+# ✓ app/components/Button.py
 ```
 
 **3. Use it.**
 
 ```python
-from app.components import Greeting
+from app.components import Button
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    return Greeting(name="World")
+    return Button(label="Save", variant="danger")
 ```
 
-### Use Python in templates
+### Control flow
 
 The template body is the function body. Any valid Python works. Blocks end with `end`.
 
@@ -79,81 +82,53 @@ end
 
 ### Components
 
-Components compose like HTML elements. Use `<{Component}>` syntax to render one component inside another. Children go in the default slot with `{...}`.
+Components compose like HTML elements. Children go in the default slot with `{...}`.
 
 ```hyper
-# Card.hyper
-title: str
+# app/layouts/Layout.hyper
+
+title: str = "My App"
 
 ---
 
-<div class="card">
-    <h2>{title}</h2>
-    <div class="card-body">
-        {...}
-    </div>
-</div>
+<!doctype html>
+<html>
+<head>
+    <title>{title}</title>
+</head>
+<body>
+    {...}
+</body>
+</html>
 ```
 
 ```hyper
-# Page.hyper
-from app.components import Card, Badge
+# app/pages/Dashboard.hyper
+from app.layouts import Layout
+from app.components import Card
 
 items: list[dict]
 
 ---
 
-for item in items:
-    <{Card} title={item["name"]}>
-        <{Badge} text="New" />
-        <p>{item["description"]}</p>
-    </{Card}>
-end
+<{Layout} title="Dashboard">
+    for item in items:
+        <{Card} title={item["name"]}>
+            <p>{item["description"]}</p>
+        </{Card}>
+    end
+</{Layout}>
 ```
 
-### Streaming
-
-Every component is a generator that yields HTML chunks. This means streaming works out of the box:
+Every component is a generator, so streaming works out of the box:
 
 ```python
 from fastapi.responses import StreamingResponse
-from app.pages import Feed
+from app.pages import Dashboard
 
-@app.get("/feed")
-def feed():
-    return StreamingResponse(Feed(posts=posts), media_type="text/html")
-```
-
-Or render to a string when you don't need streaming:
-
-```python
-html = str(Feed(posts=posts))
-```
-
-### Smart attributes
-
-The compiler understands HTML attribute semantics, so you don't have to think about them.
-
-```hyper
-is_active: bool
-disabled: bool
-
----
-
-<!-- Boolean: True renders the attribute, False omits it -->
-<button {disabled}>Click</button>
-
-<!-- Class lists: strings, lists, and conditional dicts -->
-<div class={["btn", {"active": is_active}]}>...</div>
-
-<!-- Style objects -->
-<p style={{"color": "red", "font-weight": "bold"}}>Alert</p>
-
-<!-- Data/ARIA: dicts expand to prefixed attributes (ARIA bools become "true"/"false" per spec) -->
-<div data={{"user-id": 123}} aria={{"label": "Close", "hidden": True}}>...</div>
-
-<!-- Spread -->
-<a {**attrs}>Link</a>
+@app.get("/dashboard")
+def dashboard():
+    return StreamingResponse(Dashboard(items=items), media_type="text/html")
 ```
 
 ### IDE Support
