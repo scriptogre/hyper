@@ -11,11 +11,9 @@ uvx hyper .
 
 ## Quick Tour
 
-Templates compile to typed Python functions with full IDE support.
-
 ### A simple template
 
-A `.hyper` file compiles to a Python function.
+Each `.hyper` file compiles to a typed Python function.
 
 ```hyper
 # Greeting.hyper
