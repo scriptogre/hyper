@@ -5,10 +5,8 @@ Hyper's documentation should read like IKEA instructions: clear, concise, and di
 ## Principles
 
 - Short, complete sentences. One concept at a time.
-- Lead with code examples. Explain after, and only when needed.
-- Each example should demonstrate exactly one thing. Cut everything else.
 
-## Show, then tell
+### Show, don't tell
 
 Bad:
 
@@ -28,19 +26,63 @@ Good:
 ## Boolean Attributes
 
 \```hyper
-<button {disabled}>Click</button>
+<button {disabled}>
 \```
 
 \```html
-<!-- disabled=True -->
-<button disabled>Click</button>
+<!-- disabled == True -->
+<button disabled>
 
-<!-- disabled=False -->
-<button>Click</button>
+<!-- disabled == False -->
+<button>
 \```
 ```
 
-The HTML comments do the explaining. No extra prose needed.
+Use inline comments to complement the examples shown.
+
+### One concept per example
+
+Bad:
+
+```markdown
+## Props
+
+\```hyper
+name: str
+count: int = 0
+disabled: bool = False
+
+---
+
+<div class={["btn", {"active": is_active}]}>
+    <h1>Hello {name}</h1>
+    if count > 0:
+        <p>{count} items</p>
+    end
+    <button {disabled}>Click</button>
+</div>
+\```
+```
+
+Good:
+
+```markdown
+## Props
+
+\```hyper
+name: str
+count: int = 0
+
+---
+
+<h1>Hello {name}</h1>
+<p>{count} items</p>
+\```
+
+Props are declared above the `---` delimiter. They become keyword-only arguments of the compiled function.
+```
+
+Each example should demonstrate exactly one thing. Cut everything else.
 
 ## Headings and structure
 
