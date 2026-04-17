@@ -55,28 +55,28 @@ def index():
 The template body is the function body. Any valid Python works. Blocks end with `end`.
 
 ```hyper
-status: str
+from app.models import Status, Product
+
+status: Status
 products: list[Product]
 
 ---
 
-if not products:
-    <p>No products found</p>
-elif status == "loading":
-    <div class="spinner" />
-else:
-    <ul>
-        for product in products:
-            <li>{product.name}</li>
-        end
-    </ul>
-end
-
 match status:
-    case "error":
+    case Status.LOADING:
+        <div class="spinner" />
+    case Status.ERROR:
         <p class="error">Something went wrong</p>
-    case _:
-        <p>{len(products)} products</p>
+    case Status.OK:
+        if not products:
+            <p>No products found</p>
+        else:
+            <ul>
+                for product in products:
+                    <li>{product.name}</li>
+                end
+            </ul>
+        end
 end
 ```
 
