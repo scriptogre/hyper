@@ -55,7 +55,8 @@ def index():
 The template body is the function body. Any valid Python works. Blocks end with `end`.
 
 ```hyper
-from app.models import Status, Product
+from app.enums import Status
+from app.models import Product
 
 status: Status
 products: list[Product]
