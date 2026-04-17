@@ -1,0 +1,5 @@
+# Ensure consistent line endings for test fixtures
+*.hyper text eol=lf
+*.expected.py text eol=lf
+*.expected.json text eol=lf
+*.expected.err text eol=lf
