@@ -17,34 +17,15 @@ uvx hyper .
 
 ## Quick Tour
 
-### A simple template
+### Templates
 
-Each `.hyper` file compiles to a typed Python function.
-
-```hyper
-# Greeting.hyper
-
-<h1>Hello, World!</h1>
-```
-
-```python
-from fastapi.responses import HTMLResponse
-from components import Greeting
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-    return Greeting()
-```
-
-### Adding props
-
-Props are type annotations above the `---` delimiter. They become keyword arguments.
+Each `.hyper` file compiles to a typed Python function. Props are declared above the `---` delimiter.
 
 ```hyper
 # Greeting.hyper
 
-name: str
-greeting: str = "Hello"
+name: str                    # required
+greeting: str = "Hello"      # optional
 
 ---
 
@@ -52,6 +33,9 @@ greeting: str = "Hello"
 ```
 
 ```python
+from fastapi.responses import HTMLResponse
+from components import Greeting
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     return Greeting(name="World")
