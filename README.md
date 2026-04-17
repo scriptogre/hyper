@@ -9,7 +9,7 @@ Type-safe templates for Python, powered by Rust.
 uvx hyper .
 ```
 
-`.hyper` files compile to real Python with type-safe components, slots, and full IDE support.
+`.hyper` files compile to Python components with slots, type-safe arguments, and full IDE support.
 
 ### Quick Start
 
