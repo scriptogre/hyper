@@ -34,7 +34,7 @@ fn collect_tests() -> Vec<Trial> {
         let path = entry.path().to_path_buf();
 
         // Skip error tests — they don't compile successfully
-        if path.to_string_lossy().contains("/errors/") {
+        if path.components().any(|c| c.as_os_str() == "errors") {
             continue;
         }
 
