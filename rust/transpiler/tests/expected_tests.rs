@@ -24,7 +24,7 @@ fn collect_tests() -> Vec<Trial> {
         .filter(|e| e.path().extension().map(|s| s == "hyper").unwrap_or(false))
     {
         let path = entry.path().to_path_buf();
-        let is_error_test = path.to_string_lossy().contains("/errors/");
+        let is_error_test = path.components().any(|c| c.as_os_str() == "errors");
 
         // Create test name from path: "basic/hello" or "errors/unclosed_if"
         let rel_path = path.strip_prefix(&test_dir).unwrap();
