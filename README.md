@@ -19,10 +19,10 @@ uvx hyper .
 
 ### Templates
 
-Each `.hyper` file compiles to a typed Python function. Props are declared above the `---` delimiter.
+**1. Write a template.** Props go above the `---`, template body below.
 
 ```hyper
-# Greeting.hyper
+# app/components/Greeting.hyper
 
 name: str                    # required
 greeting: str = "Hello"      # optional
@@ -32,12 +32,21 @@ greeting: str = "Hello"      # optional
 <h1>{greeting}, {name}!</h1>
 ```
 
+**2. Compile it.**
+
+```
+uvx hyper .
+# ✓ app/components/Greeting.py
+```
+
+**3. Use it.**
+
 ```python
-from app.components import Greeting  # Just import it
+from app.components import Greeting
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    return Greeting(name="World")  # And use it
+    return Greeting(name="World")
 ```
 
 ### Use Python in templates
