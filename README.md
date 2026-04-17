@@ -40,26 +40,35 @@ def index():
     return Greeting(name="World")  # And use it
 ```
 
-### Using Python in templates
+### Use Python in templates
 
-The template body is the function body. Any valid Python works.
+The template body is the function body. Any valid Python works. Blocks end with `end`.
 
 ```hyper
-items: list[str]
+status: str
+items: list[dict]
 
 ---
 
-count = len(items)
+if not items:
+    <p>No items found</p>
+elif status == "loading":
+    <div class="spinner" />
+else:
+    <ul>
+        for item in items:
+            <li>{item["name"]}</li>
+        end
+    </ul>
+end
 
-<p>{count} items found</p>
-<ul>
-    for item in items:
-        <li>{item}</li>
-    end
-</ul>
+match status:
+    case "error":
+        <p class="error">Something went wrong</p>
+    case _:
+        <p>Items: {len(items)}</p>
+end
 ```
-
-All Python control flow is supported: `if`/`elif`/`else`, `for`, `while`, `match`/`case`, `try`/`except`, `with`, and their `async` variants. Blocks end with `end` instead of relying on indentation.
 
 ### Composing components
 
