@@ -20,6 +20,35 @@ uvx hyper .
 **1. Write a template.** Props go above the `---`, template body below.
 
 ```hyper
+# app/components/Greeting.hyper
+
+name: str
+
+---
+
+<h1>Hello, {name}!</h1>
+```
+
+**2. Compile it.**
+
+```
+uvx hyper .
+# ✓ app/components/Greeting.py
+```
+
+**3. Use it.**
+
+```python
+from app.components import Greeting
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return Greeting(name="World")
+```
+
+A more realistic component:
+
+```hyper
 # app/components/Alert.hyper
 
 message: str
@@ -34,23 +63,6 @@ dismissible: bool = False
         <button class="close" aria={{"label": "Dismiss"}}>&times;</button>
     end
 </div>
-```
-
-**2. Compile it.**
-
-```
-uvx hyper .
-# ✓ app/components/Alert.py
-```
-
-**3. Use it.**
-
-```python
-from app.components import Alert
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-    return Alert(message="Saved!", type="success", dismissible=True)
 ```
 
 ### Control flow
