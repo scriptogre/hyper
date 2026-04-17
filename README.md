@@ -28,10 +28,12 @@ Each `.hyper` file compiles to a typed Python function.
 ```
 
 ```python
+from fastapi.responses import HTMLResponse
 from components import Greeting
 
-html = str(Greeting())
-# <h1>Hello, World!</h1>
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return Greeting()
 ```
 
 ### Adding props
@@ -50,11 +52,9 @@ greeting: str = "Hello"
 ```
 
 ```python
-html = str(Greeting(name="World"))
-# <h1>Hello, World!</h1>
-
-html = str(Greeting(name="World", greeting="Hey"))
-# <h1>Hey, World!</h1>
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return Greeting(name="World")
 ```
 
 ### Using Python in templates
