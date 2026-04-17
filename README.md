@@ -33,7 +33,6 @@ greeting: str = "Hello"      # optional
 ```
 
 ```python
-from fastapi.responses import HTMLResponse
 from app.components import Greeting  # Just import it
 
 @app.get("/", response_class=HTMLResponse)
