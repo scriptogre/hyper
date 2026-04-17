@@ -8,14 +8,13 @@ pub struct HelperDetectionPlugin;
 impl Visitor for HelperDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
-            Node::Expression(expr) => {
+            Node::Expression(expr)
                 // Note: escape() import is detected by the generator via code.contains("{escape(")
                 // rather than being tracked as a helper here
-
+                //
                 // Check if expression explicitly uses safe()
-                if expr.expr.contains("safe(") {
+                if expr.expr.contains("safe(") => {
                     metadata.helpers_used.insert("safe".to_string());
-                }
             }
             Node::Element(el) => {
                 // Check attributes for helper usage
@@ -38,10 +37,9 @@ impl Visitor for HelperDetectionPlugin {
                                 metadata.helpers_used.insert("render_aria".to_string());
                             }
                         }
-                        AttributeKind::Spread { expr, .. } => {
-                            if expr.contains("spread_attrs(") {
+                        AttributeKind::Spread { expr, .. }
+                            if expr.contains("spread_attrs(") => {
                                 metadata.helpers_used.insert("spread_attrs".to_string());
-                            }
                         }
                         _ => {}
                     }

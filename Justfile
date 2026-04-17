@@ -4,7 +4,7 @@ build:
 
 # Compile .hyper files (debug build)
 run *files:
-    cd {{justfile_directory()}}/rust && cargo run -q -- generate {{files}}
+    cargo run -q --manifest-path {{justfile_directory()}}/rust/transpiler/Cargo.toml -- generate {{files}}
 
 # Run transpiler tests
 test:

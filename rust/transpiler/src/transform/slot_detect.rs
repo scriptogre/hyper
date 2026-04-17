@@ -12,11 +12,10 @@ impl Visitor for SlotDetectionPlugin {
                 let slot_name = slot.name.clone().unwrap_or_default();
                 metadata.slots_used.insert(slot_name);
             }
-            Node::Expression(expr) => {
+            Node::Expression(expr)
                 // Check for {...} which is the default children slot
-                if expr.expr == "..." {
+                if expr.expr == "..." => {
                     metadata.slots_used.insert(String::new());
-                }
             }
             _ => {}
         }

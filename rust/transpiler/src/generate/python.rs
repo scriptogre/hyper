@@ -210,60 +210,58 @@ impl PythonGenerator {
                     output.push(&text.content);
                 }
             }
-            Node::Expression(expr) => {
-                if in_fstring {
-                    let has_format_extras =
-                        expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
-                    let (start, end) = if has_format_extras {
-                        // Format spec, conversion, or debug — emit raw (no escape wrapper)
-                        output.push("{");
-                        let start = output.position();
-                        output.push(&expr.expr);
-                        if expr.debug {
-                            output.push("=");
-                        }
-                        if let Some(conv) = expr.conversion {
-                            output.push("!");
-                            output.push(&conv.to_string());
-                        }
-                        if let Some(ref spec) = expr.format_spec {
-                            output.push(":");
-                            output.push(spec);
-                        }
-                        let end = output.position();
-                        output.push("}");
-                        (start, end)
-                    } else if expr.escape {
-                        // Use direct escape() call inside f-string
-                        // Track just the expression text for IDE highlighting
-                        output.push("{escape(");
-                        let start = output.position();
-                        output.push(&expr.expr);
-                        let end = output.position();
-                        output.push(")}");
-                        (start, end)
-                    } else {
-                        let start = output.position();
-                        output.push("{");
-                        output.push(&expr.expr);
-                        output.push("}");
-                        let end = output.position();
-                        (start, end)
-                    };
+            Node::Expression(expr) if in_fstring => {
+                let has_format_extras =
+                    expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
+                let (start, end) = if has_format_extras {
+                    // Format spec, conversion, or debug — emit raw (no escape wrapper)
+                    output.push("{");
+                    let start = output.position();
+                    output.push(&expr.expr);
+                    if expr.debug {
+                        output.push("=");
+                    }
+                    if let Some(conv) = expr.conversion {
+                        output.push("!");
+                        output.push(&conv.to_string());
+                    }
+                    if let Some(ref spec) = expr.format_spec {
+                        output.push(":");
+                        output.push(spec);
+                    }
+                    let end = output.position();
+                    output.push("}");
+                    (start, end)
+                } else if expr.escape {
+                    // Use direct escape() call inside f-string
+                    // Track just the expression text for IDE highlighting
+                    output.push("{escape(");
+                    let start = output.position();
+                    output.push(&expr.expr);
+                    let end = output.position();
+                    output.push(")}");
+                    (start, end)
+                } else {
+                    let start = output.position();
+                    output.push("{");
+                    output.push(&expr.expr);
+                    output.push("}");
+                    let end = output.position();
+                    (start, end)
+                };
 
-                    // Source range excludes braces — just the inner expression
-                    let content_start = expr.span.start.byte + 1; // skip '{'
-                    let content_end = expr.span.end.byte - 1; // skip '}'
+                // Source range excludes braces — just the inner expression
+                let content_start = expr.span.start.byte + 1; // skip '{'
+                let content_end = expr.span.end.byte - 1; // skip '}'
 
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: start,
-                        compiled_end: end,
-                        needs_injection: true,
-                    });
-                }
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: start,
+                    compiled_end: end,
+                    needs_injection: true,
+                });
             }
             Node::Element(el) => {
                 self.emit_element_content(el, output, in_fstring);

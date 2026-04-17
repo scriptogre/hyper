@@ -580,11 +580,11 @@ impl<'a> Tokenizer<'a> {
                     // skip next char (escape sequence) — handled by loop increment
                     continue;
                 }
-                b'#' if !in_single && !in_double => {
+                b'#' if !in_single && !in_double
                     // Found unquoted #; check if preceded by whitespace
-                    if i > 0 && bytes[i - 1] == b' ' {
-                        return line[..i].trim_end();
-                    }
+                    && i > 0 && bytes[i - 1] == b' ' =>
+                {
+                    return line[..i].trim_end();
                 }
                 _ => {}
             }
