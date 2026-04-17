@@ -20,34 +20,37 @@ uvx hyper .
 **1. Write a template.** Props go above the `---`, template body below.
 
 ```hyper
-# app/components/Button.hyper
+# app/components/Alert.hyper
 
-label: str
-disabled: bool = False
-variant: str = "primary"
+message: str
+type: str = "info"
+dismissible: bool = False
 
 ---
 
-<button class={["btn", f"btn-{variant}"]} {disabled}>
-    {label}
-</button>
+<div class={["alert", f"alert-{type}"]} role="alert">
+    <p>{message}</p>
+    if dismissible:
+        <button class="close" aria={{"label": "Dismiss"}}>&times;</button>
+    end
+</div>
 ```
 
 **2. Compile it.**
 
 ```
 uvx hyper .
-# ✓ app/components/Button.py
+# ✓ app/components/Alert.py
 ```
 
 **3. Use it.**
 
 ```python
-from app.components import Button
+from app.components import Alert
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    return Button(label="Save", variant="danger")
+    return Alert(message="Saved!", type="success", dismissible=True)
 ```
 
 ### Control flow
