@@ -34,11 +34,11 @@ greeting: str = "Hello"      # optional
 
 ```python
 from fastapi.responses import HTMLResponse
-from app.components import Greeting
+from app.components import Greeting  # Just import it
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    return Greeting(name="World")
+    return Greeting(name="World")  # And use it
 ```
 
 ### Using Python in templates
