@@ -15,7 +15,7 @@ uvx hyper .
 - Real components with slots and type-safe arguments.
 - Full IDE support inside templates.
 
-### Templates
+### Quick Start
 
 **1. Write a template.** Props go above the `---`, template body below.
 
@@ -46,7 +46,11 @@ def index():
     return Greeting(name="World")
 ```
 
-A more realistic component:
+### Features
+
+#### Components
+
+Components compose like HTML elements. Children go in the default slot with `{...}`.
 
 ```hyper
 # app/components/ProductCard.hyper
@@ -68,7 +72,28 @@ on_sale: bool = False
 </div>
 ```
 
-### Control flow
+```hyper
+# app/pages/Store.hyper
+from app.layouts import Layout
+from app.components import ProductCard
+
+products: list[Product]
+
+---
+
+<{Layout} title="Store">
+    for product in products:
+        <{ProductCard}
+            name={product.name}
+            price={product.price}
+            image={product.image}
+            on_sale={product.on_sale}
+        />
+    end
+</{Layout}>
+```
+
+#### Control flow
 
 The template body is the function body. Any valid Python works. Blocks end with `end`.
 
@@ -99,55 +124,17 @@ match status:
 end
 ```
 
-### Components
-
-Components compose like HTML elements. Children go in the default slot with `{...}`.
-
-```hyper
-# app/layouts/Layout.hyper
-
-title: str = "My App"
-
----
-
-<!doctype html>
-<html>
-<head>
-    <title>{title}</title>
-</head>
-<body>
-    {...}
-</body>
-</html>
-```
-
-```hyper
-# app/pages/Dashboard.hyper
-from app.layouts import Layout
-from app.components import Card
-
-items: list[dict]
-
----
-
-<{Layout} title="Dashboard">
-    for item in items:
-        <{Card} title={item["name"]}>
-            <p>{item["description"]}</p>
-        </{Card}>
-    end
-</{Layout}>
-```
+#### Streaming
 
 Every component is a generator, so streaming works out of the box:
 
 ```python
 from fastapi.responses import StreamingResponse
-from app.pages import Dashboard
+from app.pages import Store
 
-@app.get("/dashboard")
-def dashboard():
-    return StreamingResponse(Dashboard(items=items), media_type="text/html")
+@app.get("/store")
+def store():
+    return StreamingResponse(Store(products=products), media_type="text/html")
 ```
 
 ### IDE Support
