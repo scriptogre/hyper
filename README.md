@@ -34,7 +34,7 @@ greeting: str = "Hello"      # optional
 
 ```python
 from fastapi.responses import HTMLResponse
-from components import Greeting
+from app.components import Greeting
 
 @app.get("/", response_class=HTMLResponse)
 def index():
@@ -82,7 +82,7 @@ title: str
 
 ```hyper
 # Page.hyper
-from components import Card, Badge
+from app.components import Card, Badge
 
 items: list[dict]
 
@@ -102,7 +102,7 @@ Every component is a generator that yields HTML chunks. This means streaming wor
 
 ```python
 from fastapi.responses import StreamingResponse
-from pages import Feed
+from app.pages import Feed
 
 @app.get("/feed")
 def feed():
