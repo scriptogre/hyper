@@ -6,14 +6,49 @@ build:
 run *files:
     cargo run -q --manifest-path {{justfile_directory()}}/rust/transpiler/Cargo.toml -- generate {{files}}
 
+# Run all checks (fmt, clippy, tests)
+check:
+    cd {{justfile_directory()}}/rust && cargo fmt --check
+    cd {{justfile_directory()}}/rust && cargo clippy -- -D warnings
+    cd {{justfile_directory()}}/rust && cargo test
+
 # Run transpiler tests
 test:
     cd {{justfile_directory()}}/rust && cargo test
+
+# Format code
+fmt:
+    cd {{justfile_directory()}}/rust && cargo fmt
+
+# Auto-fix clippy warnings
+fix:
+    cd {{justfile_directory()}}/rust && cargo clippy --fix --allow-dirty
 
 # Update expected test files from current output
 test-accept *filter:
     cd {{justfile_directory()}}/rust/transpiler && cargo run --example accept_expected -- {{filter}}
 
+# Release a new version
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! "{{version}}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: version must be semver (e.g. 0.2.0), got '{{version}}'"
+        exit 1
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "Error: working tree is dirty. Commit or stash changes first."
+        exit 1
+    fi
+    just check
+    sed -i '' 's/^version = ".*"/version = "{{version}}"/' pyproject.toml rust/transpiler/Cargo.toml
+    cd rust && cargo check --quiet 2>/dev/null
+    git add pyproject.toml rust/transpiler/Cargo.toml rust/transpiler/Cargo.lock
+    git commit -m "Release v{{version}}"
+    git tag "v{{version}}"
+    echo ""
+    echo "Ready to publish. Run:"
+    echo "  git push && git push --tags"
 
 # Build JetBrains plugin (builds transpiler + bundles binary + builds plugin)
 build-plugin: build _bundle
