@@ -56,18 +56,18 @@ The template body is the function body. Any valid Python works. Blocks end with 
 
 ```hyper
 status: str
-items: list[dict]
+products: list[Product]
 
 ---
 
-if not items:
-    <p>No items found</p>
+if not products:
+    <p>No products found</p>
 elif status == "loading":
     <div class="spinner" />
 else:
     <ul>
-        for item in items:
-            <li>{item["name"]}</li>
+        for product in products:
+            <li>{product.name}</li>
         end
     </ul>
 end
@@ -76,7 +76,7 @@ match status:
     case "error":
         <p class="error">Something went wrong</p>
     case _:
-        <p>Items: {len(items)}</p>
+        <p>{len(products)} products</p>
 end
 ```
 
