@@ -3,9 +3,7 @@
 [![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A fast templating language for Python, written in Rust.
-
-It's just Python and HTML. Type-safe components, streaming out of the box, and a compiler that knows HTML.
+A component templating language for Python, written in Rust. Templates compile to typed Python functions with full IDE support.
 
 ```
 uvx hyper .
