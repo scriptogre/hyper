@@ -20,17 +20,17 @@ build-plugin: build _bundle
     #!/usr/bin/env bash
     set -e
     ROOT="{{justfile_directory()}}"
-    cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
-    cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
+    cd "$ROOT/editors/jetbrains" && ./gradlew clean buildPlugin
+    cp "$ROOT/editors/jetbrains/build/distributions"/*.zip "$ROOT/editors/jetbrains/hyper-plugin.zip"
 
 # Run JetBrains plugin sandbox
 run-plugin: build-plugin
-    cd {{justfile_directory()}}/editors/jetbrains-plugin && ./gradlew runIde
+    cd {{justfile_directory()}}/editors/jetbrains && ./gradlew runIde
 
 # Run JetBrains plugin tests
 test-plugin:
     cd {{justfile_directory()}}/rust && cargo build -q
-    cd {{justfile_directory()}}/editors/jetbrains-plugin && ./gradlew test
+    cd {{justfile_directory()}}/editors/jetbrains && ./gradlew test
 
 # Bundle transpiler binary into plugin resources
 [private]
@@ -52,6 +52,6 @@ _bundle:
     esac
     BINARY_NAME="hyper-${OS_NAME}-${ARCH_NAME}"
     SRC="$ROOT/rust/target/release/hyper"
-    DEST="$ROOT/editors/jetbrains-plugin/src/main/resources/bin/${BINARY_NAME}"
+    DEST="$ROOT/editors/jetbrains/src/main/resources/bin/${BINARY_NAME}"
     mkdir -p "$(dirname "$DEST")"
     cp "$SRC" "$DEST"
