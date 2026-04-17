@@ -3,13 +3,15 @@
 [![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A component templating language for Python, written in Rust. Templates compile to typed Python functions with full IDE support.
+A component templating language for Python, written in Rust.
 
 ```
 uvx hyper .
 ```
 
 ## Quick Tour
+
+Templates compile to typed Python functions with full IDE support.
 
 ### A simple template
 
