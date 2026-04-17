@@ -157,25 +157,6 @@ disabled: bool
 <a {**attrs}>Link</a>
 ```
 
-### Content collections
-
-Load and validate structured content from Markdown, JSON, YAML, or TOML:
-
-```python
-from hyper.content import MarkdownCollection
-
-class Post(MarkdownCollection):
-    title: str
-    date: str
-
-    class Meta:
-        pattern = "posts/*.md"
-
-posts = Post.load()  # Typed, validated, with auto-generated html/toc/slug fields
-```
-
-Works with dataclasses, Pydantic, and msgspec.
-
 ## IDE Support
 
 - **JetBrains** (PyCharm, IntelliJ) — Full Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation on save
