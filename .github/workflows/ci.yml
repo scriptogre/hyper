@@ -36,3 +36,16 @@ jobs:
         with:
           workspaces: rust
       - run: cd rust && cargo test
+
+  test-python:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - run: uv sync
+      - run: uv run pytest
