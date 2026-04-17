@@ -1,94 +1,43 @@
-# Default: build transpiler, bundle it in plugin, and build plugin
-default: build
-
-# Build transpiler
-build-transpiler:
+# Build transpiler (release)
+build:
     cd {{justfile_directory()}}/rust && cargo build --release
 
-# Build plugin (always rebuilds + bundles transpiler first)
-build-plugin: build-transpiler _bundle
-    #!/usr/bin/env bash
-    set -e
-    ROOT="{{justfile_directory()}}"
-    echo "Building JetBrains plugin..."
-    cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
-    cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
-    echo ""
-    echo "✅ Plugin built!"
-    echo "📦 Install: editors/jetbrains-plugin/hyper-plugin.zip"
+# Compile .hyper files (debug build)
+run *files:
+    cd {{justfile_directory()}}/rust && cargo run -q -- generate {{files}}
 
-# Build everything (or a specific target)
-build target="":
-    #!/usr/bin/env bash
-    set -e
-    case "{{target}}" in
-        transpiler) just build-transpiler ;;
-        plugin)     just build-plugin ;;
-        "")         just build-transpiler && just _bundle && just build-plugin ;;
-        *)          echo "Usage: just build [transpiler|plugin]"; exit 1 ;;
-    esac
+# Run transpiler tests
+test:
+    cd {{justfile_directory()}}/rust && cargo test
 
-# Run transpiler or plugin
-run target *args:
-    #!/usr/bin/env bash
-    set -e
-    ROOT="{{justfile_directory()}}"
-
-    case "{{target}}" in
-        transpiler)
-            "$ROOT/rust/target/release/hyper" {{args}}
-            ;;
-        plugin)
-            just build-plugin
-            cd "$ROOT/editors/jetbrains-plugin" && ./gradlew runIde
-            ;;
-        *)
-            echo "Usage: just run [transpiler|plugin] [args...]"
-            exit 1
-            ;;
-    esac
-
-# Test transpiler or plugin
-test target:
-    #!/usr/bin/env bash
-    set -e
-    ROOT="{{justfile_directory()}}"
-
-    case "{{target}}" in
-        transpiler)
-            cd "$ROOT/rust" && cargo test
-            ;;
-        plugin)
-            echo "Building transpiler (debug)..."
-            cd "$ROOT/rust" && cargo build -q
-            cd "$ROOT/editors/jetbrains-plugin" && ./gradlew test
-            ;;
-        *)
-            echo "Usage: just test [transpiler|plugin]"
-            exit 1
-            ;;
-    esac
-
-# Update all expected test files from current transpiler output
+# Update expected test files from current output
 test-accept *filter:
     cd {{justfile_directory()}}/rust/transpiler && cargo run --example accept_expected -- {{filter}}
 
-# Show diff between expected and actual transpiler output
-test-diff *filter:
+
+# Build JetBrains plugin (builds transpiler + bundles binary + builds plugin)
+build-plugin: build _bundle
     #!/usr/bin/env bash
-    cd "{{justfile_directory()}}/rust" && cargo test --test expected_tests 2>&1 | head -100
+    set -e
+    ROOT="{{justfile_directory()}}"
+    cd "$ROOT/editors/jetbrains-plugin" && ./gradlew clean buildPlugin
+    cp "$ROOT/editors/jetbrains-plugin/build/distributions"/*.zip "$ROOT/editors/jetbrains-plugin/hyper-plugin.zip"
 
-# Run expected tests only (faster than full test suite)
-test-expected:
-    cd {{justfile_directory()}}/rust && cargo test --test expected_tests
+# Run JetBrains plugin sandbox
+run-plugin: build-plugin
+    cd {{justfile_directory()}}/editors/jetbrains-plugin && ./gradlew runIde
 
-# Bundle transpiler binary into plugin resources (internal helper)
+# Run JetBrains plugin tests
+test-plugin:
+    cd {{justfile_directory()}}/rust && cargo build -q
+    cd {{justfile_directory()}}/editors/jetbrains-plugin && ./gradlew test
+
+# Bundle transpiler binary into plugin resources
+[private]
 _bundle:
     #!/usr/bin/env bash
     set -e
     ROOT="{{justfile_directory()}}"
-
-    # Detect platform
     OS=$(uname -s | tr '[:upper:]' '[:lower:]')
     ARCH=$(uname -m)
     case "$OS" in
@@ -101,19 +50,8 @@ _bundle:
         x86_64|amd64)  ARCH_NAME="x64" ;;
         *)             ARCH_NAME="$ARCH" ;;
     esac
-
     BINARY_NAME="hyper-${OS_NAME}-${ARCH_NAME}"
     SRC="$ROOT/rust/target/release/hyper"
     DEST="$ROOT/editors/jetbrains-plugin/src/main/resources/bin/${BINARY_NAME}"
-
     mkdir -p "$(dirname "$DEST")"
     cp "$SRC" "$DEST"
-    echo "✓ Bundled: $DEST"
-
-# Generate Python from .hyper files
-generate *files:
-    {{justfile_directory()}}/rust/target/release/hyper generate {{files}}
-
-# Compile .hyper file(s) (build + run, for quick iteration)
-compile *files:
-    cd {{justfile_directory()}}/rust && RUSTFLAGS="-Awarnings" cargo run -q -- generate {{files}}
