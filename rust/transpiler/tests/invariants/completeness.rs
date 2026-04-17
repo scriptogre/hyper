@@ -25,9 +25,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         }
     });
 
-    let in_body = |byte: usize| -> bool {
-        separator_byte.is_none_or(|sep| byte > sep)
-    };
+    let in_body = |byte: usize| -> bool { separator_byte.is_none_or(|sep| byte > sep) };
 
     let is_covered = |start: usize, end: usize| -> bool {
         python_ranges
@@ -57,9 +55,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 }
             }
             Token::ControlStart {
-                keyword,
-                rest_span,
-                ..
+                keyword, rest_span, ..
             } if (keyword == "def" || keyword == "class" || keyword == "async def")
                 && in_body(rest_span.start.byte) =>
             {
@@ -97,8 +93,10 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
             Token::PythonStatement { code, span, .. } if in_body(span.start.byte) => {
                 // Skip renamed statements (class/type assignments) — generator
                 // intentionally omits their range since the compiled code differs
-                if code.starts_with("class ") || code.starts_with("class=")
-                    || code.starts_with("type ") || code.starts_with("type=")
+                if code.starts_with("class ")
+                    || code.starts_with("class=")
+                    || code.starts_with("type ")
+                    || code.starts_with("type=")
                 {
                     continue;
                 }
@@ -118,18 +116,12 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 }
             }
             Token::ControlStart {
-                keyword,
-                rest_span,
-                ..
+                keyword, rest_span, ..
             } if in_body(rest_span.start.byte)
-                && matches!(
-                    keyword.as_str(),
-                    "if" | "for" | "while" | "match" | "with"
-                ) =>
+                && matches!(keyword.as_str(), "if" | "for" | "while" | "match" | "with") =>
             {
                 // Generator trims trailing `:` from conditions
-                let trimmed_end =
-                    trim_colon_end(&source, rest_span.start.byte, rest_span.end.byte);
+                let trimmed_end = trim_colon_end(&source, rest_span.start.byte, rest_span.end.byte);
                 if !is_covered(rest_span.start.byte, trimmed_end) {
                     return Err(format!(
                         "{} condition at [{},{}] has no Python range: {:?}",
@@ -147,8 +139,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 ..
             } if in_body(rest_span.start.byte) => {
                 // Generator trims trailing `:` from continuation clauses
-                let trimmed_end =
-                    trim_colon_end(&source, rest_span.start.byte, rest_span.end.byte);
+                let trimmed_end = trim_colon_end(&source, rest_span.start.byte, rest_span.end.byte);
                 if !is_covered(rest_span.start.byte, trimmed_end) {
                     return Err(format!(
                         "{} clause at [{},{}] has no Python range: {:?}",

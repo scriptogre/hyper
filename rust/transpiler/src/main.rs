@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
-use hyper_transpiler::{Pipeline, GenerateOptions};
-use std::io::{self, Read, IsTerminal};
+use hyper_transpiler::{GenerateOptions, Pipeline};
 use std::fs;
+use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 use std::time::Instant;
 use walkdir::WalkDir;
@@ -47,7 +47,14 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Generate { files, stdin, json, injection, name, daemon } => {
+        Commands::Generate {
+            files,
+            stdin,
+            json,
+            injection,
+            name,
+            daemon,
+        } => {
             if daemon {
                 run_daemon();
             } else if stdin {
@@ -92,7 +99,12 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
     }
 }
 
-fn generate_files(files: Vec<String>, _json_output: bool, _include_injections: bool, _name: Option<String>) {
+fn generate_files(
+    files: Vec<String>,
+    _json_output: bool,
+    _include_injections: bool,
+    _name: Option<String>,
+) {
     let start = Instant::now();
 
     let files_to_process: Vec<String> = if files.is_empty() {
@@ -196,7 +208,10 @@ fn print_summary(count: usize, elapsed: std::time::Duration) {
     let files_word = if count == 1 { "file" } else { "files" };
 
     if is_tty {
-        eprintln!("\n\x1b[1m✨ Generated {} {} in {}\x1b[0m", count, files_word, time_str);
+        eprintln!(
+            "\n\x1b[1m✨ Generated {} {} in {}\x1b[0m",
+            count, files_word, time_str
+        );
     } else {
         eprintln!("\n✨ Generated {} {} in {}", count, files_word, time_str);
     }
@@ -222,7 +237,7 @@ fn format_duration(d: std::time::Duration) -> String {
 /// Request JSON: {"content": "...", "injection": bool, "name": "..."}
 /// Response JSON: Same as normal --json output
 fn run_daemon() {
-    use std::io::{stdin, stdout, Write};
+    use std::io::{Write, stdin, stdout};
 
     let stdin = stdin();
     let mut stdin = stdin.lock();
@@ -251,7 +266,7 @@ fn run_daemon() {
         // Read 4-byte length prefix
         let mut len_buf = [0u8; 4];
         match stdin.read_exact(&mut len_buf) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 eprintln!("Daemon exiting: failed to read length prefix: {}", e);
                 break; // EOF or error
@@ -279,7 +294,10 @@ fn run_daemon() {
         // Write response with length prefix
         let response_bytes = response.as_bytes();
         let response_len = (response_bytes.len() as u32).to_be_bytes();
-        if stdout.write_all(&response_len).is_err() || stdout.write_all(response_bytes).is_err() || stdout.flush().is_err() {
+        if stdout.write_all(&response_len).is_err()
+            || stdout.write_all(response_bytes).is_err()
+            || stdout.flush().is_err()
+        {
             eprintln!("Daemon exiting: failed to write response");
             break;
         }
@@ -315,8 +333,7 @@ fn process_request(json: &str) -> String {
     };
 
     let response = result_to_response(result, req.injection);
-    serde_json::to_string(&response)
-        .unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
+    serde_json::to_string(&response).unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
 }
 
 #[derive(serde::Serialize)]
@@ -340,42 +357,67 @@ fn render_error(e: &hyper_transpiler::CompileError, source: &str, filename: &str
     }
 }
 
-fn result_to_response(result: hyper_transpiler::GenerateResult, include_injections: bool) -> DaemonResponse {
+fn result_to_response(
+    result: hyper_transpiler::GenerateResult,
+    include_injections: bool,
+) -> DaemonResponse {
     DaemonResponse {
         compiled: result.code,
-        mappings: result.mappings.into_iter().map(|m| DaemonMapping {
-            gen_line: m.gen_line,
-            gen_col: m.gen_col,
-            src_line: m.src_line,
-            src_col: m.src_col,
-        }).collect(),
+        mappings: result
+            .mappings
+            .into_iter()
+            .map(|m| DaemonMapping {
+                gen_line: m.gen_line,
+                gen_col: m.gen_col,
+                src_line: m.src_line,
+                src_col: m.src_col,
+            })
+            .collect(),
         ranges: if include_injections {
-            Some(result.ranges.into_iter().map(|r| DaemonRange {
-                range_type: format!("{:?}", r.range_type).to_lowercase(),
-                source_start: r.source_start,
-                source_end: r.source_end,
-                compiled_start: r.compiled_start,
-                compiled_end: r.compiled_end,
-            }).collect())
+            Some(
+                result
+                    .ranges
+                    .into_iter()
+                    .map(|r| DaemonRange {
+                        range_type: format!("{:?}", r.range_type).to_lowercase(),
+                        source_start: r.source_start,
+                        source_end: r.source_end,
+                        compiled_start: r.compiled_start,
+                        compiled_end: r.compiled_end,
+                    })
+                    .collect(),
+            )
         } else {
             None
         },
         injections: if include_injections {
-            Some(result.injections.into_iter().map(|i| DaemonInjection {
-                injection_type: i.injection_type,
-                start: i.start,
-                end: i.end,
-                prefix: i.prefix,
-                suffix: i.suffix,
-            }).collect())
+            Some(
+                result
+                    .injections
+                    .into_iter()
+                    .map(|i| DaemonInjection {
+                        injection_type: i.injection_type,
+                        start: i.start,
+                        end: i.end,
+                        prefix: i.prefix,
+                        suffix: i.suffix,
+                    })
+                    .collect(),
+            )
         } else {
             None
         },
         expression_braces: if include_injections {
-            Some(result.expression_braces.into_iter().map(|b| DaemonExpressionBrace {
-                open: b.open,
-                close: b.close,
-            }).collect())
+            Some(
+                result
+                    .expression_braces
+                    .into_iter()
+                    .map(|b| DaemonExpressionBrace {
+                        open: b.open,
+                        close: b.close,
+                    })
+                    .collect(),
+            )
         } else {
             None
         },

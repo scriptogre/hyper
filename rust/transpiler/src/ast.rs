@@ -68,10 +68,10 @@ pub struct CommentNode {
 pub struct ExpressionNode {
     pub expr: String,
     pub span: Span,
-    pub escape: bool, // true = escape HTML, false = raw
-    pub format_spec: Option<String>,  // e.g. "03d", ".2f", ">20"
-    pub conversion: Option<char>,     // 'r', 's', or 'a'
-    pub debug: bool,                  // true if {value=}
+    pub escape: bool,                // true = escape HTML, false = raw
+    pub format_spec: Option<String>, // e.g. "03d", ".2f", ">20"
+    pub conversion: Option<char>,    // 'r', 's', or 'a'
+    pub debug: bool,                 // true if {value=}
 }
 
 /// HTML element
@@ -128,12 +128,12 @@ pub struct IfNode {
 /// For loop
 #[derive(Debug, Clone)]
 pub struct ForNode {
-    pub binding: String,      // "item" or "i, item"
+    pub binding: String, // "item" or "i, item"
     pub binding_span: Span,
-    pub iterable: String,     // The Python expression
+    pub iterable: String, // The Python expression
     pub iterable_span: Span,
     pub body: Vec<Node>,
-    pub is_async: bool,       // async for
+    pub is_async: bool, // async for
     pub span: Span,
 }
 
@@ -247,10 +247,7 @@ pub struct Attribute {
 #[derive(Debug, Clone)]
 pub enum AttributeKind {
     /// Static: class="foo"
-    Static {
-        name: String,
-        value: String,
-    },
+    Static { name: String, value: String },
 
     /// Dynamic: class={expr}
     Dynamic {
@@ -266,21 +263,13 @@ pub enum AttributeKind {
     },
 
     /// Boolean: disabled
-    Boolean {
-        name: String,
-    },
+    Boolean { name: String },
 
     /// Shorthand: {disabled}
-    Shorthand {
-        name: String,
-        expr_span: Span,
-    },
+    Shorthand { name: String, expr_span: Span },
 
     /// Spread: {...props}
-    Spread {
-        expr: String,
-        expr_span: Span,
-    },
+    Spread { expr: String, expr_span: Span },
 
     /// Slot assignment: slot:name or slot:name={expr}
     SlotAssignment {

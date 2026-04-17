@@ -3,15 +3,15 @@
 //! Property-based checks that run across ALL .hyper test files.
 //! Each module validates one structural invariant.
 
+mod bounds;
+mod braces;
+mod completeness;
 mod helpers;
-mod roundtrip;
+mod html_completeness;
 mod monotonicity;
 mod no_overlap;
-mod bounds;
+mod roundtrip;
 mod semantic;
-mod completeness;
-mod braces;
-mod html_completeness;
 
 use libtest_mimic::{Arguments, Trial};
 use std::path::Path;
@@ -86,10 +86,9 @@ fn collect_tests() -> Vec<Trial> {
 
         // Test G: Expression brace positions point to actual { and } characters
         let p = path.clone();
-        tests.push(Trial::test(
-            format!("braces::{}", test_name),
-            move || braces::run(&p),
-        ));
+        tests.push(Trial::test(format!("braces::{}", test_name), move || {
+            braces::run(&p)
+        }));
 
         // Test H: Every HTML element/component/slot tag has HTML injection ranges
         let p = path.clone();

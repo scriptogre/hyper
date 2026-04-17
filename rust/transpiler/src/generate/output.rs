@@ -36,8 +36,8 @@ pub struct Range {
 pub struct Injection {
     #[serde(rename = "type")]
     pub injection_type: String,
-    pub start: usize,      // source start (UTF-16)
-    pub end: usize,        // source end (UTF-16)
+    pub start: usize, // source start (UTF-16)
+    pub end: usize,   // source end (UTF-16)
     pub prefix: String,
     pub suffix: String,
 }
@@ -50,7 +50,10 @@ pub struct ExpressionBrace {
 }
 
 /// Convert byte offset pairs to UTF-16 offsets for expression braces.
-pub fn convert_braces_to_utf16(source: &str, byte_braces: &[(usize, usize)]) -> Vec<ExpressionBrace> {
+pub fn convert_braces_to_utf16(
+    source: &str,
+    byte_braces: &[(usize, usize)],
+) -> Vec<ExpressionBrace> {
     let byte_to_utf16 = build_byte_to_utf16_map(source);
     byte_braces
         .iter()

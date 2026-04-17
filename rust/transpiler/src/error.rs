@@ -127,16 +127,37 @@ impl ParseError {
         }
 
         // Error header: bold red label, message with highlighted tags
-        let message = if color { highlight_inline_tags(&self.message) } else { self.message.clone() };
+        let message = if color {
+            highlight_inline_tags(&self.message)
+        } else {
+            self.message.clone()
+        };
         output.push_str(&format!("{}error:{} {}\n", red, reset, message));
 
         // Source context
         let err_line = self.span.start.line + 1;
         if let Some(source_line) = source.lines().nth(self.span.start.line) {
             let line_num_width = format!("{}", err_line).len().max(2);
-            let highlighted = if color { highlight_syntax(source_line) } else { source_line.to_string() };
-            output.push_str(&format!("{}{:>width$} |{}\n", dim, "", reset, width = line_num_width));
-            output.push_str(&format!("{}{:>width$} |{} {}\n", dim, err_line, reset, highlighted, width = line_num_width));
+            let highlighted = if color {
+                highlight_syntax(source_line)
+            } else {
+                source_line.to_string()
+            };
+            output.push_str(&format!(
+                "{}{:>width$} |{}\n",
+                dim,
+                "",
+                reset,
+                width = line_num_width
+            ));
+            output.push_str(&format!(
+                "{}{:>width$} |{} {}\n",
+                dim,
+                err_line,
+                reset,
+                highlighted,
+                width = line_num_width
+            ));
 
             // Underline: red carets — the primary visual anchor in the code
             let underline_start = self.span.start.col;
@@ -150,8 +171,13 @@ impl ParseError {
             let carets = "^".repeat(underline_len);
             output.push_str(&format!(
                 "{}{:>width$} |{} {}{}{}{}\n",
-                dim, "", reset,
-                spaces, red, carets, reset,
+                dim,
+                "",
+                reset,
+                spaces,
+                red,
+                carets,
+                reset,
                 width = line_num_width
             ));
         }
@@ -161,10 +187,16 @@ impl ParseError {
             let related_line = related.start.line + 1;
             if let Some(related_source_line) = source.lines().nth(related.start.line) {
                 let line_num_width = format!("{}", related_line).len().max(2);
-                let highlighted = if color { highlight_syntax(related_source_line) } else { related_source_line.to_string() };
+                let highlighted = if color {
+                    highlight_syntax(related_source_line)
+                } else {
+                    related_source_line.to_string()
+                };
                 output.push_str(&format!(
                     "{}{:>width$} |{} {}\n",
-                    dim, related_line, reset,
+                    dim,
+                    related_line,
+                    reset,
                     highlighted,
                     width = line_num_width
                 ));
@@ -173,7 +205,10 @@ impl ParseError {
                 let underline_len = if related.end.line == related.start.line {
                     (related.end.col.saturating_sub(related.start.col)).max(1)
                 } else {
-                    related_source_line.len().saturating_sub(underline_start).max(1)
+                    related_source_line
+                        .len()
+                        .saturating_sub(underline_start)
+                        .max(1)
                 };
 
                 let spaces = " ".repeat(underline_start);
@@ -181,8 +216,14 @@ impl ParseError {
                 let label = self.related_label.as_deref().unwrap_or("opened here");
                 output.push_str(&format!(
                     "{}{:>width$} |{} {}{}{} {}{}\n",
-                    dim, "", reset,
-                    spaces, dim, carets, label, reset,
+                    dim,
+                    "",
+                    reset,
+                    spaces,
+                    dim,
+                    carets,
+                    label,
+                    reset,
                     width = line_num_width
                 ));
             }
@@ -192,7 +233,11 @@ impl ParseError {
         if let Some(ref help) = self.help {
             output.push('\n'); // blank line before help for spacing
             for (i, help_line) in help.lines().enumerate() {
-                let content = if color { highlight_inline_tags(help_line) } else { help_line.to_string() };
+                let content = if color {
+                    highlight_inline_tags(help_line)
+                } else {
+                    help_line.to_string()
+                };
                 if i == 0 {
                     output.push_str(&format!(" {}help:{} {}\n", cyan, reset, content));
                 } else {
@@ -236,7 +281,9 @@ impl CompileError {
     pub fn render_color(&self, source: &str, filename: &str) -> String {
         match self {
             CompileError::Parse(err) => err.render_color(source, filename),
-            CompileError::Generate(msg) => format!("\x1b[1;31merror\x1b[0m: \x1b[1m{}\x1b[0m\n", msg),
+            CompileError::Generate(msg) => {
+                format!("\x1b[1;31merror\x1b[0m: \x1b[1m{}\x1b[0m\n", msg)
+            }
         }
     }
 }
@@ -266,25 +313,124 @@ fn highlight_inline_tags(text: &str) -> String {
 
     // Known HTML tags (avoid highlighting placeholders like <variable>)
     const HTML_TAGS: &[&str] = &[
-        "a", "abbr", "address", "area", "article", "aside", "audio",
-        "b", "base", "bdi", "bdo", "blockquote", "body", "br", "button",
-        "canvas", "caption", "cite", "code", "col", "colgroup",
-        "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt",
-        "em", "embed", "fieldset", "figcaption", "figure", "footer", "form",
-        "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html",
-        "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-        "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript",
-        "object", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress",
-        "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "slot", "small",
-        "source", "span", "strong", "style", "sub", "summary", "sup", "svg",
-        "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track",
-        "u", "ul", "var", "video", "wbr",
+        "a",
+        "abbr",
+        "address",
+        "area",
+        "article",
+        "aside",
+        "audio",
+        "b",
+        "base",
+        "bdi",
+        "bdo",
+        "blockquote",
+        "body",
+        "br",
+        "button",
+        "canvas",
+        "caption",
+        "cite",
+        "code",
+        "col",
+        "colgroup",
+        "data",
+        "datalist",
+        "dd",
+        "del",
+        "details",
+        "dfn",
+        "dialog",
+        "div",
+        "dl",
+        "dt",
+        "em",
+        "embed",
+        "fieldset",
+        "figcaption",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "head",
+        "header",
+        "hgroup",
+        "hr",
+        "html",
+        "i",
+        "iframe",
+        "img",
+        "input",
+        "ins",
+        "kbd",
+        "label",
+        "legend",
+        "li",
+        "link",
+        "main",
+        "map",
+        "mark",
+        "menu",
+        "meta",
+        "meter",
+        "nav",
+        "noscript",
+        "object",
+        "ol",
+        "optgroup",
+        "option",
+        "output",
+        "p",
+        "picture",
+        "pre",
+        "progress",
+        "q",
+        "rp",
+        "rt",
+        "ruby",
+        "s",
+        "samp",
+        "script",
+        "section",
+        "select",
+        "slot",
+        "small",
+        "source",
+        "span",
+        "strong",
+        "style",
+        "sub",
+        "summary",
+        "sup",
+        "svg",
+        "table",
+        "tbody",
+        "td",
+        "template",
+        "textarea",
+        "tfoot",
+        "th",
+        "thead",
+        "time",
+        "title",
+        "tr",
+        "track",
+        "u",
+        "ul",
+        "var",
+        "video",
+        "wbr",
     ];
 
     // Python keywords to highlight in code-like contexts
     const CODE_KEYWORDS: &[&str] = &[
-        "for", "in", "if", "else", "elif", "while", "with", "as", "try", "except",
-        "finally", "def", "class", "return", "yield", "import", "from", "end",
+        "for", "in", "if", "else", "elif", "while", "with", "as", "try", "except", "finally",
+        "def", "class", "return", "yield", "import", "from", "end",
     ];
 
     // Check if text contains placeholder patterns like <variable> (indicates code example)
@@ -486,24 +632,60 @@ fn highlight_syntax(line: &str) -> String {
     // Keywords that are unambiguous (rarely appear as English words in HTML content)
     const KEYWORDS: &[&str] = &[
         "if", "elif", "else", "for", "while", "with", "match", "case", "try", "except", "finally",
-        "def", "class", "return", "yield", "import", "from", "pass", "break",
-        "continue", "raise", "assert", "async", "await", "lambda", "None", "True",
-        "False", "end",
+        "def", "class", "return", "yield", "import", "from", "pass", "break", "continue", "raise",
+        "assert", "async", "await", "lambda", "None", "True", "False", "end",
     ];
 
     // Keywords that are also common English words - only highlight in code context
     const AMBIGUOUS_KEYWORDS: &[&str] = &["is", "in", "as", "or", "and", "not"];
 
     const BUILTINS: &[&str] = &[
-        "print", "len", "range", "open", "str", "int", "float", "bool", "list", "dict",
-        "set", "tuple", "type", "isinstance", "hasattr", "getattr", "setattr", "delattr",
-        "sum", "min", "max", "abs", "round", "sorted", "reversed", "enumerate", "zip",
-        "map", "filter", "any", "all", "input", "format", "repr", "id", "hex", "bin", "oct",
+        "print",
+        "len",
+        "range",
+        "open",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "list",
+        "dict",
+        "set",
+        "tuple",
+        "type",
+        "isinstance",
+        "hasattr",
+        "getattr",
+        "setattr",
+        "delattr",
+        "sum",
+        "min",
+        "max",
+        "abs",
+        "round",
+        "sorted",
+        "reversed",
+        "enumerate",
+        "zip",
+        "map",
+        "filter",
+        "any",
+        "all",
+        "input",
+        "format",
+        "repr",
+        "id",
+        "hex",
+        "bin",
+        "oct",
     ];
 
     // Check if line starts with Python code (keyword at start)
     let trimmed = line.trim_start();
-    let first_word: String = trimmed.chars().take_while(|c| c.is_alphabetic() || *c == '_').collect();
+    let first_word: String = trimmed
+        .chars()
+        .take_while(|c| c.is_alphabetic() || *c == '_')
+        .collect();
     let line_is_python = KEYWORDS.contains(&first_word.as_str());
 
     let mut result = String::with_capacity(line.len() * 2);
@@ -584,10 +766,18 @@ fn highlight_syntax(line: &str) -> String {
                                 }
                                 i += 1;
                             }
-                        } else if chars[i].is_alphabetic() || chars[i] == '_' || chars[i] == ':' || chars[i] == '@' {
+                        } else if chars[i].is_alphabetic()
+                            || chars[i] == '_'
+                            || chars[i] == ':'
+                            || chars[i] == '@'
+                        {
                             attrs.push_str(ATTR);
                             while i < chars.len()
-                                && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_' || chars[i] == ':' || chars[i] == '@')
+                                && (chars[i].is_alphanumeric()
+                                    || chars[i] == '-'
+                                    || chars[i] == '_'
+                                    || chars[i] == ':'
+                                    || chars[i] == '@')
                             {
                                 attrs.push(chars[i]);
                                 i += 1;
@@ -632,7 +822,9 @@ fn highlight_syntax(line: &str) -> String {
 
             // Regular HTML tag
             let name_start = i;
-            while i < chars.len() && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_') {
+            while i < chars.len()
+                && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_')
+            {
                 i += 1;
             }
             let name_end = i;
@@ -700,10 +892,18 @@ fn highlight_syntax(line: &str) -> String {
                             }
                             i += 1;
                         }
-                    } else if chars[i].is_alphabetic() || chars[i] == '_' || chars[i] == ':' || chars[i] == '@' {
+                    } else if chars[i].is_alphabetic()
+                        || chars[i] == '_'
+                        || chars[i] == ':'
+                        || chars[i] == '@'
+                    {
                         result.push_str(ATTR);
                         while i < chars.len()
-                            && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_' || chars[i] == ':' || chars[i] == '@')
+                            && (chars[i].is_alphanumeric()
+                                || chars[i] == '-'
+                                || chars[i] == '_'
+                                || chars[i] == ':'
+                                || chars[i] == '@')
                         {
                             result.push(chars[i]);
                             i += 1;
@@ -815,7 +1015,13 @@ fn highlight_syntax(line: &str) -> String {
         // Numbers
         if chars[i].is_ascii_digit() {
             result.push_str(NUMBER);
-            while i < chars.len() && (chars[i].is_ascii_digit() || chars[i] == '.' || chars[i] == '_' || chars[i] == 'e' || chars[i] == 'E') {
+            while i < chars.len()
+                && (chars[i].is_ascii_digit()
+                    || chars[i] == '.'
+                    || chars[i] == '_'
+                    || chars[i] == 'e'
+                    || chars[i] == 'E')
+            {
                 result.push(chars[i]);
                 i += 1;
             }

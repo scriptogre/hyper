@@ -117,7 +117,10 @@ fn process_file(path: &Path) {
             if is_error_test {
                 // Write .expected.err
                 let expected_err = path.with_extension("expected.err");
-                let filename = path.file_name().and_then(|s| s.to_str()).unwrap_or("unknown");
+                let filename = path
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
                 if let Err(err) = fs::write(&expected_err, e.render(&source, filename)) {
                     eprintln!("Failed to write {:?}: {}", expected_err, err);
                 } else {
@@ -149,7 +152,10 @@ fn validate_source_ranges(source: &str, result: &hyper_transpiler::GenerateResul
             if prev.is_alphanumeric() && first.is_alphanumeric() {
                 warnings.push(format!(
                     "  WARNING: range [{}, {}] starts mid-identifier: ...{}|{}...",
-                    range.source_start, range.source_end, prev, &text[..text.len().min(20)]
+                    range.source_start,
+                    range.source_end,
+                    prev,
+                    &text[..text.len().min(20)]
                 ));
             }
         }
@@ -160,7 +166,10 @@ fn validate_source_ranges(source: &str, result: &hyper_transpiler::GenerateResul
             if last.is_alphanumeric() && next.is_alphanumeric() {
                 warnings.push(format!(
                     "  WARNING: range [{}, {}] ends mid-identifier: ...{}|{}...",
-                    range.source_start, range.source_end, &text[text.len().saturating_sub(20)..], next
+                    range.source_start,
+                    range.source_end,
+                    &text[text.len().saturating_sub(20)..],
+                    next
                 ));
             }
         }

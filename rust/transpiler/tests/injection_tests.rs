@@ -1,7 +1,7 @@
 mod common;
 
-use hyper_transpiler::{Pipeline, GenerateOptions};
-use common::{compile_with_ranges, python_injections, python_ranges, html_injections, html_ranges};
+use common::{compile_with_ranges, html_injections, html_ranges, python_injections, python_ranges};
+use hyper_transpiler::{GenerateOptions, Pipeline};
 
 #[test]
 fn test_expression_injection() {
@@ -15,13 +15,21 @@ fn test_expression_injection() {
 
     let py_ranges = python_ranges(&result);
     // Check that compiled positions are not zero
-    assert!(py_ranges[0].compiled_start > 0, "Compiled start should not be 0");
-    assert!(py_ranges[0].compiled_end > py_ranges[0].compiled_start,
-            "Compiled end should be after compiled start");
+    assert!(
+        py_ranges[0].compiled_start > 0,
+        "Compiled start should not be 0"
+    );
+    assert!(
+        py_ranges[0].compiled_end > py_ranges[0].compiled_start,
+        "Compiled end should be after compiled start"
+    );
 
     // Verify source range excludes braces (should be just 'x', not '{x}')
     let range_len = py_ranges[0].source_end - py_ranges[0].source_start;
-    assert_eq!(range_len, 1, "Source range should be 1 char (just 'x'), not 3 ('{{x}}')");
+    assert_eq!(
+        range_len, 1,
+        "Source range should be 1 char (just 'x'), not 3 ('{{x}}')"
+    );
 
     // Should also have HTML injection ranges for the static HTML parts
     let html = html_injections(&result);
@@ -44,9 +52,13 @@ fn test_parameter_injection() {
 
     // Python ranges should have valid compiled positions
     for (i, range) in python_ranges(&result).iter().enumerate() {
-        assert!(range.compiled_end > range.compiled_start,
-                "Range {} has invalid compiled positions: {} -> {}",
-                i, range.compiled_start, range.compiled_end);
+        assert!(
+            range.compiled_end > range.compiled_start,
+            "Range {} has invalid compiled positions: {} -> {}",
+            i,
+            range.compiled_start,
+            range.compiled_end
+        );
     }
 }
 
@@ -62,11 +74,20 @@ fn test_text_expression_injection() {
     assert_eq!(py_ranges.len(), 1);
 
     let range = py_ranges[0];
-    assert!(range.source_start < range.source_end, "Range should have positive length");
-    assert!(range.source_end <= source.len(), "Range should be within source bounds");
+    assert!(
+        range.source_start < range.source_end,
+        "Range should have positive length"
+    );
+    assert!(
+        range.source_end <= source.len(),
+        "Range should be within source bounds"
+    );
 
     // Verify the injection creates valid Python code
-    assert!(py[0].prefix.contains("def "), "Should contain function definition");
+    assert!(
+        py[0].prefix.contains("def "),
+        "Should contain function definition"
+    );
 }
 
 #[test]
@@ -92,7 +113,10 @@ fn test_style_attribute_injection() {
 
     let py_ranges = python_ranges(&result);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
-    assert!(source_text.starts_with("{"), "Should start with opening brace");
+    assert!(
+        source_text.starts_with("{"),
+        "Should start with opening brace"
+    );
     assert!(source_text.contains("color"), "Should contain 'color'");
 }
 
@@ -123,15 +147,26 @@ y: int
 
     let py = python_injections(&result);
     // x in class, y in text, z in aria + params
-    assert!(py.len() >= 3, "Expected at least 3 Python injections, got {}", py.len());
+    assert!(
+        py.len() >= 3,
+        "Expected at least 3 Python injections, got {}",
+        py.len()
+    );
 
     // All Python ranges should have valid positions
     for (i, range) in python_ranges(&result).iter().enumerate() {
-        assert!(range.compiled_end > range.compiled_start,
-                "Range {} has invalid positions", i);
-        assert!(range.source_end <= source.len(),
-                "Range {} source_end {} exceeds source length {}",
-                i, range.source_end, source.len());
+        assert!(
+            range.compiled_end > range.compiled_start,
+            "Range {} has invalid positions",
+            i
+        );
+        assert!(
+            range.source_end <= source.len(),
+            "Range {} source_end {} exceeds source length {}",
+            i,
+            range.source_end,
+            source.len()
+        );
     }
 
     // Should also have HTML ranges
@@ -196,25 +231,36 @@ print("test")
     let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
-    assert!(py.len() >= 2, "Expected at least 2 Python injections (statement + expression)");
+    assert!(
+        py.len() >= 2,
+        "Expected at least 2 Python injections (statement + expression)"
+    );
 
     // The print statement should now have its own injection range
-    let stmt_injection = py.iter()
+    let stmt_injection = py
+        .iter()
         .find(|inj| {
             let source_slice = &source[inj.start..inj.end];
             source_slice.contains("print")
         })
         .expect("Should find injection for the print statement");
     let source_slice = &source[stmt_injection.start..stmt_injection.end];
-    assert_eq!(source_slice.trim(), "print(\"test\")",
-            "Statement injection should map to the print statement in source");
+    assert_eq!(
+        source_slice.trim(),
+        "print(\"test\")",
+        "Statement injection should map to the print statement in source"
+    );
 
-    let expr_injection = py.iter()
+    let expr_injection = py
+        .iter()
         .find(|inj| inj.prefix.contains("aria"))
         .expect("Should find expression injection with aria attribute");
 
     let source_expr = &source[expr_injection.start..expr_injection.end];
-    assert_eq!(source_expr, "x", "Expression injection should map to 'x' in source");
+    assert_eq!(
+        source_expr, "x",
+        "Expression injection should map to 'x' in source"
+    );
 }
 
 #[test]
@@ -267,18 +313,30 @@ end"#;
 
     // Expected Python ranges:
     // 2 params + 5 attrs + 2 text exprs + 3 control flow + 2 nested exprs = 14
-    assert!(py_ranges.len() >= 13,
-            "Expected at least 13 Python ranges, got {}",
-            py_ranges.len());
+    assert!(
+        py_ranges.len() >= 13,
+        "Expected at least 13 Python ranges, got {}",
+        py_ranges.len()
+    );
 
     for (i, range) in py_ranges.iter().enumerate() {
-        assert!(range.compiled_end > range.compiled_start,
-                "Range {} has invalid compiled positions", i);
-        assert!(range.source_end > range.source_start,
-                "Range {} has invalid source positions", i);
-        assert!(range.source_end <= source.len(),
-                "Range {} source_end {} exceeds source len {}",
-                i, range.source_end, source.len());
+        assert!(
+            range.compiled_end > range.compiled_start,
+            "Range {} has invalid compiled positions",
+            i
+        );
+        assert!(
+            range.source_end > range.source_start,
+            "Range {} has invalid source positions",
+            i
+        );
+        assert!(
+            range.source_end <= source.len(),
+            "Range {} source_end {} exceeds source len {}",
+            i,
+            range.source_end,
+            source.len()
+        );
     }
 
     // Should have HTML ranges for element tags
@@ -287,11 +345,18 @@ end"#;
 
     // HTML ranges should cover source content
     for (i, range) in html.iter().enumerate() {
-        assert!(range.source_end > range.source_start,
-                "HTML range {} should have positive length", i);
-        assert!(range.source_end <= source.len(),
-                "HTML range {} source_end {} exceeds source len {}",
-                i, range.source_end, source.len());
+        assert!(
+            range.source_end > range.source_start,
+            "HTML range {} should have positive length",
+            i
+        );
+        assert!(
+            range.source_end <= source.len(),
+            "HTML range {} source_end {} exceeds source len {}",
+            i,
+            range.source_end,
+            source.len()
+        );
     }
 
     // HTML injections should have empty prefix/suffix
@@ -316,9 +381,13 @@ fn test_text_expression_range_excludes_braces() {
         let text = &source[r.source_start..r.source_end];
         text == "name"
     });
-    assert!(expr_range.is_some(),
-            "Should have a Python range for just 'name' (no braces). Got: {:?}",
-            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+    assert!(
+        expr_range.is_some(),
+        "Should have a Python range for just 'name' (no braces). Got: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -331,9 +400,13 @@ fn test_complex_expression_range_excludes_braces() {
         let text = &source[r.source_start..r.source_end];
         text == "count + 1"
     });
-    assert!(expr_range.is_some(),
-            "Should have range for 'count + 1' (no braces). Got: {:?}",
-            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+    assert!(
+        expr_range.is_some(),
+        "Should have range for 'count + 1' (no braces). Got: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 // ========================================================================
@@ -344,7 +417,9 @@ fn test_complex_expression_range_excludes_braces() {
 fn test_error_has_position_for_unclosed_element() {
     let source = "<div>unclosed";
     let mut pipeline = Pipeline::standard();
-    let err = pipeline.compile(source, &GenerateOptions::default()).unwrap_err();
+    let err = pipeline
+        .compile(source, &GenerateOptions::default())
+        .unwrap_err();
 
     match err {
         hyper_transpiler::CompileError::Parse(parse_err) => {
@@ -359,13 +434,18 @@ fn test_error_has_position_for_unclosed_element() {
 fn test_error_has_position_for_nested_interactive() {
     let source = "<a><button>click</button></a>";
     let mut pipeline = Pipeline::standard();
-    let err = pipeline.compile(source, &GenerateOptions::default()).unwrap_err();
+    let err = pipeline
+        .compile(source, &GenerateOptions::default())
+        .unwrap_err();
 
     match err {
         hyper_transpiler::CompileError::Parse(parse_err) => {
             assert!(parse_err.message.contains("cannot appear inside"));
             // Error should point to the <button> tag, not <a>
-            assert!(parse_err.span.start.col > 0, "Should point to <button>, not start of line");
+            assert!(
+                parse_err.span.start.col > 0,
+                "Should point to <button>, not start of line"
+            );
         }
         _ => panic!("Expected ParseError"),
     }
@@ -375,11 +455,17 @@ fn test_error_has_position_for_nested_interactive() {
 fn test_error_has_position_for_duplicate_attribute() {
     let source = r#"<div class={x} class={y}>text</div>"#;
     let mut pipeline = Pipeline::standard();
-    let err = pipeline.compile(source, &GenerateOptions::default()).unwrap_err();
+    let err = pipeline
+        .compile(source, &GenerateOptions::default())
+        .unwrap_err();
 
     match err {
         hyper_transpiler::CompileError::Parse(parse_err) => {
-            assert!(parse_err.message.contains("twice") || parse_err.message.contains("duplicate") || parse_err.message.contains("set twice"));
+            assert!(
+                parse_err.message.contains("twice")
+                    || parse_err.message.contains("duplicate")
+                    || parse_err.message.contains("set twice")
+            );
             // Should have position info
             assert_eq!(parse_err.span.start.line, 0);
         }
@@ -403,8 +489,12 @@ fn test_html_range_source_text_simple() {
     for (i, range) in html.iter().enumerate() {
         let text = &source[range.source_start..range.source_end];
         assert!(!text.is_empty(), "HTML range {} should not be empty", i);
-        assert!(text.contains('<') || text.contains('>'),
-                "HTML range {} should contain tag characters, got: {:?}", i, text);
+        assert!(
+            text.contains('<') || text.contains('>'),
+            "HTML range {} should contain tag characters, got: {:?}",
+            i,
+            text
+        );
     }
 }
 
@@ -415,17 +505,28 @@ fn test_html_range_source_text_with_attributes() {
 
     let html = html_ranges(&result);
     // HTML ranges should split around the {active} expression
-    assert!(html.len() >= 2, "Should have at least 2 HTML ranges, got {}", html.len());
+    assert!(
+        html.len() >= 2,
+        "Should have at least 2 HTML ranges, got {}",
+        html.len()
+    );
 
     // First HTML range: "<div class=" (before expression)
     let first_text = &source[html[0].source_start..html[0].source_end];
-    assert!(first_text.starts_with("<div"), "First HTML range should start with <div, got: {:?}", first_text);
+    assert!(
+        first_text.starts_with("<div"),
+        "First HTML range should start with <div, got: {:?}",
+        first_text
+    );
 
     // Verify no HTML range contains the expression braces
     for range in &html {
         let text = &source[range.source_start..range.source_end];
-        assert!(!text.contains("{active}"),
-                "HTML range should not contain expression: {:?}", text);
+        assert!(
+            !text.contains("{active}"),
+            "HTML range should not contain expression: {:?}",
+            text
+        );
     }
 }
 
@@ -439,7 +540,10 @@ fn test_html_ranges_void_element() {
 
     // Should split around {url} expression
     let py = python_ranges(&result);
-    assert!(!py.is_empty(), "Should have Python range for url expression");
+    assert!(
+        !py.is_empty(),
+        "Should have Python range for url expression"
+    );
 }
 
 // ========================================================================
@@ -465,9 +569,11 @@ fn test_no_overlap_python_html_ranges() {
         for h in &html {
             for p in &py {
                 let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
-                assert!(!overlaps,
-                        "Overlap in {:?}: HTML [{},{}] overlaps Python [{},{}]",
-                        source, h.source_start, h.source_end, p.source_start, p.source_end);
+                assert!(
+                    !overlaps,
+                    "Overlap in {:?}: HTML [{},{}] overlaps Python [{},{}]",
+                    source, h.source_start, h.source_end, p.source_start, p.source_end
+                );
             }
         }
     }
@@ -492,15 +598,26 @@ fn test_injection_reconstruction_produces_valid_python() {
         let combined = format!("{}{}{}", inj.prefix, source_slice, inj.suffix);
 
         // The combined code should contain the original source expression
-        assert!(combined.contains(source_slice),
-                "Reconstructed code should contain source slice {:?}", source_slice);
+        assert!(
+            combined.contains(source_slice),
+            "Reconstructed code should contain source slice {:?}",
+            source_slice
+        );
     }
 
     // At least one injection (the first) should reconstruct to code containing "def"
     let first = &py[0];
-    let first_combined = format!("{}{}{}", first.prefix, &source[first.start..first.end], first.suffix);
-    assert!(first_combined.contains("def "),
-            "First injection reconstruction should contain 'def': {:?}", first_combined);
+    let first_combined = format!(
+        "{}{}{}",
+        first.prefix,
+        &source[first.start..first.end],
+        first.suffix
+    );
+    assert!(
+        first_combined.contains("def "),
+        "First injection reconstruction should contain 'def': {:?}",
+        first_combined
+    );
 }
 
 #[test]
@@ -513,10 +630,20 @@ fn test_injection_reconstruction_with_multiple_expressions() {
 
     // Verify each injection is self-consistent
     for (i, inj) in py.iter().enumerate() {
-        assert!(inj.start < inj.end,
-                "Injection {} has invalid range: {} >= {}", i, inj.start, inj.end);
-        assert!(inj.end <= source.len(),
-                "Injection {} end {} exceeds source len {}", i, inj.end, source.len());
+        assert!(
+            inj.start < inj.end,
+            "Injection {} has invalid range: {} >= {}",
+            i,
+            inj.start,
+            inj.end
+        );
+        assert!(
+            inj.end <= source.len(),
+            "Injection {} end {} exceeds source len {}",
+            i,
+            inj.end,
+            source.len()
+        );
 
         // Verify the suffix of one injection connects to the prefix of the next
         if i + 1 < py.len() {
@@ -524,8 +651,12 @@ fn test_injection_reconstruction_with_multiple_expressions() {
             // The gap between injections in the source should be bridged by suffix+prefix
             let bridge = format!("{}{}", inj.suffix, next.prefix);
             // The bridge should contain the compiled equivalent of the gap
-            assert!(!bridge.is_empty(),
-                    "Bridge between injections {} and {} should not be empty", i, i + 1);
+            assert!(
+                !bridge.is_empty(),
+                "Bridge between injections {} and {} should not be empty",
+                i,
+                i + 1
+            );
         }
     }
 }
@@ -545,8 +676,13 @@ fn test_if_condition_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text.contains("active")
     });
-    assert!(has_condition, "Should have Python range for if condition. Ranges: {:?}",
-            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+    assert!(
+        has_condition,
+        "Should have Python range for if condition. Ranges: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -560,16 +696,23 @@ fn test_for_loop_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text.contains("item in items")
     });
-    assert!(has_binding_and_iterable,
+    assert!(
+        has_binding_and_iterable,
         "Should have Python range for 'item in items' (not just iterable). Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 
     // Must also have a range for the {item} expression inside the body
     let has_item_expr = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "item" && r.source_start > source.find('{').unwrap()
     });
-    assert!(has_item_expr, "Should have Python range for {{item}} expression");
+    assert!(
+        has_item_expr,
+        "Should have Python range for {{item}} expression"
+    );
 }
 
 #[test]
@@ -583,9 +726,13 @@ fn test_for_loop_binding_in_range() {
         let text = &source[r.source_start..r.source_end];
         text == "item in items"
     });
-    assert!(loop_range.is_some(),
+    assert!(
+        loop_range.is_some(),
         "Should have Python range for 'item in items'. Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -598,7 +745,10 @@ fn test_while_condition_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text.contains("running")
     });
-    assert!(has_condition, "Should have Python range for while condition");
+    assert!(
+        has_condition,
+        "Should have Python range for while condition"
+    );
 }
 
 #[test]
@@ -611,9 +761,13 @@ fn test_except_clause_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text == "ValueError as e"
     });
-    assert!(has_except,
+    assert!(
+        has_except,
         "Should have Python range for except clause. Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -622,12 +776,19 @@ fn test_html_ranges_basic() {
     let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
-    assert!(!html.is_empty(), "Should have HTML ranges for static element");
+    assert!(
+        !html.is_empty(),
+        "Should have HTML ranges for static element"
+    );
 
     // The HTML range covers the opening tag <div>
     let first = html[0];
     let tag_text = &source[first.source_start..first.source_end];
-    assert!(tag_text.starts_with("<div"), "HTML range should cover opening tag, got: {}", tag_text);
+    assert!(
+        tag_text.starts_with("<div"),
+        "HTML range should cover opening tag, got: {}",
+        tag_text
+    );
 
     // HTML injections should have empty prefix/suffix
     let html_inj = html_injections(&result);
@@ -643,7 +804,11 @@ fn test_html_ranges_with_expression() {
     let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
-    assert!(html.len() >= 2, "Should have multiple HTML ranges (split around expressions), got {}", html.len());
+    assert!(
+        html.len() >= 2,
+        "Should have multiple HTML ranges (split around expressions), got {}",
+        html.len()
+    );
 
     // Verify HTML ranges don't overlap with expression spans
     let py = python_ranges(&result);
@@ -654,9 +819,14 @@ fn test_html_ranges_with_expression() {
             // (they might be adjacent but not overlapping)
             if overlaps {
                 // Check it's just adjacency, not overlap
-                assert!(h.source_end <= p.source_start || h.source_start >= p.source_end,
-                        "HTML range [{},{}] overlaps with Python range [{},{}]",
-                        h.source_start, h.source_end, p.source_start, p.source_end);
+                assert!(
+                    h.source_end <= p.source_start || h.source_start >= p.source_end,
+                    "HTML range [{},{}] overlaps with Python range [{},{}]",
+                    h.source_start,
+                    h.source_end,
+                    p.source_start,
+                    p.source_end
+                );
             }
         }
     }
@@ -677,14 +847,20 @@ fn test_template_attribute_single_expression() {
         let text = &source[r.source_start..r.source_end];
         text == "variant"
     });
-    assert!(variant_range.is_some(),
-            "Should have Python range for 'variant' in template attribute. Got: {:?}",
-            py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+    assert!(
+        variant_range.is_some(),
+        "Should have Python range for 'variant' in template attribute. Got: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 
     // Verify compiled text is also 'variant' (expression should match)
     let range = variant_range.unwrap();
-    assert!(range.compiled_end > range.compiled_start,
-            "Template expression range should have positive compiled length");
+    assert!(
+        range.compiled_end > range.compiled_start,
+        "Template expression range should have positive compiled length"
+    );
 }
 
 #[test]
@@ -693,11 +869,18 @@ fn test_template_attribute_multiple_expressions() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
-    let id_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "id");
-    let variant_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "variant");
+    let id_range = py
+        .iter()
+        .find(|r| &source[r.source_start..r.source_end] == "id");
+    let variant_range = py
+        .iter()
+        .find(|r| &source[r.source_start..r.source_end] == "variant");
 
     assert!(id_range.is_some(), "Should have Python range for 'id'");
-    assert!(variant_range.is_some(), "Should have Python range for 'variant'");
+    assert!(
+        variant_range.is_some(),
+        "Should have Python range for 'variant'"
+    );
 
     // id should come before variant in source
     assert!(id_range.unwrap().source_start < variant_range.unwrap().source_start);
@@ -709,8 +892,12 @@ fn test_template_attribute_adjacent_expressions() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_ranges(&result);
-    let a_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "a");
-    let b_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "b");
+    let a_range = py
+        .iter()
+        .find(|r| &source[r.source_start..r.source_end] == "a");
+    let b_range = py
+        .iter()
+        .find(|r| &source[r.source_start..r.source_end] == "b");
 
     assert!(a_range.is_some(), "Should have Python range for 'a'");
     assert!(b_range.is_some(), "Should have Python range for 'b'");
@@ -725,28 +912,40 @@ fn test_template_attribute_html_range_splits() {
     let py = python_ranges(&result);
 
     // HTML ranges should split around the {id} expression in the template attribute
-    assert!(html.len() >= 2,
-            "Should have at least 2 HTML ranges (split around template expression), got {}",
-            html.len());
+    assert!(
+        html.len() >= 2,
+        "Should have at least 2 HTML ranges (split around template expression), got {}",
+        html.len()
+    );
 
     // No HTML range should contain the expression braces
     for h in &html {
         let text = &source[h.source_start..h.source_end];
-        assert!(!text.contains("{id}"),
-                "HTML range should not contain '{{id}}', got: {:?}", text);
+        assert!(
+            !text.contains("{id}"),
+            "HTML range should not contain '{{id}}', got: {:?}",
+            text
+        );
     }
 
     // Python range should exist for the expression
-    let id_range = py.iter().find(|r| &source[r.source_start..r.source_end] == "id");
-    assert!(id_range.is_some(), "Should have Python range for 'id' in template attribute");
+    let id_range = py
+        .iter()
+        .find(|r| &source[r.source_start..r.source_end] == "id");
+    assert!(
+        id_range.is_some(),
+        "Should have Python range for 'id' in template attribute"
+    );
 
     // No overlap between HTML and Python ranges
     for h in &html {
         for p in &py {
             let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
-            assert!(!overlaps,
-                    "HTML range [{},{}] overlaps Python range [{},{}]",
-                    h.source_start, h.source_end, p.source_start, p.source_end);
+            assert!(
+                !overlaps,
+                "HTML range [{},{}] overlaps Python range [{},{}]",
+                h.source_start, h.source_end, p.source_start, p.source_end
+            );
         }
     }
 }
@@ -760,7 +959,9 @@ fn test_template_attribute_roundtrip() {
     let result = compile_with_ranges(source, "Test");
 
     // Reconstruct virtual Python from injections
-    let py_injections: Vec<_> = result.injections.iter()
+    let py_injections: Vec<_> = result
+        .injections
+        .iter()
         .filter(|i| i.injection_type == "python")
         .collect();
 
@@ -778,8 +979,10 @@ fn test_template_attribute_roundtrip() {
         virtual_python.push_str(&inj.suffix);
     }
 
-    assert_eq!(virtual_python, result.code,
-               "Virtual Python from injections should match compiled code");
+    assert_eq!(
+        virtual_python, result.code,
+        "Virtual Python from injections should match compiled code"
+    );
 }
 
 // ========================================================================
@@ -796,9 +999,13 @@ fn test_decorator_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text == "@fragment"
     });
-    assert!(has_decorator,
+    assert!(
+        has_decorator,
         "Should have Python range for @fragment decorator. Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 // ========================================================================
@@ -815,9 +1022,13 @@ fn test_def_signature_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text.contains("def Badge(text: str):")
     });
-    assert!(has_def,
+    assert!(
+        has_def,
         "Should have Python range for def signature. Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 // ========================================================================
@@ -834,9 +1045,13 @@ fn test_standalone_expression_has_python_range() {
         let text = &source[r.source_start..r.source_end];
         text == "Badge(\"New\")"
     });
-    assert!(has_call,
+    assert!(
+        has_call,
         "Should have Python range for standalone expression Badge(\"New\"). Ranges: {:?}",
-        py.iter().map(|r| &source[r.source_start..r.source_end]).collect::<Vec<_>>());
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -849,16 +1064,23 @@ fn test_component_tag_braces_in_expression_braces() {
 
     // Opening tag <{Card}>: { at byte 1, } at byte 6
     let has_open = braces.iter().any(|b| b.open == 1 && b.close == 6);
-    assert!(has_open,
-        "Opening component tag braces <{{Card}}> should be tracked. Got: {:?}", braces);
+    assert!(
+        has_open,
+        "Opening component tag braces <{{Card}}> should be tracked. Got: {:?}",
+        braces
+    );
 
     // Closing tag </{Card}>: { at byte 24, } at byte 29
     let close_brace_open = source.rfind("/{").unwrap() + 1;
     let close_brace_close = source.rfind("}").unwrap();
-    let has_close = braces.iter().any(|b| b.open == close_brace_open && b.close == close_brace_close);
-    assert!(has_close,
+    let has_close = braces
+        .iter()
+        .any(|b| b.open == close_brace_open && b.close == close_brace_close);
+    assert!(
+        has_close,
         "Closing component tag braces </{{Card}}> should be tracked at ({}, {}). Got: {:?}",
-        close_brace_open, close_brace_close, braces);
+        close_brace_open, close_brace_close, braces
+    );
 }
 
 #[test]
@@ -872,18 +1094,26 @@ fn test_named_slot_tag_braces_in_expression_braces() {
     // Opening tag <{...header}>: { at byte 1, } at byte 11
     let open_brace = source.find('{').unwrap();
     let open_close = source.find('}').unwrap();
-    let has_open = braces.iter().any(|b| b.open == open_brace && b.close == open_close);
-    assert!(has_open,
+    let has_open = braces
+        .iter()
+        .any(|b| b.open == open_brace && b.close == open_close);
+    assert!(
+        has_open,
         "Opening named slot tag braces <{{...header}}> should be tracked at ({}, {}). Got: {:?}",
-        open_brace, open_close, braces);
+        open_brace, open_close, braces
+    );
 
     // Closing tag </{...header}>: find the closing { and }
     let close_brace_open = source.rfind("/{").unwrap() + 1;
     let close_brace_close = source.rfind('}').unwrap();
-    let has_close = braces.iter().any(|b| b.open == close_brace_open && b.close == close_brace_close);
-    assert!(has_close,
+    let has_close = braces
+        .iter()
+        .any(|b| b.open == close_brace_open && b.close == close_brace_close);
+    assert!(
+        has_close,
         "Closing named slot tag braces </{{...header}}> should be tracked at ({}, {}). Got: {:?}",
-        close_brace_open, close_brace_close, braces);
+        close_brace_open, close_brace_close, braces
+    );
 }
 
 #[test]
@@ -897,23 +1127,51 @@ fn test_component_tag_angle_brackets_have_html_ranges() {
 
     // Opening tag: "<" at byte 0 should be in an HTML range
     let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
-    assert!(has_open_lt,
+    assert!(
+        has_open_lt,
         "Opening '<' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 
     // Opening tag: ">" at byte 7 should be in an HTML range
     let gt_pos = source.find('>').unwrap();
-    let has_open_gt = html.iter().any(|r| r.source_start <= gt_pos && r.source_end > gt_pos);
-    assert!(has_open_gt,
+    let has_open_gt = html
+        .iter()
+        .any(|r| r.source_start <= gt_pos && r.source_end > gt_pos);
+    assert!(
+        has_open_gt,
         "Closing '>' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 
     // Closing tag: "</" and ">" of </{Card}> should be in HTML range(s)
     let close_lt = source.find("</").unwrap();
-    let has_close_lt = html.iter().any(|r| r.source_start <= close_lt && r.source_end > close_lt);
-    assert!(has_close_lt,
+    let has_close_lt = html
+        .iter()
+        .any(|r| r.source_start <= close_lt && r.source_end > close_lt);
+    assert!(
+        has_close_lt,
         "'</' of </{{Card}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -926,16 +1184,34 @@ fn test_slot_tag_angle_brackets_have_html_ranges() {
 
     // Opening tag: "<" at byte 0
     let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
-    assert!(has_open_lt,
+    assert!(
+        has_open_lt,
         "Opening '<' of <{{...header}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 
     // Closing tag: "</" of </{...header}>
     let close_lt = source.find("</").unwrap();
-    let has_close_lt = html.iter().any(|r| r.source_start <= close_lt && r.source_end > close_lt);
-    assert!(has_close_lt,
+    let has_close_lt = html
+        .iter()
+        .any(|r| r.source_start <= close_lt && r.source_end > close_lt);
+    assert!(
+        has_close_lt,
         "'</' of </{{...header}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -948,13 +1224,22 @@ fn test_component_name_has_python_range() {
     let py = python_ranges(&result);
     let name_start = source.find("Badge").unwrap();
     let name_end = name_start + "Badge".len();
-    let has_name = py.iter().any(|r| {
-        r.source_start == name_start && r.source_end == name_end
-    });
-    assert!(has_name,
+    let has_name = py
+        .iter()
+        .any(|r| r.source_start == name_start && r.source_end == name_end);
+    assert!(
+        has_name,
         "Component name 'Badge' at [{},{}] should have a Python range. Ranges: {:?}",
-        name_start, name_end,
-        py.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        name_start,
+        name_end,
+        py.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -966,13 +1251,22 @@ fn test_component_close_name_has_python_range() {
     let py = python_ranges(&result);
     let close_name_start = source.rfind("Card").unwrap();
     let close_name_end = close_name_start + "Card".len();
-    let has_close_name = py.iter().any(|r| {
-        r.source_start == close_name_start && r.source_end == close_name_end
-    });
-    assert!(has_close_name,
+    let has_close_name = py
+        .iter()
+        .any(|r| r.source_start == close_name_start && r.source_end == close_name_end);
+    assert!(
+        has_close_name,
         "Closing tag component name 'Card' at [{},{}] should have a Python range. Ranges: {:?}",
-        close_name_start, close_name_end,
-        py.iter().map(|r| (r.source_start, r.source_end, &source[r.source_start..r.source_end])).collect::<Vec<_>>());
+        close_name_start,
+        close_name_end,
+        py.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
 }
 
 // Note: slot names (e.g. "header" in <{...header}>) are Hyper syntax, not Python

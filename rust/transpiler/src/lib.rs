@@ -17,11 +17,11 @@
 //! ```
 
 pub mod ast;
+pub mod error;
+pub mod generate;
+pub mod html;
 pub mod parser;
 pub mod transform;
-pub mod generate;
-pub mod error;
-pub mod html;
 
 use generate::{Generator, PythonGenerator};
 use parser::HyperParser;

@@ -26,9 +26,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         }
     });
 
-    let in_body = |byte: usize| -> bool {
-        separator_byte.is_none_or(|sep| byte > sep)
-    };
+    let in_body = |byte: usize| -> bool { separator_byte.is_none_or(|sep| byte > sep) };
 
     /// Check if any HTML range overlaps with a source byte range.
     /// We use "overlaps" rather than "covers" because HTML ranges may be split
@@ -69,9 +67,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 }
             }
             Token::ComponentOpen {
-                span,
-                self_closing,
-                ..
+                span, self_closing, ..
             } if in_body(span.start.byte) => {
                 // Component tags like <{Card}> should have HTML ranges for the
                 // angle brackets (< and >) around the braced name.

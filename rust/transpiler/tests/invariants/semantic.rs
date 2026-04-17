@@ -11,11 +11,16 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         if range.source_start >= range.source_end {
             continue;
         }
-        let text = source.get(range.source_start..range.source_end)
-            .ok_or_else(|| format!(
-                "Range [{}, {}] out of bounds for source len {}",
-                range.source_start, range.source_end, source.len()
-            ))?;
+        let text = source
+            .get(range.source_start..range.source_end)
+            .ok_or_else(|| {
+                format!(
+                    "Range [{}, {}] out of bounds for source len {}",
+                    range.source_start,
+                    range.source_end,
+                    source.len()
+                )
+            })?;
 
         // Check: range should not start mid-identifier
         if range.source_start > 0 {
@@ -25,7 +30,8 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 return Err(format!(
                     "Range [{}, {}] starts mid-identifier: prev='{}', text={:?}",
                     range.source_start, range.source_end, prev_char, text
-                ).into());
+                )
+                .into());
             }
         }
 
@@ -37,7 +43,8 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 return Err(format!(
                     "Range [{}, {}] ends mid-identifier: text={:?}, next='{}'",
                     range.source_start, range.source_end, text, next_char
-                ).into());
+                )
+                .into());
             }
         }
     }

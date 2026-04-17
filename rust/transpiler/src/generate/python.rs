@@ -1,4 +1,6 @@
-use super::{GenerateOptions, GenerateResult, Generator, Output, Range, RangeType, convert_braces_to_utf16};
+use super::{
+    GenerateOptions, GenerateResult, Generator, Output, Range, RangeType, convert_braces_to_utf16,
+};
 use crate::ast::*;
 
 pub struct PythonGenerator;
@@ -67,7 +69,9 @@ impl PythonGenerator {
                 let trailing_comment = if j < nodes.len() {
                     if let Node::Comment(c) = nodes[j] {
                         if c.inline { Some(c) } else { None }
-                    } else { None }
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 };
@@ -93,9 +97,14 @@ impl PythonGenerator {
             Node::Element(el) => {
                 // Check if element has dynamic attributes (including spreads) or expression children
                 el.attributes.iter().any(|attr| {
-                    !matches!(attr.kind, AttributeKind::Static { .. } | AttributeKind::Boolean { .. })
-                })
-                    || el.children.iter().any(|child| self.node_has_expressions(child))
+                    !matches!(
+                        attr.kind,
+                        AttributeKind::Static { .. } | AttributeKind::Boolean { .. }
+                    )
+                }) || el
+                    .children
+                    .iter()
+                    .any(|child| self.node_has_expressions(child))
             }
             _ => false,
         }
@@ -103,7 +112,13 @@ impl PythonGenerator {
 
     /// Emit consecutive text/expression/element nodes as a single yield statement.
     /// If trailing_comment is Some, the comment is appended inline after the closing `"""`.
-    fn emit_combined_nodes(&self, nodes: &[&Node], output: &mut Output, indent: usize, trailing_comment: Option<&CommentNode>) {
+    fn emit_combined_nodes(
+        &self,
+        nodes: &[&Node],
+        output: &mut Output,
+        indent: usize,
+        trailing_comment: Option<&CommentNode>,
+    ) {
         // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
 
@@ -197,7 +212,8 @@ impl PythonGenerator {
             }
             Node::Expression(expr) => {
                 if in_fstring {
-                    let has_format_extras = expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
+                    let has_format_extras =
+                        expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
                     let (start, end) = if has_format_extras {
                         // Format spec, conversion, or debug — emit raw (no escape wrapper)
                         output.push("{");
@@ -237,7 +253,7 @@ impl PythonGenerator {
 
                     // Source range excludes braces — just the inner expression
                     let content_start = expr.span.start.byte + 1; // skip '{'
-                    let content_end = expr.span.end.byte - 1;     // skip '}'
+                    let content_end = expr.span.end.byte - 1; // skip '}'
 
                     output.add_range(Range {
                         range_type: RangeType::Python,
@@ -307,7 +323,10 @@ impl PythonGenerator {
                 AttributeKind::Spread { expr_span, .. } => {
                     expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
                 }
-                AttributeKind::SlotAssignment { expr_span: Some(span), .. } => {
+                AttributeKind::SlotAssignment {
+                    expr_span: Some(span),
+                    ..
+                } => {
                     // Include the = sign before { so virtual HTML sees a boolean attr
                     let gap_start = span.start.byte.saturating_sub(1);
                     expr_spans.push((gap_start, span.end.byte + 1));
@@ -325,10 +344,13 @@ impl PythonGenerator {
                             let mut depth = 1;
                             while let Some(inner) = chars.next() {
                                 byte_offset += inner.len_utf8();
-                                if inner == '{' { depth += 1; }
-                                else if inner == '}' {
+                                if inner == '{' {
+                                    depth += 1;
+                                } else if inner == '}' {
                                     depth -= 1;
-                                    if depth == 0 { break; }
+                                    if depth == 0 {
+                                        break;
+                                    }
                                 }
                             }
                             let gap_end = value_start_byte + byte_offset;
@@ -500,7 +522,11 @@ impl PythonGenerator {
                 output.push(&escape_html_attr_quotes(value));
                 output.push("\"");
             }
-            AttributeKind::Dynamic { name, expr, expr_span } => {
+            AttributeKind::Dynamic {
+                name,
+                expr,
+                expr_span,
+            } => {
                 if in_fstring {
                     // expr_span includes {expr}, skip braces for injection
                     let content_start = expr_span.start.byte + 1;
@@ -700,7 +726,11 @@ impl PythonGenerator {
                     });
                 }
             }
-            AttributeKind::SlotAssignment { name, expr, expr_span } => {
+            AttributeKind::SlotAssignment {
+                name,
+                expr,
+                expr_span,
+            } => {
                 if let Some(e) = expr {
                     if in_fstring {
                         output.push(" slot:");
@@ -870,7 +900,8 @@ impl PythonGenerator {
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        let has_format_extras = expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
+        let has_format_extras =
+            expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
         if has_format_extras {
             // Format spec, conversion, or debug — emit as f-string
             output.push("yield f\"{");
@@ -1610,7 +1641,12 @@ impl Default for PythonGenerator {
 }
 
 impl Generator for PythonGenerator {
-    fn generate(&self, ast: &Ast, metadata: &crate::transform::TransformMetadata, options: &GenerateOptions) -> GenerateResult {
+    fn generate(
+        &self,
+        ast: &Ast,
+        metadata: &crate::transform::TransformMetadata,
+        options: &GenerateOptions,
+    ) -> GenerateResult {
         let mut output = Output::new();
 
         // Collect parameters, imports, decorators, and body from AST
@@ -1631,7 +1667,10 @@ impl Generator for PythonGenerator {
                     match &ast.nodes[j] {
                         Node::Decorator(_) | Node::Comment(_) => continue,
                         Node::Text(t) if t.content.trim().is_empty() => continue,
-                        Node::Definition(_) => { found_def = true; break; }
+                        Node::Definition(_) => {
+                            found_def = true;
+                            break;
+                        }
                         _ => break,
                     }
                 }
@@ -1666,7 +1705,8 @@ impl Generator for PythonGenerator {
                     }
                 }
                 // Skip whitespace text that's between a decorator and its definition
-                Node::Text(t) if whitespace_in_decorator_chain[i] && t.content.trim().is_empty() => {}
+                Node::Text(t)
+                    if whitespace_in_decorator_chain[i] && t.content.trim().is_empty() => {}
                 _ => body_nodes.push(node),
             }
         }
@@ -1682,7 +1722,9 @@ impl Generator for PythonGenerator {
         // import block insertion step.
 
         // Emit function signature with parameters
-        let func_name = options.function_name.as_deref()
+        let func_name = options
+            .function_name
+            .as_deref()
             .map(to_pascal_case)
             .unwrap_or_else(|| "Render".to_string());
 
@@ -1758,7 +1800,9 @@ impl Generator for PythonGenerator {
 
         // Add named slot parameters
         if has_named_slots {
-            let mut sorted_slots: Vec<_> = metadata.slots_used.iter()
+            let mut sorted_slots: Vec<_> = metadata
+                .slots_used
+                .iter()
                 .filter(|s| !s.is_empty())
                 .collect();
             sorted_slots.sort();
@@ -1836,7 +1880,8 @@ impl Generator for PythonGenerator {
 
         // Detect typing constructs needed from parameter type hints
         let mut typing_imports: Vec<&str> = Vec::new();
-        let all_type_hints: String = parameters.iter()
+        let all_type_hints: String = parameters
+            .iter()
             .filter_map(|p| p.type_hint.as_ref())
             .cloned()
             .collect::<Vec<_>>()
@@ -1863,7 +1908,10 @@ impl Generator for PythonGenerator {
 
         // Add typing imports if needed
         if !typing_imports.is_empty() {
-            import_lines.push_str(&format!("from typing import {}\n", typing_imports.join(", ")));
+            import_lines.push_str(&format!(
+                "from typing import {}\n",
+                typing_imports.join(", ")
+            ));
         }
 
         // Add Iterable import if needed
@@ -1873,7 +1921,7 @@ impl Generator for PythonGenerator {
 
         // Add hyper imports
         import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
-        import_lines.push_str("\n\n");  // Two blank lines before function (PEP 8)
+        import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)
 
         // Add user decorators for the outer template function (before @html)
         for dec in &decorators {
@@ -1886,22 +1934,26 @@ impl Generator for PythonGenerator {
 
         // Insert imports before function definition
         // Search for "async def" first to avoid matching "def" inside "async def"
-        let import_offset = if let Some(def_pos) = code.find("async def ").or_else(|| code.find("def ")) {
-            code.insert_str(def_pos, &import_lines);
-            import_lines.len()
-        } else {
-            code.insert_str(0, &import_lines);
-            import_lines.len()
-        };
+        let import_offset =
+            if let Some(def_pos) = code.find("async def ").or_else(|| code.find("def ")) {
+                code.insert_str(def_pos, &import_lines);
+                import_lines.len()
+            } else {
+                code.insert_str(0, &import_lines);
+                import_lines.len()
+            };
 
         // Compute injection ranges and injections using the analyzer (if requested)
         let (ranges, injections, expression_braces) = if options.include_ranges {
             // Adjust tracked ranges by the import line offset
-            let adjusted_ranges: Vec<crate::generate::Range> = tracked_ranges.into_iter().map(|mut r| {
-                r.compiled_start += import_offset;
-                r.compiled_end += import_offset;
-                r
-            }).collect();
+            let adjusted_ranges: Vec<crate::generate::Range> = tracked_ranges
+                .into_iter()
+                .map(|mut r| {
+                    r.compiled_start += import_offset;
+                    r.compiled_end += import_offset;
+                    r
+                })
+                .collect();
 
             let analyzer = super::InjectionAnalyzer::new();
             let (ranges, injections) = analyzer.analyze(ast, &code, &ast.source, adjusted_ranges);
@@ -2065,7 +2117,10 @@ fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
             // expr_span.end points TO closing brace (not past it)
             braces.push((expr_span.start.byte, expr_span.end.byte));
         }
-        AttributeKind::SlotAssignment { expr_span: Some(span), .. } => {
+        AttributeKind::SlotAssignment {
+            expr_span: Some(span),
+            ..
+        } => {
             // expr_span.end points TO closing brace
             braces.push((span.start.byte, span.end.byte));
         }

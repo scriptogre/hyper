@@ -3,7 +3,6 @@
 /// These tests verify that error messages have correct highlighting.
 /// The visible_ansi function converts ANSI codes to visible markers for comparison.
 /// The assert_highlighted helper verifies a word is wrapped in color codes.
-
 use hyper_transpiler::error::{ErrorKind, ParseError};
 use hyper_transpiler::parser::tokenizer::{Position, Span};
 
@@ -37,8 +36,12 @@ fn visible_ansi(s: &str) -> String {
 fn assert_highlighted(rendered: &str, text: &str) {
     let visible = visible_ansi(rendered);
     let pattern = format!("›{}‹", text);
-    assert!(visible.contains(&pattern),
-        "Expected '{}' to be highlighted (wrapped in ANSI codes).\nGot: {}", text, visible);
+    assert!(
+        visible.contains(&pattern),
+        "Expected '{}' to be highlighted (wrapped in ANSI codes).\nGot: {}",
+        text,
+        visible
+    );
 }
 
 /// Find the source line from a rendered error — the line with a line number, pipe
@@ -48,19 +51,30 @@ fn get_source_line(source: &str) -> String {
         ErrorKind::InvalidSyntax,
         "test",
         Span {
-            start: Position { byte: 0, line: 0, col: 0 },
-            end: Position { byte: 1, line: 0, col: 1 },
+            start: Position {
+                byte: 0,
+                line: 0,
+                col: 0,
+            },
+            end: Position {
+                byte: 1,
+                line: 0,
+                col: 1,
+            },
         },
     );
     let rendered = err.render_color(source, "test.hyper");
     // The source line has syntax-highlighting color codes (38;5;NNN) after the pipe,
     // unlike the blank gutter line which only has dim/reset codes.
-    rendered.lines()
-        .find(|l| l.contains('|') && {
-            if let Some(pipe_pos) = l.find('|') {
-                l[pipe_pos..].contains("\x1b[38;5;")
-            } else {
-                false
+    rendered
+        .lines()
+        .find(|l| {
+            l.contains('|') && {
+                if let Some(pipe_pos) = l.find('|') {
+                    l[pipe_pos..].contains("\x1b[38;5;")
+                } else {
+                    false
+                }
             }
         })
         .unwrap_or("")
@@ -73,12 +87,21 @@ fn get_error_message_line(message: &str) -> String {
         ErrorKind::InvalidSyntax,
         message,
         Span {
-            start: Position { byte: 0, line: 0, col: 0 },
-            end: Position { byte: 1, line: 0, col: 1 },
+            start: Position {
+                byte: 0,
+                line: 0,
+                col: 0,
+            },
+            end: Position {
+                byte: 1,
+                line: 0,
+                col: 1,
+            },
         },
     );
     let rendered = err.render_color("x", "test.hyper");
-    rendered.lines()
+    rendered
+        .lines()
         .find(|l| l.contains("error"))
         .unwrap_or("")
         .to_string()
@@ -90,12 +113,22 @@ fn get_help_line(help: &str) -> String {
         ErrorKind::InvalidSyntax,
         "test",
         Span {
-            start: Position { byte: 0, line: 0, col: 0 },
-            end: Position { byte: 1, line: 0, col: 1 },
+            start: Position {
+                byte: 0,
+                line: 0,
+                col: 0,
+            },
+            end: Position {
+                byte: 1,
+                line: 0,
+                col: 1,
+            },
         },
-    ).with_help(help);
+    )
+    .with_help(help);
     let rendered = err.render_color("x", "test.hyper");
-    rendered.lines()
+    rendered
+        .lines()
         .find(|l| l.contains("help:"))
         .unwrap_or("")
         .to_string()
@@ -142,9 +175,15 @@ mod highlight_syntax {
         let line = get_source_line(r#"<div class="container">"#);
         // In source highlighting, <div is colored as TAG, and class as ATTR
         let visible = visible_ansi(&line);
-        assert!(visible.contains("‹38;5;180›"), "Should have TAG color code for <div");
+        assert!(
+            visible.contains("‹38;5;180›"),
+            "Should have TAG color code for <div"
+        );
         assert!(visible.contains("div"), "Should contain tag name");
-        assert!(visible.contains("‹38;5;250›"), "Should have ATTR color code for class");
+        assert!(
+            visible.contains("‹38;5;250›"),
+            "Should have ATTR color code for class"
+        );
         assert!(visible.contains("class"), "Should contain attribute");
     }
 }
@@ -182,7 +221,9 @@ mod highlight_help {
 
     #[test]
     fn void_element_tags() {
-        let line = get_help_line("<br> is a void element (like <img>, <input>, <hr>). Write it as <br /> instead.");
+        let line = get_help_line(
+            "<br> is a void element (like <img>, <input>, <hr>). Write it as <br /> instead.",
+        );
         assert_highlighted(&line, "<br>");
         assert_highlighted(&line, "<img>");
         assert_highlighted(&line, "<input>");
@@ -191,7 +232,9 @@ mod highlight_help {
 
     #[test]
     fn close_tag_help() {
-        let line = get_help_line("Add </div> to close this element, or use <div /> if it has no children.");
+        let line = get_help_line(
+            "Add </div> to close this element, or use <div /> if it has no children.",
+        );
         assert_highlighted(&line, "</div>");
         assert_highlighted(&line, "<div />");
     }

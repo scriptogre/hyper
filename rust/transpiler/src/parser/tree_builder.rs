@@ -1,6 +1,6 @@
-use super::tokenizer::{Token, Span, Position};
+use super::tokenizer::{Position, Span, Token};
 use crate::ast::*;
-use crate::error::{ParseError, ParseResult, ErrorKind};
+use crate::error::{ErrorKind, ParseError, ParseResult};
 use crate::html;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ pub struct TreeBuilder {
     tokens: Vec<Token>,
     pos: usize,
     source: Arc<str>,
-    in_header: bool, // Track if we're before the --- separator
+    in_header: bool,            // Track if we're before the --- separator
     element_stack: Vec<String>, // Parent element names for nesting validation
 }
 
@@ -189,7 +189,11 @@ impl TreeBuilder {
                     .with_help(format!(
                         "<{}> is a void element (like {}). Write it as <{} /> instead.",
                         element_tag,
-                        examples.iter().map(|e| format!("<{}>", e)).collect::<Vec<_>>().join(", "),
+                        examples
+                            .iter()
+                            .map(|e| format!("<{}>", e))
+                            .collect::<Vec<_>>()
+                            .join(", "),
                         element_tag
                     ))
                     .boxed());
@@ -263,7 +267,12 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::ControlStart { keyword, rest, span, rest_span } => {
+            Token::ControlStart {
+                keyword,
+                rest,
+                span,
+                rest_span,
+            } => {
                 let keyword = keyword.clone();
                 let rest = rest.clone();
                 let span = *span;
@@ -279,17 +288,11 @@ impl TreeBuilder {
                 if self.in_header && self.is_parameter_declaration(&code) {
                     self.parse_parameter(&code, &span)
                 } else if self.is_import_statement(&code) {
-                    let node = Node::Import(ImportNode {
-                        stmt: code,
-                        span,
-                    });
+                    let node = Node::Import(ImportNode { stmt: code, span });
                     self.advance();
                     Ok(Some(node))
                 } else {
-                    let node = Node::Statement(StatementNode {
-                        stmt: code,
-                        span,
-                    });
+                    let node = Node::Statement(StatementNode { stmt: code, span });
                     self.advance();
                     Ok(Some(node))
                 }
@@ -401,11 +404,17 @@ impl TreeBuilder {
                 ErrorKind::InvalidSyntax,
                 format!("'{}' is not a recognized block keyword.", keyword),
                 *span,
-            ).boxed()),
+            )
+            .boxed()),
         }
     }
 
-    fn parse_if(&mut self, condition: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
+    fn parse_if(
+        &mut self,
+        condition: &str,
+        span: &Span,
+        rest_span: &Span,
+    ) -> ParseResult<Option<Node>> {
         let condition_span = *rest_span;
         let if_span = *span;
 
@@ -415,8 +424,12 @@ impl TreeBuilder {
         let mut elif_branches = Vec::new();
         let mut else_branch = None;
 
-        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) =
-            self.peek()
+        while let Some(Token::ControlContinuation {
+            keyword,
+            rest,
+            span,
+            rest_span,
+        }) = self.peek()
         {
             match keyword.as_str() {
                 "elif" => {
@@ -449,7 +462,13 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_for(&mut self, rest: &str, span: &Span, rest_span: &Span, is_async: bool) -> ParseResult<Option<Node>> {
+    fn parse_for(
+        &mut self,
+        rest: &str,
+        span: &Span,
+        rest_span: &Span,
+        is_async: bool,
+    ) -> ParseResult<Option<Node>> {
         // Parse "binding in iterable"
         let parts: Vec<&str> = rest.splitn(2, " in ").collect();
         if parts.len() != 2 {
@@ -459,10 +478,7 @@ impl TreeBuilder {
                 format!("This doesn't look like a valid {} loop.", keyword),
                 *span,
             )
-            .with_help(format!(
-                "Syntax: {} x in items:",
-                keyword
-            ))
+            .with_help(format!("Syntax: {} x in items:", keyword))
             .boxed());
         }
 
@@ -507,7 +523,12 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_while(&mut self, condition: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
+    fn parse_while(
+        &mut self,
+        condition: &str,
+        span: &Span,
+        rest_span: &Span,
+    ) -> ParseResult<Option<Node>> {
         let condition_span = *rest_span;
         let while_span = *span;
 
@@ -525,7 +546,12 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_match(&mut self, expr: &str, span: &Span, rest_span: &Span) -> ParseResult<Option<Node>> {
+    fn parse_match(
+        &mut self,
+        expr: &str,
+        span: &Span,
+        rest_span: &Span,
+    ) -> ParseResult<Option<Node>> {
         let expr_span = *rest_span;
         let match_span = *span;
 
@@ -535,7 +561,12 @@ impl TreeBuilder {
         // Skip newlines and indents before looking for case statements
         self.skip_structural_tokens();
 
-        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) = self.peek()
+        while let Some(Token::ControlContinuation {
+            keyword,
+            rest,
+            span,
+            rest_span,
+        }) = self.peek()
         {
             if keyword == "case" {
                 let pattern = rest.clone().unwrap_or_default();
@@ -568,7 +599,13 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_with(&mut self, items: &str, span: &Span, rest_span: &Span, is_async: bool) -> ParseResult<Option<Node>> {
+    fn parse_with(
+        &mut self,
+        items: &str,
+        span: &Span,
+        rest_span: &Span,
+        is_async: bool,
+    ) -> ParseResult<Option<Node>> {
         let items_span = *rest_span;
         let with_span = *span;
 
@@ -598,8 +635,12 @@ impl TreeBuilder {
         let mut else_clause = None;
         let mut finally_clause = None;
 
-        while let Some(Token::ControlContinuation { keyword, rest, span, rest_span }) =
-            self.peek()
+        while let Some(Token::ControlContinuation {
+            keyword,
+            rest,
+            span,
+            rest_span,
+        }) = self.peek()
         {
             match keyword.as_str() {
                 "except" => {
@@ -779,7 +820,11 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    fn parse_until_element_close(&mut self, tag: &str, open_span: &Span) -> ParseResult<(Vec<Node>, Option<Span>)> {
+    fn parse_until_element_close(
+        &mut self,
+        tag: &str,
+        open_span: &Span,
+    ) -> ParseResult<(Vec<Node>, Option<Span>)> {
         self.element_stack.push(tag.to_string());
         let mut nodes = Vec::new();
 
@@ -825,7 +870,9 @@ impl TreeBuilder {
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::ComponentClose {
-                    name: close_name, span: close_span, ..
+                    name: close_name,
+                    span: close_span,
+                    ..
                 }) if close_name == name => {
                     let close_span = *close_span;
                     self.advance();
@@ -849,13 +896,19 @@ impl TreeBuilder {
         .boxed())
     }
 
-    fn parse_until_slot_close(&mut self, name: &Option<String>, open_span: &Span) -> ParseResult<(Vec<Node>, Option<Span>)> {
+    fn parse_until_slot_close(
+        &mut self,
+        name: &Option<String>,
+        open_span: &Span,
+    ) -> ParseResult<(Vec<Node>, Option<Span>)> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::SlotClose {
-                    name: close_name, span: close_span, ..
+                    name: close_name,
+                    span: close_span,
+                    ..
                 }) if close_name == name => {
                     let close_span = *close_span;
                     self.advance();
@@ -869,7 +922,10 @@ impl TreeBuilder {
             }
         }
 
-        let slot_name = name.as_ref().map(|n| format!("...{}", n)).unwrap_or_else(|| "...".to_string());
+        let slot_name = name
+            .as_ref()
+            .map(|n| format!("...{}", n))
+            .unwrap_or_else(|| "...".to_string());
         Err(ParseError::new(
             ErrorKind::UnclosedSlot,
             format!("<{{{}}}> is never closed.", slot_name),
@@ -919,13 +975,11 @@ impl TreeBuilder {
                         expr: code.clone(),
                         expr_span: *span,
                     },
-                    AttributeValue::SlotAssignment(name, span) => {
-                        AttributeKind::SlotAssignment {
-                            name: name.clone(),
-                            expr: None,
-                            expr_span: Some(*span),
-                        }
-                    }
+                    AttributeValue::SlotAssignment(name, span) => AttributeKind::SlotAssignment {
+                        name: name.clone(),
+                        expr: None,
+                        expr_span: Some(*span),
+                    },
                 };
 
                 Attribute {
@@ -967,7 +1021,11 @@ impl TreeBuilder {
         Ok(())
     }
 
-    fn check_duplicate_attributes(&self, attrs: &[Attribute], _element_span: &Span) -> ParseResult<()> {
+    fn check_duplicate_attributes(
+        &self,
+        attrs: &[Attribute],
+        _element_span: &Span,
+    ) -> ParseResult<()> {
         let mut seen = HashMap::new();
         for attr in attrs {
             let name = match &attr.kind {
@@ -1010,8 +1068,7 @@ impl TreeBuilder {
     }
 
     fn is_at_end(&self) -> bool {
-        self.pos >= self.tokens.len()
-            || matches!(self.peek(), Some(Token::Eof { .. }))
+        self.pos >= self.tokens.len() || matches!(self.peek(), Some(Token::Eof { .. }))
     }
 
     /// Skip over newlines and indents
@@ -1036,8 +1093,11 @@ impl TreeBuilder {
 
         // 1. Check for debug format: trailing `=` (but not ==, !=, <=, >=)
         let trimmed = expr.trim_end();
-        if trimmed.ends_with('=') && !trimmed.ends_with("==") && !trimmed.ends_with("!=")
-            && !trimmed.ends_with("<=") && !trimmed.ends_with(">=")
+        if trimmed.ends_with('=')
+            && !trimmed.ends_with("==")
+            && !trimmed.ends_with("!=")
+            && !trimmed.ends_with("<=")
+            && !trimmed.ends_with(">=")
         {
             debug = true;
             expr = trimmed[..trimmed.len() - 1].to_string();
@@ -1089,9 +1149,16 @@ impl TreeBuilder {
                 }
             } else {
                 match ch {
-                    '"' | '\'' => { in_string = true; string_char = ch; }
-                    '(' | '[' | '{' => { depth += 1; }
-                    ')' | ']' | '}' => { depth = depth.saturating_sub(1); }
+                    '"' | '\'' => {
+                        in_string = true;
+                        string_char = ch;
+                    }
+                    '(' | '[' | '{' => {
+                        depth += 1;
+                    }
+                    ')' | ']' | '}' => {
+                        depth = depth.saturating_sub(1);
+                    }
                     _ => {}
                 }
             }
@@ -1124,9 +1191,16 @@ impl TreeBuilder {
                 }
             } else {
                 match ch {
-                    '"' | '\'' => { in_string = true; string_char = ch; }
-                    '(' | '[' | '{' => { depth += 1; }
-                    ')' | ']' | '}' => { depth = depth.saturating_sub(1); }
+                    '"' | '\'' => {
+                        in_string = true;
+                        string_char = ch;
+                    }
+                    '(' | '[' | '{' => {
+                        depth += 1;
+                    }
+                    ')' | ']' | '}' => {
+                        depth = depth.saturating_sub(1);
+                    }
                     ':' if depth == 0 => {
                         last_colon_at_depth_0 = Some(i);
                     }
@@ -1219,11 +1293,13 @@ impl TreeBuilder {
                 ErrorKind::InvalidSyntax,
                 "Hyper components don't support *args.".to_string(),
                 *span,
-            ).with_help(
+            )
+            .with_help(
                 "Hyper components use keyword-only arguments, so *args (which captures \
                 positional arguments) doesn't make sense. If you want to accept extra \
-                keyword arguments, use **kwargs instead."
-            ).boxed());
+                keyword arguments, use **kwargs instead.",
+            )
+            .boxed());
         }
 
         // Check if there's a default value

@@ -1,12 +1,12 @@
-mod helper_detect;
 mod async_detect;
-mod slot_detect;
+mod helper_detect;
 mod metadata;
+mod slot_detect;
 
-pub use helper_detect::HelperDetectionPlugin;
 pub use async_detect::AsyncDetectionPlugin;
-pub use slot_detect::SlotDetectionPlugin;
+pub use helper_detect::HelperDetectionPlugin;
 pub use metadata::TransformMetadata;
+pub use slot_detect::SlotDetectionPlugin;
 
 use crate::ast::{Ast, Node};
 
@@ -50,7 +50,11 @@ impl Transformer {
         &self.metadata
     }
 
-    fn visit_nodes(nodes: &mut Vec<Node>, visitor: &mut dyn Visitor, metadata: &mut TransformMetadata) {
+    fn visit_nodes(
+        nodes: &mut Vec<Node>,
+        visitor: &mut dyn Visitor,
+        metadata: &mut TransformMetadata,
+    ) {
         for node in nodes {
             if visitor.enter(node, metadata) {
                 // Visit children based on node type

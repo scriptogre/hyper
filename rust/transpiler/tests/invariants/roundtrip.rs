@@ -38,7 +38,10 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     // but the content is semantically identical and Python syntax highlighting works
     // correctly regardless of indentation within bracket/paren groups.
     let normalize = |s: &str| -> String {
-        s.lines().map(|l| l.trim_start()).collect::<Vec<_>>().join("\n")
+        s.lines()
+            .map(|l| l.trim_start())
+            .collect::<Vec<_>>()
+            .join("\n")
     };
 
     if normalize(&virtual_python) != normalize(&result.code) {

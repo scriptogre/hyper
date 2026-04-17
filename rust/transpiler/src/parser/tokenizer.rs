@@ -1,4 +1,3 @@
-
 /// Position in source code (byte offset only; convert to UTF-16 at output time)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
@@ -12,7 +11,11 @@ pub struct Position {
 
 impl Position {
     pub fn new() -> Self {
-        Self { byte: 0, line: 0, col: 0 }
+        Self {
+            byte: 0,
+            line: 0,
+            col: 0,
+        }
     }
 }
 
@@ -66,15 +69,29 @@ pub enum Token {
 
     // === Python Domain ===
     /// Control flow start: if, for, while, match, with, try, def, class, async for, async with, async def
-    ControlStart { keyword: String, rest: String, span: Span, rest_span: Span },
+    ControlStart {
+        keyword: String,
+        rest: String,
+        span: Span,
+        rest_span: Span,
+    },
     /// Control flow continuation: else, elif, case, except, finally
-    ControlContinuation { keyword: String, rest: Option<String>, span: Span, rest_span: Option<Span> },
+    ControlContinuation {
+        keyword: String,
+        rest: Option<String>,
+        span: Span,
+        rest_span: Option<Span>,
+    },
     /// Block terminator: end
     End { span: Span },
     /// Python statement (assignment, call, import, etc.)
     PythonStatement { code: String, span: Span },
     /// Comment (including the # prefix)
-    Comment { text: String, span: Span, inline: bool },
+    Comment {
+        text: String,
+        span: Span,
+        inline: bool,
+    },
     /// Decorator (@something)
     Decorator { code: String, span: Span },
 
@@ -88,7 +105,13 @@ pub enum Token {
 
     // === Components ===
     /// Component opening tag: <{Name} attributes>
-    ComponentOpen { name: String, name_span: Span, attributes: Vec<Attribute>, self_closing: bool, span: Span },
+    ComponentOpen {
+        name: String,
+        name_span: Span,
+        attributes: Vec<Attribute>,
+        self_closing: bool,
+        span: Span,
+    },
     /// Component closing tag: </{Name}>
     ComponentClose { name: String, span: Span },
 
@@ -96,11 +119,11 @@ pub enum Token {
     /// HTML element opening tag: <tag attributes>
     HtmlElementOpen {
         tag: String,
-        tag_span: Span,              // Position of "<tag" (opening bracket + tag name)
+        tag_span: Span, // Position of "<tag" (opening bracket + tag name)
         attributes: Vec<Attribute>,
         close_bracket_pos: Position, // Position of ">" or "/>"
         self_closing: bool,
-        span: Span,                  // Overall span covering entire token
+        span: Span, // Overall span covering entire token
     },
     /// HTML element closing tag: </tag>
     HtmlElementClose { tag: String, span: Span },
@@ -125,7 +148,10 @@ impl Token {
         match self {
             Token::Indent { span, .. } => *span,
             Token::Newline { span, .. } => *span,
-            Token::Eof { position } => Span { start: *position, end: *position },
+            Token::Eof { position } => Span {
+                start: *position,
+                end: *position,
+            },
             Token::ControlStart { span, .. } => *span,
             Token::ControlContinuation { span, .. } => *span,
             Token::End { span, .. } => *span,
@@ -203,7 +229,9 @@ impl<'a> Tokenizer<'a> {
             self.tokenize_line(&mut tokens);
         }
 
-        tokens.push(Token::Eof { position: self.position });
+        tokens.push(Token::Eof {
+            position: self.position,
+        });
         tokens
     }
 
@@ -215,7 +243,10 @@ impl<'a> Tokenizer<'a> {
         if indent_level > 0 {
             tokens.push(Token::Indent {
                 level: indent_level,
-                span: Span { start: indent_start, end: self.position },
+                span: Span {
+                    start: indent_start,
+                    end: self.position,
+                },
             });
         }
 
@@ -227,7 +258,10 @@ impl<'a> Tokenizer<'a> {
             let nl_start = self.position;
             self.consume_newline();
             tokens.push(Token::Newline {
-                span: Span { start: nl_start, end: self.position },
+                span: Span {
+                    start: nl_start,
+                    end: self.position,
+                },
             });
             return;
         }
@@ -245,7 +279,10 @@ impl<'a> Tokenizer<'a> {
 
             tokens.push(Token::PythonStatement {
                 code: line_content.to_string(),
-                span: Span { start: line_start, end: self.position },
+                span: Span {
+                    start: line_start,
+                    end: self.position,
+                },
             });
 
             // Consume newline
@@ -253,7 +290,10 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span { start: nl_start, end: self.position },
+                    span: Span {
+                        start: nl_start,
+                        end: self.position,
+                    },
                 });
             }
             return;
@@ -270,9 +310,7 @@ impl<'a> Tokenizer<'a> {
             let trimmed = line_content.trim();
 
             let should_exit = match &exit_mode {
-                RawContentExit::ClosingTag(tag) => {
-                    trimmed.starts_with(&format!("</{}", tag))
-                }
+                RawContentExit::ClosingTag(tag) => trimmed.starts_with(&format!("</{}", tag)),
                 RawContentExit::EndKeyword { indent } => {
                     trimmed == "end" && indent_level == *indent
                 }
@@ -296,7 +334,10 @@ impl<'a> Tokenizer<'a> {
                 let text = self.consume_to_eol();
                 tokens.push(Token::Text {
                     text,
-                    span: Span { start: text_start, end: self.position },
+                    span: Span {
+                        start: text_start,
+                        end: self.position,
+                    },
                 });
             }
 
@@ -305,7 +346,10 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span { start: nl_start, end: self.position },
+                    span: Span {
+                        start: nl_start,
+                        end: self.position,
+                    },
                 });
             }
             return;
@@ -317,12 +361,17 @@ impl<'a> Tokenizer<'a> {
             let trimmed = line_content.trim();
             if trimmed == "raw:" || trimmed == "raw :" {
                 self.skip_to_eol();
-                self.in_raw_content = Some(RawContentExit::EndKeyword { indent: indent_level });
+                self.in_raw_content = Some(RawContentExit::EndKeyword {
+                    indent: indent_level,
+                });
                 if self.at_newline() {
                     let nl_start = self.position;
                     self.consume_newline();
                     tokens.push(Token::Newline {
-                        span: Span { start: nl_start, end: self.position },
+                        span: Span {
+                            start: nl_start,
+                            end: self.position,
+                        },
                     });
                 }
                 return;
@@ -335,7 +384,11 @@ impl<'a> Tokenizer<'a> {
         // Check for multi-line string start
         let trimmed = line_content.trim();
         if trimmed.starts_with("\"\"\"") || trimmed.starts_with("'''") {
-            let delimiter = if trimmed.starts_with("\"\"\"") { "\"\"\"" } else { "'''" };
+            let delimiter = if trimmed.starts_with("\"\"\"") {
+                "\"\"\""
+            } else {
+                "'''"
+            };
             // Count occurrences of delimiter in line
             let count = trimmed.matches(delimiter).count();
             // If odd number, we're entering a multi-line string
@@ -347,7 +400,10 @@ impl<'a> Tokenizer<'a> {
             self.skip_to_eol();
             tokens.push(Token::PythonStatement {
                 code: line_content.to_string(),
-                span: Span { start: line_start, end: self.position },
+                span: Span {
+                    start: line_start,
+                    end: self.position,
+                },
             });
 
             // Consume newline
@@ -355,7 +411,10 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span { start: nl_start, end: self.position },
+                    span: Span {
+                        start: nl_start,
+                        end: self.position,
+                    },
                 });
             }
             return;
@@ -367,7 +426,10 @@ impl<'a> Tokenizer<'a> {
             let sep_start = self.position;
             self.skip_to_eol();
             tokens.push(Token::Separator {
-                span: Span { start: sep_start, end: self.position },
+                span: Span {
+                    start: sep_start,
+                    end: self.position,
+                },
             });
         }
         // 1. Comment (starts with #)
@@ -375,21 +437,22 @@ impl<'a> Tokenizer<'a> {
             self.tokenize_comment(tokens);
         }
         // 2. Decorator (starts with @, no HTML, not CSS at-rules)
-        else if line_content.starts_with("@") && !line_content.contains('<') && !self.is_css_at_rule(&line_content) {
+        else if line_content.starts_with("@")
+            && !line_content.contains('<')
+            && !self.is_css_at_rule(&line_content)
+        {
             self.tokenize_decorator(tokens);
         }
         // 3. Slot definition tags: <{...}> or <{...name}>
         else if line_content.starts_with("<{...") {
             self.tokenize_slot_open(tokens);
-        }
-        else if line_content.starts_with("</{...") {
+        } else if line_content.starts_with("</{...") {
             self.tokenize_slot_close(tokens);
         }
         // 4. Component tags: <{Name}>
         else if line_content.starts_with("<{") {
             self.tokenize_component_open(tokens);
-        }
-        else if line_content.starts_with("</{") {
+        } else if line_content.starts_with("</{") {
             self.tokenize_component_close(tokens);
         }
         // 4. End keyword (before content check!)
@@ -397,11 +460,15 @@ impl<'a> Tokenizer<'a> {
             let end_start = self.position;
             self.skip_to_eol();
             tokens.push(Token::End {
-                span: Span { start: end_start, end: self.position },
+                span: Span {
+                    start: end_start,
+                    end: self.position,
+                },
             });
         }
         // 5. Fragment definition
-        else if line_content.trim().starts_with("fragment ") && line_content.trim().ends_with(':') {
+        else if line_content.trim().starts_with("fragment ") && line_content.trim().ends_with(':')
+        {
             self.tokenize_fragment_start(tokens, &line_content);
         }
         // 6. Control flow keywords
@@ -423,7 +490,9 @@ impl<'a> Tokenizer<'a> {
         // 7.6. Parameter declarations (*args: type, **kwargs: type, name: type)
         // These aren't valid Python statements but are valid in header zone
         // 8. Check if it's a Python statement using tree-sitter
-        else if self.is_parameter_declaration(&line_content) || self.is_python_statement(&line_content) {
+        else if self.is_parameter_declaration(&line_content)
+            || self.is_python_statement(&line_content)
+        {
             self.tokenize_python_statement(tokens);
         }
         // 9. Default: treat as content
@@ -439,7 +508,10 @@ impl<'a> Tokenizer<'a> {
             let nl_start = self.position;
             self.consume_newline();
             tokens.push(Token::Newline {
-                span: Span { start: nl_start, end: self.position },
+                span: Span {
+                    start: nl_start,
+                    end: self.position,
+                },
             });
         }
     }
@@ -483,12 +555,12 @@ impl<'a> Tokenizer<'a> {
         }
 
         // class: must be followed by identifier (not `=`), and end with `:`
-        if let Some(rest) = trimmed.strip_prefix("class ") {
-            if let Some(first_char) = rest.chars().next() {
-                if (first_char.is_alphabetic() || first_char == '_') && effective.ends_with(':') {
-                    return true;
-                }
-            }
+        if let Some(rest) = trimmed.strip_prefix("class ")
+            && let Some(first_char) = rest.chars().next()
+            && (first_char.is_alphabetic() || first_char == '_')
+            && effective.ends_with(':')
+        {
+            return true;
         }
 
         false
@@ -537,15 +609,15 @@ impl<'a> Tokenizer<'a> {
 
         // Regular parameter: name: type or name: type = default
         // Must start with identifier character
-        if let Some(first_char) = trimmed.chars().next() {
-            if first_char.is_alphabetic() || first_char == '_' {
-                // Check colon comes before any = (for defaults)
-                if let Some(colon_pos) = trimmed.find(':') {
-                    if let Some(equals_pos) = trimmed.find('=') {
-                        return colon_pos < equals_pos;
-                    }
-                    return true;
+        if let Some(first_char) = trimmed.chars().next()
+            && (first_char.is_alphabetic() || first_char == '_')
+        {
+            // Check colon comes before any = (for defaults)
+            if let Some(colon_pos) = trimmed.find(':') {
+                if let Some(equals_pos) = trimmed.find('=') {
+                    return colon_pos < equals_pos;
                 }
+                return true;
             }
         }
 
@@ -554,30 +626,32 @@ impl<'a> Tokenizer<'a> {
 
     fn is_control_continuation(&self, line: &str) -> bool {
         let trimmed = line.trim();
-        trimmed.starts_with("else:") || trimmed.starts_with("else :") ||
-        trimmed.starts_with("elif ") ||
-        trimmed.starts_with("except") ||
-        trimmed.starts_with("finally:") || trimmed.starts_with("finally :") ||
-        trimmed.starts_with("case ")
+        trimmed.starts_with("else:")
+            || trimmed.starts_with("else :")
+            || trimmed.starts_with("elif ")
+            || trimmed.starts_with("except")
+            || trimmed.starts_with("finally:")
+            || trimmed.starts_with("finally :")
+            || trimmed.starts_with("case ")
     }
 
     /// Check if line is a CSS at-rule (to avoid treating as Python decorator)
     fn is_css_at_rule(&self, line: &str) -> bool {
         let trimmed = line.trim();
         // Common CSS at-rules
-        trimmed.starts_with("@media") ||
-        trimmed.starts_with("@keyframes") ||
-        trimmed.starts_with("@import") ||
-        trimmed.starts_with("@charset") ||
-        trimmed.starts_with("@font-face") ||
-        trimmed.starts_with("@supports") ||
-        trimmed.starts_with("@namespace") ||
-        trimmed.starts_with("@page") ||
-        trimmed.starts_with("@counter-style") ||
-        trimmed.starts_with("@layer") ||
-        trimmed.starts_with("@property") ||
-        trimmed.starts_with("@container") ||
-        trimmed.starts_with("@scope")
+        trimmed.starts_with("@media")
+            || trimmed.starts_with("@keyframes")
+            || trimmed.starts_with("@import")
+            || trimmed.starts_with("@charset")
+            || trimmed.starts_with("@font-face")
+            || trimmed.starts_with("@supports")
+            || trimmed.starts_with("@namespace")
+            || trimmed.starts_with("@page")
+            || trimmed.starts_with("@counter-style")
+            || trimmed.starts_with("@layer")
+            || trimmed.starts_with("@property")
+            || trimmed.starts_with("@container")
+            || trimmed.starts_with("@scope")
     }
 
     /// Check if tag is a raw text element whose content should not be parsed
@@ -593,7 +667,9 @@ impl<'a> Tokenizer<'a> {
             return true;
         }
 
-        let Some(first_char) = trimmed.chars().next() else { return true };
+        let Some(first_char) = trimmed.chars().next() else {
+            return true;
+        };
 
         // Triple-quoted strings are Python docstrings, not content
         if trimmed.starts_with("\"\"\"") || trimmed.starts_with("'''") {
@@ -606,8 +682,8 @@ impl<'a> Tokenizer<'a> {
         // - Pure text without Python operators
         match first_char {
             // HTML tags or content starting with punctuation (except @ which is decorator)
-            '<' | '>' | '&' | '!' | '?' | '/' | '*' | '+' | '-' | '.' | ',' | ';' | ':' |
-            '[' | ']' | '(' | ')' | '"' | '\'' | '`' | '~' | '^' | '%' | '$' | '|' => {
+            '<' | '>' | '&' | '!' | '?' | '/' | '*' | '+' | '-' | '.' | ',' | ';' | ':' | '['
+            | ']' | '(' | ')' | '"' | '\'' | '`' | '~' | '^' | '%' | '$' | '|' => {
                 return true;
             }
             // Numbers at start are content (Python statements don't start with digits)
@@ -691,28 +767,41 @@ impl<'a> Tokenizer<'a> {
                 return false;
             }
 
-            if root.kind() == "module" {
-                if let Some(child) = root.child(0) {
-                    match child.kind() {
-                        // These are definitely Python statements
-                        "assignment" | "augmented_assignment" |
-                        "import_statement" | "import_from_statement" |
-                        "return_statement" | "raise_statement" | "assert_statement" |
-                        "pass_statement" | "break_statement" | "continue_statement" |
-                        "delete_statement" | "global_statement" | "nonlocal_statement" => {
-                            return true;
-                        }
-                        "expression_statement" => {
-                            // Check if it's a meaningful expression (call, await, etc.)
-                            if let Some(expr) = child.child(0) {
-                                return matches!(expr.kind(),
-                                    "call" | "await" | "yield" | "named_expression" |
-                                    "assignment" | "augmented_assignment"
-                                );
-                            }
-                        }
-                        _ => {}
+            if root.kind() == "module"
+                && let Some(child) = root.child(0)
+            {
+                match child.kind() {
+                    // These are definitely Python statements
+                    "assignment"
+                    | "augmented_assignment"
+                    | "import_statement"
+                    | "import_from_statement"
+                    | "return_statement"
+                    | "raise_statement"
+                    | "assert_statement"
+                    | "pass_statement"
+                    | "break_statement"
+                    | "continue_statement"
+                    | "delete_statement"
+                    | "global_statement"
+                    | "nonlocal_statement" => {
+                        return true;
                     }
+                    "expression_statement" => {
+                        // Check if it's a meaningful expression (call, await, etc.)
+                        if let Some(expr) = child.child(0) {
+                            return matches!(
+                                expr.kind(),
+                                "call"
+                                    | "await"
+                                    | "yield"
+                                    | "named_expression"
+                                    | "assignment"
+                                    | "augmented_assignment"
+                            );
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
@@ -732,7 +821,10 @@ impl<'a> Tokenizer<'a> {
             let after_eq = &trimmed[eq_pos + 3..].trim_start();
 
             // Check if what follows = is HTML or a parenthesized expression
-            if after_eq.starts_with('<') && !after_eq.starts_with("<=") && !after_eq.starts_with("<<") {
+            if after_eq.starts_with('<')
+                && !after_eq.starts_with("<=")
+                && !after_eq.starts_with("<<")
+            {
                 // Verify the left side is a valid identifier (possibly with type annotation)
                 let before_eq = &trimmed[..eq_pos].trim();
 
@@ -745,9 +837,12 @@ impl<'a> Tokenizer<'a> {
 
                 // Check it's a valid identifier
                 if !identifier.is_empty() {
-                    let Some(first) = identifier.chars().next() else { return false };
+                    let Some(first) = identifier.chars().next() else {
+                        return false;
+                    };
                     if (first.is_alphabetic() || first == '_')
-                        && identifier.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                        && identifier.chars().all(|c| c.is_alphanumeric() || c == '_')
+                    {
                         return true;
                     }
                 }
@@ -771,7 +866,9 @@ impl<'a> Tokenizer<'a> {
         let has_call = trimmed.contains('(') && !trimmed.contains(')');
 
         // Check for valid Python identifier at start
-        let starts_with_identifier = trimmed.chars().next()
+        let starts_with_identifier = trimmed
+            .chars()
+            .next()
             .map(|c| c.is_alphabetic() || c == '_')
             .unwrap_or(false);
 
@@ -785,7 +882,10 @@ impl<'a> Tokenizer<'a> {
         let text = self.consume_to_eol();
         tokens.push(Token::Comment {
             text,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
             inline: false,
         });
     }
@@ -795,7 +895,10 @@ impl<'a> Tokenizer<'a> {
         let code = self.consume_to_eol();
         tokens.push(Token::Decorator {
             code,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -814,7 +917,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::FragmentStart {
             name,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -828,37 +934,61 @@ impl<'a> Tokenizer<'a> {
         let effective = self.strip_trailing_comment(trimmed);
 
         // Handle compound keywords (async for, async with, async def)
-        let (keyword, rest, rest_offset_in_effective) = if let Some(after) = effective.strip_prefix("async for ") {
-            let rest_start = 10 + after.len() - after.trim_start().len();
-            ("async for".to_string(), after.trim_start().to_string(), rest_start)
-        } else if let Some(after) = effective.strip_prefix("async with ") {
-            let rest_start = 11 + after.len() - after.trim_start().len();
-            ("async with".to_string(), after.trim_start().to_string(), rest_start)
-        } else if let Some(after) = effective.strip_prefix("async def ") {
-            let rest_start = 10 + after.len() - after.trim_start().len();
-            ("async def".to_string(), after.trim_start().to_string(), rest_start)
-        } else if let Some(idx) = effective.find(|c: char| c.is_whitespace() || c == ':') {
-            let after_kw = &effective[idx..];
-            let rest_start = idx + after_kw.len() - after_kw.trim_start().len();
-            let kw = &effective[..idx];
-            let r = after_kw.trim_start();
-            (kw.to_string(), r.to_string(), rest_start)
-        } else {
-            (effective.to_string(), String::new(), effective.len())
-        };
+        let (keyword, rest, rest_offset_in_effective) =
+            if let Some(after) = effective.strip_prefix("async for ") {
+                let rest_start = 10 + after.len() - after.trim_start().len();
+                (
+                    "async for".to_string(),
+                    after.trim_start().to_string(),
+                    rest_start,
+                )
+            } else if let Some(after) = effective.strip_prefix("async with ") {
+                let rest_start = 11 + after.len() - after.trim_start().len();
+                (
+                    "async with".to_string(),
+                    after.trim_start().to_string(),
+                    rest_start,
+                )
+            } else if let Some(after) = effective.strip_prefix("async def ") {
+                let rest_start = 10 + after.len() - after.trim_start().len();
+                (
+                    "async def".to_string(),
+                    after.trim_start().to_string(),
+                    rest_start,
+                )
+            } else if let Some(idx) = effective.find(|c: char| c.is_whitespace() || c == ':') {
+                let after_kw = &effective[idx..];
+                let rest_start = idx + after_kw.len() - after_kw.trim_start().len();
+                let kw = &effective[..idx];
+                let r = after_kw.trim_start();
+                (kw.to_string(), r.to_string(), rest_start)
+            } else {
+                (effective.to_string(), String::new(), effective.len())
+            };
 
         // Calculate rest_span in source coordinates
         let rest_start_byte = start.byte + leading_ws + rest_offset_in_effective;
         let rest_end_byte = rest_start_byte + rest.len();
         let rest_span = Span {
-            start: Position { line: start.line, col: start.col + leading_ws + rest_offset_in_effective, byte: rest_start_byte },
-            end: Position { line: start.line, col: start.col + leading_ws + rest_offset_in_effective + rest.len(), byte: rest_end_byte },
+            start: Position {
+                line: start.line,
+                col: start.col + leading_ws + rest_offset_in_effective,
+                byte: rest_start_byte,
+            },
+            end: Position {
+                line: start.line,
+                col: start.col + leading_ws + rest_offset_in_effective + rest.len(),
+                byte: rest_end_byte,
+            },
         };
 
         tokens.push(Token::ControlStart {
             keyword,
             rest,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
             rest_span,
         });
     }
@@ -870,30 +1000,42 @@ impl<'a> Tokenizer<'a> {
         let leading_ws = code.len() - code.trim_start().len();
 
         // Extract keyword and optional rest
-        let (keyword, rest, rest_span) = if let Some(idx) = trimmed.find(|c: char| c.is_whitespace() || c == ':') {
-            let kw = &trimmed[..idx];
-            let after_kw = &trimmed[idx..];
-            let r = after_kw.trim_start();
-            if r.is_empty() || r == ":" {
-                (kw.to_string(), None, None)
+        let (keyword, rest, rest_span) =
+            if let Some(idx) = trimmed.find(|c: char| c.is_whitespace() || c == ':') {
+                let kw = &trimmed[..idx];
+                let after_kw = &trimmed[idx..];
+                let r = after_kw.trim_start();
+                if r.is_empty() || r == ":" {
+                    (kw.to_string(), None, None)
+                } else {
+                    let rest_offset = idx + after_kw.len() - after_kw.trim_start().len();
+                    let rest_start_byte = start.byte + leading_ws + rest_offset;
+                    let rest_end_byte = rest_start_byte + r.len();
+                    let span = Span {
+                        start: Position {
+                            line: start.line,
+                            col: start.col + leading_ws + rest_offset,
+                            byte: rest_start_byte,
+                        },
+                        end: Position {
+                            line: start.line,
+                            col: start.col + leading_ws + rest_offset + r.len(),
+                            byte: rest_end_byte,
+                        },
+                    };
+                    (kw.to_string(), Some(r.to_string()), Some(span))
+                }
             } else {
-                let rest_offset = idx + after_kw.len() - after_kw.trim_start().len();
-                let rest_start_byte = start.byte + leading_ws + rest_offset;
-                let rest_end_byte = rest_start_byte + r.len();
-                let span = Span {
-                    start: Position { line: start.line, col: start.col + leading_ws + rest_offset, byte: rest_start_byte },
-                    end: Position { line: start.line, col: start.col + leading_ws + rest_offset + r.len(), byte: rest_end_byte },
-                };
-                (kw.to_string(), Some(r.to_string()), Some(span))
-            }
-        } else {
-            (trimmed.to_string(), None, None)
-        };
+                (trimmed.to_string(), None, None)
+            };
 
         tokens.push(Token::ControlContinuation {
             keyword,
             rest,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
             rest_span,
         });
     }
@@ -920,13 +1062,19 @@ impl<'a> Tokenizer<'a> {
 
             tokens.push(Token::PythonStatement {
                 code,
-                span: Span { start, end: self.position },
+                span: Span {
+                    start,
+                    end: self.position,
+                },
             });
         } else {
             // Fallback: just emit as Python statement
             tokens.push(Token::PythonStatement {
                 code: line,
-                span: Span { start, end: self.position },
+                span: Span {
+                    start,
+                    end: self.position,
+                },
             });
         }
     }
@@ -972,7 +1120,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::PythonStatement {
             code,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1103,9 +1254,11 @@ impl<'a> Tokenizer<'a> {
                 //          Content with # hash
                 //
                 // Full-line comments (# at line start) are handled in tokenize_line().
-                (QuoteCtx::None, '#') if after_structural
-                    && !text_buf.is_empty()
-                    && text_buf.chars().all(|c| c.is_whitespace()) => {
+                (QuoteCtx::None, '#')
+                    if after_structural
+                        && !text_buf.is_empty()
+                        && text_buf.chars().all(|c| c.is_whitespace()) =>
+                {
                     // Discard whitespace-only text_buf (it's just padding before comment)
                     text_buf.clear();
                     // Consume comment
@@ -1113,7 +1266,10 @@ impl<'a> Tokenizer<'a> {
                     let comment = self.consume_to_eol();
                     tokens.push(Token::Comment {
                         text: comment,
-                        span: Span { start: comment_start, end: self.position },
+                        span: Span {
+                            start: comment_start,
+                            end: self.position,
+                        },
                         inline: true,
                     });
                     return; // Line is done
@@ -1125,7 +1281,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1134,7 +1293,10 @@ impl<'a> Tokenizer<'a> {
                     self.advance();
                     tokens.push(Token::EscapedBrace {
                         brace: '{',
-                        span: Span { start: brace_start, end: self.position },
+                        span: Span {
+                            start: brace_start,
+                            end: self.position,
+                        },
                     });
                     text_start = self.position;
                     after_structural = true;
@@ -1144,7 +1306,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1153,7 +1318,10 @@ impl<'a> Tokenizer<'a> {
                     self.advance();
                     tokens.push(Token::EscapedBrace {
                         brace: '}',
-                        span: Span { start: brace_start, end: self.position },
+                        span: Span {
+                            start: brace_start,
+                            end: self.position,
+                        },
                     });
                     text_start = self.position;
                     after_structural = true;
@@ -1165,7 +1333,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1181,7 +1352,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1202,7 +1376,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1217,7 +1394,10 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span { start: text_start, end: self.position },
+                            span: Span {
+                                start: text_start,
+                                end: self.position,
+                            },
                         });
                         text_buf.clear();
                     }
@@ -1241,7 +1421,10 @@ impl<'a> Tokenizer<'a> {
         if !text_buf.is_empty() {
             tokens.push(Token::Text {
                 text: text_buf,
-                span: Span { start: text_start, end: self.position },
+                span: Span {
+                    start: text_start,
+                    end: self.position,
+                },
             });
         }
     }
@@ -1319,7 +1502,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::Expression {
             code: final_expr,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1342,8 +1528,17 @@ impl<'a> Tokenizer<'a> {
                 self.advance(); // }
                 return Some(Attribute {
                     name: "**".to_string(),
-                    value: AttributeValue::Spread(expr, Span { start: attr_start, end: attr_end }),
-                    span: Span { start: attr_start, end: self.position },
+                    value: AttributeValue::Spread(
+                        expr,
+                        Span {
+                            start: attr_start,
+                            end: attr_end,
+                        },
+                    ),
+                    span: Span {
+                        start: attr_start,
+                        end: self.position,
+                    },
                 });
             } else if self.peek_char() == Some('.') {
                 // Slot assignment {...name}
@@ -1355,8 +1550,17 @@ impl<'a> Tokenizer<'a> {
                 self.advance(); // }
                 return Some(Attribute {
                     name: format!("...{}", slot_name),
-                    value: AttributeValue::SlotAssignment(slot_name.trim().to_string(), Span { start: attr_start, end: attr_end }),
-                    span: Span { start: attr_start, end: self.position },
+                    value: AttributeValue::SlotAssignment(
+                        slot_name.trim().to_string(),
+                        Span {
+                            start: attr_start,
+                            end: attr_end,
+                        },
+                    ),
+                    span: Span {
+                        start: attr_start,
+                        end: self.position,
+                    },
                 });
             } else {
                 // Shorthand {name}
@@ -1365,14 +1569,25 @@ impl<'a> Tokenizer<'a> {
                 self.advance(); // }
                 return Some(Attribute {
                     name: expr.clone(),
-                    value: AttributeValue::Shorthand(expr, Span { start: attr_start, end: attr_end }),
-                    span: Span { start: attr_start, end: self.position },
+                    value: AttributeValue::Shorthand(
+                        expr,
+                        Span {
+                            start: attr_start,
+                            end: attr_end,
+                        },
+                    ),
+                    span: Span {
+                        start: attr_start,
+                        end: self.position,
+                    },
                 });
             }
         } else if ch.is_alphabetic() || ch == '_' || ch == '-' || ch == '@' || ch == ':' {
             // Named attribute
             let attr_start = self.position;
-            let attr_name = self.consume_while(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '@' || c == ':');
+            let attr_name = self.consume_while(|c| {
+                c.is_alphanumeric() || c == '_' || c == '-' || c == '@' || c == ':'
+            });
 
             if self.peek_char() == Some('=') {
                 self.advance(); // =
@@ -1383,7 +1598,16 @@ impl<'a> Tokenizer<'a> {
                     self.advance(); // {
                     let expr = self.consume_until_char('}');
                     self.advance(); // } - advance past closing brace
-                    (AttributeValue::Expression(expr, Span { start: val_start, end: self.position }), self.position)
+                    (
+                        AttributeValue::Expression(
+                            expr,
+                            Span {
+                                start: val_start,
+                                end: self.position,
+                            },
+                        ),
+                        self.position,
+                    )
                 } else if self.peek_char() == Some('"') {
                     // Double-quoted string
                     self.advance(); // "
@@ -1403,14 +1627,20 @@ impl<'a> Tokenizer<'a> {
                 return Some(Attribute {
                     name: attr_name,
                     value,
-                    span: Span { start: attr_start, end: value_end },
+                    span: Span {
+                        start: attr_start,
+                        end: value_end,
+                    },
                 });
             } else {
                 // Boolean attribute
                 return Some(Attribute {
                     name: attr_name,
                     value: AttributeValue::Bool,
-                    span: Span { start: attr_start, end: self.position },
+                    span: Span {
+                        start: attr_start,
+                        end: self.position,
+                    },
                 });
             }
         }
@@ -1429,7 +1659,10 @@ impl<'a> Tokenizer<'a> {
         let name_end = self.position;
         self.advance(); // }
 
-        let name_span = Span { start: name_start, end: name_end };
+        let name_span = Span {
+            start: name_start,
+            end: name_end,
+        };
 
         // Parse attributes
         let mut attrs = Vec::new();
@@ -1452,7 +1685,10 @@ impl<'a> Tokenizer<'a> {
                     name_span,
                     attributes: attrs,
                     self_closing: true,
-                    span: Span { start, end: self.position },
+                    span: Span {
+                        start,
+                        end: self.position,
+                    },
                 });
                 return;
             }
@@ -1463,7 +1699,10 @@ impl<'a> Tokenizer<'a> {
                     name_span,
                     attributes: attrs,
                     self_closing: false,
-                    span: Span { start, end: self.position },
+                    span: Span {
+                        start,
+                        end: self.position,
+                    },
                 });
                 // There might be trailing content on this line - tokenize it
                 if !self.at_eof() && !self.at_newline() {
@@ -1487,7 +1726,10 @@ impl<'a> Tokenizer<'a> {
             name_span,
             attributes: attrs,
             self_closing: false,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1510,7 +1752,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::ComponentClose {
             name,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1543,7 +1788,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::SlotOpen {
             name,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1577,7 +1825,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::SlotClose {
             name,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1653,11 +1904,17 @@ impl<'a> Tokenizer<'a> {
                 self.advance();
                 tokens.push(Token::HtmlElementOpen {
                     tag,
-                    tag_span: Span { start, end: tag_end },
+                    tag_span: Span {
+                        start,
+                        end: tag_end,
+                    },
                     attributes: attrs,
                     close_bracket_pos: close_pos,
                     self_closing: true,
-                    span: Span { start, end: self.position },
+                    span: Span {
+                        start,
+                        end: self.position,
+                    },
                 });
                 return;
             }
@@ -1667,11 +1924,17 @@ impl<'a> Tokenizer<'a> {
                 let is_raw = Self::is_raw_text_element(&tag);
                 tokens.push(Token::HtmlElementOpen {
                     tag: tag.clone(),
-                    tag_span: Span { start, end: tag_end },
+                    tag_span: Span {
+                        start,
+                        end: tag_end,
+                    },
                     attributes: attrs,
                     close_bracket_pos: close_pos,
                     self_closing: false,
-                    span: Span { start, end: self.position },
+                    span: Span {
+                        start,
+                        end: self.position,
+                    },
                 });
                 if is_raw {
                     self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
@@ -1692,11 +1955,17 @@ impl<'a> Tokenizer<'a> {
         let is_raw = Self::is_raw_text_element(&tag);
         tokens.push(Token::HtmlElementOpen {
             tag: tag.clone(),
-            tag_span: Span { start, end: tag_end },
+            tag_span: Span {
+                start,
+                end: tag_end,
+            },
             attributes: attrs,
             close_bracket_pos: self.position, // No actual ">" - use end position
             self_closing: false,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
         if is_raw {
             self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
@@ -1721,7 +1990,10 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::HtmlElementClose {
             tag,
-            span: Span { start, end: self.position },
+            span: Span {
+                start,
+                end: self.position,
+            },
         });
     }
 
@@ -1732,13 +2004,17 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn at_newline(&self) -> bool {
-        if self.at_eof() { return false; }
+        if self.at_eof() {
+            return false;
+        }
         let ch = self.bytes[self.position.byte];
         ch == b'\n' || ch == b'\r'
     }
 
     fn peek_char(&self) -> Option<char> {
-        if self.at_eof() { return None; }
+        if self.at_eof() {
+            return None;
+        }
         // Simple ASCII fast path
         let b = self.bytes[self.position.byte];
         if b < 128 {
@@ -1749,7 +2025,9 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn peek_next_char(&self) -> Option<char> {
-        if self.position.byte + 1 >= self.bytes.len() { return None; }
+        if self.position.byte + 1 >= self.bytes.len() {
+            return None;
+        }
         let b = self.bytes[self.position.byte + 1];
         if b < 128 {
             Some(b as char)
@@ -1785,8 +2063,14 @@ impl<'a> Tokenizer<'a> {
         let mut level = 0;
         while !self.at_eof() {
             match self.peek_char() {
-                Some(' ') => { level += 1; self.advance(); }
-                Some('\t') => { level += 4; self.advance(); } // Tab = 4 spaces
+                Some(' ') => {
+                    level += 1;
+                    self.advance();
+                }
+                Some('\t') => {
+                    level += 4;
+                    self.advance();
+                } // Tab = 4 spaces
                 _ => break,
             }
         }
@@ -1830,12 +2114,18 @@ impl<'a> Tokenizer<'a> {
         let mut depth = 0;
         while !self.at_eof() {
             let Some(ch) = self.peek_char() else { break };
-            if ch == '{' { depth += 1; }
+            if ch == '{' {
+                depth += 1;
+            }
             if ch == '}' {
-                if depth == 0 && stop == '}' { break; }
+                if depth == 0 && stop == '}' {
+                    break;
+                }
                 depth -= 1;
             }
-            if ch == stop && depth == 0 { break; }
+            if ch == stop && depth == 0 {
+                break;
+            }
             self.advance();
         }
         self.source[start..self.position.byte].to_string()
@@ -2103,8 +2393,10 @@ mod tests {
         let tokens = tokenize("<a href=\"#section\">Link</a>\n");
         // The # is inside href attribute, so no Comment token
         assert!(!tokens.iter().any(|t| matches!(t, Token::Comment { .. })));
-        assert!(matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
-            if tag == "a" && attributes.iter().any(|a| a.name == "href")));
+        assert!(
+            matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
+            if tag == "a" && attributes.iter().any(|a| a.name == "href"))
+        );
     }
 
     #[test]
@@ -2122,20 +2414,36 @@ mod tests {
     #[test]
     fn test_escaped_braces() {
         let tokens = tokenize("<p>Use {{variable}} for templates</p>\n");
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { brace: '{', .. })));
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { brace: '}', .. })));
+        assert!(
+            tokens
+                .iter()
+                .any(|t| matches!(t, Token::EscapedBrace { brace: '{', .. }))
+        );
+        assert!(
+            tokens
+                .iter()
+                .any(|t| matches!(t, Token::EscapedBrace { brace: '}', .. }))
+        );
     }
 
     #[test]
     fn test_component_self_closing() {
         let tokens = tokenize("<{Button} type=\"submit\" />\n");
-        assert!(matches!(&tokens[0], Token::ComponentOpen { name, self_closing: true, .. } if name == "Button"));
+        assert!(
+            matches!(&tokens[0], Token::ComponentOpen { name, self_closing: true, .. } if name == "Button")
+        );
     }
 
     #[test]
     fn test_component_with_slot() {
         let tokens = tokenize("<{Card} title={title}>\n");
-        if let Token::ComponentOpen { name, attributes, self_closing, .. } = &tokens[0] {
+        if let Token::ComponentOpen {
+            name,
+            attributes,
+            self_closing,
+            ..
+        } = &tokens[0]
+        {
             assert_eq!(name, "Card");
             assert!(!self_closing);
             assert_eq!(attributes.len(), 1);
@@ -2171,19 +2479,33 @@ mod tests {
         // Trailing whitespace before comment is trimmed
         let tokens = tokenize("    <span>Active</span>  # Comment\n");
 
-        let token_types: Vec<&str> = tokens.iter().map(|t| match t {
-            Token::Indent { .. } => "Indent",
-            Token::Text { .. } => "Text",
-            Token::Comment { .. } => "Comment",
-            Token::Newline { .. } => "Newline",
-            Token::Eof { .. } => "Eof",
-            Token::HtmlElementOpen { .. } => "HtmlOpen",
-            Token::HtmlElementClose { .. } => "HtmlClose",
-            _ => "Other",
-        }).collect();
+        let token_types: Vec<&str> = tokens
+            .iter()
+            .map(|t| match t {
+                Token::Indent { .. } => "Indent",
+                Token::Text { .. } => "Text",
+                Token::Comment { .. } => "Comment",
+                Token::Newline { .. } => "Newline",
+                Token::Eof { .. } => "Eof",
+                Token::HtmlElementOpen { .. } => "HtmlOpen",
+                Token::HtmlElementClose { .. } => "HtmlClose",
+                _ => "Other",
+            })
+            .collect();
 
         // Now parsed as structured HTML: Indent, HtmlOpen, Text, HtmlClose, Comment, Newline, Eof
-        assert_eq!(token_types, vec!["Indent", "HtmlOpen", "Text", "HtmlClose", "Comment", "Newline", "Eof"]);
+        assert_eq!(
+            token_types,
+            vec![
+                "Indent",
+                "HtmlOpen",
+                "Text",
+                "HtmlClose",
+                "Comment",
+                "Newline",
+                "Eof"
+            ]
+        );
     }
 
     // === Edge Case Tests ===
@@ -2207,16 +2529,27 @@ mod tests {
         // <style> content is raw — braces are literal text, not escaped braces
         let tokens = tokenize("<style>.foo { color: red; }</style>\n");
         // No EscapedBrace tokens inside <style>
-        assert!(!tokens.iter().any(|t| matches!(t, Token::EscapedBrace { .. })));
+        assert!(
+            !tokens
+                .iter()
+                .any(|t| matches!(t, Token::EscapedBrace { .. }))
+        );
         // CSS content is emitted as Text
-        assert!(tokens.iter().any(|t| matches!(t, Token::Text { text, .. } if text.contains("{ color: red; }"))));
+        assert!(
+            tokens
+                .iter()
+                .any(|t| matches!(t, Token::Text { text, .. } if text.contains("{ color: red; }")))
+        );
     }
 
     #[test]
     fn test_nested_expression() {
         // Nested braces in expressions
         let tokens = tokenize("<span>{user['name']}</span>\n");
-        if let Some(Token::Expression { code, .. }) = tokens.iter().find(|t| matches!(t, Token::Expression { .. })) {
+        if let Some(Token::Expression { code, .. }) = tokens
+            .iter()
+            .find(|t| matches!(t, Token::Expression { .. }))
+        {
             assert_eq!(code, "user['name']");
         } else {
             panic!("Expected Expr token");
@@ -2229,7 +2562,11 @@ mod tests {
         // This is actually escaped braces around an expression
         let tokens = tokenize("<span>{{k: v for k, v in d.items()}}</span>\n");
         // Should have escaped braces, not an expression
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { brace: '{', .. })));
+        assert!(
+            tokens
+                .iter()
+                .any(|t| matches!(t, Token::EscapedBrace { brace: '{', .. }))
+        );
     }
 
     #[test]
@@ -2252,11 +2589,14 @@ mod tests {
         // This is a known limitation - could be improved by checking for "in" clause
         // For now, this is classified as control (which will fail at Python level)
         let tokens = tokenize("for your information\n");
-        let token_types: Vec<&str> = tokens.iter().map(|t| match t {
-            Token::Text { .. } => "Text",
-            Token::ControlStart { .. } => "Control",
-            _ => "Other",
-        }).collect();
+        let token_types: Vec<&str> = tokens
+            .iter()
+            .map(|t| match t {
+                Token::Text { .. } => "Text",
+                Token::ControlStart { .. } => "Control",
+                _ => "Other",
+            })
+            .collect();
         // Currently classified as control - could improve by validating for/in pattern
         // This is acceptable because invalid Python will fail at transpile time
         assert!(token_types.contains(&"Control") || token_types.contains(&"Text"));
@@ -2267,9 +2607,15 @@ mod tests {
         // class="foo" in HTML vs class Foo: in Python
         let tokens = tokenize("<div class=\"card\">Content</div>\n");
         // Now parsed as structured HTML element with class attribute
-        assert!(matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
-            if tag == "div" && attributes.iter().any(|a| a.name == "class")));
-        assert!(!tokens.iter().any(|t| matches!(t, Token::ControlStart { keyword, .. } if keyword == "class")));
+        assert!(
+            matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
+            if tag == "div" && attributes.iter().any(|a| a.name == "class"))
+        );
+        assert!(
+            !tokens
+                .iter()
+                .any(|t| matches!(t, Token::ControlStart { keyword, .. } if keyword == "class"))
+        );
     }
 
     #[test]
@@ -2277,25 +2623,35 @@ mod tests {
         // Expression with dict literal
         let tokens = tokenize("<span>{{'key': value}}</span>\n");
         // This is escaped brace then expression
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { .. })));
+        assert!(
+            tokens
+                .iter()
+                .any(|t| matches!(t, Token::EscapedBrace { .. }))
+        );
     }
 
     #[test]
     fn test_control_continuation() {
         let tokens = tokenize("else:\n");
-        assert!(matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "else"));
+        assert!(
+            matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "else")
+        );
     }
 
     #[test]
     fn test_elif() {
         let tokens = tokenize("elif count > 5:\n");
-        assert!(matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "elif"));
+        assert!(
+            matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "elif")
+        );
     }
 
     #[test]
     fn test_except() {
         let tokens = tokenize("except ValueError:\n");
-        assert!(matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "except"));
+        assert!(
+            matches!(&tokens[0], Token::ControlContinuation { keyword, .. } if keyword == "except")
+        );
     }
 
     #[test]
@@ -2307,7 +2663,9 @@ mod tests {
     #[test]
     fn test_function_call() {
         let tokens = tokenize("print(\"hello\")\n");
-        assert!(matches!(&tokens[0], Token::PythonStatement { code, .. } if code == "print(\"hello\")"));
+        assert!(
+            matches!(&tokens[0], Token::PythonStatement { code, .. } if code == "print(\"hello\")")
+        );
     }
 
     #[test]
@@ -2323,8 +2681,10 @@ mod tests {
         // (escaped braces only apply in f-string context, not inside HTML attribute strings)
         let tokens = tokenize("<div x-data=\"{{ open: false }}\">Content</div>\n");
         // Now parsed as structured HTML with x-data attribute containing the JS object literal
-        assert!(matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
-            if tag == "div" && attributes.iter().any(|a| a.name == "x-data")));
+        assert!(
+            matches!(&tokens[0], Token::HtmlElementOpen { tag, attributes, .. }
+            if tag == "div" && attributes.iter().any(|a| a.name == "x-data"))
+        );
     }
 
     #[test]
@@ -2347,7 +2707,9 @@ mod tests {
         let tokens = tokenize("<{Button} {**props} />\n");
         if let Token::ComponentOpen { attributes, .. } = &tokens[0] {
             assert_eq!(attributes.len(), 1);
-            assert!(matches!(&attributes[0].value, AttributeValue::Spread(expr, _) if expr == "props"));
+            assert!(
+                matches!(&attributes[0].value, AttributeValue::Spread(expr, _) if expr == "props")
+            );
         } else {
             panic!("Expected ComponentOpen");
         }
@@ -2358,8 +2720,12 @@ mod tests {
         let tokens = tokenize("<{Input} {value} {disabled} />\n");
         if let Token::ComponentOpen { attributes, .. } = &tokens[0] {
             assert_eq!(attributes.len(), 2);
-            assert!(matches!(&attributes[0].value, AttributeValue::Shorthand(name, _) if name == "value"));
-            assert!(matches!(&attributes[1].value, AttributeValue::Shorthand(name, _) if name == "disabled"));
+            assert!(
+                matches!(&attributes[0].value, AttributeValue::Shorthand(name, _) if name == "value")
+            );
+            assert!(
+                matches!(&attributes[1].value, AttributeValue::Shorthand(name, _) if name == "disabled")
+            );
         } else {
             panic!("Expected ComponentOpen");
         }
@@ -2368,7 +2734,10 @@ mod tests {
     #[test]
     fn test_empty_lines() {
         let tokens = tokenize("\n\n\n");
-        let newlines = tokens.iter().filter(|t| matches!(t, Token::Newline { .. })).count();
+        let newlines = tokens
+            .iter()
+            .filter(|t| matches!(t, Token::Newline { .. }))
+            .count();
         assert_eq!(newlines, 3);
     }
 
@@ -2386,7 +2755,8 @@ mod tests {
         let tokens = tokenize(source);
 
         // Should be a single PythonStatement token (plus newline and EOF)
-        let stmt_tokens: Vec<_> = tokens.iter()
+        let stmt_tokens: Vec<_> = tokens
+            .iter()
             .filter(|t| matches!(t, Token::PythonStatement { .. }))
             .collect();
         assert_eq!(stmt_tokens.len(), 1);
@@ -2403,7 +2773,8 @@ mod tests {
         let source = "items = [\n    1,\n    2,\n    3\n]\n";
         let tokens = tokenize(source);
 
-        let stmt_tokens: Vec<_> = tokens.iter()
+        let stmt_tokens: Vec<_> = tokens
+            .iter()
             .filter(|t| matches!(t, Token::PythonStatement { .. }))
             .collect();
         assert_eq!(stmt_tokens.len(), 1);
@@ -2415,7 +2786,8 @@ mod tests {
         let source = "result = some_function(\n    arg1,\n    arg2,\n    kwarg=\"value\"\n)\n";
         let tokens = tokenize(source);
 
-        let stmt_tokens: Vec<_> = tokens.iter()
+        let stmt_tokens: Vec<_> = tokens
+            .iter()
             .filter(|t| matches!(t, Token::PythonStatement { .. }))
             .collect();
         assert_eq!(stmt_tokens.len(), 1);
@@ -2427,7 +2799,8 @@ mod tests {
         let source = "x = {\n    \"key\": \"value with { brace\"\n}\n";
         let tokens = tokenize(source);
 
-        let stmt_tokens: Vec<_> = tokens.iter()
+        let stmt_tokens: Vec<_> = tokens
+            .iter()
             .filter(|t| matches!(t, Token::PythonStatement { .. }))
             .collect();
         assert_eq!(stmt_tokens.len(), 1);
@@ -2439,7 +2812,9 @@ mod tests {
         let source = "x = {\"key\": \"value\"}\n";
         let tokens = tokenize(source);
 
-        assert!(matches!(&tokens[0], Token::PythonStatement { code, .. } if code == "x = {\"key\": \"value\"}"));
+        assert!(
+            matches!(&tokens[0], Token::PythonStatement { code, .. } if code == "x = {\"key\": \"value\"}")
+        );
     }
 
     #[test]
@@ -2458,15 +2833,27 @@ mod tests {
         assert!(has_separator, "should have separator token");
 
         // Find separator position
-        let sep_pos = tokens.iter().position(|t| matches!(t, Token::Separator { .. })).unwrap();
+        let sep_pos = tokens
+            .iter()
+            .position(|t| matches!(t, Token::Separator { .. }))
+            .unwrap();
 
         // PythonStatement should come before separator
-        let stmt_pos = tokens.iter().position(|t| matches!(t, Token::PythonStatement { .. })).unwrap();
+        let stmt_pos = tokens
+            .iter()
+            .position(|t| matches!(t, Token::PythonStatement { .. }))
+            .unwrap();
         assert!(stmt_pos < sep_pos, "statement should come before separator");
 
         // HTML content should come after separator
-        let html_pos = tokens.iter().position(|t| matches!(t, Token::HtmlElementOpen { .. })).unwrap();
-        assert!(html_pos > sep_pos, "HTML content should come after separator");
+        let html_pos = tokens
+            .iter()
+            .position(|t| matches!(t, Token::HtmlElementOpen { .. }))
+            .unwrap();
+        assert!(
+            html_pos > sep_pos,
+            "HTML content should come after separator"
+        );
     }
 }
 
@@ -2480,12 +2867,21 @@ mod rest_span_tests {
         let source = "if is_active:\n";
         let tokens = tokenize(source);
 
-        if let Token::ControlStart { keyword, rest, span: _, rest_span } = &tokens[0] {
+        if let Token::ControlStart {
+            keyword,
+            rest,
+            span: _,
+            rest_span,
+        } = &tokens[0]
+        {
             assert_eq!(keyword, "if");
             assert_eq!(rest, "is_active:");
             // rest_span should start after "if " (3 bytes)
             assert_eq!(rest_span.start.byte, 3);
-            assert_eq!(&source[rest_span.start.byte..rest_span.end.byte], "is_active:");
+            assert_eq!(
+                &source[rest_span.start.byte..rest_span.end.byte],
+                "is_active:"
+            );
         } else {
             panic!("Expected ControlStart token");
         }

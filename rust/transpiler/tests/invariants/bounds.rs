@@ -76,11 +76,9 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
             .into());
         }
         if inj.start > inj.end {
-            return Err(format!(
-                "Injection {} start ({}) > end ({})",
-                i, inj.start, inj.end,
-            )
-            .into());
+            return Err(
+                format!("Injection {} start ({}) > end ({})", i, inj.start, inj.end,).into(),
+            );
         }
     }
 

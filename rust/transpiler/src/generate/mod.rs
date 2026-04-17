@@ -1,10 +1,13 @@
-mod python;
-mod output;
 mod injection_analyzer;
+mod output;
+mod python;
 
-pub use python::PythonGenerator;
-pub use output::{Output, Mapping, Range, RangeType, Injection, ExpressionBrace, compute_injections, validate_python_ranges, convert_braces_to_utf16};
 pub use injection_analyzer::InjectionAnalyzer;
+pub use output::{
+    ExpressionBrace, Injection, Mapping, Output, Range, RangeType, compute_injections,
+    convert_braces_to_utf16, validate_python_ranges,
+};
+pub use python::PythonGenerator;
 
 use crate::ast::Ast;
 use crate::transform::TransformMetadata;
@@ -28,5 +31,10 @@ pub struct GenerateResult {
 
 /// Generator trait - converts AST to code
 pub trait Generator {
-    fn generate(&self, ast: &Ast, metadata: &TransformMetadata, options: &GenerateOptions) -> GenerateResult;
+    fn generate(
+        &self,
+        ast: &Ast,
+        metadata: &TransformMetadata,
+        options: &GenerateOptions,
+    ) -> GenerateResult;
 }

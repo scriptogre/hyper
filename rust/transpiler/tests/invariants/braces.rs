@@ -16,14 +16,20 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         if brace.open >= source_utf16.len() {
             return Err(format!(
                 "Brace {} open position ({}) >= source UTF-16 length ({})",
-                i, brace.open, source_utf16.len()
-            ).into());
+                i,
+                brace.open,
+                source_utf16.len()
+            )
+            .into());
         }
         if brace.close >= source_utf16.len() {
             return Err(format!(
                 "Brace {} close position ({}) >= source UTF-16 length ({})",
-                i, brace.close, source_utf16.len()
-            ).into());
+                i,
+                brace.close,
+                source_utf16.len()
+            )
+            .into());
         }
 
         // Convert UTF-16 offset to byte offset for character checking
@@ -33,9 +39,12 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         if open_char != '{' {
             return Err(format!(
                 "Brace {} open at UTF-16 offset {} should be '{{', got '{}' (source context: {:?})",
-                i, brace.open, open_char,
+                i,
+                brace.open,
+                open_char,
                 context_around(&source, brace.open)
-            ).into());
+            )
+            .into());
         }
         if close_char != '}' {
             return Err(format!(
@@ -49,7 +58,8 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
             return Err(format!(
                 "Brace {} open ({}) >= close ({})",
                 i, brace.open, brace.close
-            ).into());
+            )
+            .into());
         }
     }
 
