@@ -15,9 +15,7 @@ uvx hyper .
 - Real components with slots and type-safe arguments.
 - Full IDE support inside templates.
 
-## Quick Tour
-
-### Templates
+## Templates
 
 **1. Write a template.** Props go above the `---`, template body below.
 
@@ -49,7 +47,7 @@ def index():
     return Greeting(name="World")
 ```
 
-### Use Python in templates
+## Use Python in templates
 
 The template body is the function body. Any valid Python works. Blocks end with `end`.
 
@@ -79,7 +77,7 @@ match status:
 end
 ```
 
-### Composing components
+## Components
 
 Components compose like HTML elements. Use `<{Component}>` syntax to render one component inside another. Children go in the default slot with `{...}`.
 
@@ -113,7 +111,7 @@ for item in items:
 end
 ```
 
-### Streaming
+## Streaming
 
 Every component is a generator that yields HTML chunks. This means streaming works out of the box:
 
@@ -132,7 +130,7 @@ Or render to a string when you don't need streaming:
 html = str(Feed(posts=posts))
 ```
 
-### Smart attributes
+## Smart attributes
 
 The compiler understands HTML attribute semantics, so you don't have to think about them.
 
