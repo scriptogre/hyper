@@ -3,44 +3,80 @@
 [![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A Python framework for hypermedia-driven applications. Write templates in `.hyper` syntax that compile to type-safe, streaming Python.
+A fast templating language for Python, written in Rust.
 
-## Usage
+It's just Python and HTML. Type-safe components, streaming out of the box, and a compiler that knows HTML.
 
-Write a template:
+```
+uvx hyper .
+```
+
+## Quick Tour
+
+### A simple template
+
+A `.hyper` file compiles to a Python function.
 
 ```hyper
-# Button.hyper
-label: str
-variant: str = "primary"
-disabled: bool = False
+# Greeting.hyper
+
+<h1>Hello, World!</h1>
+```
+
+```python
+from components import Greeting
+
+html = str(Greeting())
+# <h1>Hello, World!</h1>
+```
+
+### Adding props
+
+Props are type annotations above the `---` delimiter. They become keyword arguments.
+
+```hyper
+# Greeting.hyper
+
+name: str
+greeting: str = "Hello"
 
 ---
 
-<button class="btn btn-{variant}" {disabled}>
-    {label}
-</button>
+<h1>{greeting}, {name}!</h1>
 ```
-
-Use it:
 
 ```python
-from Button import Button
+html = str(Greeting(name="World"))
+# <h1>Hello, World!</h1>
 
-html = str(Button(label="Save", variant="danger"))
-# <button class="btn btn-danger">Save</button>
+html = str(Greeting(name="World", greeting="Hey"))
+# <h1>Hey, World!</h1>
 ```
 
-## Features
+### Using Python in templates
 
-- **Type-safe props** — Catch errors before runtime with Python type annotations
-- **Streaming by default** — Components are generators, ready for HTTP streaming
-- **Full Python** — Any expression, import, or control flow inside templates
-- **IDE intelligence** — Autocomplete, go-to-definition, and type checking in JetBrains
-- **Rust-powered compiler** — Fast compilation with helpful error messages
-- **Content collections** — Load and validate Markdown, JSON, YAML, TOML with typed models
+The template body is the function body. Any valid Python works.
 
-## Components and Slots
+```hyper
+items: list[str]
+
+---
+
+count = len(items)
+
+<p>{count} items found</p>
+<ul>
+    for item in items:
+        <li>{item}</li>
+    end
+</ul>
+```
+
+All Python control flow is supported: `if`/`elif`/`else`, `for`, `while`, `match`/`case`, `try`/`except`, `with`, and their `async` variants. Blocks end with `end` instead of relying on indentation.
+
+### Composing components
+
+Components compose like HTML elements. Use `<{Component}>` syntax to render one component inside another. Children go in the default slot with `{...}`.
 
 ```hyper
 # Card.hyper
@@ -65,81 +101,61 @@ items: list[dict]
 ---
 
 for item in items:
-    <{Card} title={item['name']}>
+    <{Card} title={item["name"]}>
         <{Badge} text="New" />
-        <p>{item['description']}</p>
+        <p>{item["description"]}</p>
     </{Card}>
 end
 ```
 
-## Control Flow
+### Streaming
 
-All Python control flow works inside templates — `if`/`elif`/`else`, `for`, `while`, `match`/`case`, `try`/`except`, `with`, and `async` variants. Blocks end with `end` instead of relying on indentation.
-
-```hyper
-status: str
-
----
-
-match status:
-    case "loading":
-        <div class="spinner" />
-    case "error":
-        <p class="error">Something went wrong</p>
-    case _:
-        <p>Ready</p>
-end
-```
-
-## Streaming
-
-Components are generators that yield chunks, ready for HTTP streaming out of the box:
+Every component is a generator that yields HTML chunks. This means streaming works out of the box:
 
 ```python
-from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pages import Feed
-
-app = FastAPI()
 
 @app.get("/feed")
 def feed():
     return StreamingResponse(Feed(posts=posts), media_type="text/html")
 ```
 
-Or render to a string:
+Or render to a string when you don't need streaming:
 
 ```python
 html = str(Feed(posts=posts))
 ```
 
-## Attributes
+### Smart attributes
+
+The compiler understands HTML attribute semantics, so you don't have to think about them.
 
 ```hyper
 is_active: bool
-data: dict = {"user-id": 123}
+disabled: bool
 
 ---
 
-# Boolean — renders as <button disabled> or <button>
+<!-- Boolean: True renders the attribute, False omits it -->
 <button {disabled}>Click</button>
 
-# Class — lists, dicts, conditional
+<!-- Class lists: strings, lists, and conditional dicts -->
 <div class={["btn", {"active": is_active}]}>...</div>
 
-# Style — dict to inline CSS
-<p style={{"color": "red"}}>Alert</p>
+<!-- Style objects -->
+<p style={{"color": "red", "font-weight": "bold"}}>Alert</p>
 
-# Data/ARIA — auto-prefixed
-<div {data} aria={{"label": "Close"}}>...</div>
+<!-- Data/ARIA: dicts expand to prefixed attributes (ARIA bools become "true"/"false" per spec) -->
+<div data={{"user-id": 123}} aria={{"label": "Close", "hidden": True}}>...</div>
 
-# Spread
+<!-- Spread -->
 <a {**attrs}>Link</a>
 ```
 
-## Content Collections
+### Content collections
 
-Load and validate structured content from JSON, YAML, TOML, or Markdown files:
+Load and validate structured content from Markdown, JSON, YAML, or TOML:
 
 ```python
 from hyper.content import MarkdownCollection
@@ -156,10 +172,14 @@ posts = Post.load()  # Typed, validated, with auto-generated html/toc/slug field
 
 Works with dataclasses, Pydantic, and msgspec.
 
-## Editor Support
+## IDE Support
 
 - **JetBrains** (PyCharm, IntelliJ) — Full Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation on save
-- **TextMate** — Syntax highlighting bundle
+- **TextMate / VS Code** — Syntax highlighting
+
+## Acknowledgements
+
+Hyper's component and attribute syntax was inspired by [tdom](https://github.com/t-strings/tdom).
 
 ## Contributing
 
