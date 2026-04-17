@@ -49,19 +49,22 @@ def index():
 A more realistic component:
 
 ```hyper
-# app/components/Alert.hyper
+# app/components/ProductCard.hyper
 
-message: str
-type: str = "info"
-dismissible: bool = False
+name: str
+price: float
+image: str
+on_sale: bool = False
 
 ---
 
-<div class={["alert", f"alert-{type}"]} role="alert">
-    <p>{message}</p>
-    if dismissible:
-        <button class="close" aria={{"label": "Dismiss"}}>&times;</button>
+<div class={["card", {"sale": on_sale}]}>
+    <img src={image} alt={name} />
+    <h3>{name}</h3>
+    if on_sale:
+        <span class="badge">Sale</span>
     end
+    <p class="price">${price:.2f}</p>
 </div>
 ```
 
