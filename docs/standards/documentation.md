@@ -36,6 +36,8 @@ Good:
 <!-- disabled == False -->
 <button>
 \```
+
+`True` renders the attribute. `False` and `None` omit it. Any other value renders as `disabled="value"`.
 ```
 
 Use inline comments to complement the examples shown.

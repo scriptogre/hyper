@@ -481,6 +481,8 @@ last: str
 <button disabled>Submit</button>
 ```
 
+The compiler knows which HTML attributes are boolean (`disabled`, `checked`, `readonly`, `required`, `hidden`, etc.) and handles them automatically. You don't need to think about whether to render `disabled` vs `disabled="true"`. Pass a bool and the compiler does the right thing.
+
 ### Shorthand
 
 When variable name matches attribute name, use shorthand:
@@ -604,7 +606,7 @@ aria = {"label": "Close dialog", "hidden": True}
 <div data-user-id="123" data-role="admin" aria-label="Close dialog" aria-hidden="true">Content</div>
 ```
 
-Boolean values in `aria` become `"true"` or `"false"` per ARIA spec.
+Boolean values in `aria` become `"true"` or `"false"` per the [ARIA spec](https://www.w3.org/TR/wai-aria-1.2/#valuetype_true-false). Unlike boolean HTML attributes, ARIA attributes are never omitted. `aria-hidden="false"` and the absence of `aria-hidden` mean different things.
 
 ### Spreading Attributes
 
