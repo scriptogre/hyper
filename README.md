@@ -9,6 +9,12 @@ A component templating language for Python, written in Rust.
 uvx hyper .
 ```
 
+## Why Hyper?
+
+- Templates are real Python, not a restricted mini-language.
+- Real components with slots and type-safe arguments.
+- Full IDE support inside templates.
+
 ## Quick Tour
 
 ### A simple template
