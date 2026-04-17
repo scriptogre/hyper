@@ -5,11 +5,11 @@
 
 A component templating language for Python, written in Rust.
 
-`.hyper` files compile to real Python with type-safe components, slots, and full IDE support.
-
 ```
 uvx hyper .
 ```
+
+`.hyper` files compile to real Python with type-safe components, slots, and full IDE support.
 
 ### Quick Start
 
