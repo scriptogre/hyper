@@ -1,0 +1,11 @@
+items: list = []
+---
+<{Header} title="Hello" />
+
+<{Card} variant="primary">
+    <p>Content</p>
+</{Card}>
+
+<{...sidebar}>
+    <nav>Default</nav>
+</{...sidebar}>

@@ -1,0 +1,38 @@
+items: list = []
+style: str = "bold"
+count: int = 10
+---
+for item in items:
+    <span>{item}</span>
+end
+
+if count > 0:
+    <span>Yes</span>
+elif count == 0:
+    <span>Zero</span>
+else:
+    <span>No</span>
+end
+
+while count > 0:
+    count = count - 1
+end
+
+match style:
+    case "bold":
+        <strong>Bold</strong>
+    case _:
+        <span>Normal</span>
+end
+
+try:
+    <span>{items[0]}</span>
+except IndexError:
+    <span>Empty</span>
+finally:
+    <span>Done</span>
+end
+
+with open("/dev/null") as f:
+    <pre>{f.read()}</pre>
+end

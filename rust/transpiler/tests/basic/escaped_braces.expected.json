@@ -11,7 +11,7 @@
       "end": 189,
       "prefix": "):\n\n    # Escaped braces for literal output\n    yield \"\"\"\\\n<p>Use {variable} for templates</p>\n<p>JSON: {\"key\": \"value\"}</p>\"\"\"\n\n    # Mixed escaped and dynamic\n    yield f\"\"\"<p>Static {{braces}} and dynamic {escape(",
       "start": 185,
-      "suffix": ")}</p>\"\"\"\n\n    # In style blocks (CSS needs escaped braces)\n    yield \"\"\"\\\n<style>\n    .card { background: white; }\n    .card:hover { transform: scale(1.05); }\n</style>\"\"\"\n\n    # In script blocks (JS needs escaped braces)\n    yield \"\"\"\\\n<script>\n    const obj = { name: \"{name}\" };\n</script>\"\"\"\n\n    # Alpine.js x-data\n    yield \"\"\"\\\n<div x-data=\"{{ open: false }}\">\n    <button @click=\"open = !open\">Toggle</button>\n</div>\"\"\"\n\n    # Multiple consecutive\n    yield \"\"\"<p>{{nested}}</p>\"\"\"\n",
+      "suffix": ")}</p>\"\"\"\n\n    # In style blocks (raw text - braces are literal)\n    yield \"\"\"\\\n<style>\n    .card { background: white; }\n    .card:hover { transform: scale(1.05); }\n</style>\"\"\"\n\n    # In script blocks (raw text - braces are literal)\n    yield \"\"\"\\\n<script>\n    const obj = { name: \"test\" };\n</script>\"\"\"\n\n    # Alpine.js x-data\n    yield \"\"\"\\\n<div x-data=\"{{ open: false }}\">\n    <button @click=\"open = !open\">Toggle</button>\n</div>\"\"\"\n\n    # Multiple consecutive\n    yield \"\"\"<p>{{nested}}</p>\"\"\"\n",
       "type": "python"
     },
     {
@@ -57,72 +57,72 @@
       "type": "html"
     },
     {
-      "end": 248,
+      "end": 253,
       "prefix": "",
-      "start": 241,
+      "start": 246,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 338,
+      "end": 339,
       "prefix": "",
-      "start": 330,
+      "start": 331,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 393,
+      "end": 400,
       "prefix": "",
-      "start": 385,
+      "start": 392,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 441,
+      "end": 444,
       "prefix": "",
-      "start": 432,
+      "start": 435,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 494,
+      "end": 497,
       "prefix": "",
-      "start": 462,
+      "start": 465,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 529,
+      "end": 532,
       "prefix": "",
-      "start": 499,
+      "start": 502,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 544,
+      "end": 547,
       "prefix": "",
-      "start": 535,
+      "start": 538,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 551,
+      "end": 554,
       "prefix": "",
-      "start": 545,
+      "start": 548,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 579,
+      "end": 582,
       "prefix": "",
-      "start": 576,
+      "start": 579,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 597,
+      "end": 600,
       "prefix": "",
-      "start": 593,
+      "start": 596,
       "suffix": "",
       "type": "html"
     }
@@ -185,74 +185,74 @@
       "source_start": 190
     },
     {
-      "compiled_end": 363,
-      "compiled_start": 363,
+      "compiled_end": 368,
+      "compiled_start": 368,
       "range_type": "Html",
-      "source_end": 248,
-      "source_start": 241
+      "source_end": 253,
+      "source_start": 246
     },
     {
-      "compiled_end": 363,
-      "compiled_start": 363,
+      "compiled_end": 368,
+      "compiled_start": 368,
       "range_type": "Html",
-      "source_end": 338,
-      "source_start": 330
+      "source_end": 339,
+      "source_start": 331
     },
     {
-      "compiled_end": 525,
-      "compiled_start": 525,
+      "compiled_end": 536,
+      "compiled_start": 536,
       "range_type": "Html",
-      "source_end": 393,
-      "source_start": 385
+      "source_end": 400,
+      "source_start": 392
     },
     {
-      "compiled_end": 525,
-      "compiled_start": 525,
+      "compiled_end": 536,
+      "compiled_start": 536,
       "range_type": "Html",
-      "source_end": 441,
-      "source_start": 432
+      "source_end": 444,
+      "source_start": 435
     },
     {
-      "compiled_end": 622,
-      "compiled_start": 622,
+      "compiled_end": 631,
+      "compiled_start": 631,
       "range_type": "Html",
-      "source_end": 529,
-      "source_start": 499
+      "source_end": 532,
+      "source_start": 502
     },
     {
-      "compiled_end": 622,
-      "compiled_start": 622,
+      "compiled_end": 631,
+      "compiled_start": 631,
       "range_type": "Html",
-      "source_end": 544,
-      "source_start": 535
+      "source_end": 547,
+      "source_start": 538
     },
     {
-      "compiled_end": 622,
-      "compiled_start": 622,
+      "compiled_end": 631,
+      "compiled_start": 631,
       "range_type": "Html",
-      "source_end": 494,
-      "source_start": 462
+      "source_end": 497,
+      "source_start": 465
     },
     {
-      "compiled_end": 622,
-      "compiled_start": 622,
+      "compiled_end": 631,
+      "compiled_start": 631,
       "range_type": "Html",
-      "source_end": 551,
-      "source_start": 545
+      "source_end": 554,
+      "source_start": 548
     },
     {
-      "compiled_end": 756,
-      "compiled_start": 756,
+      "compiled_end": 765,
+      "compiled_start": 765,
       "range_type": "Html",
-      "source_end": 579,
-      "source_start": 576
+      "source_end": 582,
+      "source_start": 579
     },
     {
-      "compiled_end": 756,
-      "compiled_start": 756,
+      "compiled_end": 765,
+      "compiled_start": 765,
       "range_type": "Html",
-      "source_end": 597,
-      "source_start": 593
+      "source_end": 600,
+      "source_start": 596
     }
   ]
 }

@@ -1,0 +1,54 @@
+theme_color: str = "red"
+
+---
+
+# Style tags are raw - CSS braces are literal
+<style>
+    .card {
+        background: white;
+        border-radius: 8px;
+    }
+    .card:hover {
+        transform: scale(1.05);
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+        .card { padding: 1rem; }
+    }
+</style>
+
+# Script tags are raw - JS braces are literal
+<script>
+    const data = { name: "test", count: 0 };
+    if (data.count > 0) {
+        console.log(data.name);
+    }
+    for (let i = 0; i < 10; i++) {
+        data.count++;
+    }
+</script>
+
+# Style with attributes
+<style type="text/tailwindcss">
+    @theme {
+        --color-accent: #FE750F;
+    }
+</style>
+
+# Explicit raw block
+<div>
+    raw:
+        @decorator
+        if something:
+            for x in y:
+                {not_an_expression}
+            end
+        end
+    end
+</div>
+
+# Content after raw resumes normal parsing
+<p>{theme_color}</p>

@@ -59,6 +59,8 @@ test target:
             cd "$ROOT/rust" && cargo test
             ;;
         plugin)
+            echo "Building transpiler (debug)..."
+            cd "$ROOT/rust" && cargo build -q
             cd "$ROOT/editors/jetbrains-plugin" && ./gradlew test
             ;;
         *)

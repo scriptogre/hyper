@@ -5,11 +5,25 @@ build-backend = "maturin"
 [project]
 name = "hyper"
 version = "0.1.0"
-description = "Python framework for hypermedia-driven applications"
+description = "A Python framework for hypermedia-driven applications"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
+keywords = ["templates", "components", "hypermedia", "htmx", "html", "streaming"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Code Generators",
+]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/scriptogre/hyper"
+Changelog = "https://github.com/scriptogre/hyper/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 content = [
@@ -37,5 +51,3 @@ dev = [
 testpaths = ["python/tests"]
 python_files = ["test_*.py"]
 
-[tool.ruff.lint.per-file-ignores]
-"playground/**" = ["F821"]

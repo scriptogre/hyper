@@ -425,6 +425,14 @@ class HyperTranspilerService(private val project: Project) : Disposable {
     }
 
     private fun findHyperBinary(): String? {
+        // Test override — allows headless tests to point at a specific binary
+        System.getProperty("hyper.binary.path")?.let { path ->
+            if (File(path).canExecute()) {
+                LOG.info("Using binary from system property: $path")
+                return path
+            }
+        }
+
         extractedBinaryPath?.let { path ->
             if (File(path).canExecute()) {
                 return path

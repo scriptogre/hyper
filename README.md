@@ -1,110 +1,170 @@
 # Hyper
 
-A Python framework for hypermedia-driven applications. Write templates in `.hyper` syntax, compile to type-safe Python.
+[![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Quick Example
+A Python framework for hypermedia-driven applications. Write templates in `.hyper` syntax that compile to type-safe, streaming Python.
+
+## Usage
 
 Write a template:
 
 ```hyper
-# Card.hyper
-title: str
-content: str = ""
+# Button.hyper
+label: str
+variant: str = "primary"
+disabled: bool = False
 
-<div class="card">
-    <h1>{title}</h1>
-    if content:
-        <p>{content}</p>
-    end
-</div>
-```
+---
 
-Compile to Python:
-
-```bash
-hyper generate Card.hyper
+<button class="btn btn-{variant}" {disabled}>
+    {label}
+</button>
 ```
 
 Use it:
 
 ```python
-from Card import Card
+from Button import Button
 
-html = Card(title="Hello", content="World")
+html = str(Button(label="Save", variant="danger"))
+# <button class="btn btn-danger">Save</button>
 ```
 
-## Packages
+## Features
 
-| Package | Description | Python |
-|---------|-------------|--------|
-| `hyper` | Runtime helpers + CLI | 3.10+ |
-| `hyper-content` | Content collections (Markdown, YAML) | 3.10+ |
+- **Type-safe props** — Catch errors before runtime with Python type annotations
+- **Streaming by default** — Components are generators, ready for HTTP streaming
+- **Full Python** — Any expression, import, or control flow inside templates
+- **IDE intelligence** — Autocomplete, go-to-definition, and type checking in JetBrains
+- **Rust-powered compiler** — Fast compilation with helpful error messages
+- **Content collections** — Load and validate Markdown, JSON, YAML, TOML with typed models
 
-Install the CLI and runtime:
+## Components and Slots
 
-```bash
-pip install hyper
+```hyper
+# Card.hyper
+title: str
+
+---
+
+<div class="card">
+    <h2>{title}</h2>
+    <div class="card-body">
+        {...}
+    </div>
+</div>
 ```
 
-For content collections:
+```hyper
+# Page.hyper
+from components import Card, Badge
 
-```bash
-pip install hyper-content
+items: list[dict]
+
+---
+
+for item in items:
+    <{Card} title={item['name']}>
+        <{Badge} text="New" />
+        <p>{item['description']}</p>
+    </{Card}>
+end
 ```
 
-## Repository Structure
+## Control Flow
 
-```
-python/
-  hyper/              Runtime + CLI
-  hyper-content/      Content collections
-rust/
-  transpiler/         Compiles .hyper → .py
-editors/
-  jetbrains-plugin/   IDE support for PyCharm/IntelliJ
-playground/           Examples and test cases
-docs/                 Design and implementation docs
-tests/                Python unit tests
-```
+All Python control flow works inside templates — `if`/`elif`/`else`, `for`, `while`, `match`/`case`, `try`/`except`, `with`, and `async` variants. Blocks end with `end` instead of relying on indentation.
 
-## Getting Started
+```hyper
+status: str
 
-### Prerequisites
+---
 
-- Python 3.10+
-- Rust (for building the transpiler)
-
-### Development Setup
-
-Clone and set up the workspace:
-
-```bash
-git clone https://github.com/user/hyper.git
-cd hyper
-uv sync
+match status:
+    case "loading":
+        <div class="spinner" />
+    case "error":
+        <p class="error">Something went wrong</p>
+    case _:
+        <p>Ready</p>
+end
 ```
 
-Build the transpiler:
+## Streaming
 
-```bash
-cd rust/transpiler
-cargo build --release
+Components are generators that yield chunks, ready for HTTP streaming out of the box:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from pages import Feed
+
+app = FastAPI()
+
+@app.get("/feed")
+def feed():
+    return StreamingResponse(Feed(posts=posts), media_type="text/html")
 ```
 
-Run tests:
+Or render to a string:
 
-```bash
-pytest
+```python
+html = str(Feed(posts=posts))
 ```
 
-## Project Status
+## Attributes
 
-**Working:**
-- Template compilation (`.hyper` → `.py`)
-- JetBrains IDE plugin with full Python intelligence
-- Content collections with Markdown support
+```hyper
+is_active: bool
+data: dict = {"user-id": 123}
 
-**Planned:**
-- Server-side rendering (SSR)
-- Streaming responses
-- File-based routing
+---
+
+# Boolean — renders as <button disabled> or <button>
+<button {disabled}>Click</button>
+
+# Class — lists, dicts, conditional
+<div class={["btn", {"active": is_active}]}>...</div>
+
+# Style — dict to inline CSS
+<p style={{"color": "red"}}>Alert</p>
+
+# Data/ARIA — auto-prefixed
+<div {data} aria={{"label": "Close"}}>...</div>
+
+# Spread
+<a {**attrs}>Link</a>
+```
+
+## Content Collections
+
+Load and validate structured content from JSON, YAML, TOML, or Markdown files:
+
+```python
+from hyper.content import MarkdownCollection
+
+class Post(MarkdownCollection):
+    title: str
+    date: str
+
+    class Meta:
+        pattern = "posts/*.md"
+
+posts = Post.load()  # Typed, validated, with auto-generated html/toc/slug fields
+```
+
+Works with dataclasses, Pydantic, and msgspec.
+
+## Editor Support
+
+- **JetBrains** (PyCharm, IntelliJ) — Full Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation on save
+- **TextMate** — Syntax highlighting bundle
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)

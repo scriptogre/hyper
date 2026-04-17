@@ -31,6 +31,18 @@ class HyperSyntaxAnnotator : Annotator {
         val INLINE_COMMENT = createTextAttributesKey(
             "HYPER_INLINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT
         )
+        val TAG_PUNCTUATION = createTextAttributesKey(
+            "HYPER_TAG_PUNCTUATION", DefaultLanguageHighlighterColors.MARKUP_TAG
+        )
+        val COMPONENT_NAME = createTextAttributesKey(
+            "HYPER_COMPONENT_NAME", DefaultLanguageHighlighterColors.CLASS_NAME
+        )
+        val SLOT_KEYWORD = createTextAttributesKey(
+            "HYPER_SLOT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD
+        )
+        val SLOT_NAME = createTextAttributesKey(
+            "HYPER_SLOT_NAME", DefaultLanguageHighlighterColors.INSTANCE_FIELD
+        )
 
         // Keywords that start a control line, matched at the beginning (after indent)
         private val CONTROL_KEYWORDS = listOf(
@@ -133,27 +145,97 @@ class HyperSyntaxAnnotator : Annotator {
                 continue
             }
 
-            // --- Skip HTML tags ---
+            // --- HTML / component / slot tags ---
             if (ch == '<') {
-                var j = i + 1
-                var d = 0
-                var inStr = false
-                var strCh = ' '
-                while (j < len) {
-                    val c = text[j]
-                    if (inStr) {
-                        if (c == '\\' && j + 1 < len) { j += 2; continue }
-                        if (c == strCh) inStr = false
-                        j++
-                        continue
+                // Detect tag type by looking at characters after <
+                // Component/slot: <{Name}>, </{Name}>, <{...name}>, </{...name}>
+                // HTML: <div>, </div>
+                val afterLt = if (i + 1 < len && text[i + 1] == '/') i + 2 else i + 1
+                val isClosing = afterLt != i + 1
+
+                if (afterLt < len && text[afterLt] == '{') {
+                    // Component or slot tag: <{...}> or </{...}>
+                    // Find the matching }
+                    var braceEnd = afterLt + 1
+                    var bd = 1
+                    while (braceEnd < len && bd > 0) {
+                        if (text[braceEnd] == '{') bd++
+                        if (text[braceEnd] == '}') bd--
+                        if (bd > 0) braceEnd++
                     }
-                    if (c == '"' || c == '\'') { inStr = true; strCh = c; j++; continue }
-                    if (c == '{') { d++; j++; continue }
-                    if (c == '}') { d--; j++; continue }
-                    if (c == '>' && d <= 0) { j++; break }
-                    j++
+                    // braceEnd is now at the }
+
+                    // Find the > that closes the tag
+                    var tagEnd = braceEnd + 1
+                    var td = 0
+                    var tInStr = false
+                    var tStrCh = ' '
+                    while (tagEnd < len) {
+                        val tc = text[tagEnd]
+                        if (tInStr) {
+                            if (tc == '\\' && tagEnd + 1 < len) { tagEnd += 2; continue }
+                            if (tc == tStrCh) tInStr = false
+                            tagEnd++; continue
+                        }
+                        if (tc == '"' || tc == '\'') { tInStr = true; tStrCh = tc; tagEnd++; continue }
+                        if (tc == '{') { td++; tagEnd++; continue }
+                        if (tc == '}') { td--; tagEnd++; continue }
+                        if (tc == '>' && td <= 0) { tagEnd++; break }
+                        tagEnd++
+                    }
+
+                    // Highlight the tag punctuation: < or </
+                    highlight(holder, base + i, base + afterLt, TAG_PUNCTUATION)
+                    // Highlight { and }
+                    highlight(holder, base + afterLt, base + afterLt + 1, TAG_PUNCTUATION)
+                    if (braceEnd < len) {
+                        highlight(holder, base + braceEnd, base + braceEnd + 1, TAG_PUNCTUATION)
+                    }
+                    // Highlight > or /> at end
+                    if (tagEnd > 0 && tagEnd <= len) {
+                        val gtStart = if (tagEnd >= 2 && text[tagEnd - 2] == '/') tagEnd - 2 else tagEnd - 1
+                        highlight(holder, base + gtStart, base + tagEnd, TAG_PUNCTUATION)
+                    }
+
+                    // Highlight name inside braces
+                    val nameStart = afterLt + 1
+                    val nameEnd = braceEnd
+                    if (nameStart < nameEnd) {
+                        val nameText = text.substring(nameStart, nameEnd)
+                        if (nameText.startsWith("...")) {
+                            // Slot: highlight "..." as keyword and the name after it
+                            highlight(holder, base + nameStart, base + nameStart + 3, SLOT_KEYWORD)
+                            if (nameStart + 3 < nameEnd) {
+                                highlight(holder, base + nameStart + 3, base + nameEnd, SLOT_NAME)
+                            }
+                        } else {
+                            // Component name
+                            highlight(holder, base + nameStart, base + nameEnd, COMPONENT_NAME)
+                        }
+                    }
+
+                    i = tagEnd
+                } else {
+                    // Regular HTML tag — skip past it
+                    var j = i + 1
+                    var d = 0
+                    var inStr = false
+                    var strCh = ' '
+                    while (j < len) {
+                        val c = text[j]
+                        if (inStr) {
+                            if (c == '\\' && j + 1 < len) { j += 2; continue }
+                            if (c == strCh) inStr = false
+                            j++; continue
+                        }
+                        if (c == '"' || c == '\'') { inStr = true; strCh = c; j++; continue }
+                        if (c == '{') { d++; j++; continue }
+                        if (c == '}') { d--; j++; continue }
+                        if (c == '>' && d <= 0) { j++; break }
+                        j++
+                    }
+                    i = j
                 }
-                i = j
                 // Tag close is a structural boundary
                 afterStructural = true
                 allWhitespaceSinceStructural = true

@@ -147,6 +147,15 @@ impl Token {
     }
 }
 
+/// How to exit raw content mode
+#[derive(Debug, Clone, PartialEq)]
+enum RawContentExit {
+    /// Exit when the matching closing tag is found (e.g. `</style>`, `</script>`)
+    ClosingTag(String),
+    /// Exit when `end` is found at the given indentation level (for `raw:` blocks)
+    EndKeyword { indent: usize },
+}
+
 /// Tokenizer for Hyper source files
 pub struct Tokenizer<'a> {
     source: &'a str,
@@ -156,6 +165,9 @@ pub struct Tokenizer<'a> {
     parser: tree_sitter::Parser,
     /// Track if we're inside a multi-line string (""" or ''')
     in_multiline_string: Option<&'static str>,
+    /// Track if we're inside raw content (<style>, <script>, or `raw:` block).
+    /// Content is emitted as plain text — no expression interpolation or control flow.
+    in_raw_content: Option<RawContentExit>,
 }
 
 /// Context for tracking quote state in content
@@ -179,6 +191,7 @@ impl<'a> Tokenizer<'a> {
             position: Position::new(),
             parser,
             in_multiline_string: None,
+            in_raw_content: None,
         }
     }
 
@@ -246,7 +259,77 @@ impl<'a> Tokenizer<'a> {
             return;
         }
 
-        // 4. Determine line type and tokenize accordingly
+        // 4. Handle raw content mode (<style>, <script>, or `raw:` block).
+        //    Raw content is a tokenizer-level concern — transparent to the parser.
+        //    Content is emitted as Text tokens; the `raw:` directive and its `end`
+        //    produce no tokens (like Jinja2's {% raw %}{% endraw %}).
+        //    For <style>/<script>, the closing tag is tokenized normally so the
+        //    tree-builder can match it with the opening tag.
+        if let Some(exit_mode) = self.in_raw_content.clone() {
+            let line_content = self.peek_line();
+            let trimmed = line_content.trim();
+
+            let should_exit = match &exit_mode {
+                RawContentExit::ClosingTag(tag) => {
+                    trimmed.starts_with(&format!("</{}", tag))
+                }
+                RawContentExit::EndKeyword { indent } => {
+                    trimmed == "end" && indent_level == *indent
+                }
+            };
+
+            if should_exit {
+                self.in_raw_content = None;
+                match exit_mode {
+                    RawContentExit::ClosingTag(_) => {
+                        // Tokenize </style> or </script> normally for tree-builder
+                        self.tokenize_content(tokens);
+                    }
+                    RawContentExit::EndKeyword { .. } => {
+                        // `end` closes `raw:` — consume silently, no token
+                        self.skip_to_eol();
+                    }
+                }
+            } else {
+                // Emit entire line as raw text
+                let text_start = self.position;
+                let text = self.consume_to_eol();
+                tokens.push(Token::Text {
+                    text,
+                    span: Span { start: text_start, end: self.position },
+                });
+            }
+
+            // Consume newline
+            if self.at_newline() {
+                let nl_start = self.position;
+                self.consume_newline();
+                tokens.push(Token::Newline {
+                    span: Span { start: nl_start, end: self.position },
+                });
+            }
+            return;
+        }
+
+        // 4b. Detect `raw:` directive — enters raw mode silently (no token emitted)
+        {
+            let line_content = self.peek_line();
+            let trimmed = line_content.trim();
+            if trimmed == "raw:" || trimmed == "raw :" {
+                self.skip_to_eol();
+                self.in_raw_content = Some(RawContentExit::EndKeyword { indent: indent_level });
+                if self.at_newline() {
+                    let nl_start = self.position;
+                    self.consume_newline();
+                    tokens.push(Token::Newline {
+                        span: Span { start: nl_start, end: self.position },
+                    });
+                }
+                return;
+            }
+        }
+
+        // 5. Determine line type and tokenize accordingly
         let line_content = self.peek_line();
 
         // Check for multi-line string start
@@ -495,6 +578,11 @@ impl<'a> Tokenizer<'a> {
         trimmed.starts_with("@property") ||
         trimmed.starts_with("@container") ||
         trimmed.starts_with("@scope")
+    }
+
+    /// Check if tag is a raw text element whose content should not be parsed
+    fn is_raw_text_element(tag: &str) -> bool {
+        tag.eq_ignore_ascii_case("style") || tag.eq_ignore_ascii_case("script")
     }
 
     /// Fast heuristic: check if line is obviously NOT Python
@@ -1098,6 +1186,12 @@ impl<'a> Tokenizer<'a> {
                         text_buf.clear();
                     }
                     self.tokenize_html_element_open(tokens);
+                    // If the element entered raw content mode, stop inline processing.
+                    // The rest of this line (and subsequent lines) will be handled
+                    // by the raw content handler in tokenize_line().
+                    if self.in_raw_content.is_some() {
+                        return;
+                    }
                     text_start = self.position;
                     after_structural = true;
                 }
@@ -1570,14 +1664,18 @@ impl<'a> Tokenizer<'a> {
             if ch == '>' {
                 let close_pos = self.position; // Position of ">"
                 self.advance();
+                let is_raw = Self::is_raw_text_element(&tag);
                 tokens.push(Token::HtmlElementOpen {
-                    tag,
+                    tag: tag.clone(),
                     tag_span: Span { start, end: tag_end },
                     attributes: attrs,
                     close_bracket_pos: close_pos,
                     self_closing: false,
                     span: Span { start, end: self.position },
                 });
+                if is_raw {
+                    self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
+                }
                 return;
             }
 
@@ -1591,14 +1689,18 @@ impl<'a> Tokenizer<'a> {
         }
 
         // Reached end of line without closing >
+        let is_raw = Self::is_raw_text_element(&tag);
         tokens.push(Token::HtmlElementOpen {
-            tag,
+            tag: tag.clone(),
             tag_span: Span { start, end: tag_end },
             attributes: attrs,
             close_bracket_pos: self.position, // No actual ">" - use end position
             self_closing: false,
             span: Span { start, end: self.position },
         });
+        if is_raw {
+            self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
+        }
     }
 
     /// Parse an HTML element closing tag: </tag>
@@ -2102,10 +2204,12 @@ mod tests {
 
     #[test]
     fn test_css_braces() {
-        // CSS braces should be escaped {{ }}
-        let tokens = tokenize("<style>.foo {{ color: red; }}</style>\n");
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { brace: '{', .. })));
-        assert!(tokens.iter().any(|t| matches!(t, Token::EscapedBrace { brace: '}', .. })));
+        // <style> content is raw — braces are literal text, not escaped braces
+        let tokens = tokenize("<style>.foo { color: red; }</style>\n");
+        // No EscapedBrace tokens inside <style>
+        assert!(!tokens.iter().any(|t| matches!(t, Token::EscapedBrace { .. })));
+        // CSS content is emitted as Text
+        assert!(tokens.iter().any(|t| matches!(t, Token::Text { text, .. } if text.contains("{ color: red; }"))));
     }
 
     #[test]

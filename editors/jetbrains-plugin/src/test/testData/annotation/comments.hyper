@@ -1,0 +1,7 @@
+name: str = "test"
+---
+# Top-level comment
+<div>
+    <span>{name}</span>  # After tag close
+</div>
+<p>Text</p>  # After paragraph

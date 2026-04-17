@@ -67,6 +67,15 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+
+    test {
+        systemProperty("hyper.binary.path",
+            rootProject.file("../../rust/transpiler/target/debug/hyper").absolutePath)
+        systemProperty("java.awt.headless", "true")
+        systemProperty("idea.classpath.index.enabled", "false")
+        jvmArgs = listOf("-Xmx2g")
+        workingDir = project.projectDir
+    }
 }
 
 java {
