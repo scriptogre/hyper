@@ -25,11 +25,11 @@ fn main() {
         let path_str = path.to_string_lossy();
 
         // Apply filter if provided
-        if let Some(ref f) = filter {
-            if !path_str.contains(f) {
-                skipped += 1;
-                continue;
-            }
+        if let Some(ref f) = filter
+            && !path_str.contains(f)
+        {
+            skipped += 1;
+            continue;
         }
 
         process_file(path);

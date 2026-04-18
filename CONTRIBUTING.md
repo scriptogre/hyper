@@ -13,13 +13,13 @@
 git clone https://github.com/scriptogre/hyper.git
 cd hyper
 uv sync
-just build transpiler
+just build
 ```
 
 ## Running Tests
 
 ```bash
-just test transpiler    # Rust transpiler tests
+just test              # Rust transpiler tests
 pytest                  # Python runtime tests
 just test plugin        # JetBrains plugin tests
 ```

@@ -4,7 +4,7 @@ build:
 
 # Compile .hyper files (debug build)
 run *files:
-    cargo run -q --manifest-path {{justfile_directory()}}/rust/transpiler/Cargo.toml -- generate {{files}}
+    cargo run -q --manifest-path {{justfile_directory()}}/rust/Cargo.toml -- generate {{files}}
 
 # Run all checks (fmt, clippy, tests)
 check:
@@ -26,7 +26,7 @@ fix:
 
 # Update expected test files from current output
 test-accept *filter:
-    cd {{justfile_directory()}}/rust/transpiler && cargo run --example accept_expected -- {{filter}}
+    cd {{justfile_directory()}}/rust && cargo run --bin accept_expected -- {{filter}}
 
 # Release a new version
 release version:
@@ -41,9 +41,9 @@ release version:
         exit 1
     fi
     just check
-    sed -i '' 's/^version = ".*"/version = "{{version}}"/' pyproject.toml rust/transpiler/Cargo.toml
+    sed -i '' 's/^version = ".*"/version = "{{version}}"/' pyproject.toml rust/Cargo.toml
     cd rust && cargo check --quiet 2>/dev/null
-    git add pyproject.toml rust/transpiler/Cargo.toml rust/transpiler/Cargo.lock
+    git add pyproject.toml rust/Cargo.toml rust/Cargo.lock
     git commit -m "Release v{{version}}"
     git tag "v{{version}}"
     echo ""

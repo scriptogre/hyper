@@ -137,10 +137,10 @@ class HyperInjectionInvariantTest : BasePlatformTestCase() {
      * Find all non-error .hyper test files from the transpiler test suite.
      */
     private fun findTestFiles(): List<File> {
-        val testDir = File(project.basePath).resolve("../../rust/transpiler/tests")
+        val testDir = File(project.basePath).resolve("../../rust/tests")
         if (!testDir.exists()) {
             // Fallback: try relative to working directory
-            val fallback = File("../../rust/transpiler/tests")
+            val fallback = File("../../rust/tests")
             assertTrue(
                 "Cannot find transpiler test directory at ${testDir.absolutePath} or ${fallback.absolutePath}",
                 fallback.exists()

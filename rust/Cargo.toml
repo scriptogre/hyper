@@ -1,3 +1,39 @@
-[workspace]
-resolver = "2"
-members = ["transpiler"]
+[package]
+name = "hyper-transpiler"
+version = "0.1.0"
+edition = "2024"
+description = "Hyper template transpiler — compiles .hyper files to Python"
+license = "MIT"
+repository = "https://github.com/scriptogre/hyper"
+readme = "../../README.md"
+keywords = ["python", "templates", "html", "transpiler", "hypermedia"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lib]
+name = "hyper_transpiler"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hyper"
+path = "src/main.rs"
+
+[dependencies]
+tree-sitter = "0.25"
+tree-sitter-python = "0.25"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+walkdir = "2"
+
+[dev-dependencies]
+glob = "0.3"
+libtest-mimic = "0.8"
+
+[[test]]
+name = "expected_tests"
+harness = false
+
+[[test]]
+name = "invariants"
+path = "tests/invariants/main.rs"
+harness = false
