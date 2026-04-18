@@ -33,7 +33,7 @@ content = [
 
 [tool.maturin]
 bindings = "bin"
-manifest-path = "rust/transpiler/Cargo.toml"
+manifest-path = "rust/Cargo.toml"
 module-name = "hyper"
 python-source = "python"
 strip = true
