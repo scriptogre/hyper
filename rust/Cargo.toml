@@ -5,7 +5,7 @@ edition = "2024"
 description = "Hyper template transpiler — compiles .hyper files to Python"
 license = "MIT"
 repository = "https://github.com/scriptogre/hyper"
-readme = "../../README.md"
+readme = "../README.md"
 keywords = ["python", "templates", "html", "transpiler", "hypermedia"]
 categories = ["command-line-utilities", "development-tools"]
 
