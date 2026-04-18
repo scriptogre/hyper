@@ -13,3 +13,15 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
+      - id: cargo-test
+        name: cargo test
+        entry: cargo test --manifest-path rust/Cargo.toml
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        always_run: true
+        pass_filenames: false
