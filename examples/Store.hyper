@@ -1,0 +1,17 @@
+from app.layouts import Layout
+from app.components import ProductCard
+
+products: list[Product]
+
+---
+
+<{Layout} title="Store">
+    for product in products:
+        <{ProductCard}
+            name={product.name}
+            price={product.price}
+            image={product.image}
+            on_sale={product.on_sale}
+        />
+    end
+</{Layout}>

@@ -9,7 +9,7 @@
     },
     {
       "end": 1002,
-      "prefix": "):\n\n    # Style tags are raw - CSS braces are literal\n    yield \"\"\"\\\n<style>\n    .card {\n        background: white;\n        border-radius: 8px;\n    }\n    .card:hover {\n        transform: scale(1.05);\n    }\n    @keyframes spin {\n        0% { transform: rotate(0deg); }\n        100% { transform: rotate(360deg); }\n    }\n    @media (max-width: 768px) {\n        .card { padding: 1rem; }\n    }\n</style>\"\"\"\n\n    # Script tags are raw - JS braces are literal\n    yield \"\"\"\\\n<script>\n    const data = { name: \"test\", count: 0 };\n    if (data.count > 0) {\n        console.log(data.name);\n    }\n    for (let i = 0; i < 10; i++) {\n        data.count++;\n    }\n</script>\"\"\"\n\n    # Style with attributes\n    yield \"\"\"\\\n<style type=\"text/tailwindcss\">\n    @theme {\n        --color-accent: #FE750F;\n    }\n</style>\"\"\"\n\n    # Explicit raw block\n    yield \"\"\"\\\n<div>\n    \n        @decorator\n        if something:\n            for x in y:\n                {not_an_expression}\n            end\n        end\n    \n</div>\"\"\"\n\n    # Content after raw resumes normal parsing\n    yield f\"\"\"<p>{escape(",
+      "prefix": "):\n    # Style tags are raw - CSS braces are literal\n    yield \"\"\"\\\n<style>\n    .card {\n        background: white;\n        border-radius: 8px;\n    }\n    .card:hover {\n        transform: scale(1.05);\n    }\n    @keyframes spin {\n        0% { transform: rotate(0deg); }\n        100% { transform: rotate(360deg); }\n    }\n    @media (max-width: 768px) {\n        .card { padding: 1rem; }\n    }\n</style>\"\"\"\n    # Script tags are raw - JS braces are literal\n    yield \"\"\"\\\n<script>\n    const data = { name: \"test\", count: 0 };\n    if (data.count > 0) {\n        console.log(data.name);\n    }\n    for (let i = 0; i < 10; i++) {\n        data.count++;\n    }\n</script>\"\"\"\n    # Style with attributes\n    yield \"\"\"\\\n<style type=\"text/tailwindcss\">\n    @theme {\n        --color-accent: #FE750F;\n    }\n</style>\"\"\"\n    # Explicit raw block\n    yield \"\"\"\\\n<div>\n            @decorator\n        if something:\n            for x in y:\n                {not_an_expression}\n            end\n        end\n    </div>\"\"\"\n    # Content after raw resumes normal parsing\n    yield f\"\"\"<p>{escape(",
       "start": 991,
       "suffix": ")}</p>\"\"\"\n",
       "type": "python"
@@ -108,64 +108,64 @@
       "source_start": 397
     },
     {
-      "compiled_end": 547,
-      "compiled_start": 547,
+      "compiled_end": 546,
+      "compiled_start": 546,
       "range_type": "Html",
       "source_end": 461,
       "source_start": 453
     },
     {
-      "compiled_end": 547,
-      "compiled_start": 547,
+      "compiled_end": 546,
+      "compiled_start": 546,
       "range_type": "Html",
       "source_end": 643,
       "source_start": 634
     },
     {
-      "compiled_end": 785,
-      "compiled_start": 785,
+      "compiled_end": 783,
+      "compiled_start": 783,
       "range_type": "Html",
       "source_end": 700,
       "source_start": 669
     },
     {
-      "compiled_end": 785,
-      "compiled_start": 785,
+      "compiled_end": 783,
+      "compiled_start": 783,
       "range_type": "Html",
       "source_end": 761,
       "source_start": 753
     },
     {
-      "compiled_end": 922,
-      "compiled_start": 922,
+      "compiled_end": 919,
+      "compiled_start": 919,
       "range_type": "Html",
       "source_end": 789,
       "source_start": 784
     },
     {
-      "compiled_end": 922,
-      "compiled_start": 922,
+      "compiled_end": 919,
+      "compiled_start": 919,
       "range_type": "Html",
       "source_end": 942,
       "source_start": 936
     },
     {
-      "compiled_end": 1162,
-      "compiled_start": 1151,
+      "compiled_end": 1155,
+      "compiled_start": 1144,
       "range_type": "Python",
       "source_end": 1002,
       "source_start": 991
     },
     {
-      "compiled_end": 1139,
-      "compiled_start": 1139,
+      "compiled_end": 1133,
+      "compiled_start": 1133,
       "range_type": "Html",
       "source_end": 990,
       "source_start": 987
     },
     {
-      "compiled_end": 1139,
-      "compiled_start": 1139,
+      "compiled_end": 1133,
+      "compiled_start": 1133,
       "range_type": "Html",
       "source_end": 1007,
       "source_start": 1003

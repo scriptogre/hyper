@@ -1,5 +1,0 @@
----
-
-class_ = "primary"
-type_ = "button"
-<button class={class_} type={type_}>Click</button>

@@ -1,0 +1,15 @@
+name: str
+price: float
+image: str
+on_sale: bool = False
+
+---
+
+<div class={["card", {"sale": on_sale}]}>
+    <img src={image} alt={name} />
+    <h3>{name}</h3>
+    if on_sale:
+        <span class="badge">Sale</span>
+    end
+    <p class="price">${price:.2f}</p>
+</div>

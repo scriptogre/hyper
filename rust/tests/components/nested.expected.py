@@ -3,9 +3,7 @@ from hyper import html, escape
 
 @html
 def Nested(*, title: str, items: list):
-
     # Nested components
-
     # <{Card}>
     def _card():
 
@@ -24,7 +22,6 @@ def Nested(*, title: str, items: list):
             def _list():
 
                 for item in items:
-
                     # <{ListItem}>
                     def _list_item():
                         yield f"""\
@@ -32,7 +29,6 @@ def Nested(*, title: str, items: list):
                 """
                     yield from ListItem(_list_item())
                     # </{ListItem}>
-
 
             yield from List(_list())
             # </{List}>
@@ -44,9 +40,7 @@ def Nested(*, title: str, items: list):
     # </{Card}>
 
     # Component in control flow
-
     if title:
-
         # <{Alert}>
         def _alert():
             yield f"""\
@@ -55,11 +49,8 @@ def Nested(*, title: str, items: list):
         yield from Alert(_alert(), type="info")
         # </{Alert}>
 
-
     # Components in loop
-
     for item in items:
-
         # <{Badge}>
         def _badge():
             yield f"""\
@@ -67,5 +58,4 @@ def Nested(*, title: str, items: list):
     """
         yield from Badge(_badge(), color="blue")
         # </{Badge}>
-
 

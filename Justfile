@@ -24,9 +24,27 @@ fmt:
 fix:
     cd {{justfile_directory()}}/rust && cargo clippy --fix --allow-dirty
 
-# Update expected test files from current output
+# Preview compiled output as .preview.py files, clean up on Enter
+test-preview *filter:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{justfile_directory()}}/rust"
+    previews=()
+    for f in $(find tests -name "*.hyper" ! -path "*/errors/*"); do
+        if [ -n "{{filter}}" ] && [[ "$f" != *"{{filter}}"* ]]; then continue; fi
+        name=$(basename "$f" .hyper)
+        out="${f%.hyper}.preview.py"
+        cargo run --bin hyper -q -- generate --stdin --name "$name" < "$f" 2>/dev/null > "$out" && previews+=("$out")
+    done
+    if [ ${#previews[@]} -eq 0 ]; then echo "No matching files."; exit 0; fi
+    echo "${#previews[@]} .preview.py file(s) written:"
+    printf "  %s\n" "${previews[@]}"
+    read -p "Press Enter to clean up..."
+    for f in "${previews[@]}"; do rm -f "$f"; done
+
+# Apply expected test updates (prompts for confirmation)
 test-accept *filter:
-    cd {{justfile_directory()}}/rust && cargo run --bin accept_expected -- {{filter}}
+    cd {{justfile_directory()}}/rust && cargo run --bin accept_expected -- {{filter}} --apply
 
 # Release a new version
 release version:

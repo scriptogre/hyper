@@ -1,5 +1,0 @@
-raw_html: str
----
-
-{safe(raw_html)}
-<div>{safe("<b>bold</b>")}</div>

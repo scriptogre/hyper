@@ -1,6 +1,0 @@
-from hyper import html
-
-
-@html
-def VoidElements():
-    yield """<br /><hr /><img src="photo.jpg" alt="Photo" /><input type="text" name="field" /><meta charset="utf-8" /><link rel="stylesheet" href="style.css" />"""

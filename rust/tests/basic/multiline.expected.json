@@ -16,7 +16,7 @@
     },
     {
       "end": 131,
-      "prefix": "):\n\n    # Multiline dict literal\n\n    ",
+      "prefix": "):\n    # Multiline dict literal\n    ",
       "start": 54,
       "suffix": "",
       "type": "python"
@@ -30,7 +30,7 @@
     },
     {
       "end": 230,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline list literal\n\n    ",
+      "prefix": ")}</span>\"\"\"\n    # Multiline list literal\n    ",
       "start": 180,
       "suffix": "",
       "type": "python"
@@ -44,7 +44,7 @@
     },
     {
       "end": 361,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline function call\n\n    ",
+      "prefix": ")}</span>\"\"\"\n    # Multiline function call\n    ",
       "start": 280,
       "suffix": "",
       "type": "python"
@@ -58,7 +58,7 @@
     },
     {
       "end": 481,
-      "prefix": ")}</span>\"\"\"\n\n    # Multiline list comprehension\n\n    ",
+      "prefix": ")}</span>\"\"\"\n    # Multiline list comprehension\n    ",
       "start": 416,
       "suffix": "",
       "type": "python"
@@ -72,7 +72,7 @@
     },
     {
       "end": 601,
-      "prefix": ")}</span>\"\"\"\n\n    # Chained method calls (each on own line)\n\n    ",
+      "prefix": ")}</span>\"\"\"\n    # Chained method calls (each on own line)\n    ",
       "start": 548,
       "suffix": "",
       "type": "python"
@@ -171,141 +171,141 @@
       "source_start": 11
     },
     {
-      "compiled_end": 210,
-      "compiled_start": 117,
+      "compiled_end": 208,
+      "compiled_start": 115,
       "range_type": "Python",
       "source_end": 131,
       "source_start": 54
     },
     {
-      "compiled_end": 245,
-      "compiled_start": 239,
+      "compiled_end": 243,
+      "compiled_start": 237,
       "range_type": "Python",
       "source_end": 145,
       "source_start": 139
     },
     {
-      "compiled_end": 224,
-      "compiled_start": 224,
+      "compiled_end": 223,
+      "compiled_start": 223,
       "range_type": "Html",
       "source_end": 138,
       "source_start": 132
     },
     {
-      "compiled_end": 224,
-      "compiled_start": 224,
+      "compiled_end": 223,
+      "compiled_start": 223,
       "range_type": "Html",
       "source_end": 153,
       "source_start": 146
     },
     {
-      "compiled_end": 359,
-      "compiled_start": 293,
+      "compiled_end": 355,
+      "compiled_start": 289,
       "range_type": "Python",
       "source_end": 230,
       "source_start": 180
     },
     {
-      "compiled_end": 394,
-      "compiled_start": 388,
+      "compiled_end": 390,
+      "compiled_start": 384,
       "range_type": "Python",
       "source_end": 244,
       "source_start": 238
     },
     {
-      "compiled_end": 373,
-      "compiled_start": 373,
+      "compiled_end": 370,
+      "compiled_start": 370,
       "range_type": "Html",
       "source_end": 237,
       "source_start": 231
     },
     {
-      "compiled_end": 373,
-      "compiled_start": 373,
+      "compiled_end": 370,
+      "compiled_start": 370,
       "range_type": "Html",
       "source_end": 252,
       "source_start": 245
     },
     {
-      "compiled_end": 540,
-      "compiled_start": 443,
+      "compiled_end": 534,
+      "compiled_start": 437,
       "range_type": "Python",
       "source_end": 361,
       "source_start": 280
     },
     {
-      "compiled_end": 575,
-      "compiled_start": 569,
+      "compiled_end": 569,
+      "compiled_start": 563,
       "range_type": "Python",
       "source_end": 375,
       "source_start": 369
     },
     {
-      "compiled_end": 554,
-      "compiled_start": 554,
+      "compiled_end": 549,
+      "compiled_start": 549,
       "range_type": "Html",
       "source_end": 368,
       "source_start": 362
     },
     {
-      "compiled_end": 554,
-      "compiled_start": 554,
+      "compiled_end": 549,
+      "compiled_start": 549,
       "range_type": "Html",
       "source_end": 383,
       "source_start": 376
     },
     {
-      "compiled_end": 710,
-      "compiled_start": 629,
+      "compiled_end": 702,
+      "compiled_start": 621,
       "range_type": "Python",
       "source_end": 481,
       "source_start": 416
     },
     {
-      "compiled_end": 746,
-      "compiled_start": 739,
+      "compiled_end": 738,
+      "compiled_start": 731,
       "range_type": "Python",
       "source_end": 496,
       "source_start": 489
     },
     {
-      "compiled_end": 724,
-      "compiled_start": 724,
+      "compiled_end": 717,
+      "compiled_start": 717,
       "range_type": "Html",
       "source_end": 488,
       "source_start": 482
     },
     {
-      "compiled_end": 724,
-      "compiled_start": 724,
+      "compiled_end": 717,
+      "compiled_start": 717,
       "range_type": "Html",
       "source_end": 504,
       "source_start": 497
     },
     {
-      "compiled_end": 876,
-      "compiled_start": 811,
+      "compiled_end": 866,
+      "compiled_start": 801,
       "range_type": "Python",
       "source_end": 601,
       "source_start": 548
     },
     {
-      "compiled_end": 914,
-      "compiled_start": 905,
+      "compiled_end": 904,
+      "compiled_start": 895,
       "range_type": "Python",
       "source_end": 618,
       "source_start": 609
     },
     {
-      "compiled_end": 890,
-      "compiled_start": 890,
+      "compiled_end": 881,
+      "compiled_start": 881,
       "range_type": "Html",
       "source_end": 608,
       "source_start": 602
     },
     {
-      "compiled_end": 890,
-      "compiled_start": 890,
+      "compiled_end": 881,
+      "compiled_start": 881,
       "range_type": "Html",
       "source_end": 626,
       "source_start": 619

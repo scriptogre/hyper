@@ -1,6 +1,0 @@
-label: str
-**attrs: Any
-
----
-
-<button {attrs}>{label}</button>

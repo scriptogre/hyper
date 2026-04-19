@@ -1,9 +1,0 @@
-url: str
-disabled: bool
-props: dict
-
----
-
-<a href="/page" class="link-{url}" data-url={url} {disabled} {props} target="_blank">
-    Link
-</a>

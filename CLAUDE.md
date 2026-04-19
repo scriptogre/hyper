@@ -71,12 +71,14 @@ Validation uses an `element_stack` in `TreeBuilder` for parent context.
 
 **Expected output workflow:**
 ```bash
-cargo test                              # Run tests, see failures
-cargo run --bin accept_expected         # Regenerate all .expected.* files from current compiler output
-cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
+cargo test                                         # Run tests, see failures
+cargo run --bin accept_expected                    # Dry-run: show diffs without writing
+cargo run --bin accept_expected -- --apply         # Write all (requires review first)
+cargo run --bin accept_expected -- basic           # Dry-run matching "basic"
+cargo run --bin accept_expected -- basic --apply   # Write matching "basic"
 ```
 
-**IMPORTANT — expected output review:** `cargo run --bin accept_expected` blindly stamps the compiler's current output as correct. Never run it after a change without manually reviewing the diffs (`git diff`) to confirm the new output is actually what you expect. A bug in the compiler will silently become the blessed expected output otherwise. When changing parser or codegen logic, always spot-check at least the directly affected `.expected.py` and `.expected.json` files before considering the change done.
+**CRITICAL — expected output workflow:** `accept_expected` is dry-run by default. It shows what would change but writes nothing. You MUST review the diffs before running with `--apply`. NEVER run `--apply` without showing the user the dry-run output first and getting explicit approval. A bug in the compiler will silently become the blessed expected output if you skip review.
 
 **CRITICAL — injection range validation:** Every Python injection range `source[start:end]` must extract to meaningful text from the source file (not mid-word garbage). After accepting expected output, verify that source positions in `.expected.json` files map to the correct source text. The test suite includes semantic validation (range text extraction checks) — if these fail, the ranges are wrong, do NOT blindly accept. Common mistakes: off-by-one in span calculations, stale expected files accepted without review, substring-matching tests that pass accidentally.
 
@@ -86,7 +88,7 @@ cargo run --bin accept_expected basic   # Regenerate only files matching "basic"
 - New invariants go in their own module file under `invariants/`
 - Adding a new `.hyper` test file automatically gets invariant coverage with zero extra work
 
-**Kitchen sink smoke test** (`tests/basic/kitchen_sink.hyper`):
+**Kitchen sink smoke test** (`tests/kitchen_sink.hyper`):
 - Exercises every syntax construct in one file (elements, components, slots, control flow, decorators, attributes, expressions, comments)
 - After any injection change, open this file in JetBrains and visually verify highlighting
 - All 8 invariants run against it automatically

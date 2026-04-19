@@ -1578,7 +1578,9 @@ impl Generator for PythonGenerator {
         let mut parameters = Vec::new();
         let mut imports = Vec::new();
         let mut decorators = Vec::new();
+        let mut header_comments = Vec::new();
         let mut body_nodes = Vec::new();
+        let mut in_header = true;
 
         // First pass: identify which decorators lead to definitions
         // so we can correctly handle decorator-definition grouping
@@ -1620,9 +1622,17 @@ impl Generator for PythonGenerator {
 
         for (i, node) in ast.nodes.iter().enumerate() {
             match node {
-                Node::Parameter(param) => parameters.push(param),
-                Node::Import(import) => imports.push(import),
+                Node::Parameter(param) => {
+                    parameters.push(param);
+                }
+                Node::Import(import) => {
+                    imports.push(import);
+                }
+                Node::Comment(c) if in_header && parameters.is_empty() && imports.is_empty() => {
+                    header_comments.push(c);
+                }
                 Node::Decorator(dec) => {
+                    in_header = false;
                     if decorator_leads_to_def[i] {
                         body_nodes.push(node);
                     } else {
@@ -1632,7 +1642,10 @@ impl Generator for PythonGenerator {
                 // Skip whitespace text that's between a decorator and its definition
                 Node::Text(t)
                     if whitespace_in_decorator_chain[i] && t.content.trim().is_empty() => {}
-                _ => body_nodes.push(node),
+                _ => {
+                    in_header = false;
+                    body_nodes.push(node);
+                }
             }
         }
 
@@ -1847,6 +1860,12 @@ impl Generator for PythonGenerator {
         // Add hyper imports
         import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
         import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)
+
+        // Add header comments (above --- separator)
+        for comment in &header_comments {
+            import_lines.push_str(&comment.text);
+            import_lines.push('\n');
+        }
 
         // Add user decorators for the outer template function (before @html)
         for dec in &decorators {

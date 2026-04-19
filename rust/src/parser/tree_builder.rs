@@ -72,6 +72,51 @@ impl TreeBuilder {
         }
     }
 
+    /// A Newline should become Text("\n") only when it represents content whitespace.
+    /// The first Newline after a non-content token (comment, statement, etc.) is just
+    /// a line ending — skip it. Subsequent consecutive Newlines are blank lines — keep them.
+    /// Any Newline after a content token (text, element, expression) is always content.
+    fn newline_is_content(&self) -> bool {
+        if self.pos == 0 {
+            return false;
+        }
+        match &self.tokens[self.pos - 1] {
+            // After content → always preserve
+            Token::Text { .. }
+            | Token::Expression { .. }
+            | Token::HtmlElementOpen { .. }
+            | Token::HtmlElementClose { .. }
+            | Token::ComponentOpen { .. }
+            | Token::ComponentClose { .. }
+            | Token::SlotOpen { .. }
+            | Token::SlotClose { .. } => true,
+            // After another Newline → blank line, preserve
+            Token::Newline { .. } => {
+                // But only if we already emitted the previous newline as content.
+                // Walk back to find the last non-Newline/non-Indent token.
+                // If it was content, all subsequent newlines are content (blank lines).
+                // If it was non-content, the first newline was skipped (line ending),
+                // so this second newline is the first blank line — preserve it.
+                let mut newline_count = 0;
+                let mut i = self.pos;
+                while i > 0 {
+                    i -= 1;
+                    match &self.tokens[i] {
+                        Token::Newline { .. } | Token::Indent { .. } => {
+                            newline_count += 1;
+                        }
+                        _ => break,
+                    }
+                }
+                // After non-content: first newline = line ending (skipped),
+                // second+ = blank lines (preserve)
+                newline_count >= 2
+            }
+            // After non-content (comment, statement, etc.) → line ending, skip
+            _ => false,
+        }
+    }
+
     fn parse_node(&mut self) -> ParseResult<Option<Node>> {
         if self.is_at_end() {
             return Ok(None);
@@ -81,8 +126,7 @@ impl TreeBuilder {
 
         match token {
             Token::Newline { span } => {
-                // In content area, preserve newlines as text
-                if !self.in_header {
+                if !self.in_header && self.newline_is_content() {
                     let node = Node::Text(TextNode {
                         content: "\n".to_string(),
                         span: *span,
@@ -90,7 +134,6 @@ impl TreeBuilder {
                     self.advance();
                     Ok(Some(node))
                 } else {
-                    // In header area, skip newlines
                     self.advance();
                     Ok(None)
                 }

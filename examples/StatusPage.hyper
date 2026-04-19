@@ -1,0 +1,24 @@
+from app.enums import Status
+from app.models import Product
+
+status: Status
+products: list[Product]
+
+---
+
+match status:
+    case Status.LOADING:
+        <div class="spinner" />
+    case Status.ERROR:
+        <p class="error">Something went wrong</p>
+    case Status.OK:
+        if not products:
+            <p>No products found</p>
+        else:
+            <ul>
+                for product in products:
+                    <li>{product.name}</li>
+                end
+            </ul>
+        end
+end

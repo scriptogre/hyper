@@ -1,20 +1,54 @@
 //! Binary to generate/update .expected.py and .expected.json files
 //!
 //! Usage:
-//!   cargo run --bin accept_expected            # Update all
-//!   cargo run --bin accept_expected -- basic   # Update only tests matching "basic"
+//!   cargo run --bin accept_expected                      # Show what would change
+//!   cargo run --bin accept_expected -- --apply           # Write (interactive only)
+//!   cargo run --bin accept_expected -- basic --apply     # Write matching "basic"
 
 use hyper_transpiler::{GenerateOptions, Pipeline};
 use std::fs;
+use std::io::{self, Write};
 use std::path::Path;
 use walkdir::WalkDir;
 
 fn main() {
-    let filter: Option<String> = std::env::args().nth(1);
-    let test_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let apply = args.iter().any(|a| a == "--apply");
+    let filter: Option<&str> = args.iter().find(|a| *a != "--apply").map(|s| s.as_str());
 
-    let mut updated = 0;
-    let mut skipped = 0;
+    if apply {
+        print!("{} file(s) will be updated. Type YES to confirm: ", {
+            let test_dir_pre = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+            let mut count = 0;
+            for entry in WalkDir::new(&test_dir_pre)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().extension().map(|s| s == "hyper").unwrap_or(false))
+            {
+                let path = entry.path();
+                if let Some(f) = filter
+                    && !path.to_string_lossy().contains(f)
+                {
+                    continue;
+                }
+                if process_file(path, false) {
+                    count += 1;
+                }
+            }
+            count
+        });
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        if input.trim() != "YES" {
+            println!("Aborted.");
+            std::process::exit(1);
+        }
+    }
+
+    let test_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    let mut changed = 0;
+    let mut _skipped = 0;
 
     for entry in WalkDir::new(&test_dir)
         .into_iter()
@@ -22,29 +56,35 @@ fn main() {
         .filter(|e| e.path().extension().map(|s| s == "hyper").unwrap_or(false))
     {
         let path = entry.path();
-        let path_str = path.to_string_lossy();
-
-        // Apply filter if provided
-        if let Some(ref f) = filter
-            && !path_str.contains(f)
+        if let Some(f) = filter
+            && !path.to_string_lossy().contains(f)
         {
-            skipped += 1;
+            _skipped += 1;
             continue;
         }
-
-        process_file(path);
-        updated += 1;
+        if process_file(path, apply) {
+            changed += 1;
+        }
     }
 
-    println!("Updated {} files, skipped {}", updated, skipped);
+    if apply {
+        println!("Updated {} file(s).", changed);
+    } else if changed > 0 {
+        println!(
+            "\n{} file(s) would change. Run with --apply to write.",
+            changed
+        );
+    } else {
+        println!("All expected files are up to date.");
+    }
 }
 
-fn process_file(path: &Path) {
+fn process_file(path: &Path, write: bool) -> bool {
     let source = match fs::read_to_string(path) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("Failed to read {:?}: {}", path, e);
-            return;
+            return false;
         }
     };
 
@@ -52,80 +92,58 @@ fn process_file(path: &Path) {
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("Template");
-
     let is_error_test = path.to_string_lossy().contains("/errors/");
-
     let mut pipeline = Pipeline::standard();
+    let mut has_changes = false;
 
-    // First compile without ranges for output
-    let options = GenerateOptions {
-        function_name: Some(name.to_string()),
-        include_ranges: false,
-    };
-
-    let result = pipeline.compile(&source, &options);
+    let result = pipeline.compile(
+        &source,
+        &GenerateOptions {
+            function_name: Some(name.to_string()),
+            include_ranges: false,
+        },
+    );
 
     match result {
         Ok(output) => {
-            // Write .expected.py
             let expected_py = path.with_extension("expected.py");
-            if let Err(e) = fs::write(&expected_py, &output.code) {
-                eprintln!("Failed to write {:?}: {}", expected_py, e);
-            } else {
-                println!("  wrote {}", expected_py.display());
-            }
+            has_changes |= write_if_changed(&expected_py, &output.code, write);
 
-            // Remove any stale .expected.err if this now compiles
             let expected_err = path.with_extension("expected.err");
             if expected_err.exists() {
-                let _ = fs::remove_file(&expected_err);
+                if write {
+                    let _ = fs::remove_file(&expected_err);
+                }
+                has_changes = true;
             }
 
-            // Now compile with ranges for injections
-            let options_with_ranges = GenerateOptions {
-                function_name: Some(name.to_string()),
-                include_ranges: true,
-            };
-            if let Ok(result_with_ranges) = pipeline.compile(&source, &options_with_ranges) {
-                let warnings = validate_source_ranges(&source, &result_with_ranges);
-                if !warnings.is_empty() {
-                    eprintln!("  \u{26a0} Range warnings for {}:", path.display());
-                    for w in &warnings {
-                        eprintln!("{}", w);
-                    }
-                }
-
-                if !result_with_ranges.injections.is_empty()
-                    || !result_with_ranges.ranges.is_empty()
-                {
-                    let expected_json = path.with_extension("expected.json");
-                    let json = serde_json::json!({
-                        "injections": result_with_ranges.injections,
-                        "ranges": result_with_ranges.ranges,
-                    });
-                    if let Err(e) =
-                        fs::write(&expected_json, serde_json::to_string_pretty(&json).unwrap())
-                    {
-                        eprintln!("Failed to write {:?}: {}", expected_json, e);
-                    } else {
-                        println!("  wrote {}", expected_json.display());
-                    }
-                }
+            let result_with_ranges = pipeline.compile(
+                &source,
+                &GenerateOptions {
+                    function_name: Some(name.to_string()),
+                    include_ranges: true,
+                },
+            );
+            if let Ok(r) = result_with_ranges
+                && (!r.injections.is_empty() || !r.ranges.is_empty())
+            {
+                let expected_json = path.with_extension("expected.json");
+                let json = serde_json::json!({
+                    "injections": r.injections,
+                    "ranges": r.ranges,
+                });
+                let content = serde_json::to_string_pretty(&json).unwrap();
+                has_changes |= write_if_changed(&expected_json, &content, write);
             }
         }
         Err(e) => {
             if is_error_test {
-                // Write .expected.err
                 let expected_err = path.with_extension("expected.err");
                 let filename = path
                     .file_name()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown");
-                if let Err(err) = fs::write(&expected_err, e.render(&source, filename)) {
-                    eprintln!("Failed to write {:?}: {}", expected_err, err);
-                } else {
-                    println!("  wrote {}", expected_err.display());
-                }
+                has_changes |= write_if_changed(&expected_err, &e.render(&source, filename), write);
             } else {
                 eprintln!(
                     "ERROR: {:?} failed to compile but is not in errors/: {}",
@@ -134,45 +152,34 @@ fn process_file(path: &Path) {
             }
         }
     }
+
+    has_changes
 }
 
-/// Validate that all source ranges extract to meaningful text.
-/// Returns warnings for any ranges that start/end mid-identifier.
-fn validate_source_ranges(source: &str, result: &hyper_transpiler::GenerateResult) -> Vec<String> {
-    let mut warnings = Vec::new();
-    for range in &result.ranges {
-        if range.source_start >= range.source_end || range.source_end > source.len() {
-            continue;
-        }
-        let text = &source[range.source_start..range.source_end];
-
-        if range.source_start > 0 {
-            let prev = source.as_bytes()[range.source_start - 1] as char;
-            let first = text.chars().next().unwrap_or(' ');
-            if prev.is_alphanumeric() && first.is_alphanumeric() {
-                warnings.push(format!(
-                    "  WARNING: range [{}, {}] starts mid-identifier: ...{}|{}...",
-                    range.source_start,
-                    range.source_end,
-                    prev,
-                    &text[..text.len().min(20)]
-                ));
-            }
-        }
-
-        if range.source_end < source.len() {
-            let last = text.chars().last().unwrap_or(' ');
-            let next = source.as_bytes()[range.source_end] as char;
-            if last.is_alphanumeric() && next.is_alphanumeric() {
-                warnings.push(format!(
-                    "  WARNING: range [{}, {}] ends mid-identifier: ...{}|{}...",
-                    range.source_start,
-                    range.source_end,
-                    &text[text.len().saturating_sub(20)..],
-                    next
-                ));
-            }
-        }
+fn write_if_changed(path: &Path, new_content: &str, write: bool) -> bool {
+    let existing = fs::read_to_string(path).unwrap_or_default();
+    if path.exists() && existing == new_content {
+        return false;
     }
-    warnings
+
+    let rel = path
+        .to_string_lossy()
+        .rsplit("/tests/")
+        .next()
+        .unwrap_or(&path.to_string_lossy())
+        .to_string();
+
+    if write {
+        if let Err(e) = fs::write(path, new_content) {
+            eprintln!("Failed to write {:?}: {}", path, e);
+        } else {
+            println!("  wrote {}", rel);
+        }
+    } else if rel.ends_with(".py") {
+        println!("=== {} ===", rel);
+        println!("{}", new_content);
+    } else {
+        println!("  CHANGED: {}", rel);
+    }
+    true
 }

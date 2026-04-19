@@ -4,7 +4,6 @@ from hyper import html
 
 @html
 def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _footer: Iterable[str] | None = None, _header: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):
-
     yield """<div class="layout">"""
 
     yield """<header>"""

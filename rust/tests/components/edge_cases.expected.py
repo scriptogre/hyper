@@ -3,13 +3,10 @@ from hyper import html
 
 @html
 def EdgeCases(*, module: object, components: dict):
-
     # Component from module
-
     yield from module.Button(label="Click")
 
     # Component from dict
-
     # <{components['Card']}>
     def _components_card():
         yield """<p>Content</p>"""
@@ -17,11 +14,9 @@ def EdgeCases(*, module: object, components: dict):
     # </{components['Card']}>
 
     # Empty component (not self-closing)
-
     yield from Wrapper()
 
     # Component with only whitespace
-
     # <{Container}>
     def _container():
         pass
@@ -29,7 +24,6 @@ def EdgeCases(*, module: object, components: dict):
     # </{Container}>
 
     # Deeply nested components
-
     # <{Outer}>
     def _outer():
 

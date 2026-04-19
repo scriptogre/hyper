@@ -1,0 +1,23 @@
+stream: object
+connection: object
+user_id: int
+
+---
+
+result = await fetch_user(user_id)
+<h1>{result.name}</h1>
+<p>{await get_bio(user_id)}</p>
+
+async for item in stream:
+    <div>{item}</div>
+end
+
+async with connection as conn:
+    <span>Connected: {conn.id}</span>
+end
+
+async with connection as conn:
+    async for message in conn.messages:
+        <p>{message}</p>
+    end
+end

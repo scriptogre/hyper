@@ -3,7 +3,6 @@ from hyper import html, escape
 
 @html
 def RawContent(*, theme_color: str = "red"):
-
     # Style tags are raw - CSS braces are literal
     yield """\
 <style>
@@ -22,7 +21,6 @@ def RawContent(*, theme_color: str = "red"):
         .card { padding: 1rem; }
     }
 </style>"""
-
     # Script tags are raw - JS braces are literal
     yield """\
 <script>
@@ -34,7 +32,6 @@ def RawContent(*, theme_color: str = "red"):
         data.count++;
     }
 </script>"""
-
     # Style with attributes
     yield """\
 <style type="text/tailwindcss">
@@ -42,19 +39,15 @@ def RawContent(*, theme_color: str = "red"):
         --color-accent: #FE750F;
     }
 </style>"""
-
     # Explicit raw block
     yield """\
 <div>
-    
-        @decorator
+            @decorator
         if something:
             for x in y:
                 {not_an_expression}
             end
         end
-    
-</div>"""
-
+    </div>"""
     # Content after raw resumes normal parsing
     yield f"""<p>{escape(theme_color)}</p>"""
