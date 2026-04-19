@@ -19,44 +19,6 @@ impl PythonGenerator {
         }
     }
 
-    /// Find the spread variable name used in {**name} if no **kwargs param is declared.
-    /// All spread usages must use the same name (Python only allows one **kwargs).
-    fn find_implicit_spread_name(nodes: &[&Node]) -> Option<String> {
-        let mut names = std::collections::HashSet::new();
-        Self::collect_spread_names(nodes, &mut names);
-        if names.len() == 1 {
-            names.into_iter().next()
-        } else {
-            // Zero or multiple different names — don't inject
-            None
-        }
-    }
-
-    fn collect_spread_names(nodes: &[&Node], names: &mut std::collections::HashSet<String>) {
-        for node in nodes {
-            match node {
-                Node::Element(el) => {
-                    for attr in &el.attributes {
-                        if let AttributeKind::Spread { expr, .. } = &attr.kind {
-                            names.insert(expr.trim().to_string());
-                        }
-                    }
-                    let children: Vec<&Node> = el.children.iter().collect();
-                    Self::collect_spread_names(&children, names);
-                }
-                Node::If(n) => {
-                    let refs: Vec<&Node> = n.then_branch.iter().collect();
-                    Self::collect_spread_names(&refs, names);
-                }
-                Node::For(n) => {
-                    let refs: Vec<&Node> = n.body.iter().collect();
-                    Self::collect_spread_names(&refs, names);
-                }
-                _ => {}
-            }
-        }
-    }
-
     /// Check if a list of nodes contains only whitespace/newline text (no real content)
     fn is_effectively_empty(&self, nodes: &[&Node]) -> bool {
         nodes.iter().all(|node| match node {
@@ -1765,10 +1727,11 @@ impl Generator for PythonGenerator {
             }
         }
 
-        // Implicit **kwargs: if body uses {**name} but no **kwargs param is declared,
-        // auto-add **name to the signature
-        let implicit_kwargs_name = if star_star_kwargs.is_none() {
-            Self::find_implicit_spread_name(&body_nodes)
+        // Implicit **kwargs: if body uses a single {**name} and no **kwargs param
+        // is declared, auto-add **name to the signature
+        let implicit_kwargs_name = if star_star_kwargs.is_none() && metadata.spread_names.len() == 1
+        {
+            metadata.spread_names.iter().next().cloned()
         } else {
             None
         };

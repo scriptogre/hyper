@@ -2,11 +2,13 @@ mod async_detect;
 mod helper_detect;
 mod metadata;
 mod slot_detect;
+mod spread_detect;
 
 pub use async_detect::AsyncDetectionPlugin;
 pub use helper_detect::HelperDetectionPlugin;
 pub use metadata::TransformMetadata;
 pub use slot_detect::SlotDetectionPlugin;
+pub use spread_detect::SpreadDetectionPlugin;
 
 use crate::ast::{Ast, Node};
 
@@ -139,4 +141,5 @@ pub fn standard_plugins() -> Transformer {
         .add(HelperDetectionPlugin)
         .add(AsyncDetectionPlugin)
         .add(SlotDetectionPlugin)
+        .add(SpreadDetectionPlugin)
 }
