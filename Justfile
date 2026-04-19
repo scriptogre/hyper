@@ -42,8 +42,9 @@ release version:
     fi
     just check
     sed -i '' 's/^version = ".*"/version = "{{version}}"/' pyproject.toml rust/Cargo.toml
+    sed -i '' 's/^pluginVersion = .*/pluginVersion = {{version}}/' editors/jetbrains/gradle.properties
     cd rust && cargo check --quiet 2>/dev/null
-    git add pyproject.toml rust/Cargo.toml rust/Cargo.lock
+    git add pyproject.toml rust/Cargo.toml rust/Cargo.lock editors/jetbrains/gradle.properties
     git commit -m "Release v{{version}}"
     git tag "v{{version}}"
     echo ""
@@ -56,7 +57,7 @@ build-plugin: build _bundle
     set -e
     ROOT="{{justfile_directory()}}"
     cd "$ROOT/editors/jetbrains" && ./gradlew clean buildPlugin
-    cp "$ROOT/editors/jetbrains/build/distributions"/*.zip "$ROOT/editors/jetbrains/hyper-plugin.zip"
+    cp "$ROOT/editors/jetbrains/build/distributions"/*.zip "$ROOT/editors/jetbrains/"
 
 # Run JetBrains plugin sandbox
 run-plugin: build-plugin

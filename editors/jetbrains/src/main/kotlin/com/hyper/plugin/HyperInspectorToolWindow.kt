@@ -382,89 +382,42 @@ class HyperRangesPanel(
     private fun formatRanges(sourceText: String, compiledText: String, ranges: List<HyperTranspilerService.Range>): String {
         val sb = StringBuilder()
 
-        sb.appendLine("INJECTION RANGES")
+        val pythonRanges = ranges.filter { it.type == "python" }
+        val htmlRanges = ranges.filter { it.type == "html" }
+
+        sb.appendLine("RANGES  (source → compiled)")
         sb.appendLine("━".repeat(80))
+        sb.appendLine()
+        sb.appendLine("Python: ${pythonRanges.size}    HTML: ${htmlRanges.size}")
         sb.appendLine()
 
         if (ranges.isEmpty()) {
-            sb.appendLine("No injection ranges found.")
+            sb.appendLine("No ranges.")
             return sb.toString()
         }
 
-        for ((index, range) in ranges.withIndex()) {
-            // Extract source text
-            val sourceSnippet = if (range.source_start < sourceText.length && range.source_end <= sourceText.length) {
-                sourceText.substring(range.source_start, range.source_end)
-            } else {
-                "!!! OUT OF BOUNDS !!!"
-            }
+        for (range in ranges) {
+            val sourceSnippet = safeSubstring(sourceText, range.source_start, range.source_end)
+            val compiledSnippet = safeSubstring(compiledText, range.compiled_start, range.compiled_end)
 
-            // Extract compiled text
-            val compiledSnippet = if (range.compiled_start < compiledText.length && range.compiled_end <= compiledText.length) {
-                compiledText.substring(range.compiled_start, range.compiled_end)
-            } else {
-                "!!! OUT OF BOUNDS !!!"
-            }
-
-            // Determine if there are issues
-            val issues = mutableListOf<String>()
-
-            // Check for out of bounds
-            if (range.source_end > sourceText.length) {
-                issues.add("source_end exceeds source length")
-            }
-            if (range.compiled_end > compiledText.length) {
-                issues.add("compiled_end exceeds compiled length")
-            }
-
-            // Check if source text looks split mid-word
-            if (sourceSnippet.isNotEmpty() && !sourceSnippet.first().isWhitespace() &&
-                range.source_start > 0 && !sourceText[range.source_start - 1].isWhitespace()) {
-                issues.add("source text appears split mid-word")
-            }
-
-            // Check if source contains mixed content
-            val hasHtmlTags = sourceSnippet.contains('<') || sourceSnippet.contains('>')
-            val hasPythonSyntax = sourceSnippet.contains('(') || sourceSnippet.contains('[') || sourceSnippet.contains('{')
-            if (range.type == "python" && hasHtmlTags) {
-                issues.add("Python range contains HTML tags")
-            }
-            if (range.type == "html" && hasPythonSyntax && !sourceSnippet.contains('<')) {
-                issues.add("HTML range contains Python syntax without tags")
-            }
-
-            // Format range header
-            val typeLabel = "[${range.type.uppercase()}]"
-            sb.appendLine("$typeLabel source[${range.source_start}:${range.source_end}] → compiled[${range.compiled_start}:${range.compiled_end}]")
-
-            // Show snippets
-            sb.appendLine("  source:   ${formatSnippet(sourceSnippet)}")
-            sb.appendLine("  compiled: ${formatSnippet(compiledSnippet)}")
-
-            // Show validation
-            if (issues.isEmpty()) {
-                if (sourceSnippet == compiledSnippet) {
-                    sb.appendLine("  ✓ Match")
-                } else {
-                    sb.appendLine("  ℹ Transform (expected)")
-                }
-            } else {
-                sb.appendLine("  ⚠ ISSUES:")
-                for (issue in issues) {
-                    sb.appendLine("    • $issue")
-                }
-            }
-
-            if (index < ranges.size - 1) {
-                sb.appendLine()
-            }
+            val typeLabel = if (range.type == "python") "PY  " else "HTML"
+            sb.appendLine("$typeLabel  source[${range.source_start}:${range.source_end}] → compiled[${range.compiled_start}:${range.compiled_end}]")
+            sb.appendLine("      ${formatSnippet(sourceSnippet)} → ${formatSnippet(compiledSnippet)}")
+            sb.appendLine()
         }
 
         return sb.toString()
     }
 
+    private fun safeSubstring(text: String, start: Int, end: Int): String {
+        return if (start >= 0 && end <= text.length && start <= end) {
+            text.substring(start, end)
+        } else {
+            "OUT OF BOUNDS (${start}:${end} in ${text.length})"
+        }
+    }
+
     private fun formatSnippet(text: String): String {
-        // Escape and truncate if needed
         val escaped = text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
         return "\"${escaped.take(60)}${if (escaped.length > 60) "..." else ""}\""
     }
