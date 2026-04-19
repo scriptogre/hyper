@@ -48,8 +48,10 @@ pub enum AttributeValue {
     Expression(String, Span),
     /// Boolean (no value): disabled
     Bool,
-    /// Shorthand: {name}
+    /// Shorthand: {name} — emits name=name
     Shorthand(String, Span),
+    /// Spread: {**expr} — kwargs unpacking
+    Spread(String, Span),
     /// Slot assignment: {...name} assigns element to children_name slot
     SlotAssignment(String, Span),
 }
@@ -1513,11 +1515,32 @@ impl<'a> Tokenizer<'a> {
         let ch = self.peek_char()?;
 
         if ch == '{' {
-            // Shorthand {name} or slot assignment {...name}
+            // Shorthand {name}, spread {**expr}, or slot assignment {...name}
             let attr_start = self.position;
             self.advance(); // {
 
-            if self.peek_char() == Some('.') {
+            if self.peek_char() == Some('*') && self.peek_next_char() == Some('*') {
+                // Spread {**expr} — kwargs unpacking
+                self.advance(); // *
+                self.advance(); // *
+                let expr = self.consume_expression();
+                let attr_end = self.position;
+                self.advance(); // }
+                return Some(Attribute {
+                    name: "**".to_string(),
+                    value: AttributeValue::Spread(
+                        expr,
+                        Span {
+                            start: attr_start,
+                            end: attr_end,
+                        },
+                    ),
+                    span: Span {
+                        start: attr_start,
+                        end: self.position,
+                    },
+                });
+            } else if self.peek_char() == Some('.') {
                 // Slot assignment {...name}
                 self.advance(); // .
                 self.advance(); // .

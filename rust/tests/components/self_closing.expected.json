@@ -51,9 +51,9 @@
     },
     {
       "end": 253,
-      "prefix": "(**props)\n\n    # Mixed\n\n    yield from ",
+      "prefix": "(props=props)\n\n    # Mixed\n\n    yield from ",
       "start": 249,
-      "suffix": "(name=\"star\", size=24, **props)\n\n",
+      "suffix": "(name=\"star\", size=24, props=props)\n\n",
       "type": "python"
     },
     {
@@ -234,8 +234,8 @@
       "source_start": 226
     },
     {
-      "compiled_end": 378,
-      "compiled_start": 374,
+      "compiled_end": 382,
+      "compiled_start": 378,
       "range_type": "Python",
       "source_end": 253,
       "source_start": 249

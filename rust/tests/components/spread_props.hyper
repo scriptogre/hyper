@@ -2,6 +2,6 @@ props: dict
 label: str
 ---
 
-<{Button} {props} />
-<{Button} label={label} {props} />
-<{Button} disabled {props} />
+<{Button} {**props} />
+<{Button} label={label} {**props} />
+<{Button} disabled {**props} />

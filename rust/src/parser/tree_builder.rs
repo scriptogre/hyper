@@ -971,6 +971,10 @@ impl TreeBuilder {
                         name: name.clone(),
                         expr_span: *span,
                     },
+                    AttributeValue::Spread(code, span) => AttributeKind::Spread {
+                        expr: code.clone(),
+                        expr_span: *span,
+                    },
                     AttributeValue::SlotAssignment(name, span) => AttributeKind::SlotAssignment {
                         name: name.clone(),
                         expr: None,
@@ -1030,7 +1034,7 @@ impl TreeBuilder {
                 | AttributeKind::Template { name, .. }
                 | AttributeKind::Boolean { name }
                 | AttributeKind::Shorthand { name, .. } => Some(name.as_str()),
-                AttributeKind::SlotAssignment { .. } => None,
+                AttributeKind::Spread { .. } | AttributeKind::SlotAssignment { .. } => None,
             };
             if let Some(name) = name {
                 if let Some(first_span) = seen.get(name) {

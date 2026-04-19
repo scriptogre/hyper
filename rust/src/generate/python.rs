@@ -315,7 +315,8 @@ impl PythonGenerator {
                     let gap_start = expr_span.start.byte.saturating_sub(1);
                     expr_spans.push((gap_start, expr_span.end.byte));
                 }
-                AttributeKind::Shorthand { expr_span, .. } => {
+                AttributeKind::Shorthand { expr_span, .. }
+                | AttributeKind::Spread { expr_span, .. } => {
                     expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
                 }
                 AttributeKind::SlotAssignment {
@@ -663,6 +664,29 @@ impl PythonGenerator {
                     });
                 }
             }
+            AttributeKind::Spread { expr, expr_span } => {
+                if in_fstring {
+                    let trimmed_expr = expr.trim();
+                    let safe_expr = self.safe_var_name(trimmed_expr);
+                    // Spread expr_span: {**expr} — skip 3 chars for "{**"
+                    let content_start = expr_span.start.byte + 3;
+                    let content_end = expr_span.end.byte;
+
+                    output.push("{spread_attrs(");
+                    let s = output.position();
+                    output.push(&safe_expr);
+                    let e = output.position();
+                    output.push(")}");
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: s,
+                        compiled_end: e,
+                        needs_injection: true,
+                    });
+                }
+            }
             AttributeKind::SlotAssignment {
                 name,
                 expr,
@@ -906,6 +930,7 @@ impl PythonGenerator {
                 AttributeKind::Dynamic { .. }
                     | AttributeKind::Template { .. }
                     | AttributeKind::Shorthand { .. }
+                    | AttributeKind::Spread { .. }
             )
         });
 
@@ -970,6 +995,11 @@ impl PythonGenerator {
                 output.push(name);
                 output.push("\", ");
                 output.push(name);
+                output.push(")}");
+            }
+            AttributeKind::Spread { expr, .. } => {
+                output.push("{spread_attrs(");
+                output.push(expr.trim());
                 output.push(")}");
             }
             AttributeKind::SlotAssignment { name, expr, .. } => {
@@ -1159,8 +1189,13 @@ impl PythonGenerator {
             }
             AttributeKind::Shorthand { name, .. } => {
                 let var_name = self.safe_var_name(name);
-                output.push("**");
+                output.push(name);
+                output.push("=");
                 output.push(&var_name);
+            }
+            AttributeKind::Spread { expr, .. } => {
+                output.push("**");
+                output.push(expr.trim());
             }
             AttributeKind::Template { name, value } => {
                 output.push(name);
@@ -1807,6 +1842,9 @@ impl Generator for PythonGenerator {
         if code.contains("{render_aria(") {
             hyper_imports.push("render_aria");
         }
+        if code.contains("{spread_attrs(") {
+            hyper_imports.push("spread_attrs");
+        }
 
         // Add other helpers based on metadata
         if metadata.helpers_used.contains("safe") {
@@ -2054,7 +2092,7 @@ fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
             // expr_span covers {expr} with exclusive end
             braces.push((expr_span.start.byte, expr_span.end.byte - 1));
         }
-        AttributeKind::Shorthand { expr_span, .. } => {
+        AttributeKind::Shorthand { expr_span, .. } | AttributeKind::Spread { expr_span, .. } => {
             // expr_span.end points TO closing brace (not past it)
             braces.push((expr_span.start.byte, expr_span.end.byte));
         }

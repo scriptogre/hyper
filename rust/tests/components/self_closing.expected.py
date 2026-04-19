@@ -18,9 +18,9 @@ def SelfClosing(*, name: str, onClick: object, props: dict):
 
     # With spread
 
-    yield from Button(**props)
+    yield from Button(props=props)
 
     # Mixed
 
-    yield from Icon(name="star", size=24, **props)
+    yield from Icon(name="star", size=24, props=props)
 

@@ -265,8 +265,11 @@ pub enum AttributeKind {
     /// Boolean: disabled
     Boolean { name: String },
 
-    /// Shorthand: {disabled}
+    /// Shorthand: {disabled} — emits name=name
     Shorthand { name: String, expr_span: Span },
+
+    /// Spread: {**props} — kwargs unpacking
+    Spread { expr: String, expr_span: Span },
 
     /// Slot assignment: {...name}
     SlotAssignment {

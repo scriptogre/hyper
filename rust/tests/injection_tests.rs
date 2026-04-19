@@ -1330,3 +1330,94 @@ fn test_string_with_brace_in_attribute_expression() {
         "Expression should include full call with string containing brace"
     );
 }
+
+// ========================================================================
+// Shorthand vs spread semantics
+// ========================================================================
+
+#[test]
+fn test_shorthand_on_html_element_emits_name_equals_name() {
+    // {disabled} on an HTML element should render as a single attribute: disabled=disabled
+    let source = r#"<button {disabled}>Click</button>"#;
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("render_attr(\"disabled\", disabled)"),
+        "Shorthand on HTML should use render_attr. Got:\n{}",
+        result.code
+    );
+    assert!(
+        !result.code.contains("**disabled"),
+        "Shorthand on HTML must NOT unpack as kwargs"
+    );
+}
+
+#[test]
+fn test_shorthand_on_component_emits_name_equals_name() {
+    // {disabled} on a component should emit disabled=disabled, NOT **disabled
+    let source = r#"<{Button} {disabled} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("disabled=disabled"),
+        "Shorthand on component should emit name=name. Got:\n{}",
+        result.code
+    );
+    assert!(
+        !result.code.contains("**disabled"),
+        "Shorthand on component must NOT unpack as kwargs"
+    );
+}
+
+#[test]
+fn test_spread_on_component_emits_kwargs_unpacking() {
+    // {**props} on a component should emit **props (kwargs unpacking)
+    let source = r#"<{Card} {**props} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("**props"),
+        "Spread on component should emit **props. Got:\n{}",
+        result.code
+    );
+    assert!(
+        !result.code.contains("props=props"),
+        "Spread must NOT emit name=name"
+    );
+}
+
+#[test]
+fn test_spread_on_html_element_emits_spread_attrs() {
+    // {**attrs} on an HTML element should use spread_attrs helper
+    let source = r#"<div {**attrs}>Content</div>"#;
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("spread_attrs(attrs)"),
+        "Spread on HTML should use spread_attrs helper. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_shorthand_and_spread_together_on_component() {
+    // Mixing {disabled} (shorthand) and {**props} (spread) on a component
+    let source = r#"<{Card} {disabled} label="hi" {**props} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("disabled=disabled"),
+        "Shorthand should emit name=name. Got:\n{}",
+        result.code
+    );
+    assert!(
+        result.code.contains("**props"),
+        "Spread should emit **props. Got:\n{}",
+        result.code
+    );
+    assert!(
+        result.code.contains("label=\"hi\""),
+        "Static attr should pass through. Got:\n{}",
+        result.code
+    );
+}
