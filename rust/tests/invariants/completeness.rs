@@ -149,6 +149,39 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                     .into());
                 }
             }
+            // Attribute expressions in HTML elements and components
+            Token::HtmlElementOpen {
+                attributes, span, ..
+            }
+            | Token::ComponentOpen {
+                attributes, span, ..
+            } if in_body(span.start.byte) => {
+                for attr in attributes {
+                    use hyper_transpiler::parser::tokenizer::AttributeValue;
+                    // Get (inner_start, inner_end) excluding delimiters
+                    let inner = match &attr.value {
+                        // class={expr}: span is {expr}, inner skips { and }
+                        AttributeValue::Expression(_, s) => {
+                            Some((s.start.byte + 1, s.end.byte - 1))
+                        }
+                        // {name}: span is {name}, inner skips {
+                        // (span.end is before }, so no -1)
+                        AttributeValue::Shorthand(_, s) => Some((s.start.byte + 1, s.end.byte)),
+                        _ => None,
+                    };
+                    if let Some((start, end)) = inner {
+                        if start < end && !is_covered(start, end) {
+                            return Err(format!(
+                                "attribute expression at [{},{}] has no Python range: {:?}",
+                                start,
+                                end,
+                                &source[start..end]
+                            )
+                            .into());
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
