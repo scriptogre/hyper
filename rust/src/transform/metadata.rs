@@ -38,10 +38,6 @@ impl TransformMetadata {
         self.helpers_used.contains("render_aria")
     }
 
-    pub fn uses_spread_attrs(&self) -> bool {
-        self.helpers_used.contains("spread_attrs")
-    }
-
     pub fn uses_children(&self) -> bool {
         self.slots_used.contains("children")
     }

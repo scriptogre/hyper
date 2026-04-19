@@ -1513,7 +1513,7 @@ impl<'a> Tokenizer<'a> {
         let ch = self.peek_char()?;
 
         if ch == '{' {
-            // Shorthand {name}, spread {**expr}, or slot assignment {...name}
+            // Shorthand {name} or slot assignment {...name}
             let attr_start = self.position;
             self.advance(); // {
 

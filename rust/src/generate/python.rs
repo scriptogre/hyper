@@ -95,7 +95,7 @@ impl PythonGenerator {
         match node {
             Node::Expression(_) => true,
             Node::Element(el) => {
-                // Check if element has dynamic attributes (including spreads) or expression children
+                // Check if element has dynamic attributes or expression children
                 el.attributes.iter().any(|attr| {
                     !matches!(
                         attr.kind,
@@ -1806,9 +1806,6 @@ impl Generator for PythonGenerator {
         }
         if code.contains("{render_aria(") {
             hyper_imports.push("render_aria");
-        }
-        if code.contains("{spread_attrs(") {
-            hyper_imports.push("spread_attrs");
         }
 
         // Add other helpers based on metadata

@@ -268,7 +268,7 @@ pub enum AttributeKind {
     /// Shorthand: {disabled}
     Shorthand { name: String, expr_span: Span },
 
-    /// Slot assignment: slot:name or slot:name={expr}
+    /// Slot assignment: {...name}
     SlotAssignment {
         name: String,
         expr: Option<String>,
