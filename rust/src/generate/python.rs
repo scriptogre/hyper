@@ -1704,15 +1704,6 @@ impl Generator for PythonGenerator {
             }
         }
 
-        // Implicit **kwargs: if body uses a single {**name} and no **kwargs param
-        // is declared, auto-add **name to the signature
-        let implicit_kwargs_name = if star_star_kwargs.is_none() && metadata.spread_names.len() == 1
-        {
-            metadata.spread_names.iter().next().cloned()
-        } else {
-            None
-        };
-
         // Emit _content parameter first if default slot is used
         let mut param_count = 0;
         if has_default_slot {
@@ -1786,12 +1777,6 @@ impl Generator for PythonGenerator {
                 output.push(": ");
                 output.push(type_hint);
             }
-        } else if let Some(name) = &implicit_kwargs_name {
-            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
-                output.push(", ");
-            }
-            output.push("**");
-            output.push(name);
         }
 
         output.push("):");

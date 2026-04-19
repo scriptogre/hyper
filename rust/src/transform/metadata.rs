@@ -7,8 +7,6 @@ pub struct TransformMetadata {
     pub helpers_used: HashSet<String>,
     pub is_async: bool,
     pub slots_used: HashSet<String>,
-    /// All {**name} spread variable names found in the body
-    pub spread_names: HashSet<String>,
 }
 
 impl TransformMetadata {
