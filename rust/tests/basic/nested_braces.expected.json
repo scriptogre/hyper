@@ -1,0 +1,272 @@
+{
+  "injections": [
+    {
+      "end": 13,
+      "prefix": "from hyper import html, escape, render_class, render_style\n\n\n@html\ndef NestedBraces(*, ",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 26,
+      "prefix": ", ",
+      "start": 14,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 98,
+      "prefix": "):\n\n    # Dict in class attribute\n    yield f\"\"\"\\\n<div class=\"{render_class(",
+      "start": 71,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 221,
+      "prefix": ")}\">\n    <span>Product</span>\n</div>\"\"\"\n\n    # Nested dict in style attribute\n    yield f\"\"\"\\\n<div style=\"{render_style(",
+      "start": 179,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 298,
+      "prefix": ")}\">\n    Styled\n</div>\"\"\"\n\n    # Set literal in expression\n    yield f\"\"\"<span>{escape(",
+      "start": 278,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 387,
+      "prefix": ")}</span>\"\"\"\n\n    # Dict comprehension in attribute\n    yield f\"\"\"\\\n<div data=\"{escape(",
+      "start": 353,
+      "suffix": ")}\">\n    Mapped\n</div>\"\"\"\n",
+      "type": "python"
+    },
+    {
+      "end": 69,
+      "prefix": "",
+      "start": 59,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 100,
+      "prefix": "",
+      "start": 99,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 111,
+      "prefix": "",
+      "start": 105,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 125,
+      "prefix": "",
+      "start": 118,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 132,
+      "prefix": "",
+      "start": 126,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 177,
+      "prefix": "",
+      "start": 167,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 223,
+      "prefix": "",
+      "start": 222,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 241,
+      "prefix": "",
+      "start": 235,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 277,
+      "prefix": "",
+      "start": 271,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 306,
+      "prefix": "",
+      "start": 299,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 351,
+      "prefix": "",
+      "start": 342,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 389,
+      "prefix": "",
+      "start": 388,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 407,
+      "prefix": "",
+      "start": 401,
+      "suffix": "",
+      "type": "html"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 100,
+      "compiled_start": 87,
+      "range_type": "Python",
+      "source_end": 13,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 114,
+      "compiled_start": 102,
+      "range_type": "Python",
+      "source_end": 26,
+      "source_start": 14
+    },
+    {
+      "compiled_end": 217,
+      "compiled_start": 190,
+      "range_type": "Python",
+      "source_end": 98,
+      "source_start": 71
+    },
+    {
+      "compiled_end": 163,
+      "compiled_start": 163,
+      "range_type": "Html",
+      "source_end": 111,
+      "source_start": 105
+    },
+    {
+      "compiled_end": 163,
+      "compiled_start": 163,
+      "range_type": "Html",
+      "source_end": 125,
+      "source_start": 118
+    },
+    {
+      "compiled_end": 163,
+      "compiled_start": 163,
+      "range_type": "Html",
+      "source_end": 69,
+      "source_start": 59
+    },
+    {
+      "compiled_end": 163,
+      "compiled_start": 163,
+      "range_type": "Html",
+      "source_end": 100,
+      "source_start": 99
+    },
+    {
+      "compiled_end": 163,
+      "compiled_start": 163,
+      "range_type": "Html",
+      "source_end": 132,
+      "source_start": 126
+    },
+    {
+      "compiled_end": 379,
+      "compiled_start": 337,
+      "range_type": "Python",
+      "source_end": 221,
+      "source_start": 179
+    },
+    {
+      "compiled_end": 310,
+      "compiled_start": 310,
+      "range_type": "Html",
+      "source_end": 177,
+      "source_start": 167
+    },
+    {
+      "compiled_end": 310,
+      "compiled_start": 310,
+      "range_type": "Html",
+      "source_end": 223,
+      "source_start": 222
+    },
+    {
+      "compiled_end": 310,
+      "compiled_start": 310,
+      "range_type": "Html",
+      "source_end": 241,
+      "source_start": 235
+    },
+    {
+      "compiled_end": 486,
+      "compiled_start": 466,
+      "range_type": "Python",
+      "source_end": 298,
+      "source_start": 278
+    },
+    {
+      "compiled_end": 451,
+      "compiled_start": 451,
+      "range_type": "Html",
+      "source_end": 277,
+      "source_start": 271
+    },
+    {
+      "compiled_end": 451,
+      "compiled_start": 451,
+      "range_type": "Html",
+      "source_end": 306,
+      "source_start": 299
+    },
+    {
+      "compiled_end": 607,
+      "compiled_start": 573,
+      "range_type": "Python",
+      "source_end": 387,
+      "source_start": 353
+    },
+    {
+      "compiled_end": 553,
+      "compiled_start": 553,
+      "range_type": "Html",
+      "source_end": 351,
+      "source_start": 342
+    },
+    {
+      "compiled_end": 553,
+      "compiled_start": 553,
+      "range_type": "Html",
+      "source_end": 389,
+      "source_start": 388
+    },
+    {
+      "compiled_end": 553,
+      "compiled_start": 553,
+      "range_type": "Html",
+      "source_end": 407,
+      "source_start": 401
+    }
+  ]
+}

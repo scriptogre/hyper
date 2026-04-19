@@ -48,7 +48,10 @@ fn test_parameter_injection() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
-    assert!(py.len() >= 1, "Expected at least 1 Python injection (expr)");
+    assert!(
+        !py.is_empty(),
+        "Expected at least 1 Python injection (expr)"
+    );
 
     // Python ranges should have valid compiled positions
     for (i, range) in python_ranges(&result).iter().enumerate() {
@@ -188,7 +191,7 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
     let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
-    assert!(py.len() >= 1, "Expected at least 1 Python injection");
+    assert!(!py.is_empty(), "Expected at least 1 Python injection");
 
     for range in &python_ranges(&result) {
         assert!(range.compiled_end > range.compiled_start);
@@ -209,7 +212,7 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
     let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
-    assert!(py.len() >= 1, "Expected at least 1 Python injection");
+    assert!(!py.is_empty(), "Expected at least 1 Python injection");
 
     for range in &python_ranges(&result) {
         assert!(range.compiled_end > range.compiled_start);
@@ -1272,3 +1275,71 @@ fn test_component_close_name_has_python_range() {
 // Note: slot names (e.g. "header" in <{...header}>) are Hyper syntax, not Python
 // expressions. They compile to _header, not header. No Python injection range
 // is emitted — styling comes from the TextMate grammar / annotator instead.
+
+// ========================================================================
+// Nested braces in attribute expressions
+// ========================================================================
+
+#[test]
+fn test_dict_in_attribute_expression() {
+    // Dict literal inside attribute expression: class={["card", {"sale": on_sale}]}
+    // The tokenizer must track bracket depth to find the correct closing }
+    let source = r#"<div class={["card", {"sale": on_sale}]}>text</div>"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let expr_range = py.iter().find(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text.contains("card") && text.contains("on_sale")
+    });
+    assert!(
+        expr_range.is_some(),
+        "Should have Python range for full dict expression. Ranges: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
+
+    // The captured expression should include the closing }]
+    let range = expr_range.unwrap();
+    let text = &source[range.source_start..range.source_end];
+    assert_eq!(
+        text, r#"["card", {"sale": on_sale}]"#,
+        "Expression should include full list with nested dict"
+    );
+
+    // The compiled output should produce valid Python
+    assert!(
+        result.code.contains(r#"["card", {"sale": on_sale}]"#),
+        "Compiled code should contain full expression. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_string_with_brace_in_attribute_expression() {
+    // A string literal containing "}" inside an attribute expression
+    // must not terminate the expression early
+    let source = r#"<div class={get_class("}")}>text</div>"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let py = python_ranges(&result);
+    let expr_range = py.iter().find(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text.contains("get_class")
+    });
+    assert!(
+        expr_range.is_some(),
+        "Should have Python range for get_class expression. Ranges: {:?}",
+        py.iter()
+            .map(|r| &source[r.source_start..r.source_end])
+            .collect::<Vec<_>>()
+    );
+
+    let range = expr_range.unwrap();
+    let text = &source[range.source_start..range.source_end];
+    assert_eq!(
+        text, r#"get_class("}")"#,
+        "Expression should include full call with string containing brace"
+    );
+}

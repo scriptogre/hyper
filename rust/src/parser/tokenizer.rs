@@ -1523,7 +1523,7 @@ impl<'a> Tokenizer<'a> {
                 // Spread {**expr}
                 self.advance();
                 self.advance();
-                let expr = self.consume_until_char('}');
+                let expr = self.consume_expression();
                 let attr_end = self.position;
                 self.advance(); // }
                 return Some(Attribute {
@@ -1564,7 +1564,7 @@ impl<'a> Tokenizer<'a> {
                 });
             } else {
                 // Shorthand {name}
-                let expr = self.consume_until_char('}');
+                let expr = self.consume_expression();
                 let attr_end = self.position;
                 self.advance(); // }
                 return Some(Attribute {
@@ -1596,7 +1596,7 @@ impl<'a> Tokenizer<'a> {
                     // Expression value: aria={expr}
                     let val_start = self.position;
                     self.advance(); // {
-                    let expr = self.consume_until_char('}');
+                    let expr = self.consume_expression();
                     self.advance(); // } - advance past closing brace
                     (
                         AttributeValue::Expression(
@@ -2109,22 +2109,74 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    /// Consume characters until `stop` is found at bracket depth 0.
+    /// Simple utility — does NOT track string context. Use `consume_expression`
+    /// for parsing Python expressions where strings may contain brackets.
     fn consume_until_char(&mut self, stop: char) -> String {
         let start = self.position.byte;
         let mut depth = 0;
         while !self.at_eof() {
             let Some(ch) = self.peek_char() else { break };
-            if ch == '{' {
-                depth += 1;
-            }
-            if ch == '}' {
-                if depth == 0 && stop == '}' {
-                    break;
+            match ch {
+                '(' | '[' | '{' => {
+                    depth += 1;
                 }
-                depth -= 1;
+                ')' | ']' | '}' => {
+                    if depth == 0 && ch == stop {
+                        break;
+                    }
+                    depth -= 1;
+                }
+                _ => {
+                    if ch == stop && depth == 0 {
+                        break;
+                    }
+                }
             }
-            if ch == stop && depth == 0 {
-                break;
+            self.advance();
+        }
+        self.source[start..self.position.byte].to_string()
+    }
+
+    /// Consume a Python expression delimited by `}`. Tracks bracket depth
+    /// across `()`, `[]`, `{}` and skips brackets inside string literals.
+    fn consume_expression(&mut self) -> String {
+        let start = self.position.byte;
+        let mut depth = 0;
+        let mut in_string = false;
+        let mut string_char = ' ';
+
+        while !self.at_eof() {
+            let Some(ch) = self.peek_char() else { break };
+
+            if in_string {
+                if ch == '\\' {
+                    self.advance();
+                    self.advance();
+                    continue;
+                }
+                if ch == string_char {
+                    in_string = false;
+                }
+                self.advance();
+                continue;
+            }
+
+            match ch {
+                '"' | '\'' => {
+                    in_string = true;
+                    string_char = ch;
+                }
+                '(' | '[' | '{' => {
+                    depth += 1;
+                }
+                ')' | ']' | '}' => {
+                    if depth == 0 {
+                        break;
+                    }
+                    depth -= 1;
+                }
+                _ => {}
             }
             self.advance();
         }
