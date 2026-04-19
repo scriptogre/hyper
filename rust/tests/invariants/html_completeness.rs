@@ -44,80 +44,78 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     for token in &tokens {
         match token {
-            Token::HtmlElementOpen { span, .. } if in_body(span.start.byte) => {
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "HTML element open tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::HtmlElementOpen { span, .. }
+                if in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "HTML element open tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
-            Token::HtmlElementClose { span, .. } if in_body(span.start.byte) => {
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "HTML element close tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::HtmlElementClose { span, .. }
+                if in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "HTML element close tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
-            Token::ComponentOpen {
-                span, self_closing, ..
-            } if in_body(span.start.byte) => {
-                // Component tags like <{Card}> should have HTML ranges for the
-                // angle brackets (< and >) around the braced name.
-                // Self-closing components (<{Card} />) also need coverage.
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "component open tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
-                let _ = self_closing; // suppress unused warning
+            Token::ComponentOpen { span, .. }
+                if in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "component open tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
-            Token::ComponentClose { span, .. } if in_body(span.start.byte) => {
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "component close tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::ComponentClose { span, .. }
+                if in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "component close tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
-            Token::SlotOpen { name, span } if name.is_some() && in_body(span.start.byte) => {
-                // Tag-form named slots like <{...header}> should have HTML ranges.
-                // Inline slots ({...} or {...name}) don't get HTML ranges — they're
-                // expressions, not tags.
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "slot open tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::SlotOpen { name, span }
+                if name.is_some()
+                    && in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "slot open tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
-            Token::SlotClose { span, .. } if in_body(span.start.byte) => {
-                if !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "slot close tag at [{},{}] has no HTML range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::SlotClose { span, .. }
+                if in_body(span.start.byte)
+                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "slot close tag at [{},{}] has no HTML range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
             _ => {}
         }

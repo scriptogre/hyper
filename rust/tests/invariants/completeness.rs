@@ -43,33 +43,31 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     for token in &tokens {
         match token {
-            Token::Decorator { span, .. } if in_body(span.start.byte) => {
-                if !is_covered(span.start.byte, span.end.byte) {
-                    return Err(format!(
-                        "decorator at [{},{}] has no Python range: {:?}",
-                        span.start.byte,
-                        span.end.byte,
-                        &source[span.start.byte..span.end.byte]
-                    )
-                    .into());
-                }
+            Token::Decorator { span, .. }
+                if in_body(span.start.byte) && !is_covered(span.start.byte, span.end.byte) =>
+            {
+                return Err(format!(
+                    "decorator at [{},{}] has no Python range: {:?}",
+                    span.start.byte,
+                    span.end.byte,
+                    &source[span.start.byte..span.end.byte]
+                )
+                .into());
             }
             Token::ControlStart {
                 keyword, rest_span, ..
             } if (keyword == "def" || keyword == "class" || keyword == "async def")
-                && in_body(rest_span.start.byte) =>
+                && in_body(rest_span.start.byte)
+                && !is_covered(rest_span.start.byte, rest_span.end.byte) =>
             {
-                // Generator includes the full signature with colon
-                if !is_covered(rest_span.start.byte, rest_span.end.byte) {
-                    return Err(format!(
-                        "{} signature at [{},{}] has no Python range: {:?}",
-                        keyword,
-                        rest_span.start.byte,
-                        rest_span.end.byte,
-                        &source[rest_span.start.byte..rest_span.end.byte]
-                    )
-                    .into());
-                }
+                return Err(format!(
+                    "{} signature at [{},{}] has no Python range: {:?}",
+                    keyword,
+                    rest_span.start.byte,
+                    rest_span.end.byte,
+                    &source[rest_span.start.byte..rest_span.end.byte]
+                )
+                .into());
             }
             Token::Expression { span, .. } if in_body(span.start.byte) => {
                 // Skip slot expressions ({...} / {...name}) — tokenizer converts
