@@ -56,7 +56,6 @@ Type hints become keyword-only function parameters:
 ```hyper
 title: str
 count: int = 0
-**kwargs: dict
 ---
 <div>{title}</div>
 ```
@@ -66,8 +65,21 @@ from hyper import html, escape
 
 
 @html
-def Template(*, title: str, count: int = 0, **kwargs: dict):
+def Template(*, title: str, count: int = 0):
     yield f"""<div>{escape(title)}</div>"""
+```
+
+Spread names like `kwargs`, `props`, `rest`, `attrs`, and `attributes` are auto-injected into the signature when used in the body without explicit declaration:
+
+```hyper
+title: str
+---
+<{Card} title={title} {**props} />
+```
+
+```python
+def Template(*, title: str, **props):
+    yield from Card(title=title, **props)
 ```
 
 ### Below `---`: Function Body

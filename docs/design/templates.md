@@ -639,8 +639,6 @@ target: str = "_blank"
 <a id="my-link" target="_blank">Link</a>
 ```
 
-Note: `{target}` is shorthand for `target={target}` — it passes a single attribute. `{**base_attrs}` unpacks the dict as multiple attributes.
-
 Special attributes like `class` work when spread:
 
 ```hyper
@@ -656,37 +654,44 @@ attrs = {"class": class, "id": "act_now", "data": {"wow": "such-attr"}}
 <button class="btn active" id="act_now" data-wow="such-attr">Click</button>
 ```
 
-### Capturing Extra Attributes
+### Pass-Through Attributes
 
-Accept arbitrary attributes with `**kwargs` syntax:
+Use one of `{**kwargs}`, `{**props}`, `{**rest}`, `{**attrs}`, or `{**attributes}` to accept and forward arbitrary attributes. The compiler adds it to the function signature automatically.
 
 ```hyper
 label: str
 type: str = "button"
-**attrs: dict
 
 ---
 
-<button {type} {attrs}>
+<button {type} {**attrs}>
     {label}
 </button>
 ```
 
+```python
+def Button(*, label: str, type: str = "button", **attrs):
+    ...
+```
+
 ```hyper
-from components import Button
-
----
-
-<{Button} label="Save" class="btn" disabled hx-post="/save" />
+<{Button} label="Save" hx-post="/save" class="btn" disabled />
 ```
 
 ```html
-<button type="button" class="btn" disabled hx-post="/save">
+<button type="button" hx-post="/save" class="btn" disabled>
     Save
 </button>
 ```
 
-Use any name: `**attrs`, `**props`, `**extra` all work.
+Other names are not auto-injected:
+
+```hyper
+my_dict = {"class": "card"}
+
+<{Card} {**my_dict} />
+# my_dict is a local variable, not a parameter
+```
 
 ---
 
@@ -1044,7 +1049,7 @@ greeting = f"Hello {name}"
 - `NAME: Final[type] = expr` — module-level constants
 - `type Name = type_expr` — type aliases (Python 3.12+)
 - Type-annotated variables become props: `name: str`, `count: int = 0`
-- `**attrs: dict` captures extra attributes
+- `**kwargs` captures extra attributes (optional if using `{**kwargs}` in the body)
 
 **Body zone** (below `---`):
 - Local variables (can reference props)
