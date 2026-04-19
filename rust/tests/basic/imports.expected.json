@@ -1,8 +1,29 @@
 {
   "injections": [
     {
+      "end": 29,
+      "prefix": "",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 41,
+      "prefix": "\n",
+      "start": 30,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 66,
+      "prefix": "\n",
+      "start": 42,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 77,
-      "prefix": "from datetime import datetime\nimport json\nfrom pathlib import Path\nfrom hyper import html, escape\n\n\n@html\ndef Imports(*, ",
+      "prefix": "\nfrom hyper import html, escape\n\n\n@html\ndef Imports(*, ",
       "start": 68,
       "suffix": "",
       "type": "python"
@@ -72,6 +93,27 @@
     }
   ],
   "ranges": [
+    {
+      "compiled_end": 29,
+      "compiled_start": 0,
+      "range_type": "Python",
+      "source_end": 29,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 41,
+      "compiled_start": 30,
+      "range_type": "Python",
+      "source_end": 41,
+      "source_start": 30
+    },
+    {
+      "compiled_end": 66,
+      "compiled_start": 42,
+      "range_type": "Python",
+      "source_end": 66,
+      "source_start": 42
+    },
     {
       "compiled_end": 130,
       "compiled_start": 121,

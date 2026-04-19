@@ -1711,8 +1711,19 @@ impl Generator for PythonGenerator {
 
         // Emit user imports
         for import in &imports {
+            let import_start = output.position();
             output.push(&import.stmt);
+            let import_end = output.position();
             output.newline();
+
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: import.span.start.byte,
+                source_end: import.span.end.byte,
+                compiled_start: import_start,
+                compiled_end: import_end,
+                needs_injection: true,
+            });
         }
 
         // Note: orphaned decorators (not attached to inner defs) are applied to
@@ -1943,12 +1954,22 @@ impl Generator for PythonGenerator {
 
         // Compute injection ranges and injections using the analyzer (if requested)
         let (ranges, injections, expression_braces) = if options.include_ranges {
-            // Adjust tracked ranges by the import line offset
+            // Find insertion point (where import_lines were inserted) in pre-insertion coordinates
+            let def_pos = code
+                .find("async def ")
+                .or_else(|| code.find("def "))
+                .unwrap_or(0);
+            let pre_insertion_def_pos = def_pos - import_offset;
+
+            // Adjust tracked ranges by the import line offset, but only for ranges
+            // at or after the insertion point (user imports come before it)
             let adjusted_ranges: Vec<crate::generate::Range> = tracked_ranges
                 .into_iter()
                 .map(|mut r| {
-                    r.compiled_start += import_offset;
-                    r.compiled_end += import_offset;
+                    if r.compiled_start >= pre_insertion_def_pos {
+                        r.compiled_start += import_offset;
+                        r.compiled_end += import_offset;
+                    }
                     r
                 })
                 .collect();
