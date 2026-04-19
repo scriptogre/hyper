@@ -50,8 +50,6 @@ pub enum AttributeValue {
     Bool,
     /// Shorthand: {name}
     Shorthand(String, Span),
-    /// Spread: {**expr}
-    Spread(String, Span),
     /// Slot assignment: {...name} assigns element to children_name slot
     SlotAssignment(String, Span),
 }
@@ -1519,28 +1517,7 @@ impl<'a> Tokenizer<'a> {
             let attr_start = self.position;
             self.advance(); // {
 
-            if self.peek_char() == Some('*') && self.peek_next_char() == Some('*') {
-                // Spread {**expr}
-                self.advance();
-                self.advance();
-                let expr = self.consume_expression();
-                let attr_end = self.position;
-                self.advance(); // }
-                return Some(Attribute {
-                    name: "**".to_string(),
-                    value: AttributeValue::Spread(
-                        expr,
-                        Span {
-                            start: attr_start,
-                            end: attr_end,
-                        },
-                    ),
-                    span: Span {
-                        start: attr_start,
-                        end: self.position,
-                    },
-                });
-            } else if self.peek_char() == Some('.') {
+            if self.peek_char() == Some('.') {
                 // Slot assignment {...name}
                 self.advance(); // .
                 self.advance(); // .
@@ -2749,19 +2726,6 @@ mod tests {
             if let AttributeValue::Expression(code, _) = &attributes[1].value {
                 assert_eq!(code, "count * 2");
             }
-        } else {
-            panic!("Expected ComponentOpen");
-        }
-    }
-
-    #[test]
-    fn test_component_spread() {
-        let tokens = tokenize("<{Button} {**props} />\n");
-        if let Token::ComponentOpen { attributes, .. } = &tokens[0] {
-            assert_eq!(attributes.len(), 1);
-            assert!(
-                matches!(&attributes[0].value, AttributeValue::Spread(expr, _) if expr == "props")
-            );
         } else {
             panic!("Expected ComponentOpen");
         }

@@ -268,9 +268,6 @@ pub enum AttributeKind {
     /// Shorthand: {disabled}
     Shorthand { name: String, expr_span: Span },
 
-    /// Spread: {...props}
-    Spread { expr: String, expr_span: Span },
-
     /// Slot assignment: slot:name or slot:name={expr}
     SlotAssignment {
         name: String,

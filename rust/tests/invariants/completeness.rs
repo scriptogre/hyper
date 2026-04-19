@@ -169,16 +169,17 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                         AttributeValue::Shorthand(_, s) => Some((s.start.byte + 1, s.end.byte)),
                         _ => None,
                     };
-                    if let Some((start, end)) = inner {
-                        if start < end && !is_covered(start, end) {
-                            return Err(format!(
-                                "attribute expression at [{},{}] has no Python range: {:?}",
-                                start,
-                                end,
-                                &source[start..end]
-                            )
-                            .into());
-                        }
+                    if let Some((start, end)) = inner
+                        && start < end
+                        && !is_covered(start, end)
+                    {
+                        return Err(format!(
+                            "attribute expression at [{},{}] has no Python range: {:?}",
+                            start,
+                            end,
+                            &source[start..end]
+                        )
+                        .into());
                     }
                 }
             }

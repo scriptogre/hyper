@@ -19,29 +19,22 @@ impl Visitor for HelperDetectionPlugin {
             Node::Element(el) => {
                 // Check attributes for helper usage
                 for attr in &el.attributes {
-                    match &attr.kind {
-                        AttributeKind::Dynamic { expr, .. } => {
-                            if expr.contains("render_class(") {
-                                metadata.helpers_used.insert("render_class".to_string());
-                            }
-                            if expr.contains("render_style(") {
-                                metadata.helpers_used.insert("render_style".to_string());
-                            }
-                            if expr.contains("render_attr(") {
-                                metadata.helpers_used.insert("render_attr".to_string());
-                            }
-                            if expr.contains("render_data(") {
-                                metadata.helpers_used.insert("render_data".to_string());
-                            }
-                            if expr.contains("render_aria(") {
-                                metadata.helpers_used.insert("render_aria".to_string());
-                            }
+                    if let AttributeKind::Dynamic { expr, .. } = &attr.kind {
+                        if expr.contains("render_class(") {
+                            metadata.helpers_used.insert("render_class".to_string());
                         }
-                        AttributeKind::Spread { expr, .. }
-                            if expr.contains("spread_attrs(") => {
-                                metadata.helpers_used.insert("spread_attrs".to_string());
+                        if expr.contains("render_style(") {
+                            metadata.helpers_used.insert("render_style".to_string());
                         }
-                        _ => {}
+                        if expr.contains("render_attr(") {
+                            metadata.helpers_used.insert("render_attr".to_string());
+                        }
+                        if expr.contains("render_data(") {
+                            metadata.helpers_used.insert("render_data".to_string());
+                        }
+                        if expr.contains("render_aria(") {
+                            metadata.helpers_used.insert("render_aria".to_string());
+                        }
                     }
                 }
             }

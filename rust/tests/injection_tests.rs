@@ -280,19 +280,6 @@ fn test_shorthand_attribute_injection() {
 }
 
 #[test]
-fn test_spread_stars_attribute_injection() {
-    let source = r#"<div {**props}>Content</div>"#;
-    let result = compile_with_ranges(source, "Test");
-
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1, "Expected 1 Python injection for spread");
-
-    let py_ranges = python_ranges(&result);
-    let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
-    assert_eq!(source_text, "props");
-}
-
-#[test]
 fn test_all_expression_contexts() {
     let source = r#"name: str
 count: int = 0

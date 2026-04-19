@@ -306,7 +306,7 @@ impl PythonGenerator {
     fn add_html_ranges(&self, el: &ElementNode, output: &mut Output) {
         // Collect expression spans (exclusive end) within the opening tag.
         // Dynamic spans already use exclusive end (past '}').
-        // Shorthand/Spread/SlotAssignment spans end AT '}', so we +1 for exclusive end.
+        // Shorthand/SlotAssignment spans end AT '}', so we +1 for exclusive end.
         let mut expr_spans = Vec::new();
         for attr in &el.attributes {
             match &attr.kind {
@@ -316,9 +316,6 @@ impl PythonGenerator {
                     expr_spans.push((gap_start, expr_span.end.byte));
                 }
                 AttributeKind::Shorthand { expr_span, .. } => {
-                    expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
-                }
-                AttributeKind::Spread { expr_span, .. } => {
                     expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
                 }
                 AttributeKind::SlotAssignment {
@@ -666,64 +663,6 @@ impl PythonGenerator {
                     });
                 }
             }
-            AttributeKind::Spread { expr, expr_span } => {
-                if in_fstring {
-                    // Detect special spread types by variable name
-                    // Convert reserved keywords to safe variable names
-                    let trimmed_expr = expr.trim();
-                    let safe_expr = self.safe_var_name(trimmed_expr);
-                    // Spread expr_span.end points TO closing brace (not past it).
-                    // Spread syntax is {**expr}, so skip 3 chars for "{**"
-                    let content_start = expr_span.start.byte + 3;
-                    let content_end = expr_span.end.byte;
-
-                    let (start, end) = if trimmed_expr == "class" {
-                        output.push(" class=\"{render_class(");
-                        let s = output.position();
-                        output.push(&safe_expr);
-                        let e = output.position();
-                        output.push(")}\"");
-                        (s, e)
-                    } else if trimmed_expr == "style" {
-                        output.push(" style=\"{render_style(");
-                        let s = output.position();
-                        output.push(&safe_expr);
-                        let e = output.position();
-                        output.push(")}\"");
-                        (s, e)
-                    } else if trimmed_expr == "data" {
-                        output.push("{render_data(");
-                        let s = output.position();
-                        output.push(&safe_expr);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
-                    } else if trimmed_expr == "aria" {
-                        output.push("{render_aria(");
-                        let s = output.position();
-                        output.push(&safe_expr);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
-                    } else {
-                        // Generic spread
-                        output.push("{spread_attrs(");
-                        let s = output.position();
-                        output.push(&safe_expr);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
-                    };
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: start,
-                        compiled_end: end,
-                        needs_injection: true,
-                    });
-                }
-            }
             AttributeKind::SlotAssignment {
                 name,
                 expr,
@@ -967,7 +906,6 @@ impl PythonGenerator {
                 AttributeKind::Dynamic { .. }
                     | AttributeKind::Template { .. }
                     | AttributeKind::Shorthand { .. }
-                    | AttributeKind::Spread { .. }
             )
         });
 
@@ -1033,11 +971,6 @@ impl PythonGenerator {
                 output.push("\", ");
                 output.push(name);
                 output.push(")}");
-            }
-            AttributeKind::Spread { expr, .. } => {
-                output.push(" {");
-                output.push(expr);
-                output.push("}");
             }
             AttributeKind::SlotAssignment { name, expr, .. } => {
                 if let Some(e) = expr {
@@ -1228,10 +1161,6 @@ impl PythonGenerator {
                 let var_name = self.safe_var_name(name);
                 output.push("**");
                 output.push(&var_name);
-            }
-            AttributeKind::Spread { expr, .. } => {
-                output.push("**");
-                output.push(expr.trim());
             }
             AttributeKind::Template { name, value } => {
                 output.push(name);
@@ -2129,10 +2058,6 @@ fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
             braces.push((expr_span.start.byte, expr_span.end.byte - 1));
         }
         AttributeKind::Shorthand { expr_span, .. } => {
-            // expr_span.end points TO closing brace (not past it)
-            braces.push((expr_span.start.byte, expr_span.end.byte));
-        }
-        AttributeKind::Spread { expr_span, .. } => {
             // expr_span.end points TO closing brace (not past it)
             braces.push((expr_span.start.byte, expr_span.end.byte));
         }
