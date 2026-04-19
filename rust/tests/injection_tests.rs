@@ -1409,3 +1409,33 @@ fn test_shorthand_and_spread_together_on_component() {
         result.code
     );
 }
+
+// ========================================================================
+// Implicit spread edge cases
+// ========================================================================
+
+#[test]
+fn test_multiple_spread_names_require_explicit_declaration() {
+    // Two elements use different spread names — implicit can't handle this
+    // (Python only allows one **kwargs), so both must be declared explicitly
+    let source = "container_attrs: dict\nbutton_attrs: dict\n---\n<div {**container_attrs}>\n    <button {**button_attrs}>Click</button>\n</div>";
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("spread_attrs(container_attrs)"),
+        "First spread should compile. Got:\n{}",
+        result.code
+    );
+    assert!(
+        result.code.contains("spread_attrs(button_attrs)"),
+        "Second spread should compile. Got:\n{}",
+        result.code
+    );
+    // Both are regular dict params, not **kwargs
+    let sig_line = result.code.lines().find(|l| l.contains("def ")).unwrap();
+    assert!(
+        sig_line.contains("container_attrs: dict") && sig_line.contains("button_attrs: dict"),
+        "Both should be regular dict params. Sig: {}",
+        sig_line
+    );
+}
