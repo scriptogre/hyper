@@ -1,5 +1,10 @@
 attrs: dict = {"href": "https://example.com", "target": "_blank"}
+extra: dict
 
 ---
 
-<a {attrs}>Link</a>
+# Spread on HTML element
+<a {**attrs}>External link</a>
+
+# Spread with other attributes
+<div id="main" {**extra} class="container">Content</div>
