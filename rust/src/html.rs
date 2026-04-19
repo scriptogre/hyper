@@ -65,3 +65,32 @@ pub fn is_block_element(tag: &str) -> bool {
 pub fn is_interactive_element(tag: &str) -> bool {
     INTERACTIVE_ELEMENTS.contains(&tag.to_ascii_lowercase().as_str())
 }
+
+/// Boolean HTML attributes: rendered as present/absent, not as key="value".
+/// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+const BOOLEAN_ATTRIBUTES: &[&str] = &[
+    "disabled",
+    "checked",
+    "readonly",
+    "required",
+    "autofocus",
+    "autoplay",
+    "controls",
+    "loop",
+    "muted",
+    "selected",
+    "open",
+    "hidden",
+    "async",
+    "defer",
+    "novalidate",
+    "formnovalidate",
+    "ismap",
+    "multiple",
+    "reversed",
+    "scoped",
+];
+
+pub fn is_boolean_attribute(name: &str) -> bool {
+    BOOLEAN_ATTRIBUTES.contains(&name)
+}

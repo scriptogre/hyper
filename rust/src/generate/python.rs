@@ -481,31 +481,8 @@ impl PythonGenerator {
         }
     }
 
-    /// Check if an attribute name is a boolean HTML attribute
     fn is_boolean_attribute(&self, name: &str) -> bool {
-        matches!(
-            name,
-            "disabled"
-                | "checked"
-                | "readonly"
-                | "required"
-                | "autofocus"
-                | "autoplay"
-                | "controls"
-                | "loop"
-                | "muted"
-                | "selected"
-                | "open"
-                | "hidden"
-                | "async"
-                | "defer"
-                | "novalidate"
-                | "formnovalidate"
-                | "ismap"
-                | "multiple"
-                | "reversed"
-                | "scoped"
-        )
+        crate::html::is_boolean_attribute(name)
     }
 
     /// Emit attribute content as part of a string literal
@@ -1836,34 +1813,22 @@ impl Generator for PythonGenerator {
         let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
         let needs_iterable = has_default_slot || has_named_slots;
 
-        // Build imports based on what helpers are actually used in the generated code
+        // Build imports from metadata (populated by HelperDetectionPlugin)
         let mut hyper_imports = vec!["html"];
 
-        if code.contains("{escape(") {
-            hyper_imports.push("escape");
-        }
-        if code.contains("{render_class(") {
-            hyper_imports.push("render_class");
-        }
-        if code.contains("{render_attr(") {
-            hyper_imports.push("render_attr");
-        }
-        if code.contains("{render_style(") {
-            hyper_imports.push("render_style");
-        }
-        if code.contains("{render_data(") {
-            hyper_imports.push("render_data");
-        }
-        if code.contains("{render_aria(") {
-            hyper_imports.push("render_aria");
-        }
-        if code.contains("{spread_attrs(") {
-            hyper_imports.push("spread_attrs");
-        }
-
-        // Add other helpers based on metadata
-        if metadata.helpers_used.contains("safe") {
-            hyper_imports.push("safe");
+        for helper in &[
+            "escape",
+            "safe",
+            "render_class",
+            "render_style",
+            "render_attr",
+            "render_data",
+            "render_aria",
+            "spread_attrs",
+        ] {
+            if metadata.helpers_used.contains(*helper) {
+                hyper_imports.push(helper);
+            }
         }
 
         // Detect typing constructs needed from parameter type hints

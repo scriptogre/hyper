@@ -1,40 +1,67 @@
 use super::Visitor;
 use crate::ast::{AttributeKind, Node};
+use crate::html;
 
-/// Detects which helper functions are used in the template
-/// This allows the generator to only import what's needed
+/// Detects which runtime helpers are needed based on AST structure.
+/// The generator reads metadata.helpers_used to emit the correct imports.
 pub struct HelperDetectionPlugin;
 
 impl Visitor for HelperDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
-            Node::Expression(expr)
-                // Note: escape() import is detected by the generator via code.contains("{escape(")
-                // rather than being tracked as a helper here
-                //
-                // Check if expression explicitly uses safe()
-                if expr.expr.contains("safe(") => {
+            Node::Expression(expr) => {
+                metadata.helpers_used.insert("escape".to_string());
+                if expr.expr.contains("safe(") {
                     metadata.helpers_used.insert("safe".to_string());
+                }
             }
             Node::Element(el) => {
-                // Check attributes for helper usage
                 for attr in &el.attributes {
-                    if let AttributeKind::Dynamic { expr, .. } = &attr.kind {
-                        if expr.contains("render_class(") {
-                            metadata.helpers_used.insert("render_class".to_string());
+                    match &attr.kind {
+                        AttributeKind::Dynamic { name, .. } => match name.as_str() {
+                            "class" => {
+                                metadata.helpers_used.insert("render_class".to_string());
+                            }
+                            "style" => {
+                                metadata.helpers_used.insert("render_style".to_string());
+                            }
+                            "data" => {
+                                metadata.helpers_used.insert("render_data".to_string());
+                            }
+                            "aria" => {
+                                metadata.helpers_used.insert("render_aria".to_string());
+                            }
+                            n if html::is_boolean_attribute(n) => {
+                                metadata.helpers_used.insert("render_attr".to_string());
+                            }
+                            _ => {
+                                metadata.helpers_used.insert("escape".to_string());
+                            }
+                        },
+                        AttributeKind::Shorthand { name, .. } => match name.as_str() {
+                            "class" => {
+                                metadata.helpers_used.insert("render_class".to_string());
+                            }
+                            "style" => {
+                                metadata.helpers_used.insert("render_style".to_string());
+                            }
+                            "data" => {
+                                metadata.helpers_used.insert("render_data".to_string());
+                            }
+                            "aria" => {
+                                metadata.helpers_used.insert("render_aria".to_string());
+                            }
+                            _ => {
+                                metadata.helpers_used.insert("render_attr".to_string());
+                            }
+                        },
+                        AttributeKind::Spread { .. } => {
+                            metadata.helpers_used.insert("spread_attrs".to_string());
                         }
-                        if expr.contains("render_style(") {
-                            metadata.helpers_used.insert("render_style".to_string());
+                        AttributeKind::Template { .. } => {
+                            metadata.helpers_used.insert("escape".to_string());
                         }
-                        if expr.contains("render_attr(") {
-                            metadata.helpers_used.insert("render_attr".to_string());
-                        }
-                        if expr.contains("render_data(") {
-                            metadata.helpers_used.insert("render_data".to_string());
-                        }
-                        if expr.contains("render_aria(") {
-                            metadata.helpers_used.insert("render_aria".to_string());
-                        }
+                        _ => {}
                     }
                 }
             }

@@ -256,13 +256,16 @@ print("test")
 
     let expr_injection = py
         .iter()
-        .find(|inj| inj.prefix.contains("aria"))
-        .expect("Should find expression injection with aria attribute");
+        .find(|inj| {
+            let text = &source[inj.start..inj.end];
+            text == "x"
+        })
+        .expect("Should find expression injection for 'x'");
 
-    let source_expr = &source[expr_injection.start..expr_injection.end];
-    assert_eq!(
-        source_expr, "x",
-        "Expression injection should map to 'x' in source"
+    assert!(
+        expr_injection.prefix.contains("aria"),
+        "Expression injection prefix should contain 'aria'. Got: {:?}",
+        expr_injection.prefix
     );
 }
 

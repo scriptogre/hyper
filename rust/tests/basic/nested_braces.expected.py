@@ -1,4 +1,4 @@
-from hyper import html, escape, render_class, render_style
+from hyper import html, escape, render_class, render_style, render_data
 
 
 @html
