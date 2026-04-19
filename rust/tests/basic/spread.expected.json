@@ -16,7 +16,7 @@
     },
     {
       "end": 120,
-      "prefix": ", **attrs):\n\n    # Spread on HTML element\n    yield f\"\"\"<a{spread_attrs(",
+      "prefix": "):\n\n    # Spread on HTML element\n    yield f\"\"\"<a{spread_attrs(",
       "start": 115,
       "suffix": "",
       "type": "python"
@@ -87,57 +87,57 @@
       "source_start": 66
     },
     {
-      "compiled_end": 214,
-      "compiled_start": 209,
+      "compiled_end": 205,
+      "compiled_start": 200,
       "range_type": "Python",
       "source_end": 120,
       "source_start": 115
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 192,
+      "compiled_end": 183,
+      "compiled_start": 183,
       "range_type": "Html",
       "source_end": 112,
       "source_start": 109
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 192,
+      "compiled_end": 183,
+      "compiled_start": 183,
       "range_type": "Html",
       "source_end": 122,
       "source_start": 121
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 192,
+      "compiled_end": 183,
+      "compiled_start": 183,
       "range_type": "Html",
       "source_end": 139,
       "source_start": 135
     },
     {
-      "compiled_end": 321,
-      "compiled_start": 316,
+      "compiled_end": 312,
+      "compiled_start": 307,
       "range_type": "Python",
       "source_end": 195,
       "source_start": 190
     },
     {
-      "compiled_end": 287,
-      "compiled_start": 287,
+      "compiled_end": 278,
+      "compiled_start": 278,
       "range_type": "Html",
       "source_end": 187,
       "source_start": 172
     },
     {
-      "compiled_end": 287,
-      "compiled_start": 287,
+      "compiled_end": 278,
+      "compiled_start": 278,
       "range_type": "Html",
       "source_end": 215,
       "source_start": 196
     },
     {
-      "compiled_end": 287,
-      "compiled_start": 287,
+      "compiled_end": 278,
+      "compiled_start": 278,
       "range_type": "Html",
       "source_end": 228,
       "source_start": 222

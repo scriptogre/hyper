@@ -1415,6 +1415,20 @@ fn test_shorthand_and_spread_together_on_component() {
 // ========================================================================
 
 #[test]
+fn test_implicit_spread_adds_kwargs_to_signature() {
+    // {**attrs} used without declaring **attrs — compiler auto-adds it
+    let source = "label: str\n---\n<button {**attrs}>{label}</button>";
+    let result = compile_with_ranges(source, "Test");
+
+    let sig = result.code.lines().find(|l| l.contains("def ")).unwrap();
+    assert!(
+        sig.contains("**attrs"),
+        "Implicit spread should add **attrs to signature. Got: {}",
+        sig
+    );
+}
+
+#[test]
 fn test_multiple_spread_names_require_explicit_declaration() {
     // Two elements use different spread names — implicit can't handle this
     // (Python only allows one **kwargs), so both must be declared explicitly

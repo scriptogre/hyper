@@ -19,37 +19,42 @@ impl PythonGenerator {
         }
     }
 
-    /// Find the spread variable name used in {**name} if no **kwargs param is declared
+    /// Find the spread variable name used in {**name} if no **kwargs param is declared.
+    /// All spread usages must use the same name (Python only allows one **kwargs).
     fn find_implicit_spread_name(nodes: &[&Node]) -> Option<String> {
+        let mut names = std::collections::HashSet::new();
+        Self::collect_spread_names(nodes, &mut names);
+        if names.len() == 1 {
+            names.into_iter().next()
+        } else {
+            // Zero or multiple different names — don't inject
+            None
+        }
+    }
+
+    fn collect_spread_names(nodes: &[&Node], names: &mut std::collections::HashSet<String>) {
         for node in nodes {
             match node {
                 Node::Element(el) => {
                     for attr in &el.attributes {
                         if let AttributeKind::Spread { expr, .. } = &attr.kind {
-                            return Some(expr.trim().to_string());
+                            names.insert(expr.trim().to_string());
                         }
                     }
                     let children: Vec<&Node> = el.children.iter().collect();
-                    if let Some(name) = Self::find_implicit_spread_name(&children) {
-                        return Some(name);
-                    }
+                    Self::collect_spread_names(&children, names);
                 }
                 Node::If(n) => {
                     let refs: Vec<&Node> = n.then_branch.iter().collect();
-                    if let Some(name) = Self::find_implicit_spread_name(&refs) {
-                        return Some(name);
-                    }
+                    Self::collect_spread_names(&refs, names);
                 }
                 Node::For(n) => {
                     let refs: Vec<&Node> = n.body.iter().collect();
-                    if let Some(name) = Self::find_implicit_spread_name(&refs) {
-                        return Some(name);
-                    }
+                    Self::collect_spread_names(&refs, names);
                 }
                 _ => {}
             }
         }
-        None
     }
 
     /// Check if a list of nodes contains only whitespace/newline text (no real content)
