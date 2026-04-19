@@ -19,6 +19,39 @@ impl PythonGenerator {
         }
     }
 
+    /// Find the spread variable name used in {**name} if no **kwargs param is declared
+    fn find_implicit_spread_name(nodes: &[&Node]) -> Option<String> {
+        for node in nodes {
+            match node {
+                Node::Element(el) => {
+                    for attr in &el.attributes {
+                        if let AttributeKind::Spread { expr, .. } = &attr.kind {
+                            return Some(expr.trim().to_string());
+                        }
+                    }
+                    let children: Vec<&Node> = el.children.iter().collect();
+                    if let Some(name) = Self::find_implicit_spread_name(&children) {
+                        return Some(name);
+                    }
+                }
+                Node::If(n) => {
+                    let refs: Vec<&Node> = n.then_branch.iter().collect();
+                    if let Some(name) = Self::find_implicit_spread_name(&refs) {
+                        return Some(name);
+                    }
+                }
+                Node::For(n) => {
+                    let refs: Vec<&Node> = n.body.iter().collect();
+                    if let Some(name) = Self::find_implicit_spread_name(&refs) {
+                        return Some(name);
+                    }
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+
     /// Check if a list of nodes contains only whitespace/newline text (no real content)
     fn is_effectively_empty(&self, nodes: &[&Node]) -> bool {
         nodes.iter().all(|node| match node {
@@ -1727,6 +1760,14 @@ impl Generator for PythonGenerator {
             }
         }
 
+        // Implicit **kwargs: if body uses {**name} but no **kwargs param is declared,
+        // auto-add **name to the signature
+        let implicit_kwargs_name = if star_star_kwargs.is_none() {
+            Self::find_implicit_spread_name(&body_nodes)
+        } else {
+            None
+        };
+
         // Emit _content parameter first if default slot is used
         let mut param_count = 0;
         if has_default_slot {
@@ -1790,7 +1831,7 @@ impl Generator for PythonGenerator {
             }
         }
 
-        // Emit **kwargs if present
+        // Emit **kwargs if declared or implicitly needed
         if let Some(kwargs) = star_star_kwargs {
             if param_count > 0 || !regular_params.is_empty() || has_named_slots {
                 output.push(", ");
@@ -1800,6 +1841,12 @@ impl Generator for PythonGenerator {
                 output.push(": ");
                 output.push(type_hint);
             }
+        } else if let Some(name) = &implicit_kwargs_name {
+            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
+                output.push(", ");
+            }
+            output.push("**");
+            output.push(name);
         }
 
         output.push("):");

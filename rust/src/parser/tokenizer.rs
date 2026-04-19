@@ -597,14 +597,14 @@ impl<'a> Tokenizer<'a> {
     fn is_parameter_declaration(&self, line: &str) -> bool {
         let trimmed = line.trim();
 
-        // Must contain a colon for type annotation
-        if !trimmed.contains(':') {
-            return false;
-        }
-
-        // Handle **kwargs and *args patterns
+        // **kwargs and *args don't require type annotations
         if trimmed.starts_with("**") || trimmed.starts_with("*") {
             return true;
+        }
+
+        // Regular params must contain a colon for type annotation
+        if !trimmed.contains(':') {
+            return false;
         }
 
         // Regular parameter: name: type or name: type = default

@@ -1232,10 +1232,12 @@ impl TreeBuilder {
     fn is_parameter_declaration(&self, code: &str) -> bool {
         let trimmed = code.trim();
 
-        // Handle **kwargs and *args patterns
-        if trimmed.starts_with("**") || trimmed.starts_with("*") {
-            // Must have a colon for type annotation: **kwargs: dict, *args: tuple
-            return trimmed.contains(':');
+        // **kwargs: type annotation optional. *args: requires colon (to reach the error message)
+        if trimmed.starts_with("**") {
+            return true;
+        }
+        if trimmed.starts_with('*') && trimmed.contains(':') {
+            return true;
         }
 
         // Simple heuristic: contains ":" before any "=" (to allow defaults)
@@ -1272,9 +1274,43 @@ impl TreeBuilder {
     }
 
     fn parse_parameter(&mut self, code: &str, span: &Span) -> ParseResult<Option<Node>> {
-        // Parse "name: type" or "name: type = default"
+        // Parse "name: type", "name: type = default", or "**kwargs"
         let parts: Vec<&str> = code.splitn(2, ':').collect();
-        if parts.len() != 2 {
+
+        let (name, type_hint, default) = if parts.len() == 2 {
+            // Has colon: "name: type" or "name: type = default"
+            let name = parts[0].trim().to_string();
+            let rest = parts[1].trim();
+
+            // Reject *args - hyper components use keyword-only arguments
+            if name.starts_with('*') && !name.starts_with("**") {
+                return Err(ParseError::new(
+                    ErrorKind::InvalidSyntax,
+                    "Hyper components don't support *args.".to_string(),
+                    *span,
+                )
+                .with_help(
+                    "Hyper components use keyword-only arguments, so *args (which captures \
+                    positional arguments) doesn't make sense. If you want to accept extra \
+                    keyword arguments, use **kwargs instead.",
+                )
+                .boxed());
+            }
+
+            if rest.contains('=') {
+                let eq_parts: Vec<&str> = rest.splitn(2, '=').collect();
+                (
+                    name,
+                    Some(eq_parts[0].trim().to_string()),
+                    Some(eq_parts[1].trim().to_string()),
+                )
+            } else {
+                (name, Some(rest.to_string()), None)
+            }
+        } else if code.trim().starts_with("**") {
+            // No colon, but **kwargs — type annotation is optional
+            (code.trim().to_string(), None, None)
+        } else {
             // Not a valid parameter, treat as statement
             let node = Node::Statement(StatementNode {
                 stmt: code.to_string(),
@@ -1282,35 +1318,6 @@ impl TreeBuilder {
             });
             self.advance();
             return Ok(Some(node));
-        }
-
-        let name = parts[0].trim().to_string();
-        let rest = parts[1].trim();
-
-        // Reject *args - hyper components use keyword-only arguments
-        if name.starts_with('*') && !name.starts_with("**") {
-            return Err(ParseError::new(
-                ErrorKind::InvalidSyntax,
-                "Hyper components don't support *args.".to_string(),
-                *span,
-            )
-            .with_help(
-                "Hyper components use keyword-only arguments, so *args (which captures \
-                positional arguments) doesn't make sense. If you want to accept extra \
-                keyword arguments, use **kwargs instead.",
-            )
-            .boxed());
-        }
-
-        // Check if there's a default value
-        let (type_hint, default) = if rest.contains('=') {
-            let parts: Vec<&str> = rest.splitn(2, '=').collect();
-            (
-                Some(parts[0].trim().to_string()),
-                Some(parts[1].trim().to_string()),
-            )
-        } else {
-            (Some(rest.to_string()), None)
         };
 
         let node = Node::Parameter(ParameterNode {
