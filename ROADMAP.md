@@ -14,6 +14,14 @@
 - [ ] PyPI package release
 - [ ] JetBrains Marketplace release
 
+## Next
+
+- [ ] Add Python injection ranges for attribute expressions (`class={expr}`, `{name}` shorthand)
+- [ ] Support multiline HTML tags (`<div\n  class="card">`)
+- [ ] Remove `{**expr}` spread attribute syntax (dead code)
+- [ ] Interactive inspector: bidirectional source <-> compiled highlighting
+- [ ] Collapse inspector to single tab with Python/HTML/Boilerplate toggles
+
 ## Future
 
 - [ ] File-based routing
