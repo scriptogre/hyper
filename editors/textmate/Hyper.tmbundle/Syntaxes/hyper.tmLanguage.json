@@ -1,0 +1,274 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Hyper",
+  "scopeName": "source.hyper",
+  "fileTypes": ["hyper"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#props" },
+    { "include": "#keywords" },
+    { "include": "#html" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.html",
+      "begin": "<!--",
+      "end": "-->"
+    },
+
+    "props": {
+      "patterns": [
+        {
+          "match": "^([a-z_][a-z_0-9]*)(:)\\s*([A-Z][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "variable.parameter.python" },
+            "2": { "name": "punctuation.separator.annotation.python" },
+            "3": { "name": "entity.name.type.class.python" }
+          }
+        },
+        {
+          "match": "^([a-z_][a-z_0-9]*)(:)\\s*(str|int|float|bool|list|dict|set|tuple)",
+          "captures": {
+            "1": { "name": "variable.parameter.python" },
+            "2": { "name": "punctuation.separator.annotation.python" },
+            "3": { "name": "support.type.python" }
+          }
+        },
+        {
+          "match": "(=)\\s*(True|False|None)",
+          "captures": {
+            "1": { "name": "keyword.operator.assignment.python" },
+            "2": { "name": "constant.language.python" }
+          }
+        }
+      ]
+    },
+
+    "keywords": {
+      "patterns": [
+        {
+          "comment": "Control flow keywords: must be at line start and line must end with ':'",
+          "match": "^\\s*(if|elif|for|while|with|try|match)\\b(.+)(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "3": { "name": "punctuation.section.block.python" }
+          }
+        },
+        {
+          "comment": "Bare block continuations: keyword + colon only",
+          "match": "^\\s*(else|finally)\\s*(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "2": { "name": "punctuation.section.block.python" }
+          }
+        },
+        {
+          "comment": "except/case: keyword at line start, line ends with ':'",
+          "match": "^\\s*(except|case)\\b(.+)(:)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" },
+            "3": { "name": "punctuation.section.block.python" }
+          }
+        },
+        {
+          "comment": "for..in: highlight 'in' only within a for-loop line",
+          "match": "^\\s*for\\b.+\\b(in)\\b.+:\\s*$",
+          "captures": {
+            "1": { "name": "keyword.operator.python" }
+          }
+        },
+        {
+          "match": "^\\s*(end)\\s*$",
+          "captures": {
+            "1": { "name": "keyword.control.flow.python" }
+          }
+        }
+      ]
+    },
+
+    "html": {
+      "patterns": [
+        { "include": "#component-tag" },
+        { "include": "#html-tag" },
+        { "include": "#expression" }
+      ]
+    },
+
+    "component-tag": {
+      "patterns": [
+        {
+          "comment": "Opening named slot: <{...name}>",
+          "begin": "(<)(\\{)(\\.\\.\\.)(\\w+)(\\})",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "keyword.operator.spread.python" },
+            "4": { "name": "entity.name.tag.slot.hyper" },
+            "5": { "name": "punctuation.section.interpolation.end" }
+          },
+          "end": "(>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Closing named slot: </{...name}>",
+          "match": "(</)(\\{)(\\.\\.\\.)(\\w+)(\\})(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "keyword.operator.spread.python" },
+            "4": { "name": "entity.name.tag.slot.hyper" },
+            "5": { "name": "punctuation.section.interpolation.end" },
+            "6": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Opening component: <{Name}> or <{Name} attrs...>",
+          "begin": "(<)(\\{)([A-Z][a-zA-Z0-9]*)(\\})",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "support.class.component.html" },
+            "4": { "name": "punctuation.section.interpolation.end" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          },
+          "patterns": [{ "include": "#tag-attributes" }]
+        },
+        {
+          "comment": "Closing component: </{Name}>",
+          "match": "(</)(\\{)([A-Z][a-zA-Z0-9]*)(\\})(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "punctuation.section.interpolation.begin" },
+            "3": { "name": "support.class.component.html" },
+            "4": { "name": "punctuation.section.interpolation.end" },
+            "5": { "name": "punctuation.definition.tag.end.html" }
+          }
+        },
+        {
+          "comment": "Opening plain component: <Component>",
+          "begin": "(<)([A-Z][a-zA-Z0-9]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "support.class.component.html" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          },
+          "patterns": [{ "include": "#tag-attributes" }]
+        },
+        {
+          "comment": "Closing plain component: </Component>",
+          "match": "(</)([A-Z][a-zA-Z0-9]*)(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "support.class.component.html" },
+            "3": { "name": "punctuation.definition.tag.end.html" }
+          }
+        }
+      ]
+    },
+
+    "html-tag": {
+      "patterns": [
+        {
+          "begin": "(<)([a-z][a-z0-9-]*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "entity.name.tag.html" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.html" }
+          },
+          "patterns": [{ "include": "#tag-attributes" }]
+        },
+        {
+          "match": "(</)([a-z][a-z0-9-]*)(>)",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.html" },
+            "2": { "name": "entity.name.tag.html" },
+            "3": { "name": "punctuation.definition.tag.end.html" }
+          }
+        }
+      ]
+    },
+
+    "tag-attributes": {
+      "patterns": [
+        {
+          "begin": "([a-zA-Z_][a-zA-Z0-9_-]*)(=)(\\{)",
+          "beginCaptures": {
+            "1": { "name": "entity.other.attribute-name.html" },
+            "2": { "name": "punctuation.separator.key-value.html" },
+            "3": { "name": "punctuation.section.interpolation.begin" }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": { "name": "punctuation.section.interpolation.end" }
+          },
+          "patterns": [{ "include": "#python-expr" }]
+        },
+        {
+          "begin": "([a-zA-Z_][a-zA-Z0-9_-]*)(=)(\")",
+          "beginCaptures": {
+            "1": { "name": "entity.other.attribute-name.html" },
+            "2": { "name": "punctuation.separator.key-value.html" },
+            "3": { "name": "punctuation.definition.string.begin.html" }
+          },
+          "end": "(\")",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.string.end.html" }
+          },
+          "contentName": "string.quoted.double.html"
+        }
+      ]
+    },
+
+    "expression": {
+      "begin": "(\\{)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.interpolation.begin" }
+      },
+      "end": "(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.interpolation.end" }
+      },
+      "patterns": [{ "include": "#python-expr" }]
+    },
+
+    "python-expr": {
+      "patterns": [
+        {
+          "match": "\\.\\.\\.",
+          "name": "keyword.operator.spread.python"
+        },
+        {
+          "match": "\\b(True|False|None)\\b",
+          "name": "constant.language.python"
+        },
+        {
+          "match": "[0-9]+",
+          "name": "constant.numeric.python"
+        },
+        {
+          "match": "\"[^\"]*\"",
+          "name": "string.quoted.double.python"
+        },
+        {
+          "match": "'[^']*'",
+          "name": "string.quoted.single.python"
+        },
+        {
+          "match": "[a-z_][a-z_0-9]*",
+          "name": "variable.other.python"
+        }
+      ]
+    }
+  }
+}
