@@ -1768,8 +1768,9 @@ impl Generator for PythonGenerator {
             }
         }
 
-        // Emit **kwargs if declared or implicitly needed
+        // Emit **kwargs — either explicitly declared or implicitly from blessed spread names
         if let Some(kwargs) = star_star_kwargs {
+            // Explicit declaration in header
             if param_count > 0 || !regular_params.is_empty() || has_named_slots {
                 output.push(", ");
             }
@@ -1778,6 +1779,15 @@ impl Generator for PythonGenerator {
                 output.push(": ");
                 output.push(type_hint);
             }
+        } else if !metadata.implicit_spreads.is_empty() {
+            // Implicit injection from blessed spread names ({**props}, {**kwargs}, etc.)
+            // Multiple names are already caught as an error in lib.rs
+            let spread_name = &metadata.implicit_spreads[0].0;
+            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
+                output.push(", ");
+            }
+            output.push("**");
+            output.push(spread_name);
         }
 
         output.push("):");

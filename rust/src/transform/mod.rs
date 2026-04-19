@@ -2,11 +2,13 @@ mod async_detect;
 mod helper_detect;
 mod metadata;
 mod slot_detect;
+mod spread_detect;
 
 pub use async_detect::AsyncDetectionPlugin;
 pub use helper_detect::HelperDetectionPlugin;
-pub use metadata::{Helper, TransformMetadata};
+pub use metadata::{BLESSED_SPREAD_NAMES, Helper, TransformMetadata};
 pub use slot_detect::SlotDetectionPlugin;
+pub use spread_detect::SpreadDetectionPlugin;
 
 use crate::ast::{Ast, Node};
 
@@ -139,4 +141,7 @@ pub fn standard_plugins() -> Transformer {
         .add(HelperDetectionPlugin)
         .add(AsyncDetectionPlugin)
         .add(SlotDetectionPlugin)
+        // ::new() because it tracks which params are declared in the header,
+        // so it can skip auto-injecting blessed names that already exist
+        .add(SpreadDetectionPlugin::new())
 }

@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use crate::ast::Span;
+
 /// Runtime helpers that can be imported from the hyper runtime
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Helper {
@@ -41,6 +43,10 @@ impl Helper {
     ];
 }
 
+/// Spread names that are automatically injected into the function signature
+/// when used as `{**name}` on a component or element without explicit declaration.
+pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", "attributes"];
+
 /// Metadata collected during transformation
 /// This is populated by analysis plugins and used by the generator
 #[derive(Debug, Clone, Default)]
@@ -48,6 +54,8 @@ pub struct TransformMetadata {
     pub helpers_used: HashSet<Helper>,
     pub is_async: bool,
     pub slots_used: HashSet<String>,
+    /// Blessed spread names found in the AST: (name, first occurrence span)
+    pub implicit_spreads: Vec<(String, Span)>,
 }
 
 impl TransformMetadata {

@@ -68,6 +68,24 @@ impl Pipeline {
         // Transform
         let metadata = self.transformer.transform(&mut ast);
 
+        // Validate: at most one blessed spread name per template
+        let mut unique_spread_names: Vec<&str> = Vec::new();
+        for (name, _) in &metadata.implicit_spreads {
+            if !unique_spread_names.contains(&name.as_str()) {
+                unique_spread_names.push(name);
+            }
+        }
+        if unique_spread_names.len() > 1 {
+            let names_list = unique_spread_names
+                .iter()
+                .map(|n| format!("{{**{n}}}"))
+                .collect::<Vec<_>>()
+                .join(" and ");
+            return Err(CompileError::Generate(format!(
+                "Cannot use {names_list} in the same template — only one spread parameter is allowed per component"
+            )));
+        }
+
         // Generate
         let mut result = self.generator.generate(&ast, metadata, options);
 

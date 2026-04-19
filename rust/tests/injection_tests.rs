@@ -1371,8 +1371,8 @@ fn test_spread_on_component() {
     let result = compile_with_ranges(source, "Test");
 
     assert!(
-        result.code.contains("**props"),
-        "Spread on component should emit **props. Got:\n{}",
+        result.code.contains("Card(**props)"),
+        "Spread on component should emit Card(**props). Got:\n{}",
         result.code
     );
 }
@@ -1409,6 +1409,125 @@ fn test_shorthand_and_spread_together_on_component() {
     assert!(
         result.code.contains("label=\"hi\""),
         "Static attr should pass through. Got:\n{}",
+        result.code
+    );
+}
+
+// ========================================================================
+// Implicit spread injection tests
+// ========================================================================
+
+#[test]
+fn test_implicit_spread_all_blessed_names() {
+    for name in &["props", "kwargs", "rest", "attrs", "attributes"] {
+        let source = format!("<{{Card}} {{**{name}}} />");
+        let result = compile_with_ranges(&source, "Test");
+
+        let expected = format!("def Test(**{name}):");
+        assert!(
+            result.code.contains(&expected),
+            "Blessed name '{name}' should be auto-injected. Got:\n{}",
+            result.code
+        );
+    }
+}
+
+#[test]
+fn test_non_blessed_spread_no_injection() {
+    // Non-blessed name → no injection, variable must be in scope at runtime
+    let source = "my_dict: dict\n---\n<{Card} {**my_dict} />\n";
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        !result.code.contains("**my_dict):\n"),
+        "Non-blessed name should NOT be injected into signature. Got:\n{}",
+        result.code
+    );
+    assert!(
+        result.code.contains("Card(**my_dict)"),
+        "Should still emit Card(**my_dict) at call site. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_explicit_param_prevents_injection() {
+    // Explicitly declared props: dict → no auto-injection
+    let source = "props: dict\n---\n<{Card} {**props} />\n";
+    let result = compile_with_ranges(source, "Test");
+
+    // Should have props as a regular keyword param, not **props
+    assert!(
+        result.code.contains("Card(**props)"),
+        "Should emit Card(**props) at call site. Got:\n{}",
+        result.code
+    );
+    // The signature should NOT have **props — props is a regular param
+    assert!(
+        !result.code.contains("**props):"),
+        "Should NOT inject **props when props is explicitly declared. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_explicit_starstar_param_prevents_injection() {
+    // Explicitly declared **props in header → use it, no double injection
+    let source = "**props\n---\n<{Card} {**props} />\n";
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("**props)"),
+        "Should have **props in signature from explicit declaration. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_same_blessed_name_multiple_components() {
+    // Same blessed name on multiple components → inject once
+    let source = "<{Card} {**props} />\n<{Button} {**props} />\n";
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result.code.contains("def Test(**props):"),
+        "Should inject **props once. Got:\n{}",
+        result.code
+    );
+}
+
+#[test]
+fn test_multiple_different_blessed_names_error() {
+    // Two different blessed names → compile error
+    let source = "<{Card} {**props} />\n<{Button} {**attrs} />\n";
+    let mut pipeline = Pipeline::standard();
+    let err = pipeline
+        .compile(source, &GenerateOptions::default())
+        .unwrap_err();
+
+    match err {
+        hyper_transpiler::CompileError::Generate(msg) => {
+            assert!(
+                msg.contains("props") && msg.contains("attrs"),
+                "Error should mention both spread names. Got: {msg}"
+            );
+        }
+        _ => panic!("Expected Generate error, got: {:?}", err),
+    }
+}
+
+#[test]
+fn test_implicit_spread_with_regular_params() {
+    // Blessed spread alongside regular params
+    let source =
+        "title: str\ncount: int = 0\n---\n<{Card} title={title} count={count} {**props} />\n";
+    let result = compile_with_ranges(source, "Test");
+
+    assert!(
+        result
+            .code
+            .contains("*, title: str, count: int = 0, **props)"),
+        "Should have regular params AND injected **props. Got:\n{}",
         result.code
     );
 }
