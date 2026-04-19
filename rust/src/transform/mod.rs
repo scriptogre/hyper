@@ -5,7 +5,7 @@ mod slot_detect;
 
 pub use async_detect::AsyncDetectionPlugin;
 pub use helper_detect::HelperDetectionPlugin;
-pub use metadata::TransformMetadata;
+pub use metadata::{Helper, TransformMetadata};
 pub use slot_detect::SlotDetectionPlugin;
 
 use crate::ast::{Ast, Node};

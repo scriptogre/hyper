@@ -2,6 +2,7 @@ use super::{
     GenerateOptions, GenerateResult, Generator, Output, Range, RangeType, convert_braces_to_utf16,
 };
 use crate::ast::*;
+use crate::transform::Helper;
 
 pub struct PythonGenerator;
 
@@ -1801,18 +1802,9 @@ impl Generator for PythonGenerator {
         // Build imports from metadata (populated by HelperDetectionPlugin)
         let mut hyper_imports = vec!["html"];
 
-        for helper in &[
-            "escape",
-            "safe",
-            "render_class",
-            "render_style",
-            "render_attr",
-            "render_data",
-            "render_aria",
-            "spread_attrs",
-        ] {
-            if metadata.helpers_used.contains(*helper) {
-                hyper_imports.push(helper);
+        for helper in Helper::ALL {
+            if metadata.helpers_used.contains(helper) {
+                hyper_imports.push(helper.import_name());
             }
         }
 
