@@ -9,9 +9,9 @@
     },
     {
       "end": 50,
-      "prefix": "):\n\n    yield \"<div class=\\\"card\\\">\"\n    yield f\"\"\"\\\n<h2>{escape(",
+      "prefix": "):\n\n    yield \"\"\"<div class=\"card\">\"\"\"\n    yield f\"\"\"\\\n<h2>{escape(",
       "start": 45,
-      "suffix": ")}</h2>\n    \"\"\"\n    if _content is not None:\n        yield from _content\n\n    yield \"</div>\"\n\n",
+      "suffix": ")}</h2>\n    \"\"\"\n    if _content is not None:\n        yield from _content\n\n    yield \"\"\"</div>\"\"\"\n\n",
       "type": "python"
     },
     {
@@ -52,22 +52,22 @@
       "source_start": 0
     },
     {
-      "compiled_end": 214,
-      "compiled_start": 209,
+      "compiled_end": 216,
+      "compiled_start": 211,
       "range_type": "Python",
       "source_end": 50,
       "source_start": 45
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 192,
+      "compiled_end": 194,
+      "compiled_start": 194,
       "range_type": "Html",
       "source_end": 44,
       "source_start": 40
     },
     {
-      "compiled_end": 192,
-      "compiled_start": 192,
+      "compiled_end": 194,
+      "compiled_start": 194,
       "range_type": "Html",
       "source_end": 56,
       "source_start": 51

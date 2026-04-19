@@ -4,7 +4,7 @@ from hyper import html
 @html
 def IfElse(*, is_admin: bool):
 
-    yield "<nav>"
+    yield """<nav>"""
 
     if is_admin:
         yield """\
@@ -15,4 +15,4 @@ def IfElse(*, is_admin: bool):
 <a href="/account">Account</a>
     """
 
-    yield "</nav>"
+    yield """</nav>"""

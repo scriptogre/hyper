@@ -278,7 +278,7 @@ impl PythonGenerator {
 
         // Emit attributes
         for attr in &el.attributes {
-            self.emit_element_attribute_inline(attr, output, in_fstring);
+            self.emit_element_attribute(attr, output, in_fstring);
         }
 
         if el.self_closing {
@@ -487,12 +487,7 @@ impl PythonGenerator {
     }
 
     /// Emit attribute content as part of a string literal
-    fn emit_element_attribute_inline(
-        &self,
-        attr: &Attribute,
-        output: &mut Output,
-        in_fstring: bool,
-    ) {
+    fn emit_element_attribute(&self, attr: &Attribute, output: &mut Output, in_fstring: bool) {
         match &attr.kind {
             AttributeKind::Static { name, value } => {
                 output.push(" ");
@@ -919,22 +914,22 @@ impl PythonGenerator {
 
         self.indent(output, indent);
         if needs_fstring {
-            output.push("yield f\"<");
+            output.push("yield f\"\"\"<");
         } else {
-            output.push("yield \"<");
+            output.push("yield \"\"\"<");
         }
         output.push(&el.tag);
 
         // Emit attributes
         for attr in &el.attributes {
-            self.emit_element_attribute(attr, output);
+            self.emit_element_attribute(attr, output, needs_fstring);
         }
 
         if el.self_closing {
-            output.push(" />\"");
+            output.push(" />\"\"\"");
             output.newline();
         } else {
-            output.push(">\"");
+            output.push(">\"\"\"");
             output.newline();
 
             // Emit children using emit_nodes for proper grouping
@@ -943,200 +938,14 @@ impl PythonGenerator {
 
             // Closing tag
             self.indent(output, indent);
-            output.push("yield \"</");
+            output.push("yield \"\"\"</");
             output.push(&el.tag);
-            output.push(">\"");
+            output.push(">\"\"\"");
             output.newline();
         }
 
         // Add HTML injection ranges for this element
         self.add_html_ranges(el, output);
-    }
-
-    fn emit_element_attribute(&self, attr: &Attribute, output: &mut Output) {
-        match &attr.kind {
-            AttributeKind::Static { name, value } => {
-                output.push(" ");
-                output.push(name);
-                output.push("=\\\"");
-                output.push(&escape_string(&escape_html_attr_quotes(value)));
-                output.push("\\\"");
-            }
-            AttributeKind::Expression {
-                name,
-                expr,
-                expr_span,
-            } => {
-                let content_start = expr_span.start.byte + 1;
-                let content_end = expr_span.end.byte - 1;
-                let safe_expr = self.safe_var_name(expr.trim());
-
-                if name == "class" {
-                    output.push(" ");
-                    output.push(name);
-                    output.push("=\\\"{render_class(");
-                    let s = output.position();
-                    output.push(&safe_expr);
-                    let e = output.position();
-                    output.push(")}\\\"");
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: s,
-                        compiled_end: e,
-                        needs_injection: true,
-                    });
-                } else if name == "style" {
-                    output.push(" ");
-                    output.push(name);
-                    output.push("=\\\"{render_style(");
-                    let s = output.position();
-                    output.push(&safe_expr);
-                    let e = output.position();
-                    output.push(")}\\\"");
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: s,
-                        compiled_end: e,
-                        needs_injection: true,
-                    });
-                } else if self.is_boolean_attribute(name) {
-                    output.push("{render_attr(\\\"");
-                    output.push(name);
-                    output.push("\\\", ");
-                    let s = output.position();
-                    output.push(&safe_expr);
-                    let e = output.position();
-                    output.push(")}");
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: s,
-                        compiled_end: e,
-                        needs_injection: true,
-                    });
-                } else {
-                    output.push(" ");
-                    output.push(name);
-                    output.push("=\\\"{escape(");
-                    let s = output.position();
-                    output.push(&safe_expr);
-                    let e = output.position();
-                    output.push(")}\\\"");
-                    output.add_range(Range {
-                        range_type: RangeType::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: s,
-                        compiled_end: e,
-                        needs_injection: true,
-                    });
-                }
-            }
-            AttributeKind::Boolean { name } => {
-                output.push(" ");
-                output.push(name);
-            }
-            AttributeKind::Shorthand { name, expr_span } => {
-                let var_name = self.safe_var_name(name);
-                let content_start = expr_span.start.byte + 1;
-                let content_end = expr_span.end.byte;
-
-                let (s, e) = if name == "class" {
-                    output.push(" ");
-                    output.push(name);
-                    output.push("=\\\"{render_class(");
-                    let s = output.position();
-                    output.push(&var_name);
-                    let e = output.position();
-                    output.push(")}\\\"");
-                    (s, e)
-                } else if name == "style" {
-                    output.push(" ");
-                    output.push(name);
-                    output.push("=\\\"{render_style(");
-                    let s = output.position();
-                    output.push(&var_name);
-                    let e = output.position();
-                    output.push(")}\\\"");
-                    (s, e)
-                } else if name == "data" {
-                    output.push("{render_data(");
-                    let s = output.position();
-                    output.push(&var_name);
-                    let e = output.position();
-                    output.push(")}");
-                    (s, e)
-                } else if name == "aria" {
-                    output.push("{render_aria(");
-                    let s = output.position();
-                    output.push(&var_name);
-                    let e = output.position();
-                    output.push(")}");
-                    (s, e)
-                } else {
-                    output.push("{render_attr(\\\"");
-                    output.push(name);
-                    output.push("\\\", ");
-                    let s = output.position();
-                    output.push(&var_name);
-                    let e = output.position();
-                    output.push(")}");
-                    (s, e)
-                };
-                output.add_range(Range {
-                    range_type: RangeType::Python,
-                    source_start: content_start,
-                    source_end: content_end,
-                    compiled_start: s,
-                    compiled_end: e,
-                    needs_injection: true,
-                });
-            }
-            AttributeKind::Spread { expr, expr_span } => {
-                let trimmed_expr = expr.trim();
-                let safe_expr = self.safe_var_name(trimmed_expr);
-                let content_start = expr_span.start.byte + 3;
-                let content_end = expr_span.end.byte;
-
-                output.push("{spread_attrs(");
-                let s = output.position();
-                output.push(&safe_expr);
-                let e = output.position();
-                output.push(")}");
-                output.add_range(Range {
-                    range_type: RangeType::Python,
-                    source_start: content_start,
-                    source_end: content_end,
-                    compiled_start: s,
-                    compiled_end: e,
-                    needs_injection: true,
-                });
-            }
-            AttributeKind::SlotAssignment { name, expr, .. } => {
-                if let Some(e) = expr {
-                    output.push(" slot:");
-                    output.push(name);
-                    output.push("=\\\"{");
-                    output.push(e);
-                    output.push("}\\\"");
-                } else {
-                    output.push(" slot:");
-                    output.push(name);
-                }
-            }
-            AttributeKind::Template { name, value } => {
-                output.push(" ");
-                output.push(name);
-                output.push("=\\\"");
-                output.push(&self.convert_template_expressions(value));
-                output.push("\\\"");
-            }
-        }
     }
 
     /// Generate a safe function name from a component name

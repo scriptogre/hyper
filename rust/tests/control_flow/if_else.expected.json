@@ -9,9 +9,9 @@
     },
     {
       "end": 42,
-      "prefix": "):\n\n    yield \"<nav>\"\n\n    if ",
+      "prefix": "):\n\n    yield \"\"\"<nav>\"\"\"\n\n    if ",
       "start": 34,
-      "suffix": ":\n        yield \"\"\"\\\n<a href=\"/admin\">Admin</a>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<a href=\"/account\">Account</a>\n    \"\"\"\n\n    yield \"</nav>\"\n",
+      "suffix": ":\n        yield \"\"\"\\\n<a href=\"/admin\">Admin</a>\n    \"\"\"\n    else:\n        yield \"\"\"\\\n<a href=\"/account\">Account</a>\n    \"\"\"\n\n    yield \"\"\"</nav>\"\"\"\n",
       "type": "python"
     },
     {
@@ -66,36 +66,36 @@
       "source_start": 0
     },
     {
-      "compiled_end": 97,
-      "compiled_start": 89,
+      "compiled_end": 101,
+      "compiled_start": 93,
       "range_type": "Python",
       "source_end": 42,
       "source_start": 34
     },
     {
-      "compiled_end": 109,
-      "compiled_start": 109,
+      "compiled_end": 113,
+      "compiled_start": 113,
       "range_type": "Html",
       "source_end": 69,
       "source_start": 52
     },
     {
-      "compiled_end": 109,
-      "compiled_start": 109,
+      "compiled_end": 113,
+      "compiled_start": 113,
       "range_type": "Html",
       "source_end": 78,
       "source_start": 74
     },
     {
-      "compiled_end": 173,
-      "compiled_start": 173,
+      "compiled_end": 177,
+      "compiled_start": 177,
       "range_type": "Html",
       "source_end": 116,
       "source_start": 97
     },
     {
-      "compiled_end": 173,
-      "compiled_start": 173,
+      "compiled_end": 177,
+      "compiled_start": 177,
       "range_type": "Html",
       "source_end": 127,
       "source_start": 123

@@ -37,14 +37,14 @@ def Classes(*, title: str, items: list):
 
         def render(self):
 
-            yield "<ul>"
+            yield """<ul>"""
 
             for item in self.items:
 
                 self.render_item(item)
 
 
-            yield "</ul>"
+            yield """</ul>"""
 
 
 

@@ -9,7 +9,7 @@
     },
     {
       "end": 49,
-      "prefix": "):\n\n    yield \"<ul>\"\n\n    for ",
+      "prefix": "):\n\n    yield \"\"\"<ul>\"\"\"\n\n    for ",
       "start": 36,
       "suffix": "",
       "type": "python"
@@ -18,7 +18,7 @@
       "end": 68,
       "prefix": ":\n        yield f\"\"\"\\\n<li>{escape(",
       "start": 64,
-      "suffix": ")}</li>\n    \"\"\"\n\n    yield \"</ul>\"\n",
+      "suffix": ")}</li>\n    \"\"\"\n\n    yield \"\"\"</ul>\"\"\"\n",
       "type": "python"
     },
     {
@@ -59,29 +59,29 @@
       "source_start": 0
     },
     {
-      "compiled_end": 113,
-      "compiled_start": 100,
+      "compiled_end": 117,
+      "compiled_start": 104,
       "range_type": "Python",
       "source_end": 49,
       "source_start": 36
     },
     {
-      "compiled_end": 151,
-      "compiled_start": 147,
+      "compiled_end": 155,
+      "compiled_start": 151,
       "range_type": "Python",
       "source_end": 68,
       "source_start": 64
     },
     {
-      "compiled_end": 126,
-      "compiled_start": 126,
+      "compiled_end": 130,
+      "compiled_start": 130,
       "range_type": "Html",
       "source_end": 63,
       "source_start": 59
     },
     {
-      "compiled_end": 126,
-      "compiled_start": 126,
+      "compiled_end": 130,
+      "compiled_start": 130,
       "range_type": "Html",
       "source_end": 74,
       "source_start": 69

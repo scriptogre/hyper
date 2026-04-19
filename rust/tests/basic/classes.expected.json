@@ -93,7 +93,7 @@
     },
     {
       "end": 494,
-      "prefix": "\n\n            yield \"<ul>\"\n\n            for ",
+      "prefix": "\n\n            yield \"\"\"<ul>\"\"\"\n\n            for ",
       "start": 476,
       "suffix": "",
       "type": "python"
@@ -107,7 +107,7 @@
     },
     {
       "end": 618,
-      "prefix": "\n\n\n            yield \"</ul>\"\n\n\n\n    # Instantiate and use\n\n    ",
+      "prefix": "\n\n\n            yield \"\"\"</ul>\"\"\"\n\n\n\n    # Instantiate and use\n\n    ",
       "start": 600,
       "suffix": "",
       "type": "python"
@@ -311,15 +311,15 @@
       "source_start": 429
     },
     {
-      "compiled_end": 641,
-      "compiled_start": 623,
+      "compiled_end": 645,
+      "compiled_start": 627,
       "range_type": "Python",
       "source_end": 494,
       "source_start": 476
     },
     {
-      "compiled_end": 682,
-      "compiled_start": 660,
+      "compiled_end": 686,
+      "compiled_start": 664,
       "range_type": "Python",
       "source_end": 534,
       "source_start": 512
@@ -339,15 +339,15 @@
       "source_start": 559
     },
     {
-      "compiled_end": 763,
-      "compiled_start": 745,
+      "compiled_end": 771,
+      "compiled_start": 753,
       "range_type": "Python",
       "source_end": 618,
       "source_start": 600
     },
     {
-      "compiled_end": 782,
-      "compiled_start": 769,
+      "compiled_end": 790,
+      "compiled_start": 777,
       "range_type": "Python",
       "source_end": 632,
       "source_start": 619

@@ -11,16 +11,16 @@ def Functions(*, name: str):
         yield f"""<span class="badge badge-{escape(color)}">{escape(text)}</span>"""
     @html
     def List(items: list, title: str = "Items"):
-        yield "<div class=\"list-container\">"
+        yield """<div class="list-container">"""
         yield f"""<h2>{escape(title)}</h2>"""
         if items:
-            yield "<ul>"
+            yield """<ul>"""
             for item in items:
                 yield f"""<li>{escape(item)}</li>"""
-            yield "</ul>"
+            yield """</ul>"""
         else:
             yield """<p>No items</p>"""
-        yield "</div>"
+        yield """</div>"""
     def format_name(n: str) -> str:
         return n.upper()
 

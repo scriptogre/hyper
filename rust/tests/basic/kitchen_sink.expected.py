@@ -108,14 +108,14 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
     @fragment
     def CachedList(entries: list):
 
-        yield "<ul>"
+        yield """<ul>"""
 
         for entry in entries:
             yield f"""\
 <li>{escape(entry)}</li>
         """
 
-        yield "</ul>"
+        yield """</ul>"""
 
 
     # -- Using decorated functions --
@@ -156,7 +156,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 
     # -- Deeply nested: components inside control flow inside elements --
 
-    yield "<section>"
+    yield """<section>"""
 
     if is_active:
 
@@ -164,7 +164,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 
             yield from Badge(text=item)
 
-            yield "<div class=\"wrapper\">"
+            yield """<div class="wrapper">"""
 
             match item:
                 case "special":
@@ -176,11 +176,11 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 <span>{escape(item)}</span>
                 """
 
-            yield "</div>"
+            yield """</div>"""
 
 
 
-    yield "</section>"
+    yield """</section>"""
 
     # -- Adjacent expressions --
     yield f"""<p>{escape(name)}{escape(count)}{escape(is_active)}</p>"""
@@ -211,10 +211,10 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 
     # Top-level comment
 
-    yield "<div>"
+    yield """<div>"""
 
     # Indented comment
     yield """<span>Text</span>"""  # Trailing comment
 
-    yield "</div>"
+    yield """</div>"""
 

@@ -51,7 +51,7 @@
     },
     {
       "end": 214,
-      "prefix": "\n\n        yield \"<ul>\"\n\n        for ",
+      "prefix": "\n\n        yield \"\"\"<ul>\"\"\"\n\n        for ",
       "start": 201,
       "suffix": "",
       "type": "python"
@@ -65,7 +65,7 @@
     },
     {
       "end": 320,
-      "prefix": ")}</li>\n        \"\"\"\n\n        yield \"</ul>\"\n\n\n    # Decorator with arguments\n\n    ",
+      "prefix": ")}</li>\n        \"\"\"\n\n        yield \"\"\"</ul>\"\"\"\n\n\n    # Decorator with arguments\n\n    ",
       "start": 298,
       "suffix": "",
       "type": "python"
@@ -79,14 +79,14 @@
     },
     {
       "end": 384,
-      "prefix": "\n\n        yield \"<div class=\\\"card\\\">\"\n        yield f\"\"\"\\\n<h2>{escape(",
+      "prefix": "\n\n        yield \"\"\"<div class=\"card\">\"\"\"\n        yield f\"\"\"\\\n<h2>{escape(",
       "start": 379,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 460,
-      "prefix": ")}</h2>\n        \"\"\"\n        if _content is not None:\n            yield from _content\n\n        yield \"</div>\"\n\n\n    # Use decorated functions\n    yield f\"\"\"\\\n{escape(",
+      "prefix": ")}</h2>\n        \"\"\"\n        if _content is not None:\n            yield from _content\n\n        yield \"\"\"</div>\"\"\"\n\n\n    # Use decorated functions\n    yield f\"\"\"\\\n{escape(",
       "start": 448,
       "suffix": "",
       "type": "python"
@@ -234,29 +234,29 @@
       "source_start": 151
     },
     {
-      "compiled_end": 409,
-      "compiled_start": 396,
+      "compiled_end": 413,
+      "compiled_start": 400,
       "range_type": "Python",
       "source_end": 214,
       "source_start": 201
     },
     {
-      "compiled_end": 451,
-      "compiled_start": 447,
+      "compiled_end": 455,
+      "compiled_start": 451,
       "range_type": "Python",
       "source_end": 237,
       "source_start": 233
     },
     {
-      "compiled_end": 422,
-      "compiled_start": 422,
+      "compiled_end": 426,
+      "compiled_start": 426,
       "range_type": "Html",
       "source_end": 232,
       "source_start": 228
     },
     {
-      "compiled_end": 422,
-      "compiled_start": 422,
+      "compiled_end": 426,
+      "compiled_start": 426,
       "range_type": "Html",
       "source_end": 243,
       "source_start": 238
@@ -276,36 +276,36 @@
       "source_start": 260
     },
     {
-      "compiled_end": 554,
-      "compiled_start": 532,
+      "compiled_end": 562,
+      "compiled_start": 540,
       "range_type": "Python",
       "source_end": 320,
       "source_start": 298
     },
     {
-      "compiled_end": 580,
-      "compiled_start": 559,
+      "compiled_end": 588,
+      "compiled_start": 567,
       "range_type": "Python",
       "source_end": 342,
       "source_start": 321
     },
     {
-      "compiled_end": 656,
-      "compiled_start": 651,
+      "compiled_end": 666,
+      "compiled_start": 661,
       "range_type": "Python",
       "source_end": 384,
       "source_start": 379
     },
     {
-      "compiled_end": 630,
-      "compiled_start": 630,
+      "compiled_end": 640,
+      "compiled_start": 640,
       "range_type": "Html",
       "source_end": 378,
       "source_start": 374
     },
     {
-      "compiled_end": 630,
-      "compiled_start": 630,
+      "compiled_end": 640,
+      "compiled_start": 640,
       "range_type": "Html",
       "source_end": 390,
       "source_start": 385
@@ -325,15 +325,15 @@
       "source_start": 409
     },
     {
-      "compiled_end": 833,
-      "compiled_start": 821,
+      "compiled_end": 847,
+      "compiled_start": 835,
       "range_type": "Python",
       "source_end": 460,
       "source_start": 448
     },
     {
-      "compiled_end": 861,
-      "compiled_start": 844,
+      "compiled_end": 875,
+      "compiled_start": 858,
       "range_type": "Python",
       "source_end": 480,
       "source_start": 463

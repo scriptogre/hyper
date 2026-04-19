@@ -6,29 +6,29 @@ def LoopPatterns(*, items: list, pairs: list, names: list, scores: list, matrix:
 
     # Enumerate
 
-    yield "<ul>"
+    yield """<ul>"""
 
     for i, item in enumerate(items):
         yield f"""\
 <li data-index="{escape(i)}">{escape(item)}</li>
     """
 
-    yield "</ul>"
+    yield """</ul>"""
 
     # Enumerate with start
 
-    yield "<ol>"
+    yield """<ol>"""
 
     for num, item in enumerate(items, start=1):
         yield f"""\
 <li value="{escape(num)}">{escape(item)}</li>
     """
 
-    yield "</ol>"
+    yield """</ol>"""
 
     # Tuple unpacking
 
-    yield "<dl>"
+    yield """<dl>"""
 
     for key, value in pairs:
         yield f"""\
@@ -36,11 +36,11 @@ def LoopPatterns(*, items: list, pairs: list, names: list, scores: list, matrix:
         <dd>{escape(value)}</dd>
     """
 
-    yield "</dl>"
+    yield """</dl>"""
 
     # Zip
 
-    yield "<table>"
+    yield """<table>"""
 
     for name, score in zip(names, scores):
         yield f"""\
@@ -50,29 +50,29 @@ def LoopPatterns(*, items: list, pairs: list, names: list, scores: list, matrix:
         </tr>
     """
 
-    yield "</table>"
+    yield """</table>"""
 
     # Nested loops
 
-    yield "<table>"
+    yield """<table>"""
 
     for row in matrix:
 
-        yield "<tr>"
+        yield """<tr>"""
 
         for cell in row:
             yield f"""\
 <td>{escape(cell)}</td>
             """
 
-        yield "</tr>"
+        yield """</tr>"""
 
 
-    yield "</table>"
+    yield """</table>"""
 
     # Dict items
 
-    yield "<dl>"
+    yield """<dl>"""
 
     for k, v in items.items():
         yield f"""\
@@ -80,27 +80,27 @@ def LoopPatterns(*, items: list, pairs: list, names: list, scores: list, matrix:
         <dd>{escape(v)}</dd>
     """
 
-    yield "</dl>"
+    yield """</dl>"""
 
     # Range
 
-    yield "<ul>"
+    yield """<ul>"""
 
     for i in range(5):
         yield f"""\
 <li>Item {escape(i)}</li>
     """
 
-    yield "</ul>"
+    yield """</ul>"""
 
     # Reversed
 
-    yield "<ul>"
+    yield """<ul>"""
 
     for item in reversed(items):
         yield f"""\
 <li>{escape(item)}</li>
     """
 
-    yield "</ul>"
+    yield """</ul>"""
 

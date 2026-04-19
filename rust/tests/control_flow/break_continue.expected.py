@@ -6,7 +6,7 @@ def BreakContinue(*, items: list, limit: int):
 
     # Break in for loop
 
-    yield "<ul>"
+    yield """<ul>"""
 
     for item in items:
 
@@ -18,11 +18,11 @@ def BreakContinue(*, items: list, limit: int):
 <li>{escape(item)}</li>
     """
 
-    yield "</ul>"
+    yield """</ul>"""
 
     # Continue in for loop
 
-    yield "<ul>"
+    yield """<ul>"""
 
     for item in items:
 
@@ -34,7 +34,7 @@ def BreakContinue(*, items: list, limit: int):
 <li>{escape(item)}</li>
     """
 
-    yield "</ul>"
+    yield """</ul>"""
 
     # Break in while loop
 

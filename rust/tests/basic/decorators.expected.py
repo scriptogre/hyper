@@ -17,14 +17,14 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
     @fragment
     def CachedList(items: list):
 
-        yield "<ul>"
+        yield """<ul>"""
 
         for item in items:
             yield f"""\
 <li>{escape(item)}</li>
         """
 
-        yield "</ul>"
+        yield """</ul>"""
 
 
     # Decorator with arguments
@@ -32,14 +32,14 @@ def Decorators(_content: Iterable[str] | None = None, *, items: list):
     @fragment(name="card")
     def Card(title: str):
 
-        yield "<div class=\"card\">"
+        yield """<div class="card">"""
         yield f"""\
 <h2>{escape(title)}</h2>
         """
         if _content is not None:
             yield from _content
 
-        yield "</div>"
+        yield """</div>"""
 
 
     # Use decorated functions

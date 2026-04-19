@@ -4,13 +4,13 @@ from hyper import html, escape
 @html
 def ComplexNested(*, sections: list, show_all: bool, user: dict):
 
-    yield "<div class=\"container\">"
+    yield """<div class="container">"""
 
     if show_all:
 
         for section in sections:
 
-            yield f"<section id=\"section-{escape(section['id'])}\">"
+            yield f"""<section id="section-{escape(section['id'])}">"""
 
             if section.get('visible', True):
 
@@ -21,7 +21,7 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
                         """
                     case "list":
 
-                        yield "<ul>"
+                        yield """<ul>"""
 
                         for item in section['items']:
 
@@ -35,7 +35,7 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
                                     """
 
 
-                        yield "</ul>"
+                        yield """</ul>"""
 
                     case "text":
                         yield f"""\
@@ -51,7 +51,7 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
 <div class="hidden">Section hidden</div>
                 """
 
-            yield "</section>"
+            yield """</section>"""
 
 
     else:
@@ -59,5 +59,5 @@ def ComplexNested(*, sections: list, show_all: bool, user: dict):
 <p>Content hidden</p>
     """
 
-    yield "</div>"
+    yield """</div>"""
 

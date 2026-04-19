@@ -5,9 +5,9 @@ from hyper import html
 @html
 def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _footer: Iterable[str] | None = None, _header: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):
 
-    yield "<div class=\"layout\">"
+    yield """<div class="layout">"""
 
-    yield "<header>"
+    yield """<header>"""
 
     if _header is not None:
         yield from _header
@@ -16,9 +16,9 @@ def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _foo
 <h1>Default Header</h1>
         """
 
-    yield "</header>"
+    yield """</header>"""
 
-    yield "<nav>"
+    yield """<nav>"""
 
     if _sidebar is not None:
         yield from _sidebar
@@ -27,16 +27,16 @@ def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _foo
 <p>Default sidebar content</p>
         """
 
-    yield "</nav>"
+    yield """</nav>"""
 
-    yield "<main>"
+    yield """<main>"""
 
     if _content is not None:
         yield from _content
 
-    yield "</main>"
+    yield """</main>"""
 
-    yield "<footer>"
+    yield """<footer>"""
 
     if _footer is not None:
         yield from _footer
@@ -45,7 +45,7 @@ def NamedWithFallback(_content: Iterable[str] | None = None, *, title: str, _foo
 <p>Default footer</p>
         """
 
-    yield "</footer>"
+    yield """</footer>"""
 
-    yield "</div>"
+    yield """</div>"""
 

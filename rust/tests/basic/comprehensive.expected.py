@@ -7,7 +7,7 @@ def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: l
 
     # Body comment
 
-    yield "<div class=\"container\">"
+    yield """<div class="container">"""
 
     # Indented comment
     yield f"""\
@@ -32,5 +32,5 @@ def Comprehensive(*, name: str, count: int = 0, is_active: bool = True, items: l
 <li>{escape(item)}</li>
     """
 
-    yield "</div>"
+    yield """</div>"""
 
