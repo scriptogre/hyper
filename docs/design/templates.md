@@ -610,14 +610,14 @@ Boolean values in `aria` become `"true"` or `"false"` per the [ARIA spec](https:
 
 ### Spreading Attributes
 
-Pass a dictionary to spread all its keys as attributes:
+Use `{**dict}` to spread a dictionary as individual attributes:
 
 ```hyper
 attrs = {"href": "https://example.com", "target": "_blank"}
 
 ---
 
-<a {attrs}>External link</a>
+<a {**attrs}>External link</a>
 ```
 
 ```html
@@ -632,12 +632,14 @@ target: str = "_blank"
 
 ---
 
-<a {base_attrs} {target}>Link</a>
+<a {**base_attrs} {target}>Link</a>
 ```
 
 ```html
 <a id="my-link" target="_blank">Link</a>
 ```
+
+Note: `{target}` is shorthand for `target={target}` — it passes a single attribute. `{**base_attrs}` unpacks the dict as multiple attributes.
 
 Special attributes like `class` work when spread:
 
@@ -647,7 +649,7 @@ attrs = {"class": class, "id": "act_now", "data": {"wow": "such-attr"}}
 
 ---
 
-<button {attrs}>Click</button>
+<button {**attrs}>Click</button>
 ```
 
 ```html

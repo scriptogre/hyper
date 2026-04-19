@@ -16,7 +16,7 @@ def SelfClosing(*, name: str, onClick: object, props: dict):
 
     yield from Button(label=name, onClick=onClick)
 
-    # With spread
+    # With shorthand
 
     yield from Button(props=props)
 

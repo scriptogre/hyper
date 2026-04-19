@@ -30,7 +30,7 @@ echo '<div>{message}</div>' | hyper generate --stdin
 Compiled templates import these helpers:
 
 ```python
-from hyper import _e, safe, _attr, _class, _style, _spread
+from hyper import _e, safe, _attr, _class, _style, spread_attrs
 ```
 
 ### Escaping
@@ -52,7 +52,7 @@ safe("<b>bold</b>") # "<b>bold</b>"
 | `_attr(name, value)` | Render a single attribute |
 | `_class(*values)` | Render class attribute |
 | `_style(value)` | Render style attribute |
-| `_spread(attrs)` | Spread dict as attributes |
+| `spread_attrs(attrs)` | Spread dict as attributes (`{**attrs}`) |
 
 ```python
 _attr("disabled", True)   # " disabled"
@@ -61,5 +61,5 @@ _attr("id", "main")       # ' id="main"'
 
 _class("btn", {"active": True})  # "btn active"
 _style({"color": "red"})         # "color:red"
-_spread({"class": "btn"})        # ' class="btn"'
+spread_attrs({"class": "btn"})   # ' class="btn"'
 ```

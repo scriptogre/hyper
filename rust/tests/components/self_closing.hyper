@@ -13,7 +13,7 @@ props: dict
 # With expression attributes
 <{Button} label={name} onClick={onClick} />
 
-# With spread
+# With shorthand
 <{Button} {props} />
 
 # Mixed

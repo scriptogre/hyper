@@ -8,11 +8,11 @@ props: dict
 # Shorthand attributes
 <input {name} {value} {disabled} />
 
-# Spread attributes
+# Shorthand with dict
 <div {props}>Content</div>
 
-# Mixed shorthand and spread
+# Mixed shorthand
 <button {name} {props} {disabled}>Click</button>
 
-# Spread with other attributes
+# Shorthand with static attributes
 <input type="text" {props} class="input" />

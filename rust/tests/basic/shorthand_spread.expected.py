@@ -7,11 +7,11 @@ def ShorthandSpread(*, name: str, value: str, disabled: bool, props: dict):
     # Shorthand attributes
     yield f"""<input{render_attr("name", name)}{render_attr("value", value)}{render_attr("disabled", disabled)} />"""
 
-    # Spread attributes
+    # Shorthand with dict
     yield f"""<div{render_attr("props", props)}>Content</div>"""
 
-    # Mixed shorthand and spread
+    # Mixed shorthand
     yield f"""<button{render_attr("name", name)}{render_attr("props", props)}{render_attr("disabled", disabled)}>Click</button>"""
 
-    # Spread with other attributes
+    # Shorthand with static attributes
     yield f"""<input type="text"{render_attr("props", props)} class="input" />"""
