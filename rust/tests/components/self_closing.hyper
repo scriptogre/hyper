@@ -1,17 +1,17 @@
-name: str
-on_click: Callable
+label: str
 disabled: bool
+variant: str = "primary"
 
 ---
 
 # Simple self-closing
 <{Button} />
 
-# With attributes
+# With static attribute
 <{Button} label="Click me" />
 
 # With expression attributes
-<{Button} label={name} on_click={on_click} />
+<{Button} label={label} variant={variant} />
 
 # With shorthand
 <{Button} {disabled} />

@@ -1,21 +1,20 @@
-from typing import Callable
 from hyper import html
 
 
 @html
-def SelfClosing(*, name: str, on_click: Callable, disabled: bool):
+def SelfClosing(*, label: str, disabled: bool, variant: str = "primary"):
 
     # Simple self-closing
 
     yield from Button()
 
-    # With attributes
+    # With static attribute
 
     yield from Button(label="Click me")
 
     # With expression attributes
 
-    yield from Button(label=name, on_click=on_click)
+    yield from Button(label=label, variant=variant)
 
     # With shorthand
 
