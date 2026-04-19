@@ -278,7 +278,7 @@ impl PythonGenerator {
 
         // Emit attributes
         for attr in &el.attributes {
-            self.emit_attribute_content(attr, output, in_fstring);
+            self.emit_element_attribute_inline(attr, output, in_fstring);
         }
 
         if el.self_closing {
@@ -311,7 +311,7 @@ impl PythonGenerator {
         let mut expr_spans = Vec::new();
         for attr in &el.attributes {
             match &attr.kind {
-                AttributeKind::Dynamic { expr_span, .. } => {
+                AttributeKind::Expression { expr_span, .. } => {
                     // Include the = sign before { so virtual HTML sees a boolean attr
                     let gap_start = expr_span.start.byte.saturating_sub(1);
                     expr_spans.push((gap_start, expr_span.end.byte));
@@ -487,7 +487,12 @@ impl PythonGenerator {
     }
 
     /// Emit attribute content as part of a string literal
-    fn emit_attribute_content(&self, attr: &Attribute, output: &mut Output, in_fstring: bool) {
+    fn emit_element_attribute_inline(
+        &self,
+        attr: &Attribute,
+        output: &mut Output,
+        in_fstring: bool,
+    ) {
         match &attr.kind {
             AttributeKind::Static { name, value } => {
                 output.push(" ");
@@ -496,7 +501,7 @@ impl PythonGenerator {
                 output.push(&escape_html_attr_quotes(value));
                 output.push("\"");
             }
-            AttributeKind::Dynamic {
+            AttributeKind::Expression {
                 name,
                 expr,
                 expr_span,
@@ -905,7 +910,7 @@ impl PythonGenerator {
         let needs_fstring = el.attributes.iter().any(|attr| {
             matches!(
                 attr.kind,
-                AttributeKind::Dynamic { .. }
+                AttributeKind::Expression { .. }
                     | AttributeKind::Template { .. }
                     | AttributeKind::Shorthand { .. }
                     | AttributeKind::Spread { .. }
@@ -922,7 +927,7 @@ impl PythonGenerator {
 
         // Emit attributes
         for attr in &el.attributes {
-            self.emit_attribute(attr, output);
+            self.emit_element_attribute(attr, output);
         }
 
         if el.self_closing {
@@ -948,7 +953,7 @@ impl PythonGenerator {
         self.add_html_ranges(el, output);
     }
 
-    fn emit_attribute(&self, attr: &Attribute, output: &mut Output) {
+    fn emit_element_attribute(&self, attr: &Attribute, output: &mut Output) {
         match &attr.kind {
             AttributeKind::Static { name, value } => {
                 output.push(" ");
@@ -957,28 +962,160 @@ impl PythonGenerator {
                 output.push(&escape_string(&escape_html_attr_quotes(value)));
                 output.push("\\\"");
             }
-            AttributeKind::Dynamic { name, expr, .. } => {
-                output.push(" ");
-                output.push(name);
-                output.push("=\\\"{escape(");
-                output.push(expr);
-                output.push(")}\\\"");
+            AttributeKind::Expression {
+                name,
+                expr,
+                expr_span,
+            } => {
+                let content_start = expr_span.start.byte + 1;
+                let content_end = expr_span.end.byte - 1;
+                let safe_expr = self.safe_var_name(expr.trim());
+
+                if name == "class" {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\\\"{render_class(");
+                    let s = output.position();
+                    output.push(&safe_expr);
+                    let e = output.position();
+                    output.push(")}\\\"");
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: s,
+                        compiled_end: e,
+                        needs_injection: true,
+                    });
+                } else if name == "style" {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\\\"{render_style(");
+                    let s = output.position();
+                    output.push(&safe_expr);
+                    let e = output.position();
+                    output.push(")}\\\"");
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: s,
+                        compiled_end: e,
+                        needs_injection: true,
+                    });
+                } else if self.is_boolean_attribute(name) {
+                    output.push("{render_attr(\\\"");
+                    output.push(name);
+                    output.push("\\\", ");
+                    let s = output.position();
+                    output.push(&safe_expr);
+                    let e = output.position();
+                    output.push(")}");
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: s,
+                        compiled_end: e,
+                        needs_injection: true,
+                    });
+                } else {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\\\"{escape(");
+                    let s = output.position();
+                    output.push(&safe_expr);
+                    let e = output.position();
+                    output.push(")}\\\"");
+                    output.add_range(Range {
+                        range_type: RangeType::Python,
+                        source_start: content_start,
+                        source_end: content_end,
+                        compiled_start: s,
+                        compiled_end: e,
+                        needs_injection: true,
+                    });
+                }
             }
             AttributeKind::Boolean { name } => {
                 output.push(" ");
                 output.push(name);
             }
-            AttributeKind::Shorthand { name, .. } => {
-                output.push("{render_attr(\"");
-                output.push(name);
-                output.push("\", ");
-                output.push(name);
-                output.push(")}");
+            AttributeKind::Shorthand { name, expr_span } => {
+                let var_name = self.safe_var_name(name);
+                let content_start = expr_span.start.byte + 1;
+                let content_end = expr_span.end.byte;
+
+                let (s, e) = if name == "class" {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\\\"{render_class(");
+                    let s = output.position();
+                    output.push(&var_name);
+                    let e = output.position();
+                    output.push(")}\\\"");
+                    (s, e)
+                } else if name == "style" {
+                    output.push(" ");
+                    output.push(name);
+                    output.push("=\\\"{render_style(");
+                    let s = output.position();
+                    output.push(&var_name);
+                    let e = output.position();
+                    output.push(")}\\\"");
+                    (s, e)
+                } else if name == "data" {
+                    output.push("{render_data(");
+                    let s = output.position();
+                    output.push(&var_name);
+                    let e = output.position();
+                    output.push(")}");
+                    (s, e)
+                } else if name == "aria" {
+                    output.push("{render_aria(");
+                    let s = output.position();
+                    output.push(&var_name);
+                    let e = output.position();
+                    output.push(")}");
+                    (s, e)
+                } else {
+                    output.push("{render_attr(\\\"");
+                    output.push(name);
+                    output.push("\\\", ");
+                    let s = output.position();
+                    output.push(&var_name);
+                    let e = output.position();
+                    output.push(")}");
+                    (s, e)
+                };
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: s,
+                    compiled_end: e,
+                    needs_injection: true,
+                });
             }
-            AttributeKind::Spread { expr, .. } => {
+            AttributeKind::Spread { expr, expr_span } => {
+                let trimmed_expr = expr.trim();
+                let safe_expr = self.safe_var_name(trimmed_expr);
+                let content_start = expr_span.start.byte + 3;
+                let content_end = expr_span.end.byte;
+
                 output.push("{spread_attrs(");
-                output.push(expr.trim());
+                let s = output.position();
+                output.push(&safe_expr);
+                let e = output.position();
                 output.push(")}");
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: s,
+                    compiled_end: e,
+                    needs_injection: true,
+                });
             }
             AttributeKind::SlotAssignment { name, expr, .. } => {
                 if let Some(e) = expr {
@@ -996,7 +1133,6 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
                 output.push("=\\\"");
-                // Convert {expr} to f-string syntax with escaping
                 output.push(&self.convert_template_expressions(value));
                 output.push("\\\"");
             }
@@ -1070,7 +1206,7 @@ impl PythonGenerator {
             // Emit attributes as keyword arguments
             for attr in &c.attributes {
                 output.push(", ");
-                self.emit_component_attr(attr, output);
+                self.emit_component_attribute(attr, output);
             }
 
             output.push(")");
@@ -1098,7 +1234,7 @@ impl PythonGenerator {
                     output.push(", ");
                 }
                 first = false;
-                self.emit_component_attr(attr, output);
+                self.emit_component_attribute(attr, output);
             }
 
             output.push(")");
@@ -1148,7 +1284,7 @@ impl PythonGenerator {
     }
 
     /// Emit a single attribute as a Python keyword argument in a component call
-    fn emit_component_attr(&self, attr: &Attribute, output: &mut Output) {
+    fn emit_component_attribute(&self, attr: &Attribute, output: &mut Output) {
         match &attr.kind {
             AttributeKind::Static { name, value } => {
                 output.push(name);
@@ -1156,24 +1292,64 @@ impl PythonGenerator {
                 output.push(&escape_string(value));
                 output.push("\"");
             }
-            AttributeKind::Dynamic { name, expr, .. } => {
+            AttributeKind::Expression {
+                name,
+                expr,
+                expr_span,
+            } => {
+                let content_start = expr_span.start.byte + 1;
+                let content_end = expr_span.end.byte - 1;
                 output.push(name);
                 output.push("=");
+                let s = output.position();
                 output.push(expr);
+                let e = output.position();
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: s,
+                    compiled_end: e,
+                    needs_injection: true,
+                });
             }
             AttributeKind::Boolean { name } => {
                 output.push(name);
                 output.push("=True");
             }
-            AttributeKind::Shorthand { name, .. } => {
+            AttributeKind::Shorthand { name, expr_span } => {
                 let var_name = self.safe_var_name(name);
+                let content_start = expr_span.start.byte + 1;
+                let content_end = expr_span.end.byte;
                 output.push(name);
                 output.push("=");
+                let s = output.position();
                 output.push(&var_name);
+                let e = output.position();
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: s,
+                    compiled_end: e,
+                    needs_injection: true,
+                });
             }
-            AttributeKind::Spread { expr, .. } => {
+            AttributeKind::Spread { expr, expr_span } => {
+                let content_start = expr_span.start.byte + 3;
+                let content_end = expr_span.end.byte;
                 output.push("**");
+                let s = output.position();
                 output.push(expr.trim());
+                let e = output.position();
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: content_start,
+                    source_end: content_end,
+                    compiled_start: s,
+                    compiled_end: e,
+                    needs_injection: true,
+                });
             }
             AttributeKind::Template { name, value } => {
                 output.push(name);
@@ -2055,7 +2231,7 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
 #[allow(clippy::while_let_on_iterator)]
 fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
     match &attr.kind {
-        AttributeKind::Dynamic { expr_span, .. } => {
+        AttributeKind::Expression { expr_span, .. } => {
             // expr_span covers {expr} with exclusive end
             braces.push((expr_span.start.byte, expr_span.end.byte - 1));
         }

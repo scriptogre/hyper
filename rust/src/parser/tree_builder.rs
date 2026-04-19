@@ -959,7 +959,7 @@ impl TreeBuilder {
                             }
                         }
                     }
-                    AttributeValue::Expression(code, span) => AttributeKind::Dynamic {
+                    AttributeValue::Expression(code, span) => AttributeKind::Expression {
                         name: attr.name.clone(),
                         expr: code.clone(),
                         expr_span: *span,
@@ -1030,7 +1030,7 @@ impl TreeBuilder {
         for attr in attrs {
             let name = match &attr.kind {
                 AttributeKind::Static { name, .. }
-                | AttributeKind::Dynamic { name, .. }
+                | AttributeKind::Expression { name, .. }
                 | AttributeKind::Template { name, .. }
                 | AttributeKind::Boolean { name }
                 | AttributeKind::Shorthand { name, .. } => Some(name.as_str()),

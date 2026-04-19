@@ -22,17 +22,45 @@
       "type": "python"
     },
     {
+      "end": 46,
+      "prefix": "(**",
+      "start": 41,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 59,
-      "prefix": "(**props)\n\n    yield from ",
+      "prefix": ")\n\n    yield from ",
       "start": 53,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 73,
+      "prefix": "(label=",
+      "start": 68,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 83,
+      "prefix": ", **",
+      "start": 78,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 96,
-      "prefix": "(label=label, **props)\n\n    yield from ",
+      "prefix": ")\n\n    yield from ",
       "start": 90,
-      "suffix": "(disabled=True, **props)\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 115,
+      "prefix": "(disabled=True, **",
+      "start": 110,
+      "suffix": ")\n\n",
       "type": "python"
     },
     {
@@ -94,6 +122,13 @@
       "source_start": 12
     },
     {
+      "compiled_end": 106,
+      "compiled_start": 101,
+      "range_type": "Python",
+      "source_end": 46,
+      "source_start": 41
+    },
+    {
       "compiled_end": 98,
       "compiled_start": 92,
       "range_type": "Python",
@@ -115,6 +150,20 @@
       "source_start": 37
     },
     {
+      "compiled_end": 142,
+      "compiled_start": 137,
+      "range_type": "Python",
+      "source_end": 73,
+      "source_start": 68
+    },
+    {
+      "compiled_end": 151,
+      "compiled_start": 146,
+      "range_type": "Python",
+      "source_end": 83,
+      "source_start": 78
+    },
+    {
       "compiled_end": 130,
       "compiled_start": 124,
       "range_type": "Python",
@@ -134,6 +183,13 @@
       "range_type": "Html",
       "source_end": 87,
       "source_start": 60
+    },
+    {
+      "compiled_end": 198,
+      "compiled_start": 193,
+      "range_type": "Python",
+      "source_end": 115,
+      "source_start": 110
     },
     {
       "compiled_end": 175,

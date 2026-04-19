@@ -78,14 +78,11 @@ fn collect_tests() -> Vec<Trial> {
         }));
 
         // Test F: Every Python-bearing token in the body has a corresponding range
-        // (includes attribute expressions — currently failing for 5 files, fix pending)
         let p = path.clone();
-        tests.push(
-            Trial::test(format!("completeness::{}", test_name), move || {
-                completeness::run(&p)
-            })
-            .with_ignored_flag(true),
-        );
+        tests.push(Trial::test(
+            format!("completeness::{}", test_name),
+            move || completeness::run(&p),
+        ));
 
         // Test G: Expression brace positions point to actual { and } characters
         let p = path.clone();

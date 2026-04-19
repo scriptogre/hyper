@@ -428,8 +428,15 @@
       "type": "python"
     },
     {
+      "end": 2396,
+      "prefix": "(_cached_list(), entries=",
+      "start": 2391,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 2493,
-      "prefix": "(_cached_list(), entries=items)\n    # </{CachedList}>\n\n    # -- Component with expression name --\n\n    yield from ",
+      "prefix": ")\n    # </{CachedList}>\n\n    # -- Component with expression name --\n\n    yield from ",
       "start": 2485,
       "suffix": "",
       "type": "python"
@@ -456,8 +463,15 @@
       "type": "python"
     },
     {
+      "end": 2834,
+      "prefix": "(text=",
+      "start": 2830,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 2899,
-      "prefix": "(text=item)\n\n            yield \"<div class=\\\"wrapper\\\">\"\n\n            match ",
+      "prefix": ")\n\n            yield \"<div class=\\\"wrapper\\\">\"\n\n            match ",
       "start": 2895,
       "suffix": "",
       "type": "python"
@@ -477,8 +491,15 @@
       "type": "python"
     },
     {
+      "end": 2996,
+      "prefix": "(entries=",
+      "start": 2984,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 3027,
-      "prefix": "(entries=[item, item])\n\n                case ",
+      "prefix": ")\n\n                case ",
       "start": 3026,
       "suffix": "",
       "type": "python"
@@ -2299,6 +2320,13 @@
       "source_start": 2422
     },
     {
+      "compiled_end": 3584,
+      "compiled_start": 3579,
+      "range_type": "Python",
+      "source_end": 2396,
+      "source_start": 2391
+    },
+    {
       "compiled_end": 3554,
       "compiled_start": 3544,
       "range_type": "Python",
@@ -2460,6 +2488,13 @@
       "source_start": 2788
     },
     {
+      "compiled_end": 4207,
+      "compiled_start": 4203,
+      "range_type": "Python",
+      "source_end": 2834,
+      "source_start": 2830
+    },
+    {
       "compiled_end": 4197,
       "compiled_start": 4192,
       "range_type": "Python",
@@ -2493,6 +2528,13 @@
       "range_type": "Python",
       "source_end": 2935,
       "source_start": 2926
+    },
+    {
+      "compiled_end": 4374,
+      "compiled_start": 4362,
+      "range_type": "Python",
+      "source_end": 2996,
+      "source_start": 2984
     },
     {
       "compiled_end": 4353,

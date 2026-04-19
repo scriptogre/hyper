@@ -249,8 +249,8 @@ pub enum AttributeKind {
     /// Static: class="foo"
     Static { name: String, value: String },
 
-    /// Dynamic: class={expr}
-    Dynamic {
+    /// Expression: class={expr}
+    Expression {
         name: String,
         expr: String,
         expr_span: Span,

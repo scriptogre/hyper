@@ -32,7 +32,7 @@ impl Visitor for HelperDetectionPlugin {
             Node::Element(el) => {
                 for attr in &el.attributes {
                     match &attr.kind {
-                        AttributeKind::Dynamic { name, .. } => {
+                        AttributeKind::Expression { name, .. } => {
                             Self::insert_helper_for_attr(name, metadata);
                         }
                         AttributeKind::Shorthand { name, .. } => match name.as_str() {

@@ -166,7 +166,11 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                         }
                         // {name}: span is {name}, inner skips {
                         // (span.end is before }, so no -1)
-                        AttributeValue::Shorthand(_, s) => Some((s.start.byte + 1, s.end.byte)),
+                        // Skip reserved keywords (class, type) — the generator renames
+                        // them (class_) so source != compiled and the range is dropped
+                        AttributeValue::Shorthand(name, s) if name != "class" && name != "type" => {
+                            Some((s.start.byte + 1, s.end.byte))
+                        }
                         _ => None,
                     };
                     if let Some((start, end)) = inner

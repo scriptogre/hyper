@@ -43,17 +43,52 @@
       "type": "python"
     },
     {
+      "end": 199,
+      "prefix": "(label=",
+      "start": 194,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 217,
+      "prefix": ", variant=",
+      "start": 210,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 248,
-      "prefix": "(label=label, variant=variant)\n\n    # With shorthand\n\n    yield from ",
+      "prefix": ")\n\n    # With shorthand\n\n    yield from ",
       "start": 242,
       "suffix": "",
       "type": "python"
     },
     {
+      "end": 259,
+      "prefix": "(disabled=",
+      "start": 251,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 279,
-      "prefix": "(disabled=disabled)\n\n    # Mixed\n\n    yield from ",
+      "prefix": ")\n\n    # Mixed\n\n    yield from ",
       "start": 275,
-      "suffix": "(name=\"star\", size=24, disabled=disabled)\n\n",
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 301,
+      "prefix": "(name=\"star\", size=",
+      "start": 299,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 312,
+      "prefix": ", disabled=",
+      "start": 304,
+      "suffix": ")\n\n",
       "type": "python"
     },
     {
@@ -192,6 +227,20 @@
       "source_start": 126
     },
     {
+      "compiled_end": 295,
+      "compiled_start": 290,
+      "range_type": "Python",
+      "source_end": 199,
+      "source_start": 194
+    },
+    {
+      "compiled_end": 312,
+      "compiled_start": 305,
+      "range_type": "Python",
+      "source_end": 217,
+      "source_start": 210
+    },
+    {
       "compiled_end": 283,
       "compiled_start": 277,
       "range_type": "Python",
@@ -213,6 +262,13 @@
       "source_start": 186
     },
     {
+      "compiled_end": 376,
+      "compiled_start": 368,
+      "range_type": "Python",
+      "source_end": 259,
+      "source_start": 251
+    },
+    {
       "compiled_end": 358,
       "compiled_start": 352,
       "range_type": "Python",
@@ -232,6 +288,20 @@
       "range_type": "Html",
       "source_end": 263,
       "source_start": 249
+    },
+    {
+      "compiled_end": 432,
+      "compiled_start": 430,
+      "range_type": "Python",
+      "source_end": 301,
+      "source_start": 299
+    },
+    {
+      "compiled_end": 451,
+      "compiled_start": 443,
+      "range_type": "Python",
+      "source_end": 312,
+      "source_start": 304
     },
     {
       "compiled_end": 411,

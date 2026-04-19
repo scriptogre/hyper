@@ -120,8 +120,15 @@
       "type": "python"
     },
     {
+      "end": 577,
+      "prefix": "(who=",
+      "start": 560,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 589,
-      "prefix": "(who=format_name(name))\n\n    yield from ",
+      "prefix": ")\n\n    yield from ",
       "start": 584,
       "suffix": "(text=\"Admin\", color=\"red\")\n\n",
       "type": "python"
@@ -477,6 +484,13 @@
       "range_type": "Python",
       "source_end": 539,
       "source_start": 523
+    },
+    {
+      "compiled_end": 783,
+      "compiled_start": 766,
+      "range_type": "Python",
+      "source_end": 577,
+      "source_start": 560
     },
     {
       "compiled_end": 761,
