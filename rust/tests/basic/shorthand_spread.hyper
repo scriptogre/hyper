@@ -1,18 +1,18 @@
 name: str
 value: str
 disabled: bool
-props: dict
+title: str
 
 ---
 
 # Shorthand attributes
 <input {name} {value} {disabled} />
 
-# Shorthand with dict
-<div {props}>Content</div>
+# Multiple shorthand
+<div {title}>Content</div>
 
 # Mixed shorthand
-<button {name} {props} {disabled}>Click</button>
+<button {name} {title} {disabled}>Click</button>
 
 # Shorthand with static attributes
-<input type="text" {props} class="input" />
+<input type="text" {name} class="input" />

@@ -1,6 +1,6 @@
 name: str
-onClick: object
-props: dict
+on_click: Callable
+disabled: bool
 
 ---
 
@@ -11,10 +11,10 @@ props: dict
 <{Button} label="Click me" />
 
 # With expression attributes
-<{Button} label={name} onClick={onClick} />
+<{Button} label={name} on_click={on_click} />
 
 # With shorthand
-<{Button} {props} />
+<{Button} {disabled} />
 
 # Mixed
-<{Icon} name="star" size={24} {props} />
+<{Icon} name="star" size={24} {disabled} />

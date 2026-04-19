@@ -1,8 +1,9 @@
+from typing import Callable
 from hyper import html
 
 
 @html
-def SelfClosing(*, name: str, onClick: object, props: dict):
+def SelfClosing(*, name: str, on_click: Callable, disabled: bool):
 
     # Simple self-closing
 
@@ -14,13 +15,13 @@ def SelfClosing(*, name: str, onClick: object, props: dict):
 
     # With expression attributes
 
-    yield from Button(label=name, onClick=onClick)
+    yield from Button(label=name, on_click=on_click)
 
     # With shorthand
 
-    yield from Button(props=props)
+    yield from Button(disabled=disabled)
 
     # Mixed
 
-    yield from Icon(name="star", size=24, props=props)
+    yield from Icon(name="star", size=24, disabled=disabled)
 
