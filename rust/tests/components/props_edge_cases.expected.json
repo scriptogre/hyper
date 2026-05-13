@@ -2,7 +2,7 @@
   "injections": [
     {
       "end": 100,
-      "prefix": "from typing import Any\nfrom hyper import html, escape\n\n\n@html\ndef PropsEdgeCases(*, ",
+      "prefix": "from typing import Any\nfrom hyper import html, escape\n\n\n# Docstring in header\n@html\ndef PropsEdgeCases(*, ",
       "start": 89,
       "suffix": "",
       "type": "python"
@@ -65,7 +65,7 @@
     },
     {
       "end": 58,
-      "prefix": ", **kwargs: Any):\n    # Docstring in header\n    ",
+      "prefix": ", **kwargs: Any):\n    ",
       "start": 22,
       "suffix": "",
       "type": "python"
@@ -150,148 +150,148 @@
   ],
   "ranges": [
     {
-      "compiled_end": 95,
-      "compiled_start": 84,
+      "compiled_end": 117,
+      "compiled_start": 106,
       "range_type": "Python",
       "source_end": 100,
       "source_start": 89
     },
     {
-      "compiled_end": 132,
-      "compiled_start": 97,
+      "compiled_end": 154,
+      "compiled_start": 119,
       "range_type": "Python",
       "source_end": 136,
       "source_start": 101
     },
     {
-      "compiled_end": 165,
-      "compiled_start": 134,
+      "compiled_end": 187,
+      "compiled_start": 156,
       "range_type": "Python",
       "source_end": 168,
       "source_start": 137
     },
     {
-      "compiled_end": 189,
-      "compiled_start": 167,
+      "compiled_end": 211,
+      "compiled_start": 189,
       "range_type": "Python",
       "source_end": 191,
       "source_start": 169
     },
     {
-      "compiled_end": 212,
-      "compiled_start": 191,
+      "compiled_end": 234,
+      "compiled_start": 213,
       "range_type": "Python",
       "source_end": 213,
       "source_start": 192
     },
     {
-      "compiled_end": 241,
-      "compiled_start": 214,
+      "compiled_end": 263,
+      "compiled_start": 236,
       "range_type": "Python",
       "source_end": 241,
       "source_start": 214
     },
     {
-      "compiled_end": 264,
-      "compiled_start": 243,
+      "compiled_end": 286,
+      "compiled_start": 265,
       "range_type": "Python",
       "source_end": 263,
       "source_start": 242
     },
     {
-      "compiled_end": 287,
-      "compiled_start": 266,
+      "compiled_end": 309,
+      "compiled_start": 288,
       "range_type": "Python",
       "source_end": 285,
       "source_start": 264
     },
     {
-      "compiled_end": 329,
-      "compiled_start": 289,
+      "compiled_end": 351,
+      "compiled_start": 311,
       "range_type": "Python",
       "source_end": 326,
       "source_start": 286
     },
     {
-      "compiled_end": 413,
-      "compiled_start": 377,
+      "compiled_end": 409,
+      "compiled_start": 373,
       "range_type": "Python",
       "source_end": 58,
       "source_start": 22
     },
     {
-      "compiled_end": 493,
-      "compiled_start": 487,
+      "compiled_end": 489,
+      "compiled_start": 483,
       "range_type": "Python",
       "source_end": 370,
       "source_start": 364
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 363,
       "source_start": 357
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 378,
       "source_start": 371
     },
     {
-      "compiled_end": 533,
-      "compiled_start": 521,
+      "compiled_end": 529,
+      "compiled_start": 517,
       "range_type": "Python",
       "source_end": 402,
       "source_start": 390
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 389,
       "source_start": 383
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 410,
       "source_start": 403
     },
     {
-      "compiled_end": 583,
-      "compiled_start": 561,
+      "compiled_end": 579,
+      "compiled_start": 557,
       "range_type": "Python",
       "source_end": 444,
       "source_start": 422
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 421,
       "source_start": 415
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 452,
       "source_start": 445
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 352,
       "source_start": 347
     },
     {
-      "compiled_end": 463,
-      "compiled_start": 463,
+      "compiled_end": 459,
+      "compiled_start": 459,
       "range_type": "Html",
       "source_end": 459,
       "source_start": 453

@@ -2,14 +2,13 @@ from collections.abc import Iterable
 from hyper import html, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
 
 
+# Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
+# Open this file in JetBrains after any injection change and verify highlighting.
 @html
 def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int = 0, is_active: bool = True, items: list = [], metadata: dict = {}, callback: object = None, style: str = "default", raw_html: str = "", value: int = 0, variant: str = "primary", limit: int = 10, sections: list = [], pairs: list = [], names: list = [], scores: list = [], matrix: list = [], _header: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):
-    # Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
-    # Open this file in JetBrains after any injection change and verify highlighting.
     ########################################
     # STATEMENTS
     ########################################
-
     result = name.upper()
     values = [x * 2 for x in range(count)]
     lookup = {k: v for k, v in metadata.items()}
@@ -106,7 +105,6 @@ Text after elements"""
     ########################################
     # CLASS LIST AND STYLE DICT
     ########################################
-
     class_ = ["btn", "btn-primary", {"active": is_active}]
     yield f"""<button{render_attr("class_", class_)}>Class list</button>"""
     styles = {"color": "red", "font-weight": "bold"}
@@ -115,7 +113,6 @@ Text after elements"""
     ########################################
     # DATA AND ARIA
     ########################################
-
     data = {"user-id": 123, "role": "admin"}
     aria = {"label": "Close", "hidden": is_active}
     yield f"""<div{render_data(data)}{render_aria(aria)}>Data and aria</div>"""
@@ -123,7 +120,6 @@ Text after elements"""
     ########################################
     # RESERVED KEYWORDS
     ########################################
-
     type_ = "button"
     yield f"""<button class="{render_class(class_)}" type="{escape(type_)}">Reserved keywords</button>"""
 
@@ -145,7 +141,6 @@ Text after elements"""
     ########################################
     # IF / ELIF / ELSE
     ########################################
-
     if is_active:
         yield """<span class="active">Active</span>"""
     elif count > 0:
@@ -156,14 +151,12 @@ Text after elements"""
     ########################################
     # FOR LOOP
     ########################################
-
     for item in items:
         yield f"""<li class="item">{escape(item)}</li>"""
 
     ########################################
     # FOR DESTRUCTURING
     ########################################
-
     for key, val in metadata.items():
         yield f"""\
 <dt>{escape(key)}</dt>
@@ -172,7 +165,6 @@ Text after elements"""
     ########################################
     # WHILE LOOP
     ########################################
-
     while count > 0:
         yield f"""\
 <p>Counting down: {escape(count)}</p>
@@ -182,7 +174,6 @@ Text after elements"""
     ########################################
     # MATCH / CASE
     ########################################
-
     match style:
         case "bold":
             yield f"""\
@@ -198,7 +189,6 @@ Text after elements"""
     ########################################
     # TRY / EXCEPT / ELSE / FINALLY
     ########################################
-
     try:
         yield f"""<span>{escape(metadata['key'])}</span>"""
     except KeyError as e:
@@ -213,14 +203,12 @@ Text after elements"""
     ########################################
     # WITH
     ########################################
-
     with open("/dev/null") as f:
         yield f"""<pre>{escape(f.read())}</pre>"""
 
     ########################################
     # DEFINITIONS
     ########################################
-
     @fragment
     def Badge(text: str, badge_variant: str = "info"):
         yield f"""<span class="badge badge-{escape(badge_variant)}">{escape(text)}</span>"""
@@ -255,7 +243,6 @@ Text after elements"""
     ########################################
     # COMPONENTS
     ########################################
-
     yield from Badge(text="Sale", badge_variant="danger")
 
     yield from Badge()
@@ -275,7 +262,6 @@ Text after elements"""
     ########################################
     # SLOTS
     ########################################
-
     if _header is not None:
         yield from _header
     else:
@@ -292,7 +278,6 @@ Text after elements"""
     ########################################
     # NESTED CONTROL FLOW
     ########################################
-
     yield """<section>"""
 
     if is_active:
@@ -316,7 +301,6 @@ Text after elements"""
     ########################################
     # BREAK / CONTINUE
     ########################################
-
     yield """<ul>"""
 
     for item in items:
@@ -349,7 +333,6 @@ Text after elements"""
     ########################################
     # LOOP PATTERNS
     ########################################
-
     for i, item in enumerate(items):
         yield f"""<li data-index="{escape(i)}">{escape(item)}</li>"""
     for num, item in enumerate(items, start=1):
@@ -377,7 +360,6 @@ Text after elements"""
     ########################################
     # MATCH GUARDS
     ########################################
-
     match value:
         case x if x < 0:
             yield f"""\
@@ -412,7 +394,6 @@ Text after elements"""
     ########################################
     # TRY VARIANTS
     ########################################
-
     try:
         yield f"""<span>{escape(callback())}</span>"""
     except ValueError as e:
@@ -437,7 +418,6 @@ Text after elements"""
     ########################################
     # EMPTY BLOCKS
     ########################################
-
     if is_active:
         pass
     if is_active:
@@ -457,7 +437,6 @@ Text after elements"""
     ########################################
     # COMPLEX NESTING
     ########################################
-
     yield """<div class="container">"""
 
     if is_active:
@@ -566,7 +545,6 @@ Text after elements"""
     ########################################
     # PYTHON FEATURES
     ########################################
-
     if (n := len(items)) > 0:
         yield f"""<span>Found {escape(n)} items</span>"""
     sorter = lambda x: x.lower()
@@ -601,7 +579,6 @@ Text after elements"""
     ########################################
     # COMMENTS
     ########################################
-
     # Top-level comment
     yield """<div>"""
 
