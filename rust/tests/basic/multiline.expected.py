@@ -2,7 +2,11 @@ from hyper import html, escape
 
 
 @html
-def Multiline(*, data: dict, items: list):
+def Multiline(
+        *,
+        data: dict,
+        items: list,
+):
     # Multiline dict literal
     config = {
         "key1": "value1",
@@ -10,6 +14,7 @@ def Multiline(*, data: dict, items: list):
         "key3": "value3"
     }
     yield f"""<span>{escape(config)}</span>"""
+
     # Multiline list literal
     values = [
         "item1",
@@ -17,6 +22,7 @@ def Multiline(*, data: dict, items: list):
         "item3"
     ]
     yield f"""<span>{escape(values)}</span>"""
+
     # Multiline function call
     result = some_function(
         arg1="value1",
@@ -24,6 +30,7 @@ def Multiline(*, data: dict, items: list):
         arg3="value3"
     )
     yield f"""<span>{escape(result)}</span>"""
+
     # Multiline list comprehension
     squares = [
         x ** 2
@@ -31,6 +38,7 @@ def Multiline(*, data: dict, items: list):
         if x % 2 == 0
     ]
     yield f"""<span>{escape(squares)}</span>"""
+
     # Chained method calls (each on own line)
     processed = (data
         .get('items', [])

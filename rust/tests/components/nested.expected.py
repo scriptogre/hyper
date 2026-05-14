@@ -2,60 +2,47 @@ from hyper import html, escape
 
 
 @html
-def Nested(*, title: str, items: list):
+def Nested(
+        *,
+        title: str,
+        items: list,
+):
     # Nested components
     # <{Card}>
-    def _card():
-
+    def _card_content():
         # <{CardHeader}>
-        def _card_header():
-            yield f"""\
-<h2>{escape(title)}</h2>
-    """
-        yield from CardHeader(_card_header())
+        def _card_header_content():
+            yield f"""<h2>{escape(title)}</h2>"""
+        yield from CardHeader(_card_header_content())
         # </{CardHeader}>
-
         # <{CardBody}>
-        def _card_body():
-
+        def _card_body_content():
             # <{List}>
-            def _list():
-
+            def _list_content():
                 for item in items:
                     # <{ListItem}>
-                    def _list_item():
-                        yield f"""\
-{escape(item)}
-                """
-                    yield from ListItem(_list_item())
+                    def _list_item_content():
+                        yield f"""{escape(item)}"""
+                    yield from ListItem(_list_item_content())
                     # </{ListItem}>
-
-            yield from List(_list())
+            yield from List(_list_content())
             # </{List}>
-
-        yield from CardBody(_card_body())
+        yield from CardBody(_card_body_content())
         # </{CardBody}>
-
-    yield from Card(_card())
+    yield from Card(_card_content())
     # </{Card}>
 
     # Component in control flow
     if title:
         # <{Alert}>
-        def _alert():
-            yield f"""\
-<span>{escape(title)}</span>
-    """
-        yield from Alert(_alert(), type="info")
+        def _alert_content():
+            yield f"""<span>{escape(title)}</span>"""
+        yield from Alert(_alert_content(), type="info")
         # </{Alert}>
-
     # Components in loop
     for item in items:
         # <{Badge}>
-        def _badge():
-            yield f"""\
-{escape(item)}
-    """
-        yield from Badge(_badge(), color="blue")
+        def _badge_content():
+            yield f"""{escape(item)}"""
+        yield from Badge(_badge_content(), color="blue")
         # </{Badge}>
-

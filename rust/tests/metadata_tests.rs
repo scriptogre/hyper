@@ -104,8 +104,8 @@ fn test_parameters_with_slots() {
 
     let code = compile(source);
 
-    //Should have parameter in signature (keyword-only)
-    assert!(code.contains("*, title: str"));
+    // Should have parameter in signature (keyword-only, multi-line format)
+    assert!(code.contains("*,") && code.contains("title: str,"));
 
     // Should have _content parameter for default slot
     assert!(code.contains("_content: Iterable[str] | None = None"));

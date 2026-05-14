@@ -324,11 +324,39 @@ impl<'a> Tokenizer<'a> {
                         self.tokenize_content(tokens);
                     }
                     RawContentExit::EndKeyword { .. } => {
-                        // `end` closes `raw:` — consume silently, no token
+                        // `end` closes `raw:` — consume entire line silently.
+                        // Pop the stray Indent token (emitted in step 1 before
+                        // we knew this line was the closing `end`).
+                        if let Some(Token::Indent { .. }) = tokens.last() {
+                            tokens.pop();
+                        }
                         self.skip_to_eol();
+                        // Consume newline silently (it's the `end` line ending)
+                        if self.at_newline() {
+                            self.consume_newline();
+                        }
+                        return;
                     }
                 }
             } else {
+                // For raw: blocks, strip the directive's own indentation from
+                // content lines so the output reflects nesting relative to the
+                // parent element, not the raw: directive.
+                if let RawContentExit::EndKeyword {
+                    indent: raw_indent, ..
+                } = &exit_mode
+                    && let Some(Token::Indent { level, span }) = tokens.last().cloned()
+                {
+                    tokens.pop();
+                    let adjusted = level.saturating_sub(*raw_indent);
+                    if adjusted > 0 {
+                        tokens.push(Token::Indent {
+                            level: adjusted,
+                            span,
+                        });
+                    }
+                }
+
                 // Emit entire line as raw text
                 let text_start = self.position;
                 let text = self.consume_to_eol();
@@ -360,19 +388,18 @@ impl<'a> Tokenizer<'a> {
             let line_content = self.peek_line();
             let trimmed = line_content.trim();
             if trimmed == "raw:" || trimmed == "raw :" {
+                // Pop the stray Indent token (emitted in step 1 before
+                // we knew this line was the `raw:` directive).
+                if let Some(Token::Indent { .. }) = tokens.last() {
+                    tokens.pop();
+                }
                 self.skip_to_eol();
                 self.in_raw_content = Some(RawContentExit::EndKeyword {
                     indent: indent_level,
                 });
+                // Consume newline silently (it's the `raw:` line ending)
                 if self.at_newline() {
-                    let nl_start = self.position;
                     self.consume_newline();
-                    tokens.push(Token::Newline {
-                        span: Span {
-                            start: nl_start,
-                            end: self.position,
-                        },
-                    });
                 }
                 return;
             }

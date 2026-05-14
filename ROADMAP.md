@@ -16,7 +16,7 @@
 
 ## Next
 
-- [ ] Add Python injection ranges for attribute expressions (`class={expr}`, `{name}` shorthand)
+- [ ] **Newline semantics in tree builder** — `newline_is_content()` treats all newlines after content tokens as content, but the first newline after an opening tag/statement is a structural line ending, not a blank line. Fix at the tree builder level so the generator doesn't need `saturating_sub(1)` workarounds.
 - [ ] Support multiline HTML tags (`<div\n  class="card">`)
 - [ ] Interactive inspector: bidirectional source <-> compiled highlighting
 - [ ] Collapse inspector to single tab with Python/HTML/Boilerplate toggles

@@ -2,114 +2,114 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from hyper import html, escape\n\n\n@html\ndef Nested(*, ",
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef Nested(\n        *,\n        ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 22,
-      "prefix": ", ",
+      "prefix": ",\n        ",
       "start": 11,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 95,
-      "prefix": "):\n    # Nested components\n    # <{Card}>\n    def _card():\n\n        # <{CardHeader}>\n        def _card_header():\n            yield f\"\"\"\\\n<h2>{escape(",
+      "prefix": ",\n):\n    # Nested components\n    # <{Card}>\n    def _card_content():\n        # <{CardHeader}>\n        def _card_header_content():\n            yield f\"\"\"<h2>{escape(",
       "start": 90,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 74,
-      "prefix": ")}</h2>\n    \"\"\"\n        yield from ",
+      "prefix": ")}</h2>\"\"\"\n        yield from ",
       "start": 64,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 185,
-      "prefix": "(_card_header())\n        # </{CardHeader}>\n\n        # <{CardBody}>\n        def _card_body():\n\n            # <{List}>\n            def _list():\n\n                for ",
+      "prefix": "(_card_header_content())\n        # </{CardHeader}>\n        # <{CardBody}>\n        def _card_body_content():\n            # <{List}>\n            def _list_content():\n                for ",
       "start": 172,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 241,
-      "prefix": ":\n                    # <{ListItem}>\n                    def _list_item():\n                        yield f\"\"\"\\\n{escape(",
+      "prefix": ":\n                    # <{ListItem}>\n                    def _list_item_content():\n                        yield f\"\"\"{escape(",
       "start": 237,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 213,
-      "prefix": ")}\n                \"\"\"\n                    yield from ",
+      "prefix": ")}\"\"\"\n                    yield from ",
       "start": 205,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 153,
-      "prefix": "(_list_item())\n                    # </{ListItem}>\n\n            yield from ",
+      "prefix": "(_list_item_content())\n                    # </{ListItem}>\n            yield from ",
       "start": 149,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 136,
-      "prefix": "(_list())\n            # </{List}>\n\n        yield from ",
+      "prefix": "(_list_content())\n            # </{List}>\n        yield from ",
       "start": 128,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 55,
-      "prefix": "(_card_body())\n        # </{CardBody}>\n\n    yield from ",
+      "prefix": "(_card_body_content())\n        # </{CardBody}>\n    yield from ",
       "start": 51,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 372,
-      "prefix": "(_card())\n    # </{Card}>\n\n    # Component in control flow\n    if ",
+      "prefix": "(_card_content())\n    # </{Card}>\n\n    # Component in control flow\n    if ",
       "start": 367,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 420,
-      "prefix": ":\n        # <{Alert}>\n        def _alert():\n            yield f\"\"\"\\\n<span>{escape(",
+      "prefix": ":\n        # <{Alert}>\n        def _alert_content():\n            yield f\"\"\"<span>{escape(",
       "start": 415,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 385,
-      "prefix": ")}</span>\n    \"\"\"\n        yield from ",
+      "prefix": ")}</span>\"\"\"\n        yield from ",
       "start": 380,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 487,
-      "prefix": "(_alert(), type=\"info\")\n        # </{Alert}>\n\n    # Components in loop\n    for ",
+      "prefix": "(_alert_content(), type=\"info\")\n        # </{Alert}>\n    # Components in loop\n    for ",
       "start": 474,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 529,
-      "prefix": ":\n        # <{Badge}>\n        def _badge():\n            yield f\"\"\"\\\n{escape(",
+      "prefix": ":\n        # <{Badge}>\n        def _badge_content():\n            yield f\"\"\"{escape(",
       "start": 525,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 500,
-      "prefix": ")}\n    \"\"\"\n        yield from ",
+      "prefix": ")}\"\"\"\n        yield from ",
       "start": 495,
-      "suffix": "(_badge(), color=\"blue\")\n        # </{Badge}>\n\n",
+      "suffix": "(_badge_content(), color=\"blue\")\n        # </{Badge}>\n",
       "type": "python"
     },
     {
@@ -339,43 +339,43 @@
   ],
   "ranges": [
     {
-      "compiled_end": 63,
-      "compiled_start": 53,
+      "compiled_end": 80,
+      "compiled_start": 70,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 76,
-      "compiled_start": 65,
+      "compiled_end": 101,
+      "compiled_start": 90,
       "range_type": "Python",
       "source_end": 22,
       "source_start": 11
     },
     {
-      "compiled_end": 230,
-      "compiled_start": 225,
+      "compiled_end": 270,
+      "compiled_start": 265,
       "range_type": "Python",
       "source_end": 95,
       "source_start": 90
     },
     {
-      "compiled_end": 204,
-      "compiled_start": 204,
+      "compiled_end": 39,
+      "compiled_start": 39,
       "range_type": "Html",
       "source_end": 89,
       "source_start": 85
     },
     {
-      "compiled_end": 204,
-      "compiled_start": 204,
+      "compiled_end": 39,
+      "compiled_start": 39,
       "range_type": "Html",
       "source_end": 101,
       "source_start": 96
     },
     {
-      "compiled_end": 275,
-      "compiled_start": 265,
+      "compiled_end": 310,
+      "compiled_start": 300,
       "range_type": "Python",
       "source_end": 74,
       "source_start": 64
@@ -416,22 +416,22 @@
       "source_start": 120
     },
     {
-      "compiled_end": 451,
-      "compiled_start": 438,
+      "compiled_end": 507,
+      "compiled_start": 494,
       "range_type": "Python",
       "source_end": 185,
       "source_start": 172
     },
     {
-      "compiled_end": 574,
-      "compiled_start": 570,
+      "compiled_end": 636,
+      "compiled_start": 632,
       "range_type": "Python",
       "source_end": 241,
       "source_start": 237
     },
     {
-      "compiled_end": 636,
-      "compiled_start": 628,
+      "compiled_end": 681,
+      "compiled_start": 673,
       "range_type": "Python",
       "source_end": 213,
       "source_start": 205
@@ -472,8 +472,8 @@
       "source_start": 271
     },
     {
-      "compiled_end": 715,
-      "compiled_start": 711,
+      "compiled_end": 767,
+      "compiled_start": 763,
       "range_type": "Python",
       "source_end": 153,
       "source_start": 149
@@ -514,8 +514,8 @@
       "source_start": 305
     },
     {
-      "compiled_end": 777,
-      "compiled_start": 769,
+      "compiled_end": 836,
+      "compiled_start": 828,
       "range_type": "Python",
       "source_end": 136,
       "source_start": 128
@@ -556,8 +556,8 @@
       "source_start": 323
     },
     {
-      "compiled_end": 836,
-      "compiled_start": 832,
+      "compiled_end": 902,
+      "compiled_start": 898,
       "range_type": "Python",
       "source_end": 55,
       "source_start": 51
@@ -598,36 +598,36 @@
       "source_start": 333
     },
     {
-      "compiled_end": 907,
-      "compiled_start": 902,
+      "compiled_end": 981,
+      "compiled_start": 976,
       "range_type": "Python",
       "source_end": 372,
       "source_start": 367
     },
     {
-      "compiled_end": 994,
-      "compiled_start": 989,
+      "compiled_end": 1074,
+      "compiled_start": 1069,
       "range_type": "Python",
       "source_end": 420,
       "source_start": 415
     },
     {
-      "compiled_end": 966,
-      "compiled_start": 966,
+      "compiled_end": 39,
+      "compiled_start": 39,
       "range_type": "Html",
       "source_end": 414,
       "source_start": 408
     },
     {
-      "compiled_end": 966,
-      "compiled_start": 966,
+      "compiled_end": 39,
+      "compiled_start": 39,
       "range_type": "Html",
       "source_end": 428,
       "source_start": 421
     },
     {
-      "compiled_end": 1036,
-      "compiled_start": 1031,
+      "compiled_end": 1111,
+      "compiled_start": 1106,
       "range_type": "Python",
       "source_end": 385,
       "source_start": 380
@@ -668,22 +668,22 @@
       "source_start": 442
     },
     {
-      "compiled_end": 1128,
-      "compiled_start": 1115,
+      "compiled_end": 1210,
+      "compiled_start": 1197,
       "range_type": "Python",
       "source_end": 487,
       "source_start": 474
     },
     {
-      "compiled_end": 1208,
-      "compiled_start": 1204,
+      "compiled_end": 1296,
+      "compiled_start": 1292,
       "range_type": "Python",
       "source_end": 529,
       "source_start": 525
     },
     {
-      "compiled_end": 1243,
-      "compiled_start": 1238,
+      "compiled_end": 1326,
+      "compiled_start": 1321,
       "range_type": "Python",
       "source_end": 500,
       "source_start": 495

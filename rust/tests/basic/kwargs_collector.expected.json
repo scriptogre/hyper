@@ -2,22 +2,22 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from typing import Any\nfrom hyper import html, escape, render_attr\n\n\n@html\ndef KwargsCollector(*, ",
+      "prefix": "from typing import Any\nfrom hyper import html, escape, spread_attrs\n\n\n@html\ndef KwargsCollector(\n        *,\n        ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 54,
-      "prefix": ", **attrs: Any):\n    yield f\"\"\"\\\n<div class=\"card\"{render_attr(\"attrs\", ",
-      "start": 49,
+      "end": 56,
+      "prefix": ",\n        **attrs: Any,\n):\n    yield f\"\"\"\\\n<div class=\"card\"{spread_attrs(",
+      "start": 51,
       "suffix": "",
       "type": "python"
     },
     {
-      "end": 71,
+      "end": 73,
       "prefix": ")}>\n    <h1>{escape(",
-      "start": 66,
+      "start": 68,
       "suffix": ")}</h1>\n</div>\"\"\"\n",
       "type": "python"
     },
@@ -29,90 +29,90 @@
       "type": "html"
     },
     {
-      "end": 56,
+      "end": 58,
       "prefix": "",
-      "start": 55,
+      "start": 57,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 65,
+      "end": 67,
       "prefix": "",
-      "start": 61,
+      "start": 63,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 77,
+      "end": 79,
       "prefix": "",
-      "start": 72,
+      "start": 74,
       "suffix": "",
       "type": "html"
     },
     {
-      "end": 84,
+      "end": 86,
       "prefix": "",
-      "start": 78,
+      "start": 80,
       "suffix": "",
       "type": "html"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 108,
-      "compiled_start": 98,
+      "compiled_end": 126,
+      "compiled_start": 116,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0
     },
     {
-      "compiled_end": 185,
-      "compiled_start": 180,
+      "compiled_end": 205,
+      "compiled_start": 200,
       "range_type": "Python",
-      "source_end": 54,
-      "source_start": 49
+      "source_end": 56,
+      "source_start": 51
     },
     {
-      "compiled_end": 210,
-      "compiled_start": 205,
+      "compiled_end": 230,
+      "compiled_start": 225,
       "range_type": "Python",
-      "source_end": 71,
-      "source_start": 66
+      "source_end": 73,
+      "source_start": 68
     },
     {
-      "compiled_end": 141,
-      "compiled_start": 141,
+      "compiled_end": 76,
+      "compiled_start": 76,
       "range_type": "Html",
-      "source_end": 65,
-      "source_start": 61
+      "source_end": 67,
+      "source_start": 63
     },
     {
-      "compiled_end": 141,
-      "compiled_start": 141,
+      "compiled_end": 76,
+      "compiled_start": 76,
       "range_type": "Html",
-      "source_end": 77,
-      "source_start": 72
+      "source_end": 79,
+      "source_start": 74
     },
     {
-      "compiled_end": 141,
-      "compiled_start": 141,
+      "compiled_end": 76,
+      "compiled_start": 76,
       "range_type": "Html",
       "source_end": 48,
       "source_start": 30
     },
     {
-      "compiled_end": 141,
-      "compiled_start": 141,
+      "compiled_end": 76,
+      "compiled_start": 76,
       "range_type": "Html",
-      "source_end": 56,
-      "source_start": 55
+      "source_end": 58,
+      "source_start": 57
     },
     {
-      "compiled_end": 141,
-      "compiled_start": 141,
+      "compiled_end": 76,
+      "compiled_start": 76,
       "range_type": "Html",
-      "source_end": 84,
-      "source_start": 78
+      "source_end": 86,
+      "source_start": 80
     }
   ]
 }

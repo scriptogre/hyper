@@ -213,13 +213,23 @@ fn substring_utf16_to_end(s: &str, start: usize) -> String {
     String::from_utf16_lossy(&utf16_units[start..])
 }
 
-/// Output buffer that accumulates generated code with mappings
+/// Output buffer that accumulates generated code with mappings.
+///
+/// Supports formatting-aware position tracking via `skip_next()` and
+/// `begin_dedent()` / `end_dedent()`. When active, `push()` discards
+/// characters (leading whitespace or anchor-indent spaces) so that
+/// `position()` always returns the correct compiled offset — no
+/// post-hoc range patching needed.
 pub struct Output {
     lines: Vec<String>,
     current_line: String,
     line_number: usize,
     mappings: Vec<Mapping>,
     ranges: Vec<Range>,
+    // Formatting-aware position tracking
+    skip_remaining: usize, // characters left to skip (for leading whitespace)
+    dedent_amount: usize,  // spaces to strip at each line start (0 = inactive)
+    dedent_skip_remaining: usize, // spaces left to strip on current content line
 }
 
 impl Output {
@@ -230,12 +240,46 @@ impl Output {
             line_number: 0,
             mappings: Vec::new(),
             ranges: Vec::new(),
+            skip_remaining: 0,
+            dedent_amount: 0,
+            dedent_skip_remaining: 0,
         }
     }
 
-    /// Add text without mapping
+    /// Add text without mapping.
+    ///
+    /// When skip or dedent mode is active, characters are selectively
+    /// discarded so that `position()` reflects the actual output.
     pub fn push(&mut self, text: &str) {
-        self.current_line.push_str(text);
+        // Fast path: no formatting active
+        if self.skip_remaining == 0 && self.dedent_amount == 0 {
+            self.current_line.push_str(text);
+            return;
+        }
+
+        for ch in text.chars() {
+            // Skip mode: discard characters entirely
+            if self.skip_remaining > 0 {
+                self.skip_remaining -= 1;
+                continue;
+            }
+
+            // Dedent mode: skip spaces at content line starts
+            if self.dedent_skip_remaining > 0 && ch == ' ' {
+                self.dedent_skip_remaining -= 1;
+                continue;
+            }
+
+            // Newline resets the dedent counter for the next line
+            if ch == '\n' && self.dedent_amount > 0 {
+                self.dedent_skip_remaining = self.dedent_amount;
+            } else {
+                // Non-space char stops dedent skipping for this line
+                self.dedent_skip_remaining = 0;
+            }
+
+            self.current_line.push(ch);
+        }
     }
 
     /// Add text with source mapping
@@ -295,6 +339,40 @@ impl Output {
     /// Get the accumulated ranges (for extracting from a temporary buffer)
     pub fn take_ranges(&mut self) -> Vec<Range> {
         std::mem::take(&mut self.ranges)
+    }
+
+    /// Skip the next `n` characters pushed to this buffer.
+    /// They won't appear in output or affect `position()`.
+    /// Used to discard leading whitespace from combined content blocks.
+    pub fn skip_next(&mut self, n: usize) {
+        self.skip_remaining = n;
+    }
+
+    /// Begin dedent mode: at each content newline, skip up to `n` leading spaces.
+    /// Does not affect the first line (only lines after a `\n` within pushed text).
+    pub fn begin_dedent(&mut self, n: usize) {
+        self.dedent_amount = n;
+        self.dedent_skip_remaining = 0; // first line is not dedented
+    }
+
+    /// End dedent mode.
+    pub fn end_dedent(&mut self) {
+        self.dedent_amount = 0;
+        self.dedent_skip_remaining = 0;
+    }
+
+    /// Remove trailing whitespace (spaces, tabs, newlines) from the current
+    /// line buffer. Used to clean up trailing content in combined blocks.
+    pub fn trim_trailing(&mut self) {
+        let trimmed_len = self.current_line.trim_end_matches([' ', '\t', '\n']).len();
+        self.current_line.truncate(trimmed_len);
+    }
+
+    /// Remove trailing spaces and tabs only (preserve newlines) from the
+    /// current line buffer. Used when the content naturally ends with `\n`.
+    pub fn trim_trailing_spaces(&mut self) {
+        let trimmed_len = self.current_line.trim_end_matches([' ', '\t']).len();
+        self.current_line.truncate(trimmed_len);
     }
 }
 

@@ -1423,7 +1423,7 @@ fn test_implicit_spread_all_blessed_names() {
         let source = format!("<{{Card}} {{**{name}}} />");
         let result = compile_with_ranges(&source, "Test");
 
-        let expected = format!("def Test(**{name}):");
+        let expected = format!("**{name},");
         assert!(
             result.code.contains(&expected),
             "Blessed name '{name}' should be auto-injected. Got:\n{}",
@@ -1489,8 +1489,9 @@ fn test_same_blessed_name_multiple_components() {
     let source = "<{Card} {**props} />\n<{Button} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
+    // Should have **props in the signature (multi-line format)
     assert!(
-        result.code.contains("def Test(**props):"),
+        result.code.contains("**props,"),
         "Should inject **props once. Got:\n{}",
         result.code
     );
@@ -1523,10 +1524,12 @@ fn test_implicit_spread_with_regular_params() {
         "title: str\ncount: int = 0\n---\n<{Card} title={title} count={count} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
+    // Multi-line signature should have *, params, and **props
     assert!(
-        result
-            .code
-            .contains("*, title: str, count: int = 0, **props)"),
+        result.code.contains("*,")
+            && result.code.contains("title: str,")
+            && result.code.contains("count: int = 0,")
+            && result.code.contains("**props,"),
         "Should have regular params AND injected **props. Got:\n{}",
         result.code
     );

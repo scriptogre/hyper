@@ -3,6 +3,6 @@ title: str
 
 ---
 
-<div class="card" {attrs}>
+<div class="card" {**attrs}>
     <h1>{title}</h1>
 </div>

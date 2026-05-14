@@ -656,6 +656,8 @@ attrs = {"class": class, "id": "act_now", "data": {"wow": "such-attr"}}
 
 ### Pass-Through Attributes
 
+Think of elements as function calls: `<button {**attrs}>` is like calling `button(**attrs)`. The `**` in the parameter declaration collects extra keyword arguments into a dict, and the `**` on the element spreads them back out, the same symmetry as Python functions.
+
 Use one of `{**kwargs}`, `{**props}`, `{**rest}`, `{**attrs}`, or `{**attributes}` to accept and forward arbitrary attributes. The compiler adds it to the function signature automatically.
 
 ```hyper

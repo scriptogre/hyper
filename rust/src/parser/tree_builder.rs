@@ -97,7 +97,7 @@ impl TreeBuilder {
                 // If it was content, all subsequent newlines are content (blank lines).
                 // If it was non-content, the first newline was skipped (line ending),
                 // so this second newline is the first blank line — preserve it.
-                let mut newline_count = 0;
+                let mut newline_count = 1; // Include the current newline
                 let mut i = self.pos;
                 while i > 0 {
                     i -= 1;
@@ -120,6 +120,23 @@ impl TreeBuilder {
     fn parse_node(&mut self) -> ParseResult<Option<Node>> {
         if self.is_at_end() {
             return Ok(None);
+        }
+
+        // If we're still in the header zone and encounter a content-producing
+        // token without having seen a --- separator, transition to body mode.
+        // This ensures newlines and indentation are preserved as content.
+        if self.in_header {
+            let is_content_token = matches!(
+                &self.tokens[self.pos],
+                Token::HtmlElementOpen { .. }
+                    | Token::Expression { .. }
+                    | Token::Text { .. }
+                    | Token::ComponentOpen { .. }
+                    | Token::SlotOpen { .. }
+            );
+            if is_content_token {
+                self.in_header = false;
+            }
         }
 
         let token = &self.tokens[self.pos];

@@ -1,10 +1,14 @@
 from typing import Any
-from hyper import html, escape, render_attr
+from hyper import html, escape, spread_attrs
 
 
 @html
-def KwargsCollector(*, title: str, **attrs: Any):
+def KwargsCollector(
+        *,
+        title: str,
+        **attrs: Any,
+):
     yield f"""\
-<div class="card"{render_attr("attrs", attrs)}>
+<div class="card"{spread_attrs(attrs)}>
     <h1>{escape(title)}</h1>
 </div>"""

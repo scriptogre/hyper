@@ -1,5 +1,7 @@
 use super::{
-    GenerateOptions, GenerateResult, Generator, Output, Range, RangeType, convert_braces_to_utf16,
+    GenerateOptions, GenerateResult, Generator, Output, Range, RangeType,
+    collect_expression_braces, convert_braces_to_utf16, html_ranges_for_component,
+    html_ranges_for_element,
 };
 use crate::ast::*;
 use crate::transform::Helper;
@@ -113,6 +115,10 @@ impl PythonGenerator {
 
     /// Emit consecutive text/expression/element nodes as a single yield statement.
     /// If trailing_comment is Some, the comment is appended inline after the closing `"""`.
+    ///
+    /// Uses a two-phase approach:
+    ///   Phase 1 — Emit to a temp buffer for content analysis (ranges discarded).
+    ///   Phase 2 — Emit to real output with skip/dedent active (ranges correct by construction).
     fn emit_combined_nodes(
         &self,
         nodes: &[&Node],
@@ -120,73 +126,85 @@ impl PythonGenerator {
         indent: usize,
         trailing_comment: Option<&CommentNode>,
     ) {
-        // Check if any node contains expressions (recursively)
         let has_expressions = nodes.iter().any(|node| self.node_has_expressions(node));
 
-        // Collect content to a temporary buffer to analyze it and capture ranges
-        let mut content_output = Output::new();
+        // ── Phase 1: Analyze ──
+        // Emit to a temp buffer to get the raw content string.
+        // Ranges from this pass are discarded.
+        let mut temp = Output::new();
         for node in nodes {
-            self.emit_node_content(node, &mut content_output, has_expressions);
+            self.emit_node_content(node, &mut temp, has_expressions);
         }
-        let ranges = content_output.take_ranges();
-        let (content, _, _) = content_output.finish();
+        let (content, _, _) = temp.finish();
+        let info = analyze_combined_content(&content);
 
-        // Calculate how much leading content we're trimming (needed for range adjustment)
-        let trimmed = content.trim_start_matches(['\n', ' ']);
-        let leading_trimmed = content.len() - trimmed.len();
-        let leading_trimmed_utf16 = content[..leading_trimmed].encode_utf16().count();
-        // Only trim ONE trailing newline (the line ending), preserve any extras (blank lines)
-        let trimmed = trimmed.strip_suffix('\n').unwrap_or(trimmed);
-        // Count remaining trailing newlines (these are blank lines to preserve)
-        let trailing_blank_lines = trimmed.chars().rev().take_while(|&c| c == '\n').count();
-        let trimmed = trimmed.trim_end_matches('\n');
-
-        // If content is empty after trimming, check if we need to preserve blank lines
-        if trimmed.is_empty() {
-            // If original content had newlines (blank lines), emit a blank line
-            if content.contains('\n') {
+        // If content is empty after trimming, just emit blank lines.
+        // The first newline is structural (line break between parent and child),
+        // only additional newlines are intentional blank lines.
+        if info.is_empty {
+            let newline_count = content
+                .chars()
+                .filter(|&c| c == '\n')
+                .count()
+                .saturating_sub(1);
+            for _ in 0..newline_count {
                 output.newline();
             }
             return;
         }
 
+        // ── Phase 2: Emit ──
+        // Leading blank lines
+        for _ in 0..info.leading_newlines {
+            output.newline();
+        }
+
         self.indent(output, indent);
 
-        // Determine if content is multiline
-        let is_multiline = trimmed.contains('\n');
-
-        // Build the yield statement
+        // Yield prefix
         if has_expressions {
-            if is_multiline {
+            if info.is_multiline {
                 output.push("yield f\"\"\"\\");
                 output.newline();
             } else {
                 output.push("yield f\"\"\"");
             }
-        } else if is_multiline {
+        } else if info.is_multiline {
             output.push("yield \"\"\"\\");
             output.newline();
         } else {
             output.push("yield \"\"\"");
         }
 
-        // Get position before emitting content (for range offset calculation)
-        let content_start_pos = output.position();
-
-        // Emit the trimmed content
-        output.push(trimmed);
-
-        // Transfer ranges from temp buffer, adjusting for:
-        // 1. The position where content starts in main output
-        // 2. The leading content that was trimmed
-        // Note: ranges use signed arithmetic to handle the subtraction
-        let offset = content_start_pos as isize - leading_trimmed_utf16 as isize;
-        for mut range in ranges {
-            range.compiled_start = (range.compiled_start as isize + offset) as usize;
-            range.compiled_end = (range.compiled_end as isize + offset) as usize;
-            output.add_range(range);
+        // Emit content with formatting-aware Output:
+        //   skip_next  → discard leading whitespace
+        //   begin_dedent → strip anchor-indent spaces at each content line start
+        // Ranges recorded by emit_node_content are correct because
+        // Output.position() reflects the actual post-skip/dedent output.
+        output.skip_next(info.leading_skip);
+        if info.anchor_indent > 0 {
+            output.begin_dedent(info.anchor_indent);
         }
 
+        for node in nodes {
+            self.emit_node_content(node, output, has_expressions);
+        }
+
+        if info.anchor_indent > 0 {
+            output.end_dedent();
+        }
+
+        // Clean up trailing whitespace.
+        // For multiline content that naturally ends with \n (from anchor-dedented
+        // trailing indentation), preserve the newline so """ goes on its own line.
+        // Otherwise trim everything so """ stays on the content line.
+        if info.is_multiline && info.has_trailing_newline {
+            output.trim_trailing_spaces();
+        } else {
+            output.trim_trailing();
+        }
+
+        // Yield suffix
         output.push("\"\"\"");
         if let Some(comment) = trailing_comment {
             output.push("  ");
@@ -194,8 +212,8 @@ impl PythonGenerator {
         }
         output.newline();
 
-        // Emit preserved blank lines
-        for _ in 0..trailing_blank_lines {
+        // Preserved trailing blank lines
+        for _ in 0..info.trailing_blank_lines {
             output.newline();
         }
     }
@@ -297,188 +315,8 @@ impl PythonGenerator {
         }
 
         // Add HTML injection ranges for this element's static HTML parts
-        self.add_html_ranges(el, output);
-    }
-
-    /// Add HTML ranges for an element's opening and closing tags.
-    /// The opening tag span (`el.span`) covers `<tag attrs>` or `<tag attrs />`.
-    /// The closing tag span (`el.close_span`) covers `</tag>`.
-    /// We create HTML ranges for the static parts, skipping over expression spans.
-    fn add_html_ranges(&self, el: &ElementNode, output: &mut Output) {
-        // Collect expression spans (exclusive end) within the opening tag.
-        // Dynamic spans already use exclusive end (past '}').
-        // Shorthand/SlotAssignment spans end AT '}', so we +1 for exclusive end.
-        let mut expr_spans = Vec::new();
-        for attr in &el.attributes {
-            match &attr.kind {
-                AttributeKind::Expression { expr_span, .. } => {
-                    // Include the = sign before { so virtual HTML sees a boolean attr
-                    let gap_start = expr_span.start.byte.saturating_sub(1);
-                    expr_spans.push((gap_start, expr_span.end.byte));
-                }
-                AttributeKind::Shorthand { expr_span, .. }
-                | AttributeKind::Spread { expr_span, .. } => {
-                    expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
-                }
-                AttributeKind::SlotAssignment {
-                    expr_span: Some(span),
-                    ..
-                } => {
-                    // Include the = sign before { so virtual HTML sees a boolean attr
-                    let gap_start = span.start.byte.saturating_sub(1);
-                    expr_spans.push((gap_start, span.end.byte + 1));
-                }
-                AttributeKind::Template { name, value } => {
-                    // Walk value to find {expr} positions, exclude them from HTML ranges
-                    let value_start_byte = attr.span.start.byte + name.len() + 2;
-                    let mut byte_offset = 0;
-                    let mut chars = value.chars().peekable();
-                    #[allow(clippy::while_let_on_iterator)]
-                    while let Some(ch) = chars.next() {
-                        if ch == '{' {
-                            let gap_start = value_start_byte + byte_offset;
-                            byte_offset += ch.len_utf8();
-                            let mut depth = 1;
-                            while let Some(inner) = chars.next() {
-                                byte_offset += inner.len_utf8();
-                                if inner == '{' {
-                                    depth += 1;
-                                } else if inner == '}' {
-                                    depth -= 1;
-                                    if depth == 0 {
-                                        break;
-                                    }
-                                }
-                            }
-                            let gap_end = value_start_byte + byte_offset;
-                            expr_spans.push((gap_start, gap_end));
-                        } else {
-                            byte_offset += ch.len_utf8();
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Sort by start position
-        expr_spans.sort_by_key(|s| s.0);
-
-        // Create HTML ranges for the gaps between expressions within the opening tag
-        let tag_start = el.span.start.byte;
-        let tag_end = el.span.end.byte;
-        let mut pos = tag_start;
-
-        for (expr_start, expr_end) in &expr_spans {
-            if *expr_start > pos && *expr_start <= tag_end {
-                output.add_range(Range {
-                    range_type: RangeType::Html,
-                    source_start: pos,
-                    source_end: *expr_start,
-                    compiled_start: 0,
-                    compiled_end: 0,
-                    needs_injection: true,
-                });
-            }
-            if *expr_end > pos {
-                pos = *expr_end;
-            }
-        }
-
-        // Remaining static part of opening tag
-        if pos < tag_end {
-            output.add_range(Range {
-                range_type: RangeType::Html,
-                source_start: pos,
-                source_end: tag_end,
-                compiled_start: 0,
-                compiled_end: 0,
-                needs_injection: true,
-            });
-        }
-
-        // Closing tag range (e.g. </div>)
-        if let Some(close_span) = &el.close_span {
-            output.add_range(Range {
-                range_type: RangeType::Html,
-                source_start: close_span.start.byte,
-                source_end: close_span.end.byte,
-                compiled_start: 0,
-                compiled_end: 0,
-                needs_injection: true,
-            });
-        }
-    }
-
-    /// Add HTML ranges for component/slot tag angle brackets.
-    /// For a tag like `<{Card}>`, creates ranges for `<` and `>`, skipping `{Card}`.
-    /// For closing tag `</{Card}>`, creates ranges for `</` and `>`, skipping `{Card}`.
-    fn add_component_html_ranges(
-        &self,
-        open_span: &Span,
-        close_span: Option<&Span>,
-        brace_open: usize,
-        brace_close: usize,
-        output: &mut Output,
-    ) {
-        // Opening tag: "<" before the brace
-        let lt_start = open_span.start.byte;
-        if brace_open > lt_start {
-            output.add_range(Range {
-                range_type: RangeType::Html,
-                source_start: lt_start,
-                source_end: brace_open,
-                compiled_start: 0,
-                compiled_end: 0,
-                needs_injection: true,
-            });
-        }
-
-        // Opening tag: ">" after the brace
-        let gt_pos = open_span.end.byte - 1;
-        if gt_pos > brace_close {
-            output.add_range(Range {
-                range_type: RangeType::Html,
-                source_start: brace_close + 1,
-                source_end: open_span.end.byte,
-                compiled_start: 0,
-                compiled_end: 0,
-                needs_injection: true,
-            });
-        }
-
-        // Closing tag
-        if let Some(cs) = close_span {
-            // Find the brace positions in the closing tag
-            // Closing tag is like </{Card}> or </{...header}>
-            // "</" is at cs.start.byte..cs.start.byte+2
-            // "{" is at cs.start.byte+2
-            // "}" is at cs.end.byte-2
-            // ">" is at cs.end.byte-1
-            let close_brace_open = cs.start.byte + 2;
-            let close_brace_close = cs.end.byte - 2;
-
-            // "</" before brace
-            output.add_range(Range {
-                range_type: RangeType::Html,
-                source_start: cs.start.byte,
-                source_end: close_brace_open,
-                compiled_start: 0,
-                compiled_end: 0,
-                needs_injection: true,
-            });
-
-            // ">" after brace
-            if cs.end.byte > close_brace_close + 1 {
-                output.add_range(Range {
-                    range_type: RangeType::Html,
-                    source_start: close_brace_close + 1,
-                    source_end: cs.end.byte,
-                    compiled_start: 0,
-                    compiled_end: 0,
-                    needs_injection: true,
-                });
-            }
+        for range in html_ranges_for_element(el) {
+            output.add_range(range);
         }
     }
 
@@ -945,7 +783,9 @@ impl PythonGenerator {
         }
 
         // Add HTML injection ranges for this element
-        self.add_html_ranges(el, output);
+        for range in html_ranges_for_element(el) {
+            output.add_range(range);
+        }
     }
 
     /// Generate a safe function name from a component name
@@ -973,6 +813,7 @@ impl PythonGenerator {
         while result.ends_with('_') && result.len() > 1 {
             result.pop();
         }
+        result.push_str("_content");
         result
     }
 
@@ -1083,13 +924,11 @@ impl PythonGenerator {
         // Add HTML ranges for component tag angle brackets
         let brace_open = c.name_span.start.byte - 1;
         let brace_close = c.name_span.end.byte;
-        self.add_component_html_ranges(
-            &c.span,
-            c.close_span.as_ref(),
-            brace_open,
-            brace_close,
-            output,
-        );
+        for range in
+            html_ranges_for_component(&c.span, c.close_span.as_ref(), brace_open, brace_close)
+        {
+            output.add_range(range);
+        }
     }
 
     /// Emit a single attribute as a Python keyword argument in a component call
@@ -1209,13 +1048,11 @@ impl PythonGenerator {
         if s.close_span.is_some() {
             let brace_open = s.span.start.byte + 1;
             let brace_close = s.span.end.byte - 2;
-            self.add_component_html_ranges(
-                &s.span,
-                s.close_span.as_ref(),
-                brace_open,
-                brace_close,
-                output,
-            );
+            for range in
+                html_ranges_for_component(&s.span, s.close_span.as_ref(), brace_open, brace_close)
+            {
+                output.add_range(range);
+            }
         }
     }
 
@@ -1684,7 +1521,6 @@ impl Generator for PythonGenerator {
             output.push("def ");
         }
         output.push(&func_name);
-        output.push("(");
 
         // Determine if we have slots (for _content parameter)
         let has_default_slot = metadata.slots_used.contains("");
@@ -1703,93 +1539,102 @@ impl Generator for PythonGenerator {
             }
         }
 
-        // Emit _content parameter first if default slot is used
-        let mut param_count = 0;
-        if has_default_slot {
-            output.push("_content: Iterable[str] | None = None");
-            param_count += 1;
-        }
+        // Multi-line signature when there are any parameters
+        let has_any_params = has_default_slot
+            || !regular_params.is_empty()
+            || has_named_slots
+            || star_star_kwargs.is_some()
+            || !metadata.implicit_spreads.is_empty();
 
-        // Add keyword-only marker if we have user parameters
-        // All hyper params are keyword-only (*, prefix)
-        if !regular_params.is_empty() {
-            if param_count > 0 {
-                output.push(", *, ");
-            } else {
-                output.push("*, ");
+        if !has_any_params {
+            output.push("():");
+            output.newline();
+        } else {
+            output.push("(");
+            output.newline();
+            let sig_indent = "        "; // 8 spaces — double indent for continuation
+
+            // _content parameter (positional, before keyword-only marker)
+            if has_default_slot {
+                output.push(sig_indent);
+                output.push("_content: Iterable[str] | None = None,");
+                output.newline();
             }
-        }
 
-        // Emit regular user parameters
-        for (i, param) in regular_params.iter().enumerate() {
-            if i > 0 {
-                output.push(", ");
+            // Keyword-only marker — only when there are user-declared params
+            if !regular_params.is_empty() {
+                output.push(sig_indent);
+                output.push("*,");
+                output.newline();
             }
-            let param_start = output.position();
-            output.push(&param.name);
-            if let Some(type_hint) = &param.type_hint {
-                output.push(": ");
-                output.push(type_hint);
-            }
-            if let Some(default) = &param.default {
-                output.push(" = ");
-                output.push(default);
-            }
-            let param_end = output.position();
 
-            output.add_range(Range {
-                range_type: RangeType::Python,
-                source_start: param.span.start.byte,
-                source_end: param.span.end.byte,
-                compiled_start: param_start,
-                compiled_end: param_end,
-                needs_injection: true,
-            });
-        }
-
-        // Add named slot parameters
-        if has_named_slots {
-            let mut sorted_slots: Vec<_> = metadata
-                .slots_used
-                .iter()
-                .filter(|s| !s.is_empty())
-                .collect();
-            sorted_slots.sort();
-
-            for slot_name in sorted_slots {
-                if param_count > 0 || !regular_params.is_empty() {
-                    output.push(", ");
+            // Regular user parameters (keyword-only, after *)
+            for param in regular_params.iter() {
+                output.push(sig_indent);
+                let param_start = output.position();
+                output.push(&param.name);
+                if let Some(type_hint) = &param.type_hint {
+                    output.push(": ");
+                    output.push(type_hint);
                 }
-                output.push("_");
-                output.push(slot_name);
-                output.push(": Iterable[str] | None = None");
-            }
-        }
+                if let Some(default) = &param.default {
+                    output.push(" = ");
+                    output.push(default);
+                }
+                let param_end = output.position();
 
-        // Emit **kwargs — either explicitly declared or implicitly from blessed spread names
-        if let Some(kwargs) = star_star_kwargs {
-            // Explicit declaration in header
-            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
-                output.push(", ");
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: param.span.start.byte,
+                    source_end: param.span.end.byte,
+                    compiled_start: param_start,
+                    compiled_end: param_end,
+                    needs_injection: true,
+                });
+                output.push(",");
+                output.newline();
             }
-            output.push(&kwargs.name);
-            if let Some(type_hint) = &kwargs.type_hint {
-                output.push(": ");
-                output.push(type_hint);
-            }
-        } else if !metadata.implicit_spreads.is_empty() {
-            // Implicit injection from blessed spread names ({**props}, {**kwargs}, etc.)
-            // Multiple names are already caught as an error in lib.rs
-            let spread_name = &metadata.implicit_spreads[0].0;
-            if param_count > 0 || !regular_params.is_empty() || has_named_slots {
-                output.push(", ");
-            }
-            output.push("**");
-            output.push(spread_name);
-        }
 
-        output.push("):");
-        output.newline();
+            // Named slot parameters
+            if has_named_slots {
+                let mut sorted_slots: Vec<_> = metadata
+                    .slots_used
+                    .iter()
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                sorted_slots.sort();
+
+                for slot_name in sorted_slots {
+                    output.push(sig_indent);
+                    output.push("_");
+                    output.push(slot_name);
+                    output.push(": Iterable[str] | None = None,");
+                    output.newline();
+                }
+            }
+
+            // **kwargs — explicit or implicit from blessed spread names
+            if let Some(kwargs) = star_star_kwargs {
+                output.push(sig_indent);
+                output.push(&kwargs.name);
+                if let Some(type_hint) = &kwargs.type_hint {
+                    output.push(": ");
+                    output.push(type_hint);
+                }
+                output.push(",");
+                output.newline();
+            } else if !metadata.implicit_spreads.is_empty() {
+                let spread_name = &metadata.implicit_spreads[0].0;
+                output.push(sig_indent);
+                output.push("**");
+                output.push(spread_name);
+                output.push(",");
+                output.newline();
+            }
+
+            output.push("):");
+            output.newline();
+        }
 
         // Emit body (using yield instead of _parts)
         if body_nodes.is_empty() || self.is_effectively_empty(&body_nodes) {
@@ -1931,178 +1776,112 @@ impl Generator for PythonGenerator {
     }
 }
 
-/// Collect all expression brace positions (byte offsets) from the AST.
-/// Returns (open_byte, close_byte) pairs for each expression brace pair.
-fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
-    let mut braces = Vec::new();
-    for node in &ast.nodes {
-        collect_braces_node(node, &mut braces);
-    }
-    braces
+/// Formatting parameters for a combined-content yield block.
+struct CombinedContentInfo {
+    /// Characters to skip from the start (leading whitespace).
+    leading_skip: usize,
+    /// Blank lines to emit before the yield statement.
+    leading_newlines: usize,
+    /// Spaces to strip at each subsequent content-line start.
+    anchor_indent: usize,
+    /// Whether the content spans multiple lines after processing.
+    is_multiline: bool,
+    /// Whether the processed content ends with `\n` (determines `"""` placement).
+    /// True when the last line of trimmed content is all spaces that get fully
+    /// stripped by anchor dedent, leaving an empty line preceded by `\n`.
+    has_trailing_newline: bool,
+    /// Blank lines to emit after the yield statement.
+    trailing_blank_lines: usize,
+    /// Content is empty after trimming — emit blank lines only.
+    is_empty: bool,
 }
 
-fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
-    match node {
-        Node::Expression(expr) => {
-            // span covers {expr} with exclusive end
-            braces.push((expr.span.start.byte, expr.span.end.byte - 1));
-        }
-        Node::Element(el) => {
-            for attr in &el.attributes {
-                collect_braces_attr(attr, braces);
-            }
-            for child in &el.children {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::Component(c) => {
-            // Opening tag <{Name}>: { is before name_span, } is at name_span.end
-            braces.push((c.name_span.start.byte - 1, c.name_span.end.byte));
-            // Closing tag </{Name}>: { at start+2, } at end-2
-            if let Some(ref cs) = c.close_span {
-                braces.push((cs.start.byte + 2, cs.end.byte - 2));
-            }
-            for attr in &c.attributes {
-                collect_braces_attr(attr, braces);
-            }
-            for child in &c.children {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::Fragment(f) => {
-            for child in &f.children {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::Slot(s) => {
-            if s.close_span.is_some() {
-                // Tag-form slot <{...name}>: { at start+1, } at end-2
-                braces.push((s.span.start.byte + 1, s.span.end.byte - 2));
-                // Closing tag </{...name}>: { at start+2, } at end-2
-                if let Some(ref cs) = s.close_span {
-                    braces.push((cs.start.byte + 2, cs.end.byte - 2));
-                }
+/// Analyze raw combined content to determine formatting parameters.
+///
+/// The content string is the concatenation of all node outputs (text, expressions,
+/// element tags) before any formatting. This function figures out how much leading
+/// whitespace to skip, how much to dedent subsequent lines, and whether the result
+/// is multiline.
+fn analyze_combined_content(content: &str) -> CombinedContentInfo {
+    // Trim leading whitespace (newlines + spaces)
+    let trimmed = content.trim_start_matches(['\n', ' ']);
+    let leading_trimmed = content.len() - trimmed.len();
+
+    // Strip trailing newlines: one is the line ending, extras are blank lines to preserve
+    let trimmed = trimmed.strip_suffix('\n').unwrap_or(trimmed);
+    let trailing_blank_lines = trimmed.chars().rev().take_while(|&c| c == '\n').count();
+    let trimmed = trimmed.trim_end_matches('\n');
+
+    // Count leading blank lines. The first newline is always structural (the
+    // line break between a parent tag/statement and the first child), so only
+    // additional newlines represent intentional blank lines.
+    let leading_newlines = content[..leading_trimmed]
+        .chars()
+        .filter(|&c| c == '\n')
+        .count()
+        .saturating_sub(1);
+
+    if trimmed.is_empty() {
+        return CombinedContentInfo {
+            leading_skip: 0,
+            leading_newlines: 0,
+            anchor_indent: 0,
+            is_multiline: false,
+            has_trailing_newline: false,
+            trailing_blank_lines: 0,
+            is_empty: true,
+        };
+    }
+
+    // Anchor indent: the indentation of the first content line.
+    // This is the number of spaces between the last newline in the leading
+    // whitespace and the start of content.
+    let last_newline_pos = content[..leading_trimmed].rfind('\n');
+    let anchor_indent = match last_newline_pos {
+        Some(pos) => leading_trimmed - (pos + 1),
+        None => leading_trimmed,
+    };
+
+    // Multiline check: after stripping trailing whitespace, does content contain \n?
+    // Anchor dedent doesn't add or remove newlines, so we can check `trimmed` directly.
+    let is_multiline = trimmed.trim_end_matches([' ', '\t', '\n']).contains('\n');
+
+    // Does the processed content end with \n?
+    // This happens when the last line of `trimmed` consists entirely of spaces
+    // that get fully stripped by anchor dedent, leaving an empty line.
+    // Example: `<div>\n        </div>\n    ` with anchor=8 → last line `    `
+    // becomes empty after dedent, so processed content ends with `\n`.
+    let has_trailing_newline = if anchor_indent > 0 && trimmed.contains('\n') {
+        let last_line = trimmed.rsplit('\n').next().unwrap_or("");
+        if last_line.is_empty() {
+            false
+        } else {
+            // After dedent, does the last line become empty?
+            let stripped = if last_line.len() >= anchor_indent
+                && last_line[..anchor_indent].chars().all(|c| c == ' ')
+            {
+                &last_line[anchor_indent..]
             } else {
-                // Inline slot {...}: span covers {..} with exclusive end
-                braces.push((s.span.start.byte, s.span.end.byte - 1));
-            }
-            for child in &s.fallback {
-                collect_braces_node(child, braces);
-            }
+                last_line.trim_start_matches(' ')
+            };
+            stripped.is_empty()
         }
-        Node::If(if_node) => {
-            for child in &if_node.then_branch {
-                collect_braces_node(child, braces);
-            }
-            for (_, _, body) in &if_node.elif_branches {
-                for child in body {
-                    collect_braces_node(child, braces);
-                }
-            }
-            if let Some(else_branch) = &if_node.else_branch {
-                for child in else_branch {
-                    collect_braces_node(child, braces);
-                }
-            }
-        }
-        Node::For(for_node) => {
-            for child in &for_node.body {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::Match(match_node) => {
-            for case in &match_node.cases {
-                for child in &case.body {
-                    collect_braces_node(child, braces);
-                }
-            }
-        }
-        Node::While(while_node) => {
-            for child in &while_node.body {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::With(with_node) => {
-            for child in &with_node.body {
-                collect_braces_node(child, braces);
-            }
-        }
-        Node::Try(try_node) => {
-            for child in &try_node.body {
-                collect_braces_node(child, braces);
-            }
-            for except in &try_node.except_clauses {
-                for child in &except.body {
-                    collect_braces_node(child, braces);
-                }
-            }
-            if let Some(else_clause) = &try_node.else_clause {
-                for child in else_clause {
-                    collect_braces_node(child, braces);
-                }
-            }
-            if let Some(finally_clause) = &try_node.finally_clause {
-                for child in finally_clause {
-                    collect_braces_node(child, braces);
-                }
-            }
-        }
-        Node::Definition(def) => {
-            for child in &def.body {
-                collect_braces_node(child, braces);
-            }
-        }
-        _ => {} // Text, Comment, Statement, Import, Parameter, Decorator
-    }
-}
+    } else {
+        false
+    };
 
-#[allow(clippy::while_let_on_iterator)]
-fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
-    match &attr.kind {
-        AttributeKind::Expression { expr_span, .. } => {
-            // expr_span covers {expr} with exclusive end
-            braces.push((expr_span.start.byte, expr_span.end.byte - 1));
-        }
-        AttributeKind::Shorthand { expr_span, .. } | AttributeKind::Spread { expr_span, .. } => {
-            // expr_span.end points TO closing brace (not past it)
-            braces.push((expr_span.start.byte, expr_span.end.byte));
-        }
-        AttributeKind::SlotAssignment {
-            expr_span: Some(span),
-            ..
-        } => {
-            // expr_span.end points TO closing brace
-            braces.push((span.start.byte, span.end.byte));
-        }
-        AttributeKind::Template { name, value } => {
-            // Walk value to find {expr} brace positions
-            let value_start_byte = attr.span.start.byte + name.len() + 2; // skip `name="`
-            let mut byte_offset = 0;
-            let mut chars = value.chars().peekable();
-            while let Some(ch) = chars.next() {
-                if ch == '{' {
-                    let open_byte = value_start_byte + byte_offset;
-                    byte_offset += ch.len_utf8();
-                    let mut depth = 1;
-                    while let Some(inner) = chars.next() {
-                        byte_offset += inner.len_utf8();
-                        if inner == '{' {
-                            depth += 1;
-                        } else if inner == '}' {
-                            depth -= 1;
-                            if depth == 0 {
-                                let close_byte = value_start_byte + byte_offset - 1;
-                                braces.push((open_byte, close_byte));
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    byte_offset += ch.len_utf8();
-                }
-            }
-        }
-        _ => {}
+    // leading_skip counts characters (not bytes), matching Output::skip_next's semantics.
+    // Leading content is always ASCII whitespace, so chars == bytes.
+    let leading_skip = content[..leading_trimmed].chars().count();
+
+    CombinedContentInfo {
+        leading_skip,
+        leading_newlines,
+        anchor_indent,
+        is_multiline,
+        has_trailing_newline,
+        trailing_blank_lines,
+        is_empty: false,
     }
 }
 

@@ -1,8 +1,12 @@
+mod brace_collector;
 mod injection_analyzer;
 mod output;
 mod python;
 
-pub use injection_analyzer::InjectionAnalyzer;
+pub use brace_collector::collect_expression_braces;
+pub use injection_analyzer::{
+    InjectionAnalyzer, html_ranges_for_component, html_ranges_for_element,
+};
 pub use output::{
     ExpressionBrace, Injection, Mapping, Output, Range, RangeType, compute_injections,
     convert_braces_to_utf16, validate_python_ranges,

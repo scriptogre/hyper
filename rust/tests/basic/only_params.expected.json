@@ -2,44 +2,44 @@
   "injections": [
     {
       "end": 9,
-      "prefix": "from hyper import html\n\n\n@html\ndef OnlyParams(*, ",
+      "prefix": "from hyper import html\n\n\n@html\ndef OnlyParams(\n        *,\n        ",
       "start": 0,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 24,
-      "prefix": ", ",
+      "prefix": ",\n        ",
       "start": 10,
       "suffix": "",
       "type": "python"
     },
     {
       "end": 36,
-      "prefix": ", ",
+      "prefix": ",\n        ",
       "start": 25,
-      "suffix": "):\n    pass\n",
+      "suffix": ",\n):\n    pass\n",
       "type": "python"
     }
   ],
   "ranges": [
     {
-      "compiled_end": 58,
-      "compiled_start": 49,
+      "compiled_end": 75,
+      "compiled_start": 66,
       "range_type": "Python",
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 74,
-      "compiled_start": 60,
+      "compiled_end": 99,
+      "compiled_start": 85,
       "range_type": "Python",
       "source_end": 24,
       "source_start": 10
     },
     {
-      "compiled_end": 87,
-      "compiled_start": 76,
+      "compiled_end": 120,
+      "compiled_start": 109,
       "range_type": "Python",
       "source_end": 36,
       "source_start": 25

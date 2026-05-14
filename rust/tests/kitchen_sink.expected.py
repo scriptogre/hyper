@@ -5,7 +5,28 @@ from hyper import html, escape, safe, render_class, render_style, render_attr, r
 # Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
 # Open this file in JetBrains after any injection change and verify highlighting.
 @html
-def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int = 0, is_active: bool = True, items: list = [], metadata: dict = {}, callback: object = None, style: str = "default", raw_html: str = "", value: int = 0, variant: str = "primary", limit: int = 10, sections: list = [], pairs: list = [], names: list = [], scores: list = [], matrix: list = [], _header: Iterable[str] | None = None, _sidebar: Iterable[str] | None = None):
+def KitchenSink(
+        _content: Iterable[str] | None = None,
+        *,
+        name: str,
+        count: int = 0,
+        is_active: bool = True,
+        items: list = [],
+        metadata: dict = {},
+        callback: object = None,
+        style: str = "default",
+        raw_html: str = "",
+        value: int = 0,
+        variant: str = "primary",
+        limit: int = 10,
+        sections: list = [],
+        pairs: list = [],
+        names: list = [],
+        scores: list = [],
+        matrix: list = [],
+        _header: Iterable[str] | None = None,
+        _sidebar: Iterable[str] | None = None,
+):
     ########################################
     # STATEMENTS
     ########################################
@@ -23,6 +44,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
     <span>{escape(f"Hello, {name}!")}</span>
 </div>"""
 
+
     ########################################
     # SELF-CLOSING
     ########################################
@@ -38,6 +60,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 <div />
 <span />"""
 
+
     ########################################
     # EMPTY ELEMENTS
     ########################################
@@ -45,6 +68,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
 <div></div>
 <span></span>
 <p></p>"""
+
 
     ########################################
     # DEEP NESTING
@@ -62,6 +86,7 @@ def KitchenSink(_content: Iterable[str] | None = None, *, name: str, count: int 
     </div>
 </div>"""
 
+
     ########################################
     # TEXT POSITIONS
     ########################################
@@ -72,6 +97,7 @@ Text between elements
 <span>Inside span</span>
 Text after elements"""
 
+
     ########################################
     # ATTRIBUTES
     ########################################
@@ -79,19 +105,23 @@ Text after elements"""
 <div class="static" id="s-{escape(count)}" data-val="{escape(name)}"{render_attr("is_active", is_active)}{render_attr("metadata", metadata)}>
     Mixed attributes
 </div>"""
+
     # Shorthand
     yield f"""\
 <input{render_attr("name", name)}{render_attr("value", value)}{render_attr("is_active", is_active)} />
 <button{render_attr("name", name)}{render_attr("variant", variant)}{render_attr("is_active", is_active)}>Click</button>
 <input type="text"{render_attr("name", name)} class="input" />"""
+
     # Spread on HTML
     yield f"""\
 <a{spread_attrs(metadata)}>External link</a>
 <div id="main"{spread_attrs(metadata)} class="container">Content</div>"""
+
     # Nested braces in attributes
     yield f"""\
 <div class="{render_class(["card", {"sale": is_active}])}">Product</div>
 <div style="{render_style({"color": "red", "font": {"size": "12px"}})}">Styled</div>"""
+
 
     ########################################
     # TEMPLATE ATTRIBUTES
@@ -102,13 +132,16 @@ Text after elements"""
 <a href="/users/{escape(count)}" class="link link-{escape(variant)}">Profile</a>
 <span data-key="{escape(count)}{escape(variant)}">Adjacent expressions</span>"""
 
+
     ########################################
     # CLASS LIST AND STYLE DICT
     ########################################
     class_ = ["btn", "btn-primary", {"active": is_active}]
     yield f"""<button{render_attr("class_", class_)}>Class list</button>"""
+
     styles = {"color": "red", "font-weight": "bold"}
     yield f"""<p{render_attr("styles", styles)}>Styled</p>"""
+
 
     ########################################
     # DATA AND ARIA
@@ -117,11 +150,13 @@ Text after elements"""
     aria = {"label": "Close", "hidden": is_active}
     yield f"""<div{render_data(data)}{render_aria(aria)}>Data and aria</div>"""
 
+
     ########################################
     # RESERVED KEYWORDS
     ########################################
     type_ = "button"
     yield f"""<button class="{render_class(class_)}" type="{escape(type_)}">Reserved keywords</button>"""
+
 
     ########################################
     # BOOLEAN ATTRIBUTES
@@ -131,12 +166,14 @@ Text after elements"""
 <input type="checkbox" checked />
 <input type="checkbox" disabled />"""
 
+
     ########################################
     # SAFE HELPER
     ########################################
     yield f"""\
 {escape(safe(raw_html))}
 <div>{escape(safe("<b>bold</b>"))}</div>"""
+
 
     ########################################
     # IF / ELIF / ELSE
@@ -160,15 +197,13 @@ Text after elements"""
     for key, val in metadata.items():
         yield f"""\
 <dt>{escape(key)}</dt>
-    <dd>{escape(val)}</dd>"""
+<dd>{escape(val)}</dd>"""
 
     ########################################
     # WHILE LOOP
     ########################################
     while count > 0:
-        yield f"""\
-<p>Counting down: {escape(count)}</p>
-    """
+        yield f"""<p>Counting down: {escape(count)}</p>"""
         count = count - 1
 
     ########################################
@@ -176,13 +211,9 @@ Text after elements"""
     ########################################
     match style:
         case "bold":
-            yield f"""\
-<strong>{escape(name)}</strong>
-    """
+            yield f"""<strong>{escape(name)}</strong>"""
         case "italic":
-            yield f"""\
-<em>{escape(name)}</em>
-    """
+            yield f"""<em>{escape(name)}</em>"""
         case _:
             yield f"""<span>{escape(name)}</span>"""
 
@@ -216,48 +247,39 @@ Text after elements"""
     @fragment
     def CachedList(entries: list):
         yield """<ul>"""
-
         for entry in entries:
-            yield f"""\
-<li>{escape(entry)}</li>
-        """
+            yield f"""<li>{escape(entry)}</li>"""
         yield """</ul>"""
-
     @fragment(name="card")
     def Card(title: str):
         yield """<div class="card">"""
-        yield f"""\
-<h2>{escape(title)}</h2>
-        """
+        yield f"""<h2>{escape(title)}</h2>"""
         if _content is not None:
             yield from _content
-
         yield """</div>"""
-
     def format_name(n: str) -> str:
         return n.upper()
     yield f"""\
 {escape(Badge("New"))}
 {escape(CachedList(items))}"""
 
+
     ########################################
     # COMPONENTS
     ########################################
     yield from Badge(text="Sale", badge_variant="danger")
-
     yield from Badge()
-
     yield from Badge(is_active=is_active)
-
     yield from Badge(text=format_name(name))
 
     # <{CachedList}>
-    def _cached_list():
+    def _cached_list_content():
         yield """<p>Fallback content</p>"""
-    yield from CachedList(_cached_list(), entries=items)
+    yield from CachedList(_cached_list_content(), entries=items)
     # </{CachedList}>
 
     yield from callback()
+
 
     ########################################
     # SLOTS
@@ -275,59 +297,46 @@ Text after elements"""
     if _content is not None:
         yield from _content
 
+
     ########################################
     # NESTED CONTROL FLOW
     ########################################
     yield """<section>"""
-
     if is_active:
         for item in items:
             yield from Badge(text=item)
-
             yield """<div class="wrapper">"""
-
             match item:
                 case "special":
                     yield from CachedList(entries=[item, item])
-
                 case _:
-                    yield f"""\
-<span>{escape(item)}</span>
-                """
+                    yield f"""<span>{escape(item)}</span>"""
             yield """</div>"""
-
     yield """</section>"""
+
 
     ########################################
     # BREAK / CONTINUE
     ########################################
     yield """<ul>"""
-
     for item in items:
         if item == "stop":
             break
-        yield f"""\
-<li>{escape(item)}</li>
-    """
+        yield f"""<li>{escape(item)}</li>"""
     yield """</ul>"""
 
     yield """<ul>"""
-
     for item in items:
         if item.startswith("_"):
             continue
-        yield f"""\
-<li>{escape(item)}</li>
-    """
+        yield f"""<li>{escape(item)}</li>"""
     yield """</ul>"""
 
     c = 0
     while True:
         if c >= limit:
             break
-        yield f"""\
-<span>{escape(c)}</span>
-    """
+        yield f"""<span>{escape(c)}</span>"""
         c = c + 1
 
     ########################################
@@ -340,18 +349,14 @@ Text after elements"""
     for key, val in pairs:
         yield f"""\
 <dt>{escape(key)}</dt>
-    <dd>{escape(val)}</dd>"""
+<dd>{escape(val)}</dd>"""
     for n, score in zip(names, scores):
         yield f"""<td>{escape(n)}</td><td>{escape(score)}</td>"""
     for row in matrix:
         yield """<tr>"""
-
         for cell in row:
-            yield f"""\
-<td>{escape(cell)}</td>
-        """
+            yield f"""<td>{escape(cell)}</td>"""
         yield """</tr>"""
-
     for i in range(5):
         yield f"""<li>Item {escape(i)}</li>"""
     for item in reversed(items):
@@ -362,32 +367,20 @@ Text after elements"""
     ########################################
     match value:
         case x if x < 0:
-            yield f"""\
-<span>Negative: {escape(x)}</span>
-    """
+            yield f"""<span>Negative: {escape(x)}</span>"""
         case x if x == 0:
-            yield """\
-<span>Zero</span>
-    """
+            yield """<span>Zero</span>"""
         case x if x > 100:
-            yield f"""\
-<span>Large: {escape(x)}</span>
-    """
+            yield f"""<span>Large: {escape(x)}</span>"""
         case x:
             yield f"""<span>Normal: {escape(x)}</span>"""
     match metadata:
         case {"type": "user", "admin": True}:
-            yield """\
-<span>Admin user</span>
-    """
+            yield """<span>Admin user</span>"""
         case {"type": "user", "admin": False}:
-            yield """\
-<span>Regular user</span>
-    """
+            yield """<span>Regular user</span>"""
         case {"type": t} if t.startswith("system"):
-            yield f"""\
-<span>System: {escape(t)}</span>
-    """
+            yield f"""<span>System: {escape(t)}</span>"""
         case _:
             yield """<span>Unknown</span>"""
 
@@ -438,41 +431,27 @@ Text after elements"""
     # COMPLEX NESTING
     ########################################
     yield """<div class="container">"""
-
     if is_active:
         for section in sections:
             yield f"""<section id="section-{escape(section['id'])}">"""
-
             match section['type']:
                 case "header":
-                    yield f"""\
-<h1>{escape(section['title'])}</h1>
-                    """
+                    yield f"""<h1>{escape(section['title'])}</h1>"""
                 case "list":
                     yield """<ul>"""
-
                     for item in section['items']:
                         if item.get('active'):
-                            yield f"""\
-<li class="active">{escape(item['name'])}</li>
-                                """
+                            yield f"""<li class="active">{escape(item['name'])}</li>"""
                         else:
-                            yield f"""\
-<li>{escape(item['name'])}</li>
-                                """
+                            yield f"""<li>{escape(item['name'])}</li>"""
                     yield """</ul>"""
-
                 case _:
-                    yield """\
-<div>Unknown type</div>
-                """
+                    yield """<div>Unknown type</div>"""
             yield """</section>"""
-
     else:
-        yield """\
-<p>Content hidden</p>
-    """
+        yield """<p>Content hidden</p>"""
     yield """</div>"""
+
 
     ########################################
     # EXPRESSIONS
@@ -490,6 +469,7 @@ Text after elements"""
 <span>{count:03d}</span>
 <span>{3.14159:.2f}</span>"""
 
+
     ########################################
     # COMPREHENSIONS
     ########################################
@@ -500,12 +480,15 @@ Text after elements"""
 <span>{{x for x in items}}</span>
 <span>{escape(sum(x for x in range(10)))}</span>"""
 
+
     ########################################
     # ADJACENT EXPRESSIONS
     ########################################
     yield f"""\
 <p>{escape(name)}{escape(count)}{escape(is_active)}</p>
+
 <span>{escape(count)} {escape("item" if count == 1 else "items")}</span>"""
+
 
     ########################################
     # ESCAPED BRACES
@@ -515,6 +498,7 @@ Text after elements"""
 <p>JSON: {{"key": "value"}}</p>
 <p>Static {{braces}} and dynamic {escape(name)}</p>
 <p>{{{{nested}}}}</p>"""
+
 
     ########################################
     # NESTED ELEMENTS
@@ -530,6 +514,7 @@ Text after elements"""
     </ul>
 </div>"""
 
+
     ########################################
     # KEYWORDS AS CONTENT
     ########################################
@@ -541,6 +526,7 @@ Text after elements"""
 <p>match the following pairs</p>
 <blockquote>with great power comes great responsibility</blockquote>
 <p>def initely the best approach</p>"""
+
 
     ########################################
     # PYTHON FEATURES
@@ -555,6 +541,7 @@ Text after elements"""
 <span>{value=}</span>
 <span>{items!r}</span>"""
 
+
     ########################################
     # UNICODE
     ########################################
@@ -567,6 +554,7 @@ Text after elements"""
 <span>Arrows: ← → ↑ ↓</span>
 <span>Math: ∞ ≠ ≤ ≥ ± × ÷</span>"""
 
+
     ########################################
     # HTML ENTITIES
     ########################################
@@ -576,12 +564,12 @@ Text after elements"""
 <p>&#60;angle brackets&#62;</p>
 <p>&copy; {escape(2024)} All rights reserved</p>"""
 
+
     ########################################
     # COMMENTS
     ########################################
     # Top-level comment
     yield """<div>"""
-
     # Indented comment
     yield """<span>Text</span>"""  # Trailing comment
     yield """</div>"""
@@ -592,9 +580,11 @@ Text after elements"""
 <span>{escape(name or '#')}</span>
 <p>Text # with hash # multiple # times</p>"""
 
+
     ########################################
     # WHITESPACE
     ########################################
     yield """\
 <div>After blank lines</div>
+
 <span>Between blank lines</span>"""

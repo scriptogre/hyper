@@ -4,7 +4,19 @@ from hyper import html, escape
 
 # Docstring in header
 @html
-def PropsEdgeCases(*, simple: str, with_default: str = "default value", none_default: str | None = None, empty_string: str = "", zero_default: int = 0, false_default: bool = False, empty_list: list = [], empty_dict: dict = {}, complex_default: dict = {"key": "value"}, **kwargs: Any):
+def PropsEdgeCases(
+        *,
+        simple: str,
+        with_default: str = "default value",
+        none_default: str | None = None,
+        empty_string: str = "",
+        zero_default: int = 0,
+        false_default: bool = False,
+        empty_list: list = [],
+        empty_dict: dict = {},
+        complex_default: dict = {"key": "value"},
+        **kwargs: Any,
+):
     """This is a component docstring."""
     # Various parameter patterns
     yield f"""\
