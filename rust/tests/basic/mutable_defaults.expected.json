@@ -1,0 +1,188 @@
+{
+  "injections": [
+    {
+      "end": 9,
+      "prefix": "from hyper import html, escape\n\n\n@html\ndef MutableDefaults(\n        *,\n        ",
+      "start": 0,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 119,
+      "prefix": ",\n        items: list | None = None,\n        config: dict | None = None,\n        tags: set | None = None,\n        ",
+      "start": 98,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 141,
+      "prefix": ",\n        ",
+      "start": 120,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 166,
+      "prefix": ",\n        ",
+      "start": 142,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 183,
+      "prefix": ",\n):\n    if items is None:\n        items = []\n    if config is None:\n        config = {\"key\": \"value\"}\n    if tags is None:\n        tags = set()\n    yield f\"\"\"\\\n<div>{escape(",
+      "start": 179,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 203,
+      "prefix": ")}</div>\n<span>{escape(",
+      "start": 198,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 225,
+      "prefix": ")}</span>\n<span>{escape(",
+      "start": 219,
+      "suffix": ")}</span>\"\"\"\n",
+      "type": "python"
+    },
+    {
+      "end": 178,
+      "prefix": "",
+      "start": 173,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 190,
+      "prefix": "",
+      "start": 184,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 197,
+      "prefix": "",
+      "start": 191,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 211,
+      "prefix": "",
+      "start": 204,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 218,
+      "prefix": "",
+      "start": 212,
+      "suffix": "",
+      "type": "html"
+    },
+    {
+      "end": 233,
+      "prefix": "",
+      "start": 226,
+      "suffix": "",
+      "type": "html"
+    }
+  ],
+  "ranges": [
+    {
+      "compiled_end": 88,
+      "compiled_start": 79,
+      "range_type": "Python",
+      "source_end": 9,
+      "source_start": 0
+    },
+    {
+      "compiled_end": 223,
+      "compiled_start": 202,
+      "range_type": "Python",
+      "source_end": 119,
+      "source_start": 98
+    },
+    {
+      "compiled_end": 254,
+      "compiled_start": 233,
+      "range_type": "Python",
+      "source_end": 141,
+      "source_start": 120
+    },
+    {
+      "compiled_end": 288,
+      "compiled_start": 264,
+      "range_type": "Python",
+      "source_end": 166,
+      "source_start": 142
+    },
+    {
+      "compiled_end": 466,
+      "compiled_start": 462,
+      "range_type": "Python",
+      "source_end": 183,
+      "source_start": 179
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 178,
+      "source_start": 173
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 190,
+      "source_start": 184
+    },
+    {
+      "compiled_end": 494,
+      "compiled_start": 489,
+      "range_type": "Python",
+      "source_end": 203,
+      "source_start": 198
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 197,
+      "source_start": 191
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 211,
+      "source_start": 204
+    },
+    {
+      "compiled_end": 524,
+      "compiled_start": 518,
+      "range_type": "Python",
+      "source_end": 225,
+      "source_start": 219
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 218,
+      "source_start": 212
+    },
+    {
+      "compiled_end": 39,
+      "compiled_start": 39,
+      "range_type": "Html",
+      "source_end": 233,
+      "source_start": 226
+    }
+  ]
+}

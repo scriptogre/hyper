@@ -1,0 +1,13 @@
+name: str
+items: list | None = []
+config: dict | None = {"key": "value"}
+tags: set | None = set()
+plain_list: list = []
+count: int | None = 0
+label: str | None = None
+
+---
+
+<div>{name}</div>
+<span>{items}</span>
+<span>{config}</span>

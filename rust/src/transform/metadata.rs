@@ -56,6 +56,9 @@ pub struct TransformMetadata {
     pub slots_used: HashSet<String>,
     /// Blessed spread names found in the AST: (name, first occurrence span)
     pub implicit_spreads: Vec<(String, Span)>,
+    /// Parameter names whose mutable defaults should be rewritten to None sentinels.
+    /// Detected when type hint is nullable (`| None`) and default is mutable (`[]`, `{}`, etc.).
+    pub mutable_default_params: HashSet<String>,
 }
 
 impl TransformMetadata {

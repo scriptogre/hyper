@@ -1567,6 +1567,9 @@ impl Generator for PythonGenerator {
             || star_star_kwargs.is_some()
             || !metadata.implicit_spreads.is_empty();
 
+        // Collect params with mutable defaults that need None sentinel guards
+        let mut mutable_default_guards: Vec<(&str, &str)> = Vec::new();
+
         if !has_any_params {
             output.push("():");
             output.newline();
@@ -1594,13 +1597,21 @@ impl Generator for PythonGenerator {
                 output.push(sig_indent);
                 let param_start = output.position();
                 output.push(&param.name);
+
+                let needs_sentinel = metadata.mutable_default_params.contains(&param.name);
+
                 if let Some(type_hint) = &param.type_hint {
                     output.push(": ");
                     output.push(type_hint);
                 }
                 if let Some(default) = &param.default {
-                    output.push(" = ");
-                    output.push(default);
+                    if needs_sentinel {
+                        output.push(" = None");
+                        mutable_default_guards.push((&param.name, default));
+                    } else {
+                        output.push(" = ");
+                        output.push(default);
+                    }
                 }
                 let param_end = output.position();
 
@@ -1657,11 +1668,27 @@ impl Generator for PythonGenerator {
             output.newline();
         }
 
+        // Emit mutable default guards (if any)
+        for (name, default) in &mutable_default_guards {
+            self.indent(&mut output, 1);
+            output.push("if ");
+            output.push(name);
+            output.push(" is None:");
+            output.newline();
+            self.indent(&mut output, 2);
+            output.push(name);
+            output.push(" = ");
+            output.push(default);
+            output.newline();
+        }
+
         // Emit body (using yield instead of _parts)
         if body_nodes.is_empty() || self.is_effectively_empty(&body_nodes) {
-            self.indent(&mut output, 1);
-            output.push("pass");
-            output.newline();
+            if mutable_default_guards.is_empty() {
+                self.indent(&mut output, 1);
+                output.push("pass");
+                output.newline();
+            }
         } else {
             self.emit_nodes(&body_nodes, &mut output, 1);
         }
