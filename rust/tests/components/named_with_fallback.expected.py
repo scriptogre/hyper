@@ -13,28 +13,36 @@ def NamedWithFallback(
 ):
     yield """<div class="layout">"""
     yield """<header>"""
+    # <{...header}>
     if _header is not None:
         yield from _header
     else:
         yield """<h1>Default Header</h1>"""
+    # </{...header}>
     yield """</header>"""
 
     yield """<nav>"""
+    # <{...sidebar}>
     if _sidebar is not None:
         yield from _sidebar
     else:
         yield """<p>Default sidebar content</p>"""
+    # </{...sidebar}>
     yield """</nav>"""
 
     yield """<main>"""
+    # <{...}>
     if _content is not None:
         yield from _content
+    # </{...}>
     yield """</main>"""
 
     yield """<footer>"""
+    # <{...footer}>
     if _footer is not None:
         yield from _footer
     else:
         yield """<p>Default footer</p>"""
+    # </{...footer}>
     yield """</footer>"""
     yield """</div>"""

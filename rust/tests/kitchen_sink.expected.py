@@ -254,8 +254,10 @@ Text after elements"""
     def Card(title: str):
         yield """<div class="card">"""
         yield f"""<h2>{escape(title)}</h2>"""
+        # <{...}>
         if _content is not None:
             yield from _content
+        # </{...}>
         yield """</div>"""
     def format_name(n: str) -> str:
         return n.upper()
@@ -284,18 +286,24 @@ Text after elements"""
     ########################################
     # SLOTS
     ########################################
+    # <{...header}>
     if _header is not None:
         yield from _header
     else:
         yield """<h2>Default Header</h2>"""
+    # </{...header}>
 
+    # <{...sidebar}>
     if _sidebar is not None:
         yield from _sidebar
     else:
         yield """<nav>Default Nav</nav>"""
+    # </{...sidebar}>
 
+    # <{...}>
     if _content is not None:
         yield from _content
+    # </{...}>
 
 
     ########################################

@@ -1024,6 +1024,20 @@ impl PythonGenerator {
             "_content".to_string()
         };
 
+        // Slot label for comments: {...} for default, {...name} for named
+        let slot_label = if let Some(name) = &s.name {
+            format!("{{...{}}}", name)
+        } else {
+            "{...}".to_string()
+        };
+
+        // Opening comment
+        self.indent(output, indent);
+        output.push("# <");
+        output.push(&slot_label);
+        output.push(">");
+        output.newline();
+
         self.indent(output, indent);
         output.push("if ");
         output.push(&slot_var);
@@ -1043,6 +1057,13 @@ impl PythonGenerator {
             let refs: Vec<&Node> = s.fallback.iter().collect();
             self.emit_nodes(&refs, output, indent + 1);
         }
+
+        // Closing comment
+        self.indent(output, indent);
+        output.push("# </");
+        output.push(&slot_label);
+        output.push(">");
+        output.newline();
 
         // Add HTML ranges for tag-form slot angle brackets (<{...name}> / </{...name}>)
         if s.close_span.is_some() {
