@@ -25,7 +25,7 @@ Create `components/Hello.hyper`:
 Render it in `main.py`:
 
 ```python
-from components import Hello
+from components.Hello import Hello
 
 print(Hello())
 ```
@@ -33,24 +33,6 @@ print(Hello())
 ```html
 <h1>Hello World</h1>
 ```
-
-<details>
-<summary>How imports work</summary>
-
-The compiler automatically updates `__init__.py` to export your templates:
-
-```python
-# components/__init__.py (auto-generated)
-from .Hello import Hello
-
-__all__ = ["Hello"]
-```
-
-This enables clean imports like `from components import Hello`.
-
-To opt out, add `# hyper: no-init` at the top of your `.hyper` file.
-
-</details>
 
 ---
 
@@ -69,8 +51,7 @@ name: str
 ```
 
 ```python
-from components import Greeting
-
+from components.Greeting import Greeting
 print(Greeting(name="Alice"))
 ```
 
@@ -93,8 +74,7 @@ count: int = 0
 ```
 
 ```python
-from components import Counter
-
+from components.Counter import Counter
 print(Counter())                    # Uses defaults
 print(Counter(name="Bob", count=5)) # Override defaults
 ```
@@ -140,8 +120,7 @@ The `{...}` marks where caller content is inserted.
 Create `pages/Home.hyper`:
 
 ```hyper
-from layouts import Layout
-
+from layouts.Layout import Layout
 ---
 
 <{Layout} title="Home">
@@ -153,8 +132,7 @@ from layouts import Layout
 Render it:
 
 ```python
-from pages import Home
-
+from pages.Home import Home
 print(Home())
 ```
 
@@ -216,8 +194,7 @@ is_admin: bool
 ```
 
 ```python
-from components import Nav
-
+from components.Nav import Nav
 print(Nav(is_admin=True))   # <nav><a href="/admin">Admin</a></nav>
 print(Nav(is_admin=False))  # <nav><a href="/account">Account</a></nav>
 ```
@@ -239,8 +216,7 @@ items: list[str]
 ```
 
 ```python
-from components import List
-
+from components.List import List
 print(List(items=["Apple", "Banana", "Cherry"]))
 ```
 
@@ -272,8 +248,7 @@ end
 ```
 
 ```python
-from components import Status
-
+from components.Status import Status
 print(Status(status="loading"))  # <p>Loading...</p>
 print(Status(status="done"))     # <p>Ready</p>
 ```
@@ -354,8 +329,7 @@ Create `layouts/Layout.hyper`:
 Create `pages/Dashboard.hyper`:
 
 ```hyper
-from layouts import Layout
-
+from layouts.Layout import Layout
 ---
 
 <{Layout}>
@@ -372,8 +346,7 @@ from layouts import Layout
 ```
 
 ```python
-from pages import Dashboard
-
+from pages.Dashboard import Dashboard
 print(Dashboard())
 ```
 
@@ -400,8 +373,7 @@ print(Dashboard())
 When a named slot contains one element, mark it directly:
 
 ```hyper
-from layouts import Layout
-
+from layouts.Layout import Layout
 ---
 
 <{Layout}>
@@ -730,8 +702,7 @@ The compiler analyzes which variables each fragment uses.
 Render the full page:
 
 ```python
-from pages import Profile
-
+from pages.Profile import Profile
 user = User(name="Alice", bio="Developer")
 posts = [Post(title="Hello"), Post(title="World")]
 
@@ -797,8 +768,7 @@ def Card(title: str):
 Use in templates with `<{Name}>` syntax:
 
 ```python
-from components import Cards
-
+from components.Cards import Cards
 print(Cards())
 ```
 
@@ -879,8 +849,7 @@ from components.forms import Form, Input, Button
 ```
 
 ```python
-from pages import Login
-
+from pages.Login import Login
 print(Login())
 ```
 
@@ -919,8 +888,7 @@ created_at: datetime
 
 ```python
 from datetime import datetime
-from components import Article
-
+from components.Article import Article
 print(Article(title="Hello", created_at=datetime(2024, 12, 25)))
 ```
 
@@ -988,7 +956,7 @@ Only use `safe()` for content you trust (e.g., sanitized HTML from your database
 Templates compile to generator functions using `yield`, enabling HTTP streaming.
 
 ```python
-from components import Feed
+from components.Feed import Feed
 from fastapi.responses import StreamingResponse
 
 @app.get("/feed")

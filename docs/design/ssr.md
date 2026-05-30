@@ -13,8 +13,7 @@ Hyper templates render server-side with any Python framework.
 ```python
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from pages import Home
-
+from pages.Home import Home
 # Set default response class
 app = FastAPI(default_response_class=HTMLResponse)
 
@@ -35,8 +34,7 @@ def index():
 
 ```python
 from django.http import HttpResponse
-from pages import Home
-
+from pages.Home import Home
 def index(request):
     return HttpResponse(Home(title="Welcome"))
 ```
@@ -45,8 +43,7 @@ def index(request):
 
 ```python
 from flask import Flask
-from pages import Home
-
+from pages.Home import Home
 app = Flask(__name__)
 
 @app.route("/")
@@ -236,8 +233,7 @@ elif request.method == "POST":
 
 ```hyper
 from hyper import Request
-from components import Layout
-
+from components.Layout import Layout
 request: Request
 
 ---
@@ -571,8 +567,7 @@ if request.method == "POST":
 ### Custom Error Pages
 
 ```python
-from pages import NotFound
-
+from pages.NotFound import NotFound
 app = FastAPI(default_response_class=HTMLResponse)
 
 @app.exception_handler(404)

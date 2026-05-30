@@ -156,15 +156,14 @@ Both `def` blocks end via dedentation. The `if` inside `Card` needs `end` becaus
 Imports go above `---`:
 
 ```hyper
-from components import Button
-
+from components.Button import Button
 title: str
 ---
 <{Button} label={title} />
 ```
 
 ```python
-from components import Button
+from components.Button import Button
 from hyper import html
 
 
@@ -319,8 +318,7 @@ File structure:
 ```
 components/
 ├── Button.hyper    # Source
-├── Button.py       # Generated (gitignored)
-└── __init__.py     # Auto-generated exports
+└── Button.py       # Generated (gitignored)
 ```
 
 ---
@@ -330,7 +328,7 @@ components/
 Import like normal Python:
 
 ```python
-from components import Button
+from components.Button import Button
 
 html = str(Button(label="Click me", disabled=False))
 ```
@@ -344,8 +342,7 @@ Works with any framework.
 **FastAPI (streaming):**
 ```python
 from fastapi.responses import StreamingResponse
-from pages import Home
-
+from pages.Home import Home
 @app.get("/")
 def index():
     return StreamingResponse(
@@ -357,8 +354,7 @@ def index():
 **FastAPI (buffered):**
 ```python
 from fastapi.responses import HTMLResponse
-from pages import Home
-
+from pages.Home import Home
 @app.get("/")
 def index():
     return HTMLResponse(str(Home(title="Welcome")))

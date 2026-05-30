@@ -11,8 +11,7 @@ Reactive templates enable real-time interactivity without JavaScript frameworks.
 **Current behavior**: Templates return strings.
 
 ```python
-from components import Counter
-
+from components.Counter import Counter
 html = Counter(count=0)  # Returns full HTML string
 ```
 
