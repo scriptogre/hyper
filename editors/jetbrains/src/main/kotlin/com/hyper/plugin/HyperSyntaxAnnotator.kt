@@ -5,8 +5,10 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
@@ -31,11 +33,16 @@ class HyperSyntaxAnnotator : Annotator {
         val INLINE_COMMENT = createTextAttributesKey(
             "HYPER_INLINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT
         )
+        // Fallback keys chosen to render in all IDEs including PyCharm CE
+        // (which doesn't have HTML/MARKUP_TAG defined). Users can still
+        // customize HYPER_* keys in Settings → Color Scheme.
         val TAG_PUNCTUATION = createTextAttributesKey(
-            "HYPER_TAG_PUNCTUATION", DefaultLanguageHighlighterColors.MARKUP_TAG
+            // Astro-style: `<`, `>`, `/>` and `{`, `}` use the keyword color (orange in Darcula).
+            "HYPER_TAG_PUNCTUATION", DefaultLanguageHighlighterColors.KEYWORD
         )
         val COMPONENT_NAME = createTextAttributesKey(
-            "HYPER_COMPONENT_NAME", DefaultLanguageHighlighterColors.CLASS_NAME
+            // Astro-style: component names use the function declaration color (yellow in Darcula).
+            "HYPER_COMPONENT_NAME", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION
         )
         val SLOT_KEYWORD = createTextAttributesKey(
             "HYPER_SLOT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD
@@ -147,15 +154,11 @@ class HyperSyntaxAnnotator : Annotator {
 
             // --- HTML / component / slot tags ---
             if (ch == '<') {
-                // Detect tag type by looking at characters after <
-                // Component/slot: <{Name}>, </{Name}>, <{...name}>, </{...name}>
-                // HTML: <div>, </div>
                 val afterLt = if (i + 1 < len && text[i + 1] == '/') i + 2 else i + 1
-                val isClosing = afterLt != i + 1
 
                 if (afterLt < len && text[afterLt] == '{') {
                     // Component or slot tag: <{...}> or </{...}>
-                    // Find the matching }
+                    // Find the matching `}`
                     var braceEnd = afterLt + 1
                     var bd = 1
                     while (braceEnd < len && bd > 0) {
@@ -163,9 +166,8 @@ class HyperSyntaxAnnotator : Annotator {
                         if (text[braceEnd] == '}') bd--
                         if (bd > 0) braceEnd++
                     }
-                    // braceEnd is now at the }
 
-                    // Find the > that closes the tag
+                    // Find the `>` that closes the tag
                     var tagEnd = braceEnd + 1
                     var td = 0
                     var tInStr = false
@@ -184,33 +186,32 @@ class HyperSyntaxAnnotator : Annotator {
                         tagEnd++
                     }
 
-                    // Highlight the tag punctuation: < or </
-                    highlight(holder, base + i, base + afterLt, TAG_PUNCTUATION)
-                    // Highlight { and }
-                    highlight(holder, base + afterLt, base + afterLt + 1, TAG_PUNCTUATION)
+                    // `<` or `</`
+                    enforce(holder, base + i, base + afterLt, TAG_PUNCTUATION)
+                    // `{`
+                    enforce(holder, base + afterLt, base + afterLt + 1, TAG_PUNCTUATION)
+                    // `}`
                     if (braceEnd < len) {
-                        highlight(holder, base + braceEnd, base + braceEnd + 1, TAG_PUNCTUATION)
+                        enforce(holder, base + braceEnd, base + braceEnd + 1, TAG_PUNCTUATION)
                     }
-                    // Highlight > or /> at end
+                    // `>` or `/>`
                     if (tagEnd > 0 && tagEnd <= len) {
                         val gtStart = if (tagEnd >= 2 && text[tagEnd - 2] == '/') tagEnd - 2 else tagEnd - 1
-                        highlight(holder, base + gtStart, base + tagEnd, TAG_PUNCTUATION)
+                        enforce(holder, base + gtStart, base + tagEnd, TAG_PUNCTUATION)
                     }
 
-                    // Highlight name inside braces
+                    // Name inside braces
                     val nameStart = afterLt + 1
                     val nameEnd = braceEnd
                     if (nameStart < nameEnd) {
                         val nameText = text.substring(nameStart, nameEnd)
                         if (nameText.startsWith("...")) {
-                            // Slot: highlight "..." as keyword and the name after it
-                            highlight(holder, base + nameStart, base + nameStart + 3, SLOT_KEYWORD)
+                            enforce(holder, base + nameStart, base + nameStart + 3, SLOT_KEYWORD)
                             if (nameStart + 3 < nameEnd) {
-                                highlight(holder, base + nameStart + 3, base + nameEnd, SLOT_NAME)
+                                enforce(holder, base + nameStart + 3, base + nameEnd, SLOT_NAME)
                             }
                         } else {
-                            // Component name
-                            highlight(holder, base + nameStart, base + nameEnd, COMPONENT_NAME)
+                            enforce(holder, base + nameStart, base + nameEnd, COMPONENT_NAME)
                         }
                     }
 
@@ -219,16 +220,16 @@ class HyperSyntaxAnnotator : Annotator {
                     // Regular HTML tag — skip past it
                     var j = i + 1
                     var d = 0
-                    var inStr = false
-                    var strCh = ' '
+                    var inStr2 = false
+                    var strCh2 = ' '
                     while (j < len) {
                         val c = text[j]
-                        if (inStr) {
+                        if (inStr2) {
                             if (c == '\\' && j + 1 < len) { j += 2; continue }
-                            if (c == strCh) inStr = false
+                            if (c == strCh2) inStr2 = false
                             j++; continue
                         }
-                        if (c == '"' || c == '\'') { inStr = true; strCh = c; j++; continue }
+                        if (c == '"' || c == '\'') { inStr2 = true; strCh2 = c; j++; continue }
                         if (c == '{') { d++; j++; continue }
                         if (c == '}') { d--; j++; continue }
                         if (c == '>' && d <= 0) { j++; break }
@@ -236,7 +237,6 @@ class HyperSyntaxAnnotator : Annotator {
                     }
                     i = j
                 }
-                // Tag close is a structural boundary
                 afterStructural = true
                 allWhitespaceSinceStructural = true
                 hasTextSinceStructural = false
@@ -318,5 +318,38 @@ class HyperSyntaxAnnotator : Annotator {
             .range(TextRange(start, end))
             .textAttributes(key)
             .create()
+    }
+
+    /**
+     * Apply a TextAttributesKey via `enforcedTextAttributes`. Required for
+     * tag punctuation/names inside the injection host: the regular
+     * `textAttributes(key)` path resolves keys against the injected language's
+     * color scheme, which can render them invisible. Enforcing pre-resolved
+     * attributes bypasses that.
+     */
+    private fun enforce(holder: AnnotationHolder, start: Int, end: Int, key: TextAttributesKey) {
+        if (start >= end) return
+        val attrs = resolveAttributes(key) ?: return
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            .range(TextRange(start, end))
+            .enforcedTextAttributes(attrs)
+            .create()
+    }
+
+    /**
+     * Resolve TextAttributes by walking the fallback chain from a key until
+     * we find attributes with an actual foreground/background color.
+     */
+    private fun resolveAttributes(key: TextAttributesKey): TextAttributes? {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        var current: TextAttributesKey? = key
+        while (current != null) {
+            val attrs = scheme.getAttributes(current)
+            if (attrs != null && (attrs.foregroundColor != null || attrs.backgroundColor != null)) {
+                return attrs
+            }
+            current = current.fallbackAttributeKey
+        }
+        return null
     }
 }

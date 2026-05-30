@@ -28,6 +28,33 @@ pub struct Range {
     /// Set to false for ranges that don't need language injection (like parameters in frontmatter).
     #[serde(skip)]
     pub needs_injection: bool,
+    /// Optional prefix for HTML injections (e.g. `<x` for component attribute fragments
+    /// that need a synthetic tag name so the HTML parser can highlight attributes).
+    #[serde(skip)]
+    #[serde(default)]
+    pub html_prefix: Option<String>,
+}
+
+impl Range {
+    /// Create a new range with default html_prefix (None).
+    pub fn new(
+        range_type: RangeType,
+        source_start: usize,
+        source_end: usize,
+        compiled_start: usize,
+        compiled_end: usize,
+        needs_injection: bool,
+    ) -> Self {
+        Self {
+            range_type,
+            source_start,
+            source_end,
+            compiled_start,
+            compiled_end,
+            needs_injection,
+            html_prefix: None,
+        }
+    }
 }
 
 /// Computed injection with prefix/suffix for IDE language injection.
@@ -47,6 +74,43 @@ pub struct Injection {
 pub struct ExpressionBrace {
     pub open: usize,
     pub close: usize,
+}
+
+/// Tag highlight kind for IDE syntax coloring of component/slot tags.
+#[derive(Debug, Clone, serde::Serialize)]
+pub enum TagHighlightKind {
+    #[serde(rename = "tag_punctuation")]
+    TagPunctuation,
+    #[serde(rename = "component_name")]
+    ComponentName,
+    #[serde(rename = "slot_keyword")]
+    SlotKeyword,
+    #[serde(rename = "slot_name")]
+    SlotName,
+}
+
+/// A highlight range for component/slot tag syntax (UTF-16 offsets).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct TagHighlight {
+    pub start: usize,
+    pub end: usize,
+    pub kind: TagHighlightKind,
+}
+
+/// Convert byte-offset tag highlights to UTF-16 offsets.
+pub fn convert_tag_highlights_to_utf16(
+    source: &str,
+    byte_highlights: &[(usize, usize, TagHighlightKind)],
+) -> Vec<TagHighlight> {
+    let byte_to_utf16 = build_byte_to_utf16_map(source);
+    byte_highlights
+        .iter()
+        .map(|(start, end, kind)| TagHighlight {
+            start: byte_to_utf16[*start],
+            end: byte_to_utf16[*end],
+            kind: kind.clone(),
+        })
+        .collect()
 }
 
 /// Convert byte offset pairs to UTF-16 offsets for expression braces.
@@ -160,13 +224,15 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
                 }
             }
             RangeType::Html => {
-                // HTML: empty prefix/suffix — the source already contains HTML
+                // HTML: prefix is usually empty (source already contains HTML).
+                // Component-attribute ranges carry an html_prefix (e.g. "<x") so the
+                // virtual HTML fragment has a tag name and JetBrains can parse attrs.
                 for range in &type_ranges {
                     injections.push(Injection {
                         injection_type: type_str.to_string(),
                         start: byte_to_utf16[range.source_start],
                         end: byte_to_utf16[range.source_end],
-                        prefix: String::new(),
+                        prefix: range.html_prefix.as_deref().unwrap_or("").to_string(),
                         suffix: String::new(),
                     });
                 }

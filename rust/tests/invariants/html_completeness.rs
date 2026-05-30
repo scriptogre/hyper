@@ -68,55 +68,11 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 )
                 .into());
             }
-            Token::ComponentOpen { span, .. }
-                if in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
-            {
-                return Err(format!(
-                    "component open tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
-                )
-                .into());
-            }
-            Token::ComponentClose { span, .. }
-                if in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
-            {
-                return Err(format!(
-                    "component close tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
-                )
-                .into());
-            }
-            Token::SlotOpen { name, span }
-                if name.is_some()
-                    && in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
-            {
-                return Err(format!(
-                    "slot open tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
-                )
-                .into());
-            }
-            Token::SlotClose { span, .. }
-                if in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
-            {
-                return Err(format!(
-                    "slot close tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
-                )
-                .into());
-            }
+            // Component and slot tags don't require full HTML coverage:
+            // - The component name gets a Python injection range
+            // - Attributes (if any) get HTML ranges with a synthetic "<x" prefix
+            // - Closing tags and slot names are handled by the TextMate grammar
+            // So we intentionally skip the coverage check for these token types.
             _ => {}
         }
     }

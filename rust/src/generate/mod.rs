@@ -3,13 +3,15 @@ mod injection_analyzer;
 mod output;
 mod python;
 
-pub use brace_collector::collect_expression_braces;
+pub use brace_collector::{collect_expression_braces, collect_tag_highlights};
 pub use injection_analyzer::{
-    InjectionAnalyzer, html_ranges_for_component, html_ranges_for_element,
+    InjectionAnalyzer, collect_component_attr_expr_spans, html_ranges_for_component,
+    html_ranges_for_element,
 };
 pub use output::{
-    ExpressionBrace, Injection, Mapping, Output, Range, RangeType, compute_injections,
-    convert_braces_to_utf16, validate_python_ranges,
+    ExpressionBrace, Injection, Mapping, Output, Range, RangeType, TagHighlight, TagHighlightKind,
+    compute_injections, convert_braces_to_utf16, convert_tag_highlights_to_utf16,
+    validate_python_ranges,
 };
 pub use python::PythonGenerator;
 
@@ -31,6 +33,7 @@ pub struct GenerateResult {
     pub ranges: Vec<Range>,
     pub injections: Vec<Injection>,
     pub expression_braces: Vec<ExpressionBrace>,
+    pub tag_highlights: Vec<TagHighlight>,
 }
 
 /// Generator trait - converts AST to code

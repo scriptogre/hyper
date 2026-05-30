@@ -1110,19 +1110,22 @@ fn test_named_slot_tag_braces_in_expression_braces() {
 }
 
 #[test]
-fn test_component_tag_angle_brackets_have_html_ranges() {
-    // <{Card}> and </{Card}> angle brackets should have HTML injection ranges
-    // so JetBrains colors them like regular HTML tag punctuation
+fn test_component_tag_no_lone_angle_bracket_html() {
+    // Component tags should NOT emit lone "<", ">", "</" as HTML ranges —
+    // they're unparseable HTML fragments that pollute the virtual document.
+    // Instead, the attribute region gets a "<x" prefix for tag context.
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
 
-    // Opening tag: "<" at byte 0 should be in an HTML range
-    let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
+    // No HTML range should start at byte 0 (the lone "<")
+    let has_lone_lt = html
+        .iter()
+        .any(|r| r.source_start == 0 && r.source_end == 1);
     assert!(
-        has_open_lt,
-        "Opening '<' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
+        !has_lone_lt,
+        "Should NOT have a lone '<' HTML range. HTML ranges: {:?}",
         html.iter()
             .map(|r| (
                 r.source_start,
@@ -1132,14 +1135,14 @@ fn test_component_tag_angle_brackets_have_html_ranges() {
             .collect::<Vec<_>>()
     );
 
-    // Opening tag: ">" at byte 7 should be in an HTML range
-    let gt_pos = source.find('>').unwrap();
-    let has_open_gt = html
-        .iter()
-        .any(|r| r.source_start <= gt_pos && r.source_end > gt_pos);
+    // The ">" after {Card} should be in an HTML range WITH a "<x" prefix
+    let gt_range = html.iter().find(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text.contains(">") && r.source_start > 0 && r.source_start < source.find('\n').unwrap()
+    });
     assert!(
-        has_open_gt,
-        "Closing '>' of <{{Card}}> should be in an HTML range. HTML ranges: {:?}",
+        gt_range.is_some(),
+        "Should have HTML range for '>' with prefix. HTML ranges: {:?}",
         html.iter()
             .map(|r| (
                 r.source_start,
@@ -1148,63 +1151,31 @@ fn test_component_tag_angle_brackets_have_html_ranges() {
             ))
             .collect::<Vec<_>>()
     );
-
-    // Closing tag: "</" and ">" of </{Card}> should be in HTML range(s)
-    let close_lt = source.find("</").unwrap();
-    let has_close_lt = html
-        .iter()
-        .any(|r| r.source_start <= close_lt && r.source_end > close_lt);
-    assert!(
-        has_close_lt,
-        "'</' of </{{Card}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter()
-            .map(|r| (
-                r.source_start,
-                r.source_end,
-                &source[r.source_start..r.source_end]
-            ))
-            .collect::<Vec<_>>()
+    assert_eq!(
+        gt_range.unwrap().html_prefix.as_deref(),
+        Some("<x"),
+        "Component '>' HTML range should have '<x' prefix"
     );
 }
 
 #[test]
-fn test_slot_tag_angle_brackets_have_html_ranges() {
-    // <{...header}> and </{...header}> angle brackets should have HTML injection ranges
+fn test_slot_tag_no_html_ranges() {
+    // Slot tags <{...header}> have no attributes, so they produce no
+    // HTML ranges for the opening/closing tag (only for child content)
     let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
     let result = compile_with_ranges(source, "Test");
 
     let html = html_ranges(&result);
 
-    // Opening tag: "<" at byte 0
-    let has_open_lt = html.iter().any(|r| r.source_start == 0 && r.source_end > 0);
-    assert!(
-        has_open_lt,
-        "Opening '<' of <{{...header}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter()
-            .map(|r| (
-                r.source_start,
-                r.source_end,
-                &source[r.source_start..r.source_end]
-            ))
-            .collect::<Vec<_>>()
-    );
-
-    // Closing tag: "</" of </{...header}>
-    let close_lt = source.find("</").unwrap();
-    let has_close_lt = html
-        .iter()
-        .any(|r| r.source_start <= close_lt && r.source_end > close_lt);
-    assert!(
-        has_close_lt,
-        "'</' of </{{...header}}> should be in an HTML range. HTML ranges: {:?}",
-        html.iter()
-            .map(|r| (
-                r.source_start,
-                r.source_end,
-                &source[r.source_start..r.source_end]
-            ))
-            .collect::<Vec<_>>()
-    );
+    // Only the child <h1>...</h1> should have HTML ranges, not the slot tags
+    for r in &html {
+        let text = &source[r.source_start..r.source_end];
+        assert!(
+            !text.contains("...header"),
+            "Should not have HTML range containing slot name. Got: {:?}",
+            text
+        );
+    }
 }
 
 #[test]
@@ -1533,4 +1504,144 @@ fn test_implicit_spread_with_regular_params() {
         "Should have regular params AND injected **props. Got:\n{}",
         result.code
     );
+}
+
+// ========================================================================
+// Component tag HTML ranges must not overlap with Python attribute ranges
+// ========================================================================
+
+#[test]
+fn test_component_html_ranges_no_overlap_with_expression_attrs() {
+    // Component with expression attributes: the HTML range after the component name
+    // must split around the expression {format_name(name)}, not overlap it
+    let source = r#"<{Badge} text={format_name(name)} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let html = html_ranges(&result);
+    let py = python_ranges(&result);
+
+    for h in &html {
+        for p in &py {
+            let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
+            assert!(
+                !overlaps,
+                "Component tag: HTML range [{},{}] ({:?}) overlaps Python range [{},{}] ({:?})",
+                h.source_start,
+                h.source_end,
+                &source[h.source_start..h.source_end],
+                p.source_start,
+                p.source_end,
+                &source[p.source_start..p.source_end]
+            );
+        }
+    }
+}
+
+#[test]
+fn test_component_html_ranges_no_overlap_with_shorthand_attrs() {
+    // Component with shorthand attribute: {is_active} is both an HTML gap and a Python range
+    let source = r#"<{Badge} {is_active} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let html = html_ranges(&result);
+    let py = python_ranges(&result);
+
+    for h in &html {
+        for p in &py {
+            let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
+            assert!(
+                !overlaps,
+                "Component tag: HTML range [{},{}] ({:?}) overlaps Python range [{},{}] ({:?})",
+                h.source_start,
+                h.source_end,
+                &source[h.source_start..h.source_end],
+                p.source_start,
+                p.source_end,
+                &source[p.source_start..p.source_end]
+            );
+        }
+    }
+}
+
+#[test]
+fn test_component_with_mixed_attrs_html_splits() {
+    // Component with static + expression + shorthand: HTML ranges should split properly
+    let source = r#"<{Badge} text="Sale" badge_variant="danger" />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let html = html_ranges(&result);
+
+    // The HTML range after the component name should cover the static attributes
+    let has_text_attr = html.iter().any(|r| {
+        let text = &source[r.source_start..r.source_end];
+        text.contains("text=")
+    });
+    assert!(
+        has_text_attr,
+        "Should have HTML range covering 'text=' attribute. HTML ranges: {:?}",
+        html.iter()
+            .map(|r| (
+                r.source_start,
+                r.source_end,
+                &source[r.source_start..r.source_end]
+            ))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_component_attr_html_has_tag_prefix() {
+    // Component attribute HTML fragments need a synthetic tag prefix so JetBrains
+    // can parse the attributes (HTML parser requires <tagname before attrs)
+    let source = r#"<{Badge} text="Sale" badge_variant="danger" />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let html_inj = html_injections(&result);
+
+    // Should have exactly one HTML injection (the attribute region with prefix)
+    // The lone "<" and closing tag fragments are no longer emitted
+    assert_eq!(
+        html_inj.len(),
+        1,
+        "Expected 1 HTML injection for component attrs. Got: {:?}",
+        html_inj
+            .iter()
+            .map(|i| (&source[i.start..i.end], &i.prefix))
+            .collect::<Vec<_>>()
+    );
+
+    // The injection should have a synthetic tag prefix
+    assert_eq!(
+        html_inj[0].prefix, "<x",
+        "Component attr HTML injection should have '<x' prefix for tag context"
+    );
+
+    // The source content should be the attribute region
+    let text = &source[html_inj[0].start..html_inj[0].end];
+    assert!(
+        text.contains("text="),
+        "HTML injection should cover attributes, got: {:?}",
+        text
+    );
+}
+
+#[test]
+fn test_component_no_attrs_no_html_injection() {
+    // A bare component <{Badge} /> with no real attributes should have minimal HTML
+    let source = r#"<{Badge} />"#;
+    let result = compile_with_ranges(source, "Test");
+
+    let html_inj = html_injections(&result);
+
+    // The " />" fragment gets the prefix, so it becomes valid HTML: <x />
+    assert_eq!(
+        html_inj.len(),
+        1,
+        "Expected 1 HTML injection for ' />'. Got: {:?}",
+        html_inj
+            .iter()
+            .map(|i| (&source[i.start..i.end], &i.prefix))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(html_inj[0].prefix, "<x");
 }

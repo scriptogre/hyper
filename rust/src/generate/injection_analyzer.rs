@@ -41,6 +41,34 @@ impl InjectionAnalyzer {
 // HTML ranges don't need compiled positions (compiled_start/end = 0)
 // because the virtual HTML file is built from source text directly.
 
+/// Collect expression spans from component/slot attributes that must be
+/// excluded from HTML ranges.  Returns `(start, exclusive_end)` byte pairs.
+pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usize)> {
+    let mut spans = Vec::new();
+    for attr in attrs {
+        match &attr.kind {
+            AttributeKind::Expression { expr_span, .. } => {
+                // Include `={…}` — gap starts at the `=` before `{`
+                let gap_start = expr_span.start.byte.saturating_sub(1);
+                spans.push((gap_start, expr_span.end.byte));
+            }
+            AttributeKind::Shorthand { expr_span, .. }
+            | AttributeKind::Spread { expr_span, .. } => {
+                spans.push((expr_span.start.byte, expr_span.end.byte + 1));
+            }
+            AttributeKind::SlotAssignment {
+                expr_span: Some(span),
+                ..
+            } => {
+                let gap_start = span.start.byte.saturating_sub(1);
+                spans.push((gap_start, span.end.byte + 1));
+            }
+            _ => {}
+        }
+    }
+    spans
+}
+
 /// Build HTML injection ranges for an element's opening and closing tags.
 ///
 /// The opening tag span covers `<tag attrs>` or `<tag attrs />`.
@@ -122,6 +150,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
                 compiled_start: 0,
                 compiled_end: 0,
                 needs_injection: true,
+                html_prefix: None,
             });
         }
         if *expr_end > pos {
@@ -138,6 +167,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
             compiled_start: 0,
             compiled_end: 0,
             needs_injection: true,
+            html_prefix: None,
         });
     }
 
@@ -150,6 +180,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
             compiled_start: 0,
             compiled_end: 0,
             needs_injection: true,
+            html_prefix: None,
         });
     }
 
@@ -160,72 +191,83 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
 ///
 /// For `<{Card}>`, creates ranges for `<` and `>`, skipping `{Card}`.
 /// For `</{Card}>`, creates ranges for `</` and `>`, skipping `{Card}`.
+///
+/// The `attr_expr_spans` parameter contains (start, exclusive_end) byte positions
+/// for expression attributes within the opening tag that must be excluded from
+/// HTML ranges (to avoid overlapping with Python injection ranges).
 pub fn html_ranges_for_component(
     open_span: &Span,
-    close_span: Option<&Span>,
-    brace_open: usize,
+    _close_span: Option<&Span>,
+    _brace_open: usize,
     brace_close: usize,
+    attr_expr_spans: &[(usize, usize)],
 ) -> Vec<Range> {
     let mut ranges = Vec::new();
 
-    // Opening tag: "<" before the brace
-    let lt_start = open_span.start.byte;
-    if brace_open > lt_start {
-        ranges.push(Range {
-            range_type: RangeType::Html,
-            source_start: lt_start,
-            source_end: brace_open,
-            compiled_start: 0,
-            compiled_end: 0,
-            needs_injection: true,
-        });
-    }
+    // NOTE: We intentionally do NOT emit the lone "<" before the component name
+    // brace as an HTML range. A lone "<" is unparseable HTML and would pollute
+    // the virtual HTML document. Instead, we give the attribute-region fragments
+    // an html_prefix of "<x" so the virtual HTML sees a valid tag like
+    // `<x text="Sale" />`, enabling attribute highlighting.
 
-    // Opening tag: ">" after the brace
-    let gt_pos = open_span.end.byte - 1;
-    if gt_pos > brace_close {
-        ranges.push(Range {
-            range_type: RangeType::Html,
-            source_start: brace_close + 1,
-            source_end: open_span.end.byte,
-            compiled_start: 0,
-            compiled_end: 0,
-            needs_injection: true,
-        });
-    }
+    // Opening tag: region after the component name brace to end of tag,
+    // split around any attribute expression spans.
+    // The first fragment gets html_prefix "<x" for tag context.
+    let after_brace = brace_close + 1;
+    let tag_end = open_span.end.byte;
 
-    // Closing tag
-    if let Some(cs) = close_span {
-        // Closing tag is like </{Card}> or </{...header}>
-        // "</" is at cs.start.byte..cs.start.byte+2
-        // "{" is at cs.start.byte+2
-        // "}" is at cs.end.byte-2
-        // ">" is at cs.end.byte-1
-        let close_brace_open = cs.start.byte + 2;
-        let close_brace_close = cs.end.byte - 2;
+    if tag_end > after_brace {
+        // Collect and sort attribute expression spans that fall in this region
+        let mut spans: Vec<(usize, usize)> = attr_expr_spans
+            .iter()
+            .filter(|(s, e)| *s >= after_brace && *e <= tag_end)
+            .copied()
+            .collect();
+        spans.sort_by_key(|s| s.0);
 
-        // "</" before brace
-        ranges.push(Range {
-            range_type: RangeType::Html,
-            source_start: cs.start.byte,
-            source_end: close_brace_open,
-            compiled_start: 0,
-            compiled_end: 0,
-            needs_injection: true,
-        });
+        let mut first = true;
+        let mut pos = after_brace;
+        for (expr_start, expr_end) in &spans {
+            if *expr_start > pos {
+                ranges.push(Range {
+                    range_type: RangeType::Html,
+                    source_start: pos,
+                    source_end: *expr_start,
+                    compiled_start: 0,
+                    compiled_end: 0,
+                    needs_injection: true,
+                    html_prefix: if first {
+                        first = false;
+                        Some("<x".into())
+                    } else {
+                        None
+                    },
+                });
+            }
+            if *expr_end > pos {
+                pos = *expr_end;
+            }
+        }
 
-        // ">" after brace
-        if cs.end.byte > close_brace_close + 1 {
+        // Remaining static part after last expression
+        if pos < tag_end {
             ranges.push(Range {
                 range_type: RangeType::Html,
-                source_start: close_brace_close + 1,
-                source_end: cs.end.byte,
+                source_start: pos,
+                source_end: tag_end,
                 compiled_start: 0,
                 compiled_end: 0,
                 needs_injection: true,
+                html_prefix: if first { Some("<x".into()) } else { None },
             });
         }
     }
+
+    // Closing tag: </{Card}> or </{...header}>
+    // We don't emit HTML ranges for the closing tag fragments ("</" and ">")
+    // because they're unparseable HTML on their own and would pollute the
+    // virtual HTML document. The component/slot closing tag gets its coloring
+    // from the TextMate grammar / annotator instead.
 
     ranges
 }

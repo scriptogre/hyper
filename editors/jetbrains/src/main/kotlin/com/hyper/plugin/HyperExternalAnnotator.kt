@@ -11,6 +11,11 @@ import com.intellij.psi.PsiFile
 /**
  * External annotator that runs the Hyper transpiler and shows errors as red squiggles.
  * Uses the ExternalAnnotator pattern: collectInformation (EDT) -> doAnnotate (background) -> apply (EDT).
+ *
+ * Also handles component/slot tag highlighting (punctuation, names). This must be
+ * in the external annotator (not the synchronous Annotator) because external annotator
+ * results override injection-layer highlighting. The synchronous Annotator's highlights
+ * get suppressed by the Python language injection layer.
  */
 class HyperExternalAnnotator : ExternalAnnotator<HyperExternalAnnotator.Info, HyperExternalAnnotator.Result>() {
 
@@ -130,7 +135,13 @@ class HyperExternalAnnotator : ExternalAnnotator<HyperExternalAnnotator.Info, Hy
             highlightBrace(holder, brace.open, docLength)
             highlightBrace(holder, brace.close, docLength)
         }
+
+        // Note: component/slot tag highlighting (< { } > />, names) is handled
+        // by HyperSyntaxAnnotator (synchronous), not here. The synchronous
+        // annotator runs on every paint cycle so highlights stay stable
+        // across focus changes — the ExternalAnnotator approach flickered.
     }
+
 
     private fun highlightBrace(holder: AnnotationHolder, offset: Int, docLength: Int) {
         if (offset < 0 || offset >= docLength) return

@@ -1,7 +1,7 @@
 use super::{
     GenerateOptions, GenerateResult, Generator, Output, Range, RangeType,
-    collect_expression_braces, convert_braces_to_utf16, html_ranges_for_component,
-    html_ranges_for_element,
+    collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
+    html_ranges_for_component, html_ranges_for_element,
 };
 use crate::ast::*;
 use crate::transform::Helper;
@@ -280,6 +280,7 @@ impl PythonGenerator {
                     compiled_start: start,
                     compiled_end: end,
                     needs_injection: true,
+                    html_prefix: None,
                 });
             }
             Node::Element(el) => {
@@ -361,6 +362,7 @@ impl PythonGenerator {
                             compiled_start: start,
                             compiled_end: end,
                             needs_injection: true,
+                            html_prefix: None,
                         });
                         output.push(")}\"");
                     } else if name == "style" {
@@ -377,6 +379,7 @@ impl PythonGenerator {
                             compiled_start: start,
                             compiled_end: end,
                             needs_injection: true,
+                            html_prefix: None,
                         });
                         output.push(")}\"");
                     } else if self.is_boolean_attribute(name) {
@@ -394,6 +397,7 @@ impl PythonGenerator {
                             compiled_start: start,
                             compiled_end: end,
                             needs_injection: true,
+                            html_prefix: None,
                         });
                         output.push(")}");
                     } else {
@@ -410,6 +414,7 @@ impl PythonGenerator {
                             compiled_start: start,
                             compiled_end: end,
                             needs_injection: true,
+                            html_prefix: None,
                         });
                         output.push(")}\"");
                     }
@@ -477,6 +482,7 @@ impl PythonGenerator {
                         compiled_start: start,
                         compiled_end: end,
                         needs_injection: true,
+                        html_prefix: None,
                     });
                 }
             }
@@ -500,6 +506,7 @@ impl PythonGenerator {
                         compiled_start: s,
                         compiled_end: e,
                         needs_injection: true,
+                        html_prefix: None,
                     });
                 }
             }
@@ -528,6 +535,7 @@ impl PythonGenerator {
                                 compiled_start: start,
                                 compiled_end: end,
                                 needs_injection: true,
+                                html_prefix: None,
                             });
                         }
                     }
@@ -583,6 +591,7 @@ impl PythonGenerator {
                                 compiled_start: start,
                                 compiled_end: end,
                                 needs_injection: true,
+                                html_prefix: None,
                             });
                         } else if ch == '"' {
                             output.push("&quot;");
@@ -705,6 +714,7 @@ impl PythonGenerator {
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
+                html_prefix: None,
             });
         } else if expr.escape {
             output.push("yield escape(");
@@ -719,6 +729,7 @@ impl PythonGenerator {
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
+                html_prefix: None,
             });
         } else {
             output.push("yield str(");
@@ -733,6 +744,7 @@ impl PythonGenerator {
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
+                html_prefix: None,
             });
         }
         output.newline();
@@ -900,6 +912,7 @@ impl PythonGenerator {
             compiled_start: name_compiled_start,
             compiled_end: name_compiled_end,
             needs_injection: true,
+            html_prefix: None,
         });
 
         // Add Python range for the component name in the closing tag.
@@ -917,16 +930,23 @@ impl PythonGenerator {
                     compiled_start: 0,
                     compiled_end: 0,
                     needs_injection: false,
+                    html_prefix: None,
                 });
             }
         }
 
-        // Add HTML ranges for component tag angle brackets
+        // Add HTML ranges for component tag angle brackets,
+        // splitting around attribute expression spans to avoid overlap
         let brace_open = c.name_span.start.byte - 1;
         let brace_close = c.name_span.end.byte;
-        for range in
-            html_ranges_for_component(&c.span, c.close_span.as_ref(), brace_open, brace_close)
-        {
+        let attr_expr_spans = collect_component_attr_expr_spans(&c.attributes);
+        for range in html_ranges_for_component(
+            &c.span,
+            c.close_span.as_ref(),
+            brace_open,
+            brace_close,
+            &attr_expr_spans,
+        ) {
             output.add_range(range);
         }
     }
@@ -959,6 +979,7 @@ impl PythonGenerator {
                     compiled_start: s,
                     compiled_end: e,
                     needs_injection: true,
+                    html_prefix: None,
                 });
             }
             AttributeKind::Boolean { name } => {
@@ -981,6 +1002,7 @@ impl PythonGenerator {
                     compiled_start: s,
                     compiled_end: e,
                     needs_injection: true,
+                    html_prefix: None,
                 });
             }
             AttributeKind::Spread { expr, expr_span } => {
@@ -997,6 +1019,7 @@ impl PythonGenerator {
                     compiled_start: s,
                     compiled_end: e,
                     needs_injection: true,
+                    html_prefix: None,
                 });
             }
             AttributeKind::Template { name, value } => {
@@ -1066,12 +1089,17 @@ impl PythonGenerator {
         output.newline();
 
         // Add HTML ranges for tag-form slot angle brackets (<{...name}> / </{...name}>)
+        // Slots have no attributes, so no expression spans to exclude
         if s.close_span.is_some() {
             let brace_open = s.span.start.byte + 1;
             let brace_close = s.span.end.byte - 2;
-            for range in
-                html_ranges_for_component(&s.span, s.close_span.as_ref(), brace_open, brace_close)
-            {
+            for range in html_ranges_for_component(
+                &s.span,
+                s.close_span.as_ref(),
+                brace_open,
+                brace_close,
+                &[],
+            ) {
                 output.add_range(range);
             }
         }
@@ -1095,6 +1123,7 @@ impl PythonGenerator {
             compiled_start: cond_start,
             compiled_end: cond_end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.push(":");
         output.newline();
@@ -1116,6 +1145,7 @@ impl PythonGenerator {
                 compiled_start: cond_start,
                 compiled_end: cond_end,
                 needs_injection: true,
+                html_prefix: None,
             });
             output.push(":");
             output.newline();
@@ -1154,6 +1184,7 @@ impl PythonGenerator {
             compiled_start: binding_start,
             compiled_end: range_end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.push(":");
         output.newline();
@@ -1177,6 +1208,7 @@ impl PythonGenerator {
             compiled_start: expr_start,
             compiled_end: expr_end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.push(":");
         output.newline();
@@ -1197,6 +1229,7 @@ impl PythonGenerator {
                 compiled_start: pat_start,
                 compiled_end: pat_end,
                 needs_injection: true,
+                html_prefix: None,
             });
             output.push(":");
             output.newline();
@@ -1221,6 +1254,7 @@ impl PythonGenerator {
             compiled_start: cond_start,
             compiled_end: cond_end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.push(":");
         output.newline();
@@ -1249,6 +1283,7 @@ impl PythonGenerator {
             compiled_start: items_start,
             compiled_end: items_end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.push(":");
         output.newline();
@@ -1281,6 +1316,7 @@ impl PythonGenerator {
                         compiled_start: start,
                         compiled_end: end,
                         needs_injection: true,
+                        html_prefix: None,
                     });
                 }
             }
@@ -1355,6 +1391,7 @@ impl PythonGenerator {
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
+                html_prefix: None,
             });
         }
 
@@ -1373,6 +1410,7 @@ impl PythonGenerator {
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.newline();
 
@@ -1390,6 +1428,7 @@ impl PythonGenerator {
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.newline();
     }
@@ -1406,6 +1445,7 @@ impl PythonGenerator {
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
+            html_prefix: None,
         });
         output.newline();
     }
@@ -1521,6 +1561,7 @@ impl Generator for PythonGenerator {
                 compiled_start: import_start,
                 compiled_end: import_end,
                 needs_injection: true,
+                html_prefix: None,
             });
         }
 
@@ -1622,6 +1663,7 @@ impl Generator for PythonGenerator {
                     compiled_start: param_start,
                     compiled_end: param_end,
                     needs_injection: true,
+                    html_prefix: None,
                 });
                 output.push(",");
                 output.newline();
@@ -1781,7 +1823,7 @@ impl Generator for PythonGenerator {
             };
 
         // Compute injection ranges and injections using the analyzer (if requested)
-        let (ranges, injections, expression_braces) = if options.include_ranges {
+        let (ranges, injections, expression_braces, tag_highlights) = if options.include_ranges {
             // Find insertion point (where import_lines were inserted) in pre-insertion coordinates
             let def_pos = code
                 .find("async def ")
@@ -1809,9 +1851,14 @@ impl Generator for PythonGenerator {
             let byte_braces = collect_expression_braces(ast);
             let expression_braces = convert_braces_to_utf16(&ast.source, &byte_braces);
 
-            (ranges, injections, expression_braces)
+            // Collect tag highlight positions for component/slot tags
+            let byte_tag_highlights = super::collect_tag_highlights(ast);
+            let tag_highlights =
+                super::convert_tag_highlights_to_utf16(&ast.source, &byte_tag_highlights);
+
+            (ranges, injections, expression_braces, tag_highlights)
         } else {
-            (Vec::new(), Vec::new(), Vec::new())
+            (Vec::new(), Vec::new(), Vec::new(), Vec::new())
         };
 
         GenerateResult {
@@ -1820,6 +1867,7 @@ impl Generator for PythonGenerator {
             ranges,
             injections,
             expression_braces,
+            tag_highlights,
         }
     }
 }

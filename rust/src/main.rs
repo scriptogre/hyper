@@ -421,6 +421,24 @@ fn result_to_response(
         } else {
             None
         },
+        tag_highlights: if include_injections {
+            Some(
+                result
+                    .tag_highlights
+                    .into_iter()
+                    .map(|t| DaemonTagHighlight {
+                        start: t.start,
+                        end: t.end,
+                        kind: serde_json::to_value(&t.kind)
+                            .ok()
+                            .and_then(|v| v.as_str().map(String::from))
+                            .unwrap_or_default(),
+                    })
+                    .collect(),
+            )
+        } else {
+            None
+        },
     }
 }
 
@@ -459,6 +477,8 @@ struct DaemonResponse {
     injections: Option<Vec<DaemonInjection>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     expression_braces: Option<Vec<DaemonExpressionBrace>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tag_highlights: Option<Vec<DaemonTagHighlight>>,
 }
 
 #[derive(serde::Serialize)]
@@ -493,4 +513,11 @@ struct DaemonInjection {
 struct DaemonExpressionBrace {
     open: usize,
     close: usize,
+}
+
+#[derive(serde::Serialize)]
+struct DaemonTagHighlight {
+    start: usize,
+    end: usize,
+    kind: String,
 }

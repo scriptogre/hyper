@@ -110,12 +110,16 @@ class HyperTranspilerService(private val project: Project) : Disposable {
     data class ExpressionBraceJson(val open: Int, val close: Int)
 
     @Serializable
+    data class TagHighlightJson(val start: Int, val end: Int, val kind: String)
+
+    @Serializable
     data class TranspileResultJson(
         val compiled: String,
         val mappings: List<Mapping>,
         val ranges: List<Range>? = null,
         val injections: List<InjectionJson>? = null,
-        val expression_braces: List<ExpressionBraceJson>? = null
+        val expression_braces: List<ExpressionBraceJson>? = null,
+        val tag_highlights: List<TagHighlightJson>? = null
     )
 
     /**
@@ -138,7 +142,8 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         val mappings: List<Mapping>,
         val ranges: List<Range>,
         val injections: List<Injection>,
-        val expressionBraces: List<ExpressionBraceJson>
+        val expressionBraces: List<ExpressionBraceJson>,
+        val tagHighlights: List<TagHighlightJson>
     ) {
         val pythonInjections: List<Injection>
             get() = injections.filter { it.type == "python" }
@@ -209,7 +214,8 @@ class HyperTranspilerService(private val project: Project) : Disposable {
             mappings = parsed.mappings,
             ranges = ranges,
             injections = injections,
-            expressionBraces = parsed.expression_braces ?: emptyList()
+            expressionBraces = parsed.expression_braces ?: emptyList(),
+            tagHighlights = parsed.tag_highlights ?: emptyList()
         )
     }
 
