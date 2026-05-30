@@ -29,17 +29,37 @@ def test_html_result_str():
     assert str(MyComponent(title="Hello")) == "<h1>Hello</h1>"
 
 
-def test_html_result_iter():
+def test_html_result_is_a_str_subclass():
+    @html
+    def MyComponent(*, title: str = "World"):
+        yield f"<h1>{title}</h1>"
+
+    result = MyComponent(title="Hello")
+    assert isinstance(result, str)
+    assert result == "<h1>Hello</h1>"
+
+
+def test_html_result_has_markupsafe_html_protocol():
+    @html
+    def MyComponent():
+        yield "<p>safe</p>"
+
+    result = MyComponent()
+    assert hasattr(result, "__html__")
+    assert result.__html__() == "<p>safe</p>"
+
+
+def test_stream_yields_chunks_without_materialization():
     @html
     def MyComponent():
         yield "<p>one</p>"
         yield "<p>two</p>"
 
-    chunks = list(MyComponent())
+    chunks = list(MyComponent.stream())
     assert chunks == ["<p>one</p>", "<p>two</p>"]
 
 
-def test_html_result_yield_from():
+def test_yield_from_composition_still_produces_correct_html():
     @html
     def Inner(*, text: str = ""):
         yield f"<span>{text}</span>"
@@ -50,7 +70,9 @@ def test_html_result_yield_from():
         yield from Inner(text="hello")
         yield "</div>"
 
-    assert str(Outer()) == "<div><span>hello</span></div>"
+    # `Inner(...)` is now a str — `yield from` on it yields characters.
+    # The outer wrapper "".join still produces correct HTML.
+    assert Outer() == "<div><span>hello</span></div>"
 
 
 def test_html_rejects_positional_args():

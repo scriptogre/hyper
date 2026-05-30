@@ -1,90 +1,99 @@
 """Decorators for Hyper templates.
 
-The @html decorator wraps generator functions to support both modes:
-- str(Component(...)) for buffered output
-- iter(Component(...)) / yield from Component(...) for streaming
+@html wraps a generator function. Calling the wrapped function eagerly
+renders the component to an HtmlResult — a real ``str`` subclass — so the
+component works natively anywhere Python frameworks accept strings:
+
+    @html
+    def Sidebar(*, user):
+        yield f"<aside>{user}</aside>"
+
+    Sidebar(user="Ada")              # HtmlResult('<aside>Ada</aside>')
+    isinstance(Sidebar(user="Ada"), str)   # True
+
+    # FastAPI, Flask, Django — all native:
+    return Sidebar(user="Ada")
+
+    # Streaming (chunk-by-chunk, no materialization):
+    for chunk in Sidebar.stream(user="Ada"):
+        ...
+
+Async components return a coroutine that resolves to an HtmlResult:
+
+    @html
+    async def Page(*, title):
+        yield f"<title>{title}</title>"
+
+    await Page(title="x")            # HtmlResult, awaited
+    async for chunk in Page.stream(title="x"):   # async streaming
+        ...
 """
 
-import asyncio
+from __future__ import annotations
+
 import functools
 import inspect
 
-__all__ = ["html"]
+__all__ = ["html", "HtmlResult"]
 
 
-class HtmlResult:
-    """Iterable, str()-able result from an @html component."""
-    __slots__ = ("_fn", "_args", "_kwargs")
+class HtmlResult(str):
+    """Rendered HTML output from a Hyper component.
 
-    def __init__(self, fn, args, kwargs):
-        self._fn = fn
-        self._args = args
-        self._kwargs = kwargs
+    A genuine ``str`` subclass: anywhere a framework, template, or library
+    expects a string, an HtmlResult is one. The ``__html__`` method opts the
+    value out of further escaping under the MarkupSafe protocol (Jinja,
+    MarkupSafe consumers).
+    """
 
-    def __iter__(self):
-        return iter(self._fn(*self._args, **self._kwargs))
+    __slots__ = ()
 
-    def __str__(self):
-        return "".join(self._fn(*self._args, **self._kwargs))
-
-    def __repr__(self):
-        return f"HtmlResult({self._fn.__name__})"
-
-
-class AsyncHtmlResult:
-    """Async iterable, renderable result from an async @html component."""
-    __slots__ = ("_fn", "_args", "_kwargs")
-
-    def __init__(self, fn, args, kwargs):
-        self._fn = fn
-        self._args = args
-        self._kwargs = kwargs
-
-    def __aiter__(self):
-        return self._fn(*self._args, **self._kwargs)
-
-    async def render(self):
-        """Render component to string (async)."""
-        chunks = []
-        async for chunk in self._fn(*self._args, **self._kwargs):
-            chunks.append(chunk)
-        return "".join(chunks)
-
-    def __str__(self):
-        try:
-            asyncio.get_running_loop()
-            raise RuntimeError(
-                "Use 'await component.render()' in async context, "
-                "or use yield mode with 'async for'"
-            )
-        except RuntimeError as e:
-            if "no running event loop" in str(e).lower():
-                return asyncio.run(self.render())
-            raise
-
-    def __repr__(self):
-        return f"AsyncHtmlResult({self._fn.__name__})"
+    def __html__(self) -> str:
+        # MarkupSafe protocol: signals "already HTML, don't escape me again."
+        return self
 
 
 def html(fn):
-    """Decorator that wraps a generator function for HTML template output.
+    """Decorator that wraps a generator function as a Hyper component.
 
-    The wrapped function returns an HtmlResult (or AsyncHtmlResult) that supports:
-    - str(result) for buffered output
-    - iter(result) / yield from result for streaming
-    - async for chunk in result for async streaming
+    The wrapped callable returns ``HtmlResult`` (eagerly rendered). Use the
+    attached ``.stream()`` method to get the raw chunk iterator instead.
     """
     sig = inspect.signature(fn)
 
     if inspect.isasyncgenfunction(fn):
+
         @functools.wraps(fn)
-        def async_wrapper(*args, **kwargs):
-            sig.bind(*args, **kwargs)  # validate arguments eagerly
-            return AsyncHtmlResult(fn, args, kwargs)
+        async def async_wrapper(*args, **kwargs):
+            sig.bind(*args, **kwargs)
+            chunks: list[str] = []
+            async for chunk in fn(*args, **kwargs):
+                chunks.append(chunk)
+            return HtmlResult("".join(chunks))
+
+        def async_stream(*args, **kwargs):
+            sig.bind(*args, **kwargs)
+            return fn(*args, **kwargs)  # async generator
+
+        async_wrapper.stream = async_stream
+        # Discovery marker for hyper.integrations.* component discovery.
+        async_wrapper.__hyper__ = True
+        # Django: prevents the template engine from auto-calling the wrapped
+        # function during variable resolution (which would invoke it with no
+        # args). The {% hyper %} tag does the call with kwargs.
+        async_wrapper.do_not_call_in_templates = True
         return async_wrapper
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        sig.bind(*args, **kwargs)  # validate arguments eagerly
-        return HtmlResult(fn, args, kwargs)
+        sig.bind(*args, **kwargs)
+        return HtmlResult("".join(fn(*args, **kwargs)))
+
+    def stream(*args, **kwargs):
+        sig.bind(*args, **kwargs)
+        return fn(*args, **kwargs)  # raw sync generator of chunks
+
+    wrapper.stream = stream
+    wrapper.__hyper__ = True
+    wrapper.do_not_call_in_templates = True
     return wrapper
