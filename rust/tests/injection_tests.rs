@@ -1234,7 +1234,7 @@ fn test_component_close_name_has_python_range() {
 }
 
 // Note: slot names (e.g. "header" in <{...header}>) are Hyper syntax, not Python
-// expressions. They compile to _header, not header. No Python injection range
+// expressions. They compile to _header_slot, not header. No Python injection range
 // is emitted — styling comes from the TextMate grammar / annotator instead.
 
 // ========================================================================

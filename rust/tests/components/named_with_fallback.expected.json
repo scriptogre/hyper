@@ -2,9 +2,9 @@
   "injections": [
     {
       "end": 10,
-      "prefix": "from collections.abc import Iterable\nfrom hyper import html\n\n\n@html\ndef NamedWithFallback(\n        _content: Iterable[str] | None = None,\n        *,\n        ",
+      "prefix": "from collections.abc import Iterable\nfrom hyper import html\n\n\n@html\ndef NamedWithFallback(\n        _default_slot: Iterable[str] | None = None,\n        *,\n        ",
       "start": 0,
-      "suffix": ",\n        _footer: Iterable[str] | None = None,\n        _header: Iterable[str] | None = None,\n        _sidebar: Iterable[str] | None = None,\n):\n    yield \"\"\"<div class=\"layout\">\"\"\"\n    yield \"\"\"<header>\"\"\"\n    # <{...header}>\n    if _header is not None:\n        yield from _header\n    else:\n        yield \"\"\"<h1>Default Header</h1>\"\"\"\n    # </{...header}>\n    yield \"\"\"</header>\"\"\"\n\n    yield \"\"\"<nav>\"\"\"\n    # <{...sidebar}>\n    if _sidebar is not None:\n        yield from _sidebar\n    else:\n        yield \"\"\"<p>Default sidebar content</p>\"\"\"\n    # </{...sidebar}>\n    yield \"\"\"</nav>\"\"\"\n\n    yield \"\"\"<main>\"\"\"\n    # <{...}>\n    if _content is not None:\n        yield from _content\n    # </{...}>\n    yield \"\"\"</main>\"\"\"\n\n    yield \"\"\"<footer>\"\"\"\n    # <{...footer}>\n    if _footer is not None:\n        yield from _footer\n    else:\n        yield \"\"\"<p>Default footer</p>\"\"\"\n    # </{...footer}>\n    yield \"\"\"</footer>\"\"\"\n    yield \"\"\"</div>\"\"\"\n",
+      "suffix": ",\n        _footer_slot: Iterable[str] | None = None,\n        _header_slot: Iterable[str] | None = None,\n        _sidebar_slot: Iterable[str] | None = None,\n):\n    yield \"\"\"<div class=\"layout\">\"\"\"\n    yield \"\"\"<header>\"\"\"\n    # <{...header}>\n    if _header_slot is not None:\n        yield from _header_slot\n    else:\n        yield \"\"\"<h1>Default Header</h1>\"\"\"\n    # </{...header}>\n    yield \"\"\"</header>\"\"\"\n\n    yield \"\"\"<nav>\"\"\"\n    # <{...sidebar}>\n    if _sidebar_slot is not None:\n        yield from _sidebar_slot\n    else:\n        yield \"\"\"<p>Default sidebar content</p>\"\"\"\n    # </{...sidebar}>\n    yield \"\"\"</nav>\"\"\"\n\n    yield \"\"\"<main>\"\"\"\n    # <{...}>\n    if _default_slot is not None:\n        yield from _default_slot\n    # </{...}>\n    yield \"\"\"</main>\"\"\"\n\n    yield \"\"\"<footer>\"\"\"\n    # <{...footer}>\n    if _footer_slot is not None:\n        yield from _footer_slot\n    else:\n        yield \"\"\"<p>Default footer</p>\"\"\"\n    # </{...footer}>\n    yield \"\"\"</footer>\"\"\"\n    yield \"\"\"</div>\"\"\"\n",
       "type": "python"
     },
     {
@@ -143,8 +143,8 @@
   ],
   "ranges": [
     {
-      "compiled_end": 167,
-      "compiled_start": 157,
+      "compiled_end": 172,
+      "compiled_start": 162,
       "range_type": "Python",
       "source_end": 10,
       "source_start": 0

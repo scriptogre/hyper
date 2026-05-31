@@ -6,6 +6,21 @@ use super::{
 use crate::ast::*;
 use crate::transform::Helper;
 
+/// Parameter that receives a component's default-slot content.
+const DEFAULT_SLOT_PARAM: &str = "_default_slot";
+
+/// Type annotation shared by every slot parameter in a component signature.
+const SLOT_PARAM_DECL: &str = ": Iterable[str] | None = None,";
+
+/// Name of the parameter a slot binds to: default -> `_default_slot`,
+/// named -> `_<name>_slot`. Single source of truth for slot param naming.
+fn slot_param_name(name: Option<&str>) -> String {
+    match name {
+        Some(n) => format!("_{n}_slot"),
+        None => DEFAULT_SLOT_PARAM.to_string(),
+    }
+}
+
 pub struct PythonGenerator;
 
 impl PythonGenerator {
@@ -800,7 +815,8 @@ impl PythonGenerator {
         }
     }
 
-    /// Generate a safe function name from a component name
+    /// Generate the name of the local buffer function that holds a component
+    /// call's default-slot content, e.g. `Inner` -> `_inner_default_slot`.
     fn component_to_func_name(&self, name: &str) -> String {
         // Convert PascalCase to snake_case and prefix with _
         // Skip non-identifier characters (brackets, quotes, dots, etc.)
@@ -825,7 +841,7 @@ impl PythonGenerator {
         while result.ends_with('_') && result.len() > 1 {
             result.pop();
         }
-        result.push_str("_content");
+        result.push_str(DEFAULT_SLOT_PARAM);
         result
     }
 
@@ -1041,11 +1057,7 @@ impl PythonGenerator {
 
     fn emit_slot(&self, s: &SlotNode, output: &mut Output, indent: usize) {
         // Emit conditional yield from for slot content
-        let slot_var = if let Some(name) = &s.name {
-            format!("_{}", name)
-        } else {
-            "_content".to_string()
-        };
+        let slot_var = slot_param_name(s.name.as_deref());
 
         // Slot label for comments: {...} for default, {...name} for named
         let slot_label = if let Some(name) = &s.name {
@@ -1584,7 +1596,7 @@ impl Generator for PythonGenerator {
         }
         output.push(&func_name);
 
-        // Determine if we have slots (for _content parameter)
+        // Determine if we have slots (for _default_slot parameter)
         let has_default_slot = metadata.slots_used.contains("");
         let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
 
@@ -1619,10 +1631,11 @@ impl Generator for PythonGenerator {
             output.newline();
             let sig_indent = "        "; // 8 spaces — double indent for continuation
 
-            // _content parameter (positional, before keyword-only marker)
+            // _default_slot parameter (positional, before keyword-only marker)
             if has_default_slot {
                 output.push(sig_indent);
-                output.push("_content: Iterable[str] | None = None,");
+                output.push(DEFAULT_SLOT_PARAM);
+                output.push(SLOT_PARAM_DECL);
                 output.newline();
             }
 
@@ -1680,9 +1693,8 @@ impl Generator for PythonGenerator {
 
                 for slot_name in sorted_slots {
                     output.push(sig_indent);
-                    output.push("_");
-                    output.push(slot_name);
-                    output.push(": Iterable[str] | None = None,");
+                    output.push(&slot_param_name(Some(slot_name)));
+                    output.push(SLOT_PARAM_DECL);
                     output.newline();
                 }
             }
@@ -1737,7 +1749,7 @@ impl Generator for PythonGenerator {
 
         let (mut code, mappings, tracked_ranges) = output.finish();
 
-        // Determine if we need Iterable import (for _content parameter)
+        // Determine if we need Iterable import (for _default_slot parameter)
         let has_default_slot = metadata.slots_used.contains("");
         let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
         let needs_iterable = has_default_slot || has_named_slots;

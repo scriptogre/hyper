@@ -55,11 +55,11 @@ fn test_content_slot_parameter() {
 
     let code = compile(source);
 
-    //Function should have _content parameter for default slot
-    assert!(code.contains("_content"));
+    //Function should have _default_slot parameter for default slot
+    assert!(code.contains("_default_slot"));
 
     // Should be optional with Iterable type
-    assert!(code.contains("_content: Iterable[str] | None = None"));
+    assert!(code.contains("_default_slot: Iterable[str] | None = None"));
 }
 
 #[test]
@@ -107,8 +107,8 @@ fn test_parameters_with_slots() {
     // Should have parameter in signature (keyword-only, multi-line format)
     assert!(code.contains("*,") && code.contains("title: str,"));
 
-    // Should have _content parameter for default slot
-    assert!(code.contains("_content: Iterable[str] | None = None"));
+    // Should have _default_slot parameter for default slot
+    assert!(code.contains("_default_slot: Iterable[str] | None = None"));
 }
 
 #[test]

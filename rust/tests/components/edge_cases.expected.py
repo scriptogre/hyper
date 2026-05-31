@@ -12,9 +12,9 @@ def EdgeCases(
 
     # Component from dict
     # <{components['Card']}>
-    def _components_card_content():
+    def _components_card_default_slot():
         yield """<p>Content</p>"""
-    yield from components['Card'](_components_card_content())
+    yield from components['Card'](_components_card_default_slot())
     # </{components['Card']}>
 
     # Empty component (not self-closing)
@@ -22,22 +22,22 @@ def EdgeCases(
 
     # Component with only whitespace
     # <{Container}>
-    def _container_content():
+    def _container_default_slot():
         pass
-    yield from Container(_container_content())
+    yield from Container(_container_default_slot())
     # </{Container}>
 
     # Deeply nested components
     # <{Outer}>
-    def _outer_content():
+    def _outer_default_slot():
         # <{Middle}>
-        def _middle_content():
+        def _middle_default_slot():
             # <{Inner}>
-            def _inner_content():
+            def _inner_default_slot():
                 yield """<span>Deep</span>"""
-            yield from Inner(_inner_content())
+            yield from Inner(_inner_default_slot())
             # </{Inner}>
-        yield from Middle(_middle_content())
+        yield from Middle(_middle_default_slot())
         # </{Middle}>
-    yield from Outer(_outer_content())
+    yield from Outer(_outer_default_slot())
     # </{Outer}>

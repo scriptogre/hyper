@@ -4,18 +4,18 @@ from hyper import html
 
 @html
 def NamedWithFallback(
-        _content: Iterable[str] | None = None,
+        _default_slot: Iterable[str] | None = None,
         *,
         title: str,
-        _footer: Iterable[str] | None = None,
-        _header: Iterable[str] | None = None,
-        _sidebar: Iterable[str] | None = None,
+        _footer_slot: Iterable[str] | None = None,
+        _header_slot: Iterable[str] | None = None,
+        _sidebar_slot: Iterable[str] | None = None,
 ):
     yield """<div class="layout">"""
     yield """<header>"""
     # <{...header}>
-    if _header is not None:
-        yield from _header
+    if _header_slot is not None:
+        yield from _header_slot
     else:
         yield """<h1>Default Header</h1>"""
     # </{...header}>
@@ -23,8 +23,8 @@ def NamedWithFallback(
 
     yield """<nav>"""
     # <{...sidebar}>
-    if _sidebar is not None:
-        yield from _sidebar
+    if _sidebar_slot is not None:
+        yield from _sidebar_slot
     else:
         yield """<p>Default sidebar content</p>"""
     # </{...sidebar}>
@@ -32,15 +32,15 @@ def NamedWithFallback(
 
     yield """<main>"""
     # <{...}>
-    if _content is not None:
-        yield from _content
+    if _default_slot is not None:
+        yield from _default_slot
     # </{...}>
     yield """</main>"""
 
     yield """<footer>"""
     # <{...footer}>
-    if _footer is not None:
-        yield from _footer
+    if _footer_slot is not None:
+        yield from _footer_slot
     else:
         yield """<p>Default footer</p>"""
     # </{...footer}>

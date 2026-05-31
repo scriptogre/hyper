@@ -6,7 +6,7 @@ from hyper import html, escape, safe, render_class, render_style, render_attr, r
 # Open this file in JetBrains after any injection change and verify highlighting.
 @html
 def KitchenSink(
-        _content: Iterable[str] | None = None,
+        _default_slot: Iterable[str] | None = None,
         *,
         name: str,
         count: int = 0,
@@ -24,8 +24,8 @@ def KitchenSink(
         names: list = [],
         scores: list = [],
         matrix: list = [],
-        _header: Iterable[str] | None = None,
-        _sidebar: Iterable[str] | None = None,
+        _header_slot: Iterable[str] | None = None,
+        _sidebar_slot: Iterable[str] | None = None,
 ):
     ########################################
     # STATEMENTS
@@ -255,8 +255,8 @@ Text after elements"""
         yield """<div class="card">"""
         yield f"""<h2>{escape(title)}</h2>"""
         # <{...}>
-        if _content is not None:
-            yield from _content
+        if _default_slot is not None:
+            yield from _default_slot
         # </{...}>
         yield """</div>"""
     def format_name(n: str) -> str:
@@ -275,9 +275,9 @@ Text after elements"""
     yield from Badge(text=format_name(name))
 
     # <{CachedList}>
-    def _cached_list_content():
+    def _cached_list_default_slot():
         yield """<p>Fallback content</p>"""
-    yield from CachedList(_cached_list_content(), entries=items)
+    yield from CachedList(_cached_list_default_slot(), entries=items)
     # </{CachedList}>
 
     yield from callback()
@@ -287,22 +287,22 @@ Text after elements"""
     # SLOTS
     ########################################
     # <{...header}>
-    if _header is not None:
-        yield from _header
+    if _header_slot is not None:
+        yield from _header_slot
     else:
         yield """<h2>Default Header</h2>"""
     # </{...header}>
 
     # <{...sidebar}>
-    if _sidebar is not None:
-        yield from _sidebar
+    if _sidebar_slot is not None:
+        yield from _sidebar_slot
     else:
         yield """<nav>Default Nav</nav>"""
     # </{...sidebar}>
 
     # <{...}>
-    if _content is not None:
-        yield from _content
+    if _default_slot is not None:
+        yield from _default_slot
     # </{...}>
 
 
