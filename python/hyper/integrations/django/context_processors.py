@@ -1,14 +1,18 @@
-"""Django context processors for Hyper components."""
+"""
+Django context processor for Hyper components.
+"""
 
 from __future__ import annotations
 
-from hyper.integrations.django import _registry
+from django.apps import apps
 
 
 def components(request):
-    """Inject every discovered Hyper component into the template context.
-
-    Add to your DTE backend's ``OPTIONS["context_processors"]`` to make
-    ``{% hyper Sidebar user=user %}`` resolve without per-view wiring.
     """
-    return _registry.all_components()
+    Put every discovered component into the template context, so any
+    template can call one by name:
+
+        {% hyper Sidebar user=user / %}
+    """
+    # {"Sidebar": <Sidebar component>, "Card": <Card component>, ...}
+    return dict(apps.get_app_config("hyper").components)

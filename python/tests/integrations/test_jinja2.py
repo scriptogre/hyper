@@ -47,7 +47,7 @@ def test_component_renders_into_jinja_template_unescaped(components_dir: Path):
 
     out = template.render()
 
-    # Hyper output reached Jinja as safe HTML via __html__ — angle brackets intact.
+    # Hyper output reached Jinja as safe HTML via __html__; angle brackets intact.
     assert out == "<p>Hello, Ada!</p>"
 
 
@@ -76,7 +76,7 @@ def test_hyper_escapes_user_input_inside_component(components_dir: Path):
 def test_choice_loader_walks_all_search_paths(tmp_path, components_dir: Path):
     other_dir = tmp_path / "other"
     other_dir.mkdir()
-    # Empty extra path — finder should still discover from components_dir.
+    # Empty extra path; finder should still discover from components_dir.
 
     env = _env(
         ChoiceLoader(
@@ -101,20 +101,20 @@ def test_warns_on_non_introspectable_loader_and_skips_discovery():
     assert "Greeting" not in env.globals
 
 
-def test_register_hyper_components_with_callable():
+def test_register_components_with_callable():
     env = _env(DictLoader({"index.html": "{{ Custom(x='hi') }}"}))
 
     @html
     def Custom(*, x: str):
         yield f"<b>{x}</b>"
 
-    env.register_hyper_components(Custom)
+    env.register_components(Custom)
 
     out = env.get_template("index.html").render()
     assert out == "<b>hi</b>"
 
 
-def test_register_hyper_components_with_iterable():
+def test_register_components_with_iterable():
     env = _env(DictLoader({}))
 
     @html
@@ -125,13 +125,13 @@ def test_register_hyper_components_with_iterable():
     def B(*, v: str):
         yield f"<b>{v}</b>"
 
-    env.register_hyper_components([A, B])
+    env.register_components([A, B])
 
-    assert env.globals["A"] is A
-    assert env.globals["B"] is B
+    assert env.globals["A"](v="x") == "<a>x</a>"
+    assert env.globals["B"](v="y") == "<b>y</b>"
 
 
-def test_register_hyper_components_with_package(components_dir: Path, monkeypatch):
+def test_register_components_with_package(components_dir: Path, monkeypatch):
     # Use the discovery-from-package code path via the test fixtures package.
     import sys
     fixtures_root = components_dir.parent.parent
@@ -145,13 +145,105 @@ def test_register_hyper_components_with_package(components_dir: Path, monkeypatc
     pkg = importlib.import_module("fixtures.components")
 
     env = _env(DictLoader({}))
-    env.register_hyper_components(pkg)
+    env.register_components(pkg)
 
     assert "Greeting" in env.globals
     assert "Card" in env.globals
 
 
-def test_register_hyper_components_rejects_garbage():
+def test_register_components_rejects_garbage():
     env = _env(DictLoader({}))
     with pytest.raises(TypeError):
-        env.register_hyper_components(42)
+        env.register_components(42)
+
+
+# --- {% hyper %} / {% slot %} ------------------------------------------------
+
+
+def test_hyper_tag_fills_default_and_named_slots(components_dir: Path):
+    env = _env(FileSystemLoader(str(components_dir)))
+    template = env.from_string(
+        "{% hyper Panel(title='Pricing') %}"
+        "<p>Body</p>"
+        "{% slot actions %}<a href=\"/buy\">Buy</a>{% endslot %}"
+        "{% endhyper %}"
+    )
+    out = template.render()
+
+    assert "<h2>Pricing</h2>" in out
+    assert "<p>Body</p>" in out
+    assert '<a href="/buy">Buy</a>' in out
+    assert "No actions" not in out  # named slot replaced the fallback
+
+
+def test_slots_work_in_an_async_environment():
+    # The slot rewrite is plain Jinja, so an async env + async component just
+    # works: AssignBlock captures and the call all compile to async code.
+    import asyncio
+
+    @html
+    async def Panel(*, title, _default_slot=None, _actions_slot=None):
+        yield f"<h2>{title}</h2>"
+        for s in _actions_slot or ["No actions"]:
+            yield s
+
+    env = Environment(loader=DictLoader({}), enable_async=True)
+    env.add_extension(HyperExtension)
+    env.globals["Panel"] = Panel
+
+    template = env.from_string(
+        "{% hyper Panel(title='Pricing') %}"
+        "{% slot actions %}<a>Buy</a>{% endslot %}"
+        "{% endhyper %}"
+    )
+    out = asyncio.run(template.render_async())
+
+    assert out == "<h2>Pricing</h2><a>Buy</a>"
+
+
+def test_slot_outside_hyper_is_a_syntax_error(components_dir: Path):
+    # {% slot %} only means something inside a {% hyper %} block. Used loose, it
+    # fails at parse time rather than miscompiling.
+    from jinja2 import TemplateSyntaxError
+
+    env = _env(FileSystemLoader(str(components_dir)))
+    with pytest.raises(TemplateSyntaxError, match="inside a .* hyper"):
+        env.from_string("{% slot actions %}<a>Buy</a>{% endslot %}")
+
+
+def test_omitted_named_slot_renders_fallback(components_dir: Path):
+    env = _env(FileSystemLoader(str(components_dir)))
+    template = env.from_string(
+        "{% hyper Panel(title='Pricing') %}<p>Body</p>{% endhyper %}"
+    )
+    out = template.render()
+
+    assert "<p>Body</p>" in out
+    assert "No actions" in out  # actions slot not supplied -> fallback
+
+
+def test_blank_body_leaves_default_slot_empty(components_dir: Path):
+    env = _env(FileSystemLoader(str(components_dir)))
+    template = env.from_string("{% hyper Panel(title='Pricing') %}   {% endhyper %}")
+    out = template.render()
+
+    assert "<h2>Pricing</h2>" in out
+    assert "No actions" in out
+
+
+def test_hyper_tag_spreads_a_dict(components_dir: Path):
+    env = _env(FileSystemLoader(str(components_dir)))
+    template = env.from_string(
+        "{% hyper Panel(**props) %}<p>Body</p>{% endhyper %}"
+    )
+    out = template.render(props={"title": "Pricing"})
+
+    assert "<h2>Pricing</h2>" in out
+
+
+def test_hyper_tag_rejects_non_call_expression(components_dir: Path):
+    from jinja2.exceptions import TemplateSyntaxError
+
+    env = _env(FileSystemLoader(str(components_dir)))
+    with pytest.raises(TemplateSyntaxError):
+        env.from_string("{% hyper Panel %}{% endhyper %}")

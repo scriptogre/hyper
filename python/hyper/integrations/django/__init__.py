@@ -23,10 +23,8 @@ template can use ``{% hyper Component arg=value %}`` without ``{% load %}``:
         },
     }]
 
-The Django app's ``ready()`` walks every installed app for a ``components/``
-subdirectory and imports the compiled ``.py`` siblings of ``.hyper`` files.
-Discovered components are exposed to every DTE template via the context
-processor.
+At startup the app looks wherever Django looks for templates (every ``DIRS``
+entry, plus each app's ``templates/`` when ``APP_DIRS`` is on) and imports the
+compiled ``.py`` sibling of every ``.hyper`` file. The context processor then
+hands those components to every template.
 """
-
-default_app_config = "hyper.integrations.django.apps.HyperConfig"

@@ -1,28 +1,26 @@
-"""Tests for FastAPI integration.
+"""Tests for using Hyper components with FastAPI.
 
-Verifies the goal: write standard FastAPI routes, return Hyper components
-directly, no wrappers, no str() calls, and no explicit hyper.integrations.*
-import — Hyper auto-registers with FastAPI on first component instantiation.
+A component is a ``str`` subclass, so a route returns it directly. FastAPI's
+default response is JSON, so mark the response HTML with ``response_class`` (or
+``default_response_class``). ``.stream()`` feeds a ``StreamingResponse``.
+
+The snippets here mirror the FastAPI block in docs/design/integrations.md.
 """
 
 from __future__ import annotations
 
-import pytest
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.testclient import TestClient
 
-from hyper import html
+from hyper import escape, html
 
 
 @html
-def Sidebar(*, user: str):
-    yield f"<aside>{user}</aside>"
-
-
-@html
-def Page(*, title: str):
-    yield f"<html><body><h1>{title}</h1></body></html>"
+def Greeting(*, name: str):
+    yield "<h1>Hello "
+    yield escape(name)  # a component escapes its own inputs
+    yield "</h1>"
 
 
 def test_return_component_with_per_route_html_response():
@@ -30,88 +28,66 @@ def test_return_component_with_per_route_html_response():
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return Sidebar(user="Ada")
+        return Greeting(name="Ada")
 
-    client = TestClient(app)
-    r = client.get("/")
+    r = TestClient(app).get("/")
 
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/html")
-    assert r.text == "<aside>Ada</aside>"
+    assert r.text == "<h1>Hello Ada</h1>"
 
 
 def test_return_component_with_default_response_class():
-    """The app-level default_response_class pattern — even cleaner."""
+    """The app-level default_response_class pattern, even cleaner."""
     app = FastAPI(default_response_class=HTMLResponse)
 
     @app.get("/")
     def index():
-        return Page(title="Welcome")
+        return Greeting(name="Ada")
 
-    client = TestClient(app)
-    r = client.get("/")
+    r = TestClient(app).get("/")
 
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/html")
-    assert "<h1>Welcome</h1>" in r.text
+    assert r.text == "<h1>Hello Ada</h1>"
 
 
-def test_user_input_escaped_in_component(components_dir):
-    """Real compiled components escape their inputs — verify end-to-end through FastAPI."""
-    import sys
-    sys.path.insert(0, str(components_dir.parent.parent))
-    try:
-        from fixtures.components.Greeting import Greeting
-    finally:
-        sys.path.pop(0)
-
+def test_user_input_escaped_in_component():
     app = FastAPI(default_response_class=HTMLResponse)
 
     @app.get("/{name}")
     def show(name: str):
         return Greeting(name=name)
 
-    client = TestClient(app)
-    r = client.get("/<script>")
+    r = TestClient(app).get("/<script>")
 
     assert "<script>" not in r.text
     assert "&lt;script&gt;" in r.text
 
 
-def test_streaming_response_consumes_component_chunks():
-    """StreamingResponse already works because HtmlResult is iterable — no glue needed."""
-
-    @html
-    def Many():
-        for i in range(3):
-            yield f"<p>{i}</p>"
-
+def test_streaming_response_with_stream_method():
     app = FastAPI()
 
-    @app.get("/")
-    def index():
-        return StreamingResponse(Many(), media_type="text/html")
+    @app.get("/stream")
+    def stream():
+        return StreamingResponse(Greeting.stream(name="Ada"), media_type="text/html")
 
-    client = TestClient(app)
-    r = client.get("/")
+    r = TestClient(app).get("/stream")
 
     assert r.status_code == 200
-    assert r.text == "<p>0</p><p>1</p><p>2</p>"
+    assert r.headers["content-type"].startswith("text/html")
+    assert r.text == "<h1>Hello Ada</h1>"
 
 
 def test_returning_html_response_directly_still_works():
-    """Users who want the explicit form should still be able to use it."""
+    """The explicit form, for users who want it."""
     app = FastAPI()
 
     @app.get("/")
     def index():
-        # HtmlResult has an .encode() method? No — but str(HtmlResult) is the
-        # documented path for explicit HTMLResponse use. This test pins that
-        # behavior.
-        return HTMLResponse(str(Sidebar(user="Ada")))
+        return HTMLResponse(Greeting(name="Ada"))
 
-    client = TestClient(app)
-    r = client.get("/")
+    r = TestClient(app).get("/")
 
     assert r.status_code == 200
-    assert r.text == "<aside>Ada</aside>"
+    assert r.text == "<h1>Hello Ada</h1>"

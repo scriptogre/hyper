@@ -1,31 +1,17 @@
-"""Decorators for Hyper templates.
-
-@html wraps a generator function. Calling the wrapped function eagerly
-renders the component to an HtmlResult — a real ``str`` subclass — so the
-component works natively anywhere Python frameworks accept strings:
+"""
+@html turns a generator into a component: call it and get HTML back.
 
     @html
     def Sidebar(*, user):
         yield f"<aside>{user}</aside>"
 
-    Sidebar(user="Ada")              # HtmlResult('<aside>Ada</aside>')
-    isinstance(Sidebar(user="Ada"), str)   # True
+    Sidebar(user="Ada")         # "<aside>Ada</aside>", a real str
+    Sidebar.stream(user="Ada")  # iterator of chunks, nothing materialized
 
-    # FastAPI, Flask, Django — all native:
-    return Sidebar(user="Ada")
+Async components work the same, awaited:
 
-    # Streaming (chunk-by-chunk, no materialization):
-    for chunk in Sidebar.stream(user="Ada"):
-        ...
-
-Async components return a coroutine that resolves to an HtmlResult:
-
-    @html
-    async def Page(*, title):
-        yield f"<title>{title}</title>"
-
-    await Page(title="x")            # HtmlResult, awaited
-    async for chunk in Page.stream(title="x"):   # async streaming
+    await Page(title="x")
+    async for chunk in Page.stream(title="x"):
         ...
 """
 
@@ -38,18 +24,14 @@ __all__ = ["html", "HtmlResult"]
 
 
 class HtmlResult(str):
-    """Rendered HTML output from a Hyper component.
-
-    A genuine ``str`` subclass: anywhere a framework, template, or library
-    expects a string, an HtmlResult is one. The ``__html__`` method opts the
-    value out of further escaping under the MarkupSafe protocol (Jinja,
-    MarkupSafe consumers).
+    """
+    A component's output. A real ``str``, so it works anywhere a string does.
+    ``__html__`` tells Jinja/MarkupSafe it's already HTML, not to escape again.
     """
 
     __slots__ = ()
 
     def __html__(self) -> str:
-        # MarkupSafe protocol: signals "already HTML, don't escape me again."
         return self
 
 

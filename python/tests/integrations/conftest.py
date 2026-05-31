@@ -21,7 +21,7 @@ BINARY = Path(__file__).resolve().parents[3] / "rust" / "target" / "release" / "
 def compile_fixture_components():
     """Compile every .hyper file under fixtures/ before the integration tests run.
 
-    Fails the session loudly when the release binary is missing — tests rely on
+    Fails the session loudly when the release binary is missing; tests rely on
     real compiled output, not hand-written stubs.
     """
     if not BINARY.exists():
@@ -65,10 +65,12 @@ def components_dir() -> Path:
 def _clear_component_registry():
     """Wipe the Django registry between tests so leakage doesn't mask bugs."""
     try:
-        from hyper.integrations.django import _registry  # type: ignore
+        from django.apps import apps  # type: ignore
+
+        config = apps.get_app_config("hyper")
     except Exception:
         yield
         return
-    _registry.set_components({})
+    config.components = {}
     yield
-    _registry.set_components({})
+    config.components = {}

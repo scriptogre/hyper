@@ -79,30 +79,30 @@ def _render(source: str, context: dict | None = None) -> str:
 
 
 def test_registry_populated_on_app_ready():
-    from hyper.integrations.django import _registry
+    from django.apps import apps as django_apps
 
-    components = _registry.all_components()
+    components = django_apps.get_app_config("hyper").components
     assert "Greeting" in components
     assert "Card" in components
     assert callable(components["Greeting"])
 
 
 def test_hyper_tag_renders_component_via_context_variable():
-    out = _render("{% hyper Greeting name='Ada' %}", _context_with_components())
+    out = _render("{% hyper Greeting name='Ada' / %}", _context_with_components())
     assert out == "<p>Hello, Ada!</p>"
 
 
 def test_hyper_tag_marks_output_safe():
-    out = _render("{% hyper Card title='Hi' body='There' %}", _context_with_components())
+    out = _render("{% hyper Card title='Hi' body='There' / %}", _context_with_components())
     assert "<h2>Hi</h2>" in out
     assert "<p>There</p>" in out
     assert "&lt;" not in out  # the output should not be escaped
 
 
 def test_hyper_tag_escapes_user_input_inside_component():
-    # The component still escapes its arguments — user-supplied HTML in arguments is safe.
+    # The component still escapes its arguments; user-supplied HTML in arguments is safe.
     out = _render(
-        "{% hyper Greeting name=evil %}",
+        "{% hyper Greeting name=evil / %}",
         {**_context_with_components(), "evil": "<script>"},
     )
     assert "<script>" not in out
@@ -111,7 +111,7 @@ def test_hyper_tag_escapes_user_input_inside_component():
 
 def test_hyper_tag_accepts_dotted_string_path():
     out = _render(
-        "{% hyper 'fixtures.components.Greeting.Greeting' name='Linus' %}",
+        "{% hyper 'fixtures.components.Greeting.Greeting' name='Linus' / %}",
         {},  # no context processor needed for string-path lookups
     )
     assert out == "<p>Hello, Linus!</p>"
@@ -121,14 +121,89 @@ def test_hyper_tag_errors_on_unknown_component():
     from django.template import TemplateSyntaxError
 
     with pytest.raises(TemplateSyntaxError):
-        _render("{% hyper 'does.not.exist' %}", {})
+        _render("{% hyper 'does.not.exist' / %}", {})
 
 
 def test_hyper_tag_errors_on_bare_string():
     from django.template import TemplateSyntaxError
 
     with pytest.raises(TemplateSyntaxError):
-        _render("{% hyper 'JustAName' %}", {})
+        _render("{% hyper 'JustAName' / %}", {})
+
+
+# --- slots -------------------------------------------------------------------
+
+
+def test_default_slot_fills_from_body():
+    out = _render(
+        "{% hyper Panel title='Pricing' %}<p>Body here</p>{% endhyper %}",
+        _context_with_components(),
+    )
+    assert "<h2>Pricing</h2>" in out
+    assert "<p>Body here</p>" in out
+
+
+def test_named_slot_overrides_fallback():
+    out = _render(
+        "{% hyper Panel title='Pricing' %}"
+        "<p>Body</p>"
+        "{% slot actions %}<a href='/buy'>Buy</a>{% endslot %}"
+        "{% endhyper %}",
+        _context_with_components(),
+    )
+    assert "<a href='/buy'>Buy</a>" in out or '<a href="/buy">Buy</a>' in out
+    assert "No actions" not in out  # fallback replaced
+
+
+def test_omitted_named_slot_renders_fallback():
+    out = _render(
+        "{% hyper Panel title='Pricing' %}<p>Body</p>{% endhyper %}",
+        _context_with_components(),
+    )
+    assert "No actions" in out  # named slot not supplied -> fallback
+
+
+def test_whitespace_only_body_leaves_default_slot_empty():
+    # The default slot has no fallback in Panel, so blank body yields nothing there.
+    out = _render(
+        "{% hyper Panel title='Pricing' %}   \n  {% endhyper %}",
+        _context_with_components(),
+    )
+    assert "<h2>Pricing</h2>" in out
+    assert "No actions" in out  # still falls back for the actions slot
+
+
+def test_spread_passes_non_conflicting_props():
+    out = _render(
+        "{% hyper Card title='Hi' **extra / %}",
+        {**_context_with_components(), "extra": {"body": "There"}},
+    )
+    assert "<h2>Hi</h2>" in out
+    assert "<p>There</p>" in out
+
+
+def test_spread_conflicting_key_raises_like_python():
+    # A spread that collides with an explicit kwarg raises, same as Python/Jinja.
+    from django.template import TemplateSyntaxError
+
+    with pytest.raises(TemplateSyntaxError):
+        _render(
+            "{% hyper Greeting name='Ada' **extra / %}",
+            {**_context_with_components(), "extra": {"name": "Linus"}},
+        )
+
+
+def test_discovery_scans_configured_template_dirs():
+    # The fixtures live under a DIRS entry; discovery finds them with no setting.
+    from django.apps import apps as django_apps
+    from hyper.integrations.django.apps import HyperConfig
+
+    config = django_apps.get_app_config("hyper")
+    HyperConfig.ready(config)
+
+    assert "Greeting" in config.components
+    assert "Card" in config.components
+    assert "Panel" in config.components
 
 
 # --- helpers -----------------------------------------------------------------
@@ -136,6 +211,6 @@ def test_hyper_tag_errors_on_bare_string():
 
 def _context_with_components() -> dict:
     """Build a context that mimics what the components context processor would inject."""
-    from hyper.integrations.django import _registry
+    from django.apps import apps as django_apps
 
-    return dict(_registry.all_components())
+    return dict(django_apps.get_app_config("hyper").components)

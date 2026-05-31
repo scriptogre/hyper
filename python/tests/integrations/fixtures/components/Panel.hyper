@@ -1,0 +1,11 @@
+title: str
+---
+<section class="panel">
+    <h2>{title}</h2>
+    {...}
+    <footer>
+        <{...actions}>
+            <span>No actions</span>
+        </{...actions}>
+    </footer>
+</section>

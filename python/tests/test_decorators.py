@@ -70,7 +70,7 @@ def test_yield_from_composition_still_produces_correct_html():
         yield from Inner(text="hello")
         yield "</div>"
 
-    # `Inner(...)` is now a str — `yield from` on it yields characters.
+    # `Inner(...)` is now a str; `yield from` on it yields characters.
     # The outer wrapper "".join still produces correct HTML.
     assert Outer() == "<div><span>hello</span></div>"
 
