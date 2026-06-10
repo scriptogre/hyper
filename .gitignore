@@ -15,6 +15,10 @@ rust/playground/
 # Generated .py files in test directories (only .expected.py should be tracked)
 rust/tests/**/*.py
 !rust/tests/**/*.expected.py
+python/tests/bench/templates/*.py
+
+# Benchmark result snapshots
+.benchmarks/
 
 # Rust build artifacts
 rust/target/

@@ -1,0 +1,45 @@
+title: str
+products: list = []
+show_banner: bool = True
+---
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar">
+            <a href="/" class="brand">Shop</a>
+            <ul class="nav-links">
+                <li><a href="/products">Products</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/cart">Cart</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    if show_banner:
+        <div class="banner">Free shipping on orders over $50</div>
+    end
+
+    <main class="container">
+        <h1>{title}</h1>
+        <ul class="product-grid">
+        for p in products:
+            <li class="product-card">
+                <h2 class="product-name">{p["name"]}</h2>
+                <p class="product-desc">{p["description"]}</p>
+                <span class="product-price">${p["price"]}</span>
+                <button class="add-btn" data-id={p["id"]}>Add to cart</button>
+            </li>
+        end
+        </ul>
+    </main>
+
+    <footer class="site-footer">
+        <p>Copyright 2026 Shop. All rights reserved.</p>
+    </footer>
+</body>
+</html>

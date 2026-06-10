@@ -5,6 +5,11 @@ These functions are used by compiled templates to safely render HTML.
 
 import re
 
+try:
+    from markupsafe._speedups import _escape_inner as _c_escape
+except ImportError:
+    _c_escape = None
+
 __all__ = [
     'Safe',
     'safe',
@@ -58,8 +63,8 @@ def escape_html(value) -> str:
     - & → &amp;
     - < → &lt;
     - > → &gt;
-    - " → &quot;
-    - ' → &#x27;
+    - " → &#34;
+    - ' → &#39;
 
     If the value has an __html__ method (like Safe), returns that directly
     without escaping.
@@ -72,22 +77,28 @@ def escape_html(value) -> str:
 
     Example:
         >>> escape_html("<script>alert('XSS')</script>")
-        "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
+        "&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;"
         >>> escape_html(safe("<b>bold</b>"))
         "<b>bold</b>"
     """
-    if value is None:
+    if type(value) is str:
+        s = value
+    elif value is None:
         return ''
-    if hasattr(value, '__html__'):
+    elif hasattr(value, '__html__'):
         return value.__html__()
+    else:
+        s = str(value)
 
-    s = str(value)
+    if _c_escape is not None:
+        return _c_escape(s)
+
     return (s
         .replace('&', '&amp;')
         .replace('<', '&lt;')
         .replace('>', '&gt;')
-        .replace('"', '&quot;')
-        .replace("'", '&#x27;'))
+        .replace('"', '&#34;')
+        .replace("'", '&#39;'))
 
 
 def render_attr(name: str, value) -> str:
