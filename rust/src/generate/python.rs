@@ -4,7 +4,7 @@ use super::{
     html_ranges_for_component, html_ranges_for_element,
 };
 use crate::ast::*;
-use crate::transform::Helper;
+use crate::transform::{Helper, rename_reserved_keywords};
 
 /// Parameter that receives a component's default-slot content.
 const DEFAULT_SLOT_PARAM: &str = "_default_slot";
@@ -26,15 +26,6 @@ pub struct PythonGenerator;
 impl PythonGenerator {
     pub fn new() -> Self {
         Self
-    }
-
-    /// Convert reserved Python keywords to safe variable names
-    fn safe_var_name(&self, name: &str) -> String {
-        match name {
-            "class" => "class_".to_string(),
-            "type" => "type_".to_string(),
-            _ => name.to_string(),
-        }
     }
 
     /// Check if a list of nodes contains only whitespace/newline text (no real content)
@@ -360,8 +351,8 @@ impl PythonGenerator {
                     let content_start = expr_span.start.byte + 1;
                     let content_end = expr_span.end.byte - 1;
 
-                    // Convert reserved keywords in expressions to safe variable names
-                    let safe_expr = self.safe_var_name(expr.trim());
+                    // Already renamed in the AST by ReservedKeywordPlugin.
+                    let safe_expr = expr.trim().to_string();
 
                     if name == "class" {
                         output.push(" ");
@@ -441,8 +432,9 @@ impl PythonGenerator {
             }
             AttributeKind::Shorthand { name, expr_span } => {
                 if in_fstring {
-                    // Use safe variable name for reserved keywords
-                    let var_name = self.safe_var_name(name);
+                    // Shorthand maps one AST field to two outputs: the HTML attr name
+                    // stays, the Python value variable renames. So rename here.
+                    let var_name = rename_reserved_keywords(name);
                     // Shorthand expr_span.end points TO closing brace (not past it),
                     // so content_end = end.byte gives exclusive end of the name content
                     let content_start = expr_span.start.byte + 1;
@@ -503,8 +495,8 @@ impl PythonGenerator {
             }
             AttributeKind::Spread { expr, expr_span } => {
                 if in_fstring {
-                    let trimmed_expr = expr.trim();
-                    let safe_expr = self.safe_var_name(trimmed_expr);
+                    // Spread expr is already renamed in the AST by ReservedKeywordPlugin.
+                    let safe_expr = expr.trim().to_string();
                     // Spread expr_span: {**expr} — skip 3 chars for "{**"
                     let content_start = expr_span.start.byte + 3;
                     let content_end = expr_span.end.byte;
@@ -593,7 +585,8 @@ impl PythonGenerator {
                                 }
                             }
                             let expr_byte_end = byte_offset - 1; // before '}'
-                            let safe_expr = self.safe_var_name(expr.trim());
+                            // Template value is parsed here, so rename the extracted expr.
+                            let safe_expr = rename_reserved_keywords(expr.trim());
                             output.push("{escape(");
                             let start = output.position();
                             output.push(&safe_expr);
@@ -1003,13 +996,13 @@ impl PythonGenerator {
                 output.push("=True");
             }
             AttributeKind::Shorthand { name, expr_span } => {
-                let var_name = self.safe_var_name(name);
+                // name is already renamed in the AST by ReservedKeywordPlugin.
                 let content_start = expr_span.start.byte + 1;
                 let content_end = expr_span.end.byte;
                 output.push(name);
                 output.push("=");
                 let s = output.position();
-                output.push(&var_name);
+                output.push(name);
                 let e = output.position();
                 output.add_range(Range {
                     range_type: RangeType::Python,
@@ -1358,28 +1351,12 @@ impl PythonGenerator {
     fn emit_statement(&self, stmt: &StatementNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
 
-        // Rename Python reserved keywords used as variable names in assignments.
-        // This matches how shorthand attributes rename {class} → class_, {type} → type_.
-        let owned_statement;
-        let statement = if stmt.stmt.starts_with("class ") || stmt.stmt.starts_with("class=") {
-            owned_statement = format!("class_{}", &stmt.stmt["class".len()..]);
-            &owned_statement
-        } else if stmt.stmt.starts_with("type ") || stmt.stmt.starts_with("type=") {
-            owned_statement = format!("type_{}", &stmt.stmt["type".len()..]);
-            &owned_statement
-        } else {
-            &stmt.stmt
-        };
-
-        // Only create injection range for non-renamed statements
-        let is_renamed = statement != &stmt.stmt;
-
         let start = output.position();
 
         // For multiline statements, add indent to each continuation line
-        if statement.contains('\n') {
+        if stmt.stmt.contains('\n') {
             let indent_str = "    ".repeat(indent);
-            let lines: Vec<&str> = statement.split('\n').collect();
+            let lines: Vec<&str> = stmt.stmt.split('\n').collect();
             for (i, line) in lines.iter().enumerate() {
                 if i > 0 {
                     output.push(&indent_str);
@@ -1390,22 +1367,20 @@ impl PythonGenerator {
                 }
             }
         } else {
-            output.push(statement);
+            output.push(&stmt.stmt);
         }
 
         let end = output.position();
 
-        if !is_renamed {
-            output.add_range(Range {
-                range_type: RangeType::Python,
-                source_start: stmt.span.start.byte,
-                source_end: stmt.span.end.byte,
-                compiled_start: start,
-                compiled_end: end,
-                needs_injection: true,
-                html_prefix: None,
-            });
-        }
+        output.add_range(Range {
+            range_type: RangeType::Python,
+            source_start: stmt.span.start.byte,
+            source_end: stmt.span.end.byte,
+            compiled_start: start,
+            compiled_end: end,
+            needs_injection: true,
+            html_prefix: None,
+        });
 
         output.newline();
     }

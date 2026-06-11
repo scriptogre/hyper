@@ -1,21 +1,15 @@
 use crate::helpers::compile;
 use hyper_transpiler::generate::RangeType;
 use hyper_transpiler::parser::tokenizer::{Token, tokenize};
+use hyper_transpiler::transform::rename_reserved_keywords;
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
 
-/// True when an expression's first identifier is a reserved keyword the generator
-/// renames (`class` to `class_`), so its dropped injection range is expected.
-fn starts_with_reserved_keyword(expr: &str) -> bool {
-    let body = expr.trim_start();
-    ["class", "type"].iter().any(|kw| {
-        body.strip_prefix(kw).is_some_and(|rest| {
-            rest.chars()
-                .next()
-                .is_none_or(|c| !c.is_alphanumeric() && c != '_')
-        })
-    })
+/// True when the generator renames the expression (`class` to `class_`), so its
+/// injection range is intentionally dropped (source differs from compiled).
+fn is_renamed(expr: &str) -> bool {
+    rename_reserved_keywords(expr) != expr
 }
 
 pub fn run(path: &PathBuf) -> Result<(), Failed> {
@@ -174,15 +168,11 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                     // Get (inner_start, inner_end) excluding delimiters
                     let inner = match &attr.value {
                         // class={expr}: inner skips { and }.
-                        AttributeValue::Expression(expr, s)
-                            if !starts_with_reserved_keyword(expr) =>
-                        {
+                        AttributeValue::Expression(expr, s) if !is_renamed(expr) => {
                             Some((s.start.byte + 1, s.end.byte - 1))
                         }
                         // {name}: inner skips { (span.end is before }, so no -1).
-                        AttributeValue::Shorthand(name, s)
-                            if !starts_with_reserved_keyword(name) =>
-                        {
+                        AttributeValue::Shorthand(name, s) if !is_renamed(name) => {
                             Some((s.start.byte + 1, s.end.byte))
                         }
                         _ => None,

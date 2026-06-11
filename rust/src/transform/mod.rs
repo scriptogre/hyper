@@ -10,7 +10,7 @@ pub use async_detect::AsyncDetectionPlugin;
 pub use helper_detect::HelperDetectionPlugin;
 pub use metadata::{BLESSED_SPREAD_NAMES, Helper, TransformMetadata};
 pub use mutable_default_detect::MutableDefaultDetectionPlugin;
-pub use reserved_keyword::ReservedKeywordPlugin;
+pub use reserved_keyword::{ReservedKeywordPlugin, rename_reserved_keywords};
 pub use slot_detect::SlotDetectionPlugin;
 pub use spread_detect::SpreadDetectionPlugin;
 

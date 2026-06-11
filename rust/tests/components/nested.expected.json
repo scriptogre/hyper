@@ -93,7 +93,7 @@
     },
     {
       "end": 487,
-      "prefix": "(_alert_default_slot(), type_=\"info\")\n        # </{Alert}>\n    # Components in loop\n    for ",
+      "prefix": "(_alert_default_slot(), type=\"info\")\n        # </{Alert}>\n    # Components in loop\n    for ",
       "start": 474,
       "suffix": "",
       "type": "python"
@@ -395,22 +395,22 @@
       "source_start": 386
     },
     {
-      "compiled_end": 1271,
-      "compiled_start": 1258,
+      "compiled_end": 1270,
+      "compiled_start": 1257,
       "range_type": "Python",
       "source_end": 487,
       "source_start": 474
     },
     {
-      "compiled_end": 1362,
-      "compiled_start": 1358,
+      "compiled_end": 1361,
+      "compiled_start": 1357,
       "range_type": "Python",
       "source_end": 529,
       "source_start": 525
     },
     {
-      "compiled_end": 1392,
-      "compiled_start": 1387,
+      "compiled_end": 1391,
+      "compiled_start": 1386,
       "range_type": "Python",
       "source_end": 500,
       "source_start": 495

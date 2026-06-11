@@ -1,10 +1,24 @@
 {
   "injections": [
     {
+      "end": 36,
+      "prefix": "from hyper import html, escape, render_class\n\n\n@html\ndef ReservedKeywordAttrs(\n        *,\n        class_: str = \"\",\n        ",
+      "start": 16,
+      "suffix": "",
+      "type": "python"
+    },
+    {
+      "end": 73,
+      "prefix": ",\n):\n    yield f\"\"\"<button class=\"{render_class(class_)}\" type=\"{escape(",
+      "start": 69,
+      "suffix": "",
+      "type": "python"
+    },
+    {
       "end": 86,
-      "prefix": "from hyper import html, escape, render_class\n\n\n@html\ndef ReservedKeywordAttrs(\n        *,\n        class_: str = \"\",\n        type_: str = \"button\",\n):\n    yield f\"\"\"<button class=\"{render_class(class_)}\" type=\"{escape(type_)}\">\"\"\"\n    yield from ",
+      "prefix": ")}\">\"\"\"\n    yield from ",
       "start": 82,
-      "suffix": "(class_=\"icon\", type_=\"svg\")\n    yield \"\"\"</button>\"\"\"\n",
+      "suffix": "(class_=\"icon\", type=\"svg\")\n    yield \"\"\"</button>\"\"\"\n",
       "type": "python"
     },
     {
@@ -45,8 +59,22 @@
   ],
   "ranges": [
     {
-      "compiled_end": 249,
-      "compiled_start": 245,
+      "compiled_end": 144,
+      "compiled_start": 124,
+      "range_type": "Python",
+      "source_end": 36,
+      "source_start": 16
+    },
+    {
+      "compiled_end": 220,
+      "compiled_start": 216,
+      "range_type": "Python",
+      "source_end": 73,
+      "source_start": 69
+    },
+    {
+      "compiled_end": 247,
+      "compiled_start": 243,
       "range_type": "Python",
       "source_end": 86,
       "source_start": 82

@@ -37,7 +37,7 @@ def Nested(
         # <{Alert}>
         def _alert_default_slot():
             yield f"""<span>{escape(title)}</span>"""
-        yield from Alert(_alert_default_slot(), type_="info")
+        yield from Alert(_alert_default_slot(), type="info")
         # </{Alert}>
     # Components in loop
     for item in items:
