@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 // Re-export Position and Span from tokenizer to avoid duplication
 // This allows the rest of the codebase to use a single Span type
-pub use crate::parser::tokenizer::{Position, Span};
+pub use crate::parse::tokenizer::{Position, Span};
 
 /// Abstract Syntax Tree
 #[derive(Debug, Clone)]

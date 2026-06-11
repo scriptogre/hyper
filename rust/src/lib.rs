@@ -20,11 +20,11 @@ pub mod ast;
 pub mod error;
 pub mod generate;
 pub mod html;
-pub mod parser;
+pub mod parse;
 pub mod transform;
 
 use generate::{Generator, PythonGenerator};
-use parser::HyperParser;
+use parse::HyperParser;
 
 /// Complete compilation pipeline
 pub struct Pipeline {
@@ -87,5 +87,5 @@ impl Pipeline {
 pub use ast::{Ast, Node, Position, Span};
 pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{GenerateOptions, GenerateResult};
-pub use parser::Parser;
+pub use parse::Parser;
 pub use transform::{Plugin, Transformer};

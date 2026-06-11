@@ -4,7 +4,7 @@
 /// The visible_ansi function converts ANSI codes to visible markers for comparison.
 /// The assert_highlighted helper verifies a word is wrapped in color codes.
 use hyper_transpiler::error::{ErrorKind, ParseError};
-use hyper_transpiler::parser::tokenizer::{Position, Span};
+use hyper_transpiler::parse::tokenizer::{Position, Span};
 
 /// Convert ANSI escape sequences to visible markers for comparison
 /// e.g., \x1b[38;5;180m becomes ‹38;5;180›

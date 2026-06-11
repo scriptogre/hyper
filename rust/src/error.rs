@@ -1,4 +1,4 @@
-use crate::parser::tokenizer::Span;
+use crate::parse::tokenizer::Span;
 use std::fmt;
 
 /// Kind of parse error

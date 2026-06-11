@@ -1,6 +1,6 @@
 use crate::helpers::compile;
 use hyper_transpiler::generate::RangeType;
-use hyper_transpiler::parser::tokenizer::{Token, tokenize};
+use hyper_transpiler::parse::tokenizer::{Token, tokenize};
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
