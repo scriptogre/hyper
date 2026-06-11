@@ -103,7 +103,7 @@ fn rename_value_expr(kind: &mut AttributeKind) {
 }
 
 impl Plugin for ReservedKeywordPlugin {
-    fn enter(&mut self, node: &mut Node, _metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, _metadata: &mut super::Analysis) -> bool {
         match node {
             Node::Parameter(param) => {
                 param.name = rename_reserved_keywords(&param.name);

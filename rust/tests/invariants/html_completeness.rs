@@ -1,6 +1,6 @@
 use crate::helpers::compile;
-use hyper_transpiler::generate::RangeType;
-use hyper_transpiler::parse::tokenizer::{Token, tokenize};
+use hyper::generate::RangeType;
+use hyper::parse::tokenizer::{Token, tokenize};
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
@@ -33,7 +33,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     /// around expression attributes (e.g., `<div class={x}>` has separate ranges
     /// for `<div class=` and `>`).
     fn has_html_coverage(
-        html_ranges: &[&hyper_transpiler::generate::Range],
+        html_ranges: &[&hyper::generate::Range],
         start: usize,
         end: usize,
     ) -> bool {

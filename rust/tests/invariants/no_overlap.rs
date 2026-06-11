@@ -1,5 +1,5 @@
 use crate::helpers::compile;
-use hyper_transpiler::generate::RangeType;
+use hyper::generate::RangeType;
 use libtest_mimic::Failed;
 use std::path::PathBuf;
 

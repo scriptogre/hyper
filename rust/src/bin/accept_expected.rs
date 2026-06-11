@@ -5,7 +5,7 @@
 //!   cargo run --bin accept_expected -- --apply           # Write (interactive only)
 //!   cargo run --bin accept_expected -- basic --apply     # Write matching "basic"
 
-use hyper_transpiler::{GenerateOptions, Pipeline};
+use hyper::{CompileOptions, compile};
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -93,12 +93,12 @@ fn process_file(path: &Path, write: bool) -> bool {
         .and_then(|s| s.to_str())
         .unwrap_or("Template");
     let is_error_test = path.to_string_lossy().contains("/errors/");
-    let mut pipeline = Pipeline::standard();
+
     let mut has_changes = false;
 
-    let result = pipeline.compile(
+    let result = compile(
         &source,
-        &GenerateOptions {
+        &CompileOptions {
             function_name: Some(name.to_string()),
             include_ranges: false,
         },
@@ -117,9 +117,9 @@ fn process_file(path: &Path, write: bool) -> bool {
                 has_changes = true;
             }
 
-            let result_with_ranges = pipeline.compile(
+            let result_with_ranges = compile(
                 &source,
-                &GenerateOptions {
+                &CompileOptions {
                     function_name: Some(name.to_string()),
                     include_ranges: true,
                 },

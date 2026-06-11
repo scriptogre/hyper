@@ -16,18 +16,18 @@ pub use output::{
 pub use python::PythonGenerator;
 
 use crate::ast::Ast;
-use crate::transform::TransformMetadata;
+use crate::plugins::Analysis;
 
 /// Generator options
 #[derive(Debug, Clone, Default)]
-pub struct GenerateOptions {
+pub struct CompileOptions {
     pub function_name: Option<String>,
     pub include_ranges: bool,
 }
 
 /// Generation result
 #[derive(Debug, Clone)]
-pub struct GenerateResult {
+pub struct CompileResult {
     pub code: String,
     pub mappings: Vec<Mapping>,
     pub ranges: Vec<Range>,
@@ -38,10 +38,5 @@ pub struct GenerateResult {
 
 /// Generator trait - converts AST to code
 pub trait Generator {
-    fn generate(
-        &self,
-        ast: &Ast,
-        metadata: &TransformMetadata,
-        options: &GenerateOptions,
-    ) -> GenerateResult;
+    fn generate(&self, ast: &Ast, analysis: &Analysis, options: &CompileOptions) -> CompileResult;
 }

@@ -1,10 +1,10 @@
 use super::{
-    GenerateOptions, GenerateResult, Generator, Output, Range, RangeType,
+    CompileOptions, CompileResult, Generator, Output, Range, RangeType,
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_ranges_for_component, html_ranges_for_element,
 };
 use crate::ast::*;
-use crate::transform::{Helper, rename_reserved_keywords};
+use crate::plugins::{Helper, rename_reserved_keywords};
 
 /// Parameter that receives a component's default-slot content.
 const DEFAULT_SLOT_PARAM: &str = "_default_slot";
@@ -1454,9 +1454,9 @@ impl Generator for PythonGenerator {
     fn generate(
         &self,
         ast: &Ast,
-        metadata: &crate::transform::TransformMetadata,
-        options: &GenerateOptions,
-    ) -> GenerateResult {
+        analysis: &crate::plugins::Analysis,
+        options: &CompileOptions,
+    ) -> CompileResult {
         let mut output = Output::new();
 
         // Collect parameters, imports, decorators, and body from AST
@@ -1564,7 +1564,7 @@ impl Generator for PythonGenerator {
             .unwrap_or_else(|| "Render".to_string());
 
         // Add async if needed
-        if metadata.is_async {
+        if analysis.is_async {
             output.push("async def ");
         } else {
             output.push("def ");
@@ -1572,8 +1572,8 @@ impl Generator for PythonGenerator {
         output.push(&func_name);
 
         // Determine if we have slots (for _default_slot parameter)
-        let has_default_slot = metadata.slots_used.contains("");
-        let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
+        let has_default_slot = analysis.slots_used.contains("");
+        let has_named_slots = analysis.slots_used.iter().any(|s| !s.is_empty());
 
         // Separate regular params from **kwargs
         // Note: *args is rejected at parse time - hyper uses keyword-only params
@@ -1593,7 +1593,7 @@ impl Generator for PythonGenerator {
             || !regular_params.is_empty()
             || has_named_slots
             || star_star_kwargs.is_some()
-            || !metadata.implicit_spreads.is_empty();
+            || !analysis.implicit_spreads.is_empty();
 
         // Collect params with mutable defaults that need None sentinel guards
         let mut mutable_default_guards: Vec<(&str, &str)> = Vec::new();
@@ -1627,7 +1627,7 @@ impl Generator for PythonGenerator {
                 let param_start = output.position();
                 output.push(&param.name);
 
-                let needs_sentinel = metadata.mutable_default_params.contains(&param.name);
+                let needs_sentinel = analysis.mutable_default_params.contains(&param.name);
 
                 if let Some(type_hint) = &param.type_hint {
                     output.push(": ");
@@ -1659,7 +1659,7 @@ impl Generator for PythonGenerator {
 
             // Named slot parameters
             if has_named_slots {
-                let mut sorted_slots: Vec<_> = metadata
+                let mut sorted_slots: Vec<_> = analysis
                     .slots_used
                     .iter()
                     .filter(|s| !s.is_empty())
@@ -1684,8 +1684,8 @@ impl Generator for PythonGenerator {
                 }
                 output.push(",");
                 output.newline();
-            } else if !metadata.implicit_spreads.is_empty() {
-                let spread_name = &metadata.implicit_spreads[0].0;
+            } else if !analysis.implicit_spreads.is_empty() {
+                let spread_name = &analysis.implicit_spreads[0].0;
                 output.push(sig_indent);
                 output.push("**");
                 output.push(spread_name);
@@ -1725,15 +1725,15 @@ impl Generator for PythonGenerator {
         let (mut code, mappings, tracked_ranges) = output.finish();
 
         // Determine if we need Iterable import (for _default_slot parameter)
-        let has_default_slot = metadata.slots_used.contains("");
-        let has_named_slots = metadata.slots_used.iter().any(|s| !s.is_empty());
+        let has_default_slot = analysis.slots_used.contains("");
+        let has_named_slots = analysis.slots_used.iter().any(|s| !s.is_empty());
         let needs_iterable = has_default_slot || has_named_slots;
 
-        // Build imports from metadata (populated by HelperDetectionPlugin)
+        // Build imports from analysis (populated by HelperDetectionPlugin)
         let mut hyper_imports = vec!["html"];
 
         for helper in Helper::ALL {
-            if metadata.helpers_used.contains(helper) {
+            if analysis.helpers_used.contains(helper) {
                 hyper_imports.push(helper.import_name());
             }
         }
@@ -1848,7 +1848,7 @@ impl Generator for PythonGenerator {
             (Vec::new(), Vec::new(), Vec::new(), Vec::new())
         };
 
-        GenerateResult {
+        CompileResult {
             code,
             mappings,
             ranges,

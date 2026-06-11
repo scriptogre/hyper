@@ -47,10 +47,9 @@ impl Helper {
 /// when used as `{**name}` on a component or element without explicit declaration.
 pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", "attributes"];
 
-/// Metadata collected during transformation
-/// This is populated by analysis plugins and used by the generator
+/// Output of the analyze phase. Populated by analyze plugins, consumed by the generator.
 #[derive(Debug, Clone, Default)]
-pub struct TransformMetadata {
+pub struct Analysis {
     pub helpers_used: HashSet<Helper>,
     pub is_async: bool,
     pub slots_used: HashSet<String>,
@@ -61,7 +60,7 @@ pub struct TransformMetadata {
     pub mutable_default_params: HashSet<String>,
 }
 
-impl TransformMetadata {
+impl Analysis {
     pub fn new() -> Self {
         Self::default()
     }

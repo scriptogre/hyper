@@ -1,7 +1,7 @@
 mod common;
 
 use common::{compile_with_ranges, html_injections, html_ranges, python_injections, python_ranges};
-use hyper_transpiler::{GenerateOptions, Pipeline};
+use hyper::CompileOptions;
 
 #[test]
 fn test_expression_injection() {
@@ -409,13 +409,11 @@ fn test_complex_expression_range_excludes_braces() {
 #[test]
 fn test_error_has_position_for_unclosed_element() {
     let source = "<div>unclosed";
-    let mut pipeline = Pipeline::standard();
-    let err = pipeline
-        .compile(source, &GenerateOptions::default())
-        .unwrap_err();
+
+    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
 
     match err {
-        hyper_transpiler::CompileError::Parse(parse_err) => {
+        hyper::CompileError::Parse(parse_err) => {
             assert_eq!(parse_err.span.start.line, 0);
             assert!(parse_err.message.contains("never closed"));
         }
@@ -426,13 +424,11 @@ fn test_error_has_position_for_unclosed_element() {
 #[test]
 fn test_error_has_position_for_nested_interactive() {
     let source = "<a><button>click</button></a>";
-    let mut pipeline = Pipeline::standard();
-    let err = pipeline
-        .compile(source, &GenerateOptions::default())
-        .unwrap_err();
+
+    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
 
     match err {
-        hyper_transpiler::CompileError::Parse(parse_err) => {
+        hyper::CompileError::Parse(parse_err) => {
             assert!(parse_err.message.contains("cannot appear inside"));
             // Error should point to the <button> tag, not <a>
             assert!(
@@ -447,13 +443,11 @@ fn test_error_has_position_for_nested_interactive() {
 #[test]
 fn test_error_has_position_for_duplicate_attribute() {
     let source = r#"<div class={x} class={y}>text</div>"#;
-    let mut pipeline = Pipeline::standard();
-    let err = pipeline
-        .compile(source, &GenerateOptions::default())
-        .unwrap_err();
+
+    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
 
     match err {
-        hyper_transpiler::CompileError::Parse(parse_err) => {
+        hyper::CompileError::Parse(parse_err) => {
             assert!(
                 parse_err.message.contains("twice")
                     || parse_err.message.contains("duplicate")
@@ -1472,13 +1466,11 @@ fn test_same_blessed_name_multiple_components() {
 fn test_multiple_different_blessed_names_error() {
     // Two different blessed names → compile error
     let source = "<{Card} {**props} />\n<{Button} {**attrs} />\n";
-    let mut pipeline = Pipeline::standard();
-    let err = pipeline
-        .compile(source, &GenerateOptions::default())
-        .unwrap_err();
+
+    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
 
     match err {
-        hyper_transpiler::CompileError::Generate(msg) => {
+        hyper::CompileError::Generate(msg) => {
             assert!(
                 msg.contains("props") && msg.contains("attrs"),
                 "Error should mention both spread names. Got: {msg}"

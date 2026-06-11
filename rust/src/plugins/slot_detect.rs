@@ -5,7 +5,7 @@ use crate::ast::Node;
 pub struct SlotDetectionPlugin;
 
 impl Plugin for SlotDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
         match node {
             Node::Slot(slot) => {
                 // Default slot uses empty string, named slots use their name

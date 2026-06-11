@@ -9,7 +9,7 @@ use crate::ast::Node;
 pub struct MutableDefaultDetectionPlugin;
 
 impl Plugin for MutableDefaultDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
         if let Node::Parameter(param) = node
             && is_nullable_with_mutable_default(
                 param.type_hint.as_deref(),

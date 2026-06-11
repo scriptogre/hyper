@@ -1,7 +1,7 @@
 use crate::helpers::compile;
-use hyper_transpiler::generate::RangeType;
-use hyper_transpiler::parse::tokenizer::{Token, tokenize};
-use hyper_transpiler::transform::rename_reserved_keywords;
+use hyper::generate::RangeType;
+use hyper::parse::tokenizer::{Token, tokenize};
+use hyper::plugins::rename_reserved_keywords;
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
@@ -164,7 +164,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 attributes, span, ..
             } if in_body(span.start.byte) => {
                 for attr in attributes {
-                    use hyper_transpiler::parse::tokenizer::AttributeValue;
+                    use hyper::parse::tokenizer::AttributeValue;
                     // Get (inner_start, inner_end) excluding delimiters
                     let inner = match &attr.value {
                         // class={expr}: inner skips { and }.

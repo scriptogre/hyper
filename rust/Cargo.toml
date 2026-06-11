@@ -1,5 +1,5 @@
 [package]
-name = "hyper-transpiler"
+name = "hyper"
 version = "0.1.0"
 edition = "2024"
 description = "Hyper template transpiler — compiles .hyper files to Python"
@@ -10,7 +10,7 @@ keywords = ["python", "templates", "html", "transpiler", "hypermedia"]
 categories = ["command-line-utilities", "development-tools"]
 
 [lib]
-name = "hyper_transpiler"
+name = "hyper"
 path = "src/lib.rs"
 
 [[bin]]

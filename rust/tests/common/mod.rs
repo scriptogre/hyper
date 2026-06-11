@@ -1,32 +1,29 @@
 #![allow(dead_code)]
 
-use hyper_transpiler::generate::{Injection, Range, RangeType};
-use hyper_transpiler::{GenerateOptions, GenerateResult, Pipeline};
+use hyper::CompileOptions;
+use hyper::CompileResult;
+use hyper::generate::{Injection, Range, RangeType};
 
 /// Compile source with default options (no ranges, default function name).
 pub fn compile(source: &str) -> String {
-    let mut pipeline = Pipeline::standard();
-    pipeline
-        .compile(source, &GenerateOptions::default())
+    hyper::compile(source, &CompileOptions::default())
         .unwrap()
         .code
 }
 
 /// Compile source with ranges enabled, returning the full result.
-pub fn compile_with_ranges(source: &str, name: &str) -> GenerateResult {
-    let mut pipeline = Pipeline::standard();
-    pipeline
-        .compile(
-            source,
-            &GenerateOptions {
-                function_name: Some(name.to_string()),
-                include_ranges: true,
-            },
-        )
-        .unwrap()
+pub fn compile_with_ranges(source: &str, name: &str) -> CompileResult {
+    hyper::compile(
+        source,
+        &CompileOptions {
+            function_name: Some(name.to_string()),
+            include_ranges: true,
+        },
+    )
+    .unwrap()
 }
 
-pub fn python_ranges(result: &GenerateResult) -> Vec<&Range> {
+pub fn python_ranges(result: &CompileResult) -> Vec<&Range> {
     result
         .ranges
         .iter()
@@ -34,7 +31,7 @@ pub fn python_ranges(result: &GenerateResult) -> Vec<&Range> {
         .collect()
 }
 
-pub fn python_injections(result: &GenerateResult) -> Vec<&Injection> {
+pub fn python_injections(result: &CompileResult) -> Vec<&Injection> {
     result
         .injections
         .iter()
@@ -42,7 +39,7 @@ pub fn python_injections(result: &GenerateResult) -> Vec<&Injection> {
         .collect()
 }
 
-pub fn html_ranges(result: &GenerateResult) -> Vec<&Range> {
+pub fn html_ranges(result: &CompileResult) -> Vec<&Range> {
     result
         .ranges
         .iter()
@@ -50,7 +47,7 @@ pub fn html_ranges(result: &GenerateResult) -> Vec<&Range> {
         .collect()
 }
 
-pub fn html_injections(result: &GenerateResult) -> Vec<&Injection> {
+pub fn html_injections(result: &CompileResult) -> Vec<&Injection> {
     result
         .injections
         .iter()

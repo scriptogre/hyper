@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::Plugin;
-use super::metadata::BLESSED_SPREAD_NAMES;
+use super::analysis::BLESSED_SPREAD_NAMES;
 use crate::ast::{AttributeKind, Node};
 use crate::error::CompileError;
 
@@ -31,7 +31,7 @@ impl Default for SpreadKwargsPlugin {
 }
 
 impl Plugin for SpreadKwargsPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
         match node {
             Node::Parameter(param) => {
                 let name = param.name.trim_start_matches('*');
@@ -48,7 +48,7 @@ impl Plugin for SpreadKwargsPlugin {
         true
     }
 
-    fn finalize(&mut self, metadata: &super::TransformMetadata) -> Result<(), CompileError> {
+    fn finalize(&mut self, metadata: &super::Analysis) -> Result<(), CompileError> {
         let mut unique_names: Vec<&str> = Vec::new();
         for (name, _) in &metadata.implicit_spreads {
             if !unique_names.contains(&name.as_str()) {
@@ -75,7 +75,7 @@ impl SpreadKwargsPlugin {
     fn collect_blessed_spreads(
         &self,
         attributes: &[crate::ast::Attribute],
-        metadata: &mut super::TransformMetadata,
+        metadata: &mut super::Analysis,
     ) {
         for attr in attributes {
             if let AttributeKind::Spread { expr, expr_span } = &attr.kind {

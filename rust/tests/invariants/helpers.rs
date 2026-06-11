@@ -1,25 +1,22 @@
-use hyper_transpiler::{GenerateOptions, GenerateResult, Pipeline};
+use hyper::{CompileOptions, CompileResult};
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
 
 /// Compile a .hyper file with ranges enabled.
-pub fn compile(path: &PathBuf) -> Result<GenerateResult, Failed> {
+pub fn compile(path: &PathBuf) -> Result<CompileResult, Failed> {
     let source = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let name = path
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("Template");
 
-    let mut pipeline = Pipeline::standard();
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: Some(name.to_string()),
         include_ranges: true,
     };
 
-    pipeline
-        .compile(&source, &options)
-        .map_err(|e| format!("Compile error: {}", e).into())
+    hyper::compile(&source, &options).map_err(|e| format!("Compile error: {}", e).into())
 }
 
 /// Extract a substring from `s` using UTF-16 offsets.

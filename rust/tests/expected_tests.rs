@@ -3,7 +3,7 @@
 //! Each .hyper file becomes its own test, enabling parallel execution
 //! and clear per-file failure output.
 
-use hyper_transpiler::{GenerateOptions, Pipeline};
+use hyper::{CompileOptions, compile};
 use libtest_mimic::{Arguments, Failed, Trial};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -73,13 +73,12 @@ fn run_output_test(path: &PathBuf) -> Result<(), Failed> {
         .and_then(|s| s.to_str())
         .unwrap_or("Template");
 
-    let mut pipeline = Pipeline::standard();
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: Some(name.to_string()),
         include_ranges: false,
     };
 
-    match pipeline.compile(&source, &options) {
+    match compile(&source, &options) {
         Ok(result) => {
             if result.code.trim() != expected.trim() {
                 Err(format!(
@@ -107,13 +106,12 @@ fn run_injection_test(path: &PathBuf) -> Result<(), Failed> {
         .and_then(|s| s.to_str())
         .unwrap_or("Template");
 
-    let mut pipeline = Pipeline::standard();
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: Some(name.to_string()),
         include_ranges: true,
     };
 
-    match pipeline.compile(&source, &options) {
+    match compile(&source, &options) {
         Ok(result) => {
             let actual = serde_json::json!({
                 "injections": result.injections,
@@ -147,13 +145,12 @@ fn run_error_test(path: &PathBuf) -> Result<(), Failed> {
         .and_then(|s| s.to_str())
         .unwrap_or("unknown");
 
-    let mut pipeline = Pipeline::standard();
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: Some(name.to_string()),
         include_ranges: false,
     };
 
-    match pipeline.compile(&source, &options) {
+    match compile(&source, &options) {
         Ok(_) => {
             if expected_err.exists() {
                 Err("Expected error but compiled successfully".into())

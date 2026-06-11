@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use hyper_transpiler::{GenerateOptions, Pipeline};
+use hyper::{CompileOptions, compile};
 use std::fs;
 use std::io::{self, IsTerminal, Read};
 use std::path::Path;
@@ -73,13 +73,12 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
         std::process::exit(1);
     }
 
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: name,
         include_ranges: include_injections,
     };
 
-    let mut pipeline = Pipeline::standard();
-    let result = match pipeline.compile(&source, &options) {
+    let result = match compile(&source, &options) {
         Ok(r) => r,
         Err(e) => {
             if json_output {
@@ -147,13 +146,12 @@ fn generate_files(
             .and_then(|s| s.to_str())
             .map(|s| s.to_string());
 
-        let options = GenerateOptions {
+        let options = CompileOptions {
             function_name,
             include_ranges: false,
         };
 
-        let mut pipeline = Pipeline::standard();
-        let result = match pipeline.compile(&source, &options) {
+        let result = match compile(&source, &options) {
             Ok(r) => r,
             Err(e) => {
                 render_error(&e, &source, &file_path);
@@ -321,13 +319,12 @@ fn process_request(json: &str) -> String {
         Err(e) => return format!(r#"{{"error":"Invalid JSON: {}"}}"#, e),
     };
 
-    let options = GenerateOptions {
+    let options = CompileOptions {
         function_name: req.name,
         include_ranges: req.injection,
     };
 
-    let mut pipeline = Pipeline::standard();
-    let result = match pipeline.compile(&req.content, &options) {
+    let result = match compile(&req.content, &options) {
         Ok(r) => r,
         Err(e) => return error_to_json(&e),
     };
@@ -349,7 +346,7 @@ struct DaemonErrorResponse {
     error_end_col: Option<usize>,
 }
 
-fn render_error(e: &hyper_transpiler::CompileError, source: &str, filename: &str) {
+fn render_error(e: &hyper::CompileError, source: &str, filename: &str) {
     if io::stderr().is_terminal() {
         eprint!("{}", e.render_color(source, filename));
     } else {
@@ -357,10 +354,7 @@ fn render_error(e: &hyper_transpiler::CompileError, source: &str, filename: &str
     }
 }
 
-fn result_to_response(
-    result: hyper_transpiler::GenerateResult,
-    include_injections: bool,
-) -> DaemonResponse {
+fn result_to_response(result: hyper::CompileResult, include_injections: bool) -> DaemonResponse {
     DaemonResponse {
         compiled: result.code,
         mappings: result
@@ -442,8 +436,8 @@ fn result_to_response(
     }
 }
 
-fn error_to_json(e: &hyper_transpiler::CompileError) -> String {
-    use hyper_transpiler::CompileError;
+fn error_to_json(e: &hyper::CompileError) -> String {
+    use hyper::CompileError;
 
     let (line, col, end_line, end_col) = match e {
         CompileError::Parse(parse_err) => (

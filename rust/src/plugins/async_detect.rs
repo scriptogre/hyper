@@ -5,7 +5,7 @@ use crate::ast::Node;
 pub struct AsyncDetectionPlugin;
 
 impl Plugin for AsyncDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
         match node {
             Node::Expression(expr) if expr.expr.contains("await ") => {
                 metadata.is_async = true;

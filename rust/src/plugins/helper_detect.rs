@@ -1,5 +1,5 @@
 use super::Plugin;
-use super::metadata::Helper;
+use super::analysis::Helper;
 use crate::ast::{AttributeKind, Node};
 use crate::html;
 
@@ -8,7 +8,7 @@ use crate::html;
 pub struct HelperDetectionPlugin;
 
 impl HelperDetectionPlugin {
-    fn insert_helper_for_attr(name: &str, metadata: &mut super::TransformMetadata) {
+    fn insert_helper_for_attr(name: &str, metadata: &mut super::Analysis) {
         match name {
             "class" => metadata.helpers_used.insert(Helper::RenderClass),
             "style" => metadata.helpers_used.insert(Helper::RenderStyle),
@@ -21,7 +21,7 @@ impl HelperDetectionPlugin {
 }
 
 impl Plugin for HelperDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
+    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
         match node {
             Node::Expression(expr) => {
                 metadata.helpers_used.insert(Helper::Escape);
