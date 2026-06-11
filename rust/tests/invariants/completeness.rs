@@ -5,6 +5,19 @@ use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
 
+/// True when an expression's first identifier is a reserved keyword the generator
+/// renames (`class` to `class_`), so its dropped injection range is expected.
+fn starts_with_reserved_keyword(expr: &str) -> bool {
+    let body = expr.trim_start();
+    ["class", "type"].iter().any(|kw| {
+        body.strip_prefix(kw).is_some_and(|rest| {
+            rest.chars()
+                .next()
+                .is_none_or(|c| !c.is_alphanumeric() && c != '_')
+        })
+    })
+}
+
 pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let source = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let result = compile(path)?;
@@ -160,15 +173,16 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                     use hyper_transpiler::parser::tokenizer::AttributeValue;
                     // Get (inner_start, inner_end) excluding delimiters
                     let inner = match &attr.value {
-                        // class={expr}: span is {expr}, inner skips { and }
-                        AttributeValue::Expression(_, s) => {
+                        // class={expr}: inner skips { and }.
+                        AttributeValue::Expression(expr, s)
+                            if !starts_with_reserved_keyword(expr) =>
+                        {
                             Some((s.start.byte + 1, s.end.byte - 1))
                         }
-                        // {name}: span is {name}, inner skips {
-                        // (span.end is before }, so no -1)
-                        // Skip reserved keywords (class, type) — the generator renames
-                        // them (class_) so source != compiled and the range is dropped
-                        AttributeValue::Shorthand(name, s) if name != "class" && name != "type" => {
+                        // {name}: inner skips { (span.end is before }, so no -1).
+                        AttributeValue::Shorthand(name, s)
+                            if !starts_with_reserved_keyword(name) =>
+                        {
                             Some((s.start.byte + 1, s.end.byte))
                         }
                         _ => None,

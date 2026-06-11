@@ -2,6 +2,7 @@ mod async_detect;
 mod helper_detect;
 mod metadata;
 mod mutable_default_detect;
+mod reserved_keyword;
 mod slot_detect;
 mod spread_detect;
 
@@ -9,6 +10,7 @@ pub use async_detect::AsyncDetectionPlugin;
 pub use helper_detect::HelperDetectionPlugin;
 pub use metadata::{BLESSED_SPREAD_NAMES, Helper, TransformMetadata};
 pub use mutable_default_detect::MutableDefaultDetectionPlugin;
+pub use reserved_keyword::ReservedKeywordPlugin;
 pub use slot_detect::SlotDetectionPlugin;
 pub use spread_detect::SpreadDetectionPlugin;
 
@@ -140,6 +142,8 @@ impl Default for Transformer {
 /// Create a transformer with the standard plugins
 pub fn standard_plugins() -> Transformer {
     Transformer::new()
+        // Runs first so every later pass and the generator see renamed identifiers.
+        .add(ReservedKeywordPlugin)
         .add(HelperDetectionPlugin)
         .add(AsyncDetectionPlugin)
         .add(SlotDetectionPlugin)

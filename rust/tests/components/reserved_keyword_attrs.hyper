@@ -1,0 +1,6 @@
+class: str = ""
+type: str = "button"
+---
+<button class={class} type={type}>
+    <{Icon} class="icon" type="svg" />
+</button>
