@@ -1,10 +1,10 @@
-use super::Visitor;
+use super::Plugin;
 use crate::ast::Node;
 
 /// Detects slots used in the template
 pub struct SlotDetectionPlugin;
 
-impl Visitor for SlotDetectionPlugin {
+impl Plugin for SlotDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
             Node::Slot(slot) => {

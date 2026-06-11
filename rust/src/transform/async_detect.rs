@@ -1,10 +1,10 @@
-use super::Visitor;
+use super::Plugin;
 use crate::ast::Node;
 
 /// Detects if the template uses await and should be async
 pub struct AsyncDetectionPlugin;
 
-impl Visitor for AsyncDetectionPlugin {
+impl Plugin for AsyncDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
             Node::Expression(expr) if expr.expr.contains("await ") => {

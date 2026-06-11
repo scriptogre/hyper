@@ -1,4 +1,4 @@
-use super::Visitor;
+use super::Plugin;
 use super::metadata::Helper;
 use crate::ast::{AttributeKind, Node};
 use crate::html;
@@ -20,7 +20,7 @@ impl HelperDetectionPlugin {
     }
 }
 
-impl Visitor for HelperDetectionPlugin {
+impl Plugin for HelperDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         match node {
             Node::Expression(expr) => {

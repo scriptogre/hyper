@@ -1,4 +1,4 @@
-use super::Visitor;
+use super::Plugin;
 use crate::ast::Node;
 
 /// Detects parameters with nullable types and mutable defaults.
@@ -8,7 +8,7 @@ use crate::ast::Node;
 /// parameters so the generator can rewrite `= []` → `= None` with a guard.
 pub struct MutableDefaultDetectionPlugin;
 
-impl Visitor for MutableDefaultDetectionPlugin {
+impl Plugin for MutableDefaultDetectionPlugin {
     fn enter(&mut self, node: &mut Node, metadata: &mut super::TransformMetadata) -> bool {
         if let Node::Parameter(param) = node
             && is_nullable_with_mutable_default(

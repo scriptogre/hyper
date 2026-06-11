@@ -1,4 +1,4 @@
-use super::Visitor;
+use super::Plugin;
 use crate::ast::{AttributeKind, Node};
 
 /// Keywords that are syntax errors as bare identifiers and never valid inside an
@@ -102,7 +102,7 @@ fn rename_value_expr(kind: &mut AttributeKind) {
     }
 }
 
-impl Visitor for ReservedKeywordPlugin {
+impl Plugin for ReservedKeywordPlugin {
     fn enter(&mut self, node: &mut Node, _metadata: &mut super::TransformMetadata) -> bool {
         match node {
             Node::Parameter(param) => {
