@@ -1592,8 +1592,7 @@ impl Generator for PythonGenerator {
         let has_any_params = has_default_slot
             || !regular_params.is_empty()
             || has_named_slots
-            || star_star_kwargs.is_some()
-            || !ctx.implicit_spreads.is_empty();
+            || star_star_kwargs.is_some();
 
         // Collect params with mutable defaults that need None sentinel guards
         let mut mutable_default_guards: Vec<(&str, &str)> = Vec::new();
@@ -1671,7 +1670,7 @@ impl Generator for PythonGenerator {
                 }
             }
 
-            // **kwargs — explicit or implicit from blessed spread names
+            // **kwargs: explicit, or injected by the SpreadKwargs plugin
             if let Some(kwargs) = star_star_kwargs {
                 output.push(sig_indent);
                 output.push(&kwargs.name);
@@ -1679,13 +1678,6 @@ impl Generator for PythonGenerator {
                     output.push(": ");
                     output.push(type_hint);
                 }
-                output.push(",");
-                output.newline();
-            } else if !ctx.implicit_spreads.is_empty() {
-                let spread_name = &ctx.implicit_spreads[0].0;
-                output.push(sig_indent);
-                output.push("**");
-                output.push(spread_name);
                 output.push(",");
                 output.newline();
             }

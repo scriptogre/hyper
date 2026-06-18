@@ -1,18 +1,18 @@
-mod collect_spread_kwargs;
 mod context;
 mod detect_async;
 mod detect_mutable_defaults;
 mod detect_slots;
 mod helper_detect;
 mod rename_reserved_keywords;
+mod spread_kwargs;
 
-pub use collect_spread_kwargs::CollectSpreadKwargs;
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
 pub use detect_async::DetectAsync;
 pub use detect_mutable_defaults::DetectMutableDefaults;
 pub use detect_slots::DetectSlots;
 pub use helper_detect::HelperDetectionPlugin;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
+pub use spread_kwargs::SpreadKwargs;
 
 use crate::ast::{Ast, Node};
 use crate::error::CompileError;
@@ -118,7 +118,7 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
         Box::new(DetectAsync),
         Box::new(DetectSlots),
         Box::new(DetectMutableDefaults),
-        Box::new(CollectSpreadKwargs::new()),
+        Box::new(SpreadKwargs::new()),
     ]
 }
 
