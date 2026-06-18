@@ -1,5 +1,6 @@
-use super::Plugin;
+use super::{Context, Flow, Plugin};
 use crate::ast::{AttributeKind, Node};
+use crate::error::CompileError;
 
 /// Keywords that are syntax errors as bare identifiers and never valid inside an
 /// expression, so renaming is always safe. Builtins like `type` are left alone.
@@ -103,7 +104,7 @@ fn rename_value_expr(kind: &mut AttributeKind) {
 }
 
 impl Plugin for ReservedKeywordPlugin {
-    fn enter(&mut self, node: &mut Node, _metadata: &mut super::Analysis) -> bool {
+    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
         match node {
             Node::Parameter(param) => {
                 param.name = rename_reserved_keywords(&param.name);
@@ -143,6 +144,6 @@ impl Plugin for ReservedKeywordPlugin {
             }
             _ => {}
         }
-        true
+        Ok(Flow::Continue)
     }
 }

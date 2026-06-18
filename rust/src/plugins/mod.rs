@@ -1,13 +1,13 @@
-mod analysis;
 mod async_detect;
+mod context;
 mod helper_detect;
 mod mutable_default_detect;
 mod reserved_keyword;
 mod slot_detect;
 mod spread_kwargs;
 
-pub use analysis::{Analysis, BLESSED_SPREAD_NAMES, Helper};
 pub use async_detect::AsyncDetectionPlugin;
+pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
 pub use helper_detect::HelperDetectionPlugin;
 pub use mutable_default_detect::MutableDefaultDetectionPlugin;
 pub use reserved_keyword::{ReservedKeywordPlugin, rename_reserved_keywords};
@@ -17,161 +17,116 @@ pub use spread_kwargs::SpreadKwargsPlugin;
 use crate::ast::{Ast, Node};
 use crate::error::CompileError;
 
-/// A plugin walks every AST node (via `enter`/`exit`) and optionally runs a
-/// final check after the walk (via `finalize`).
+/// Whether [`walk`] descends into a node's children after `enter`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Flow {
+    Continue,
+    SkipChildren,
+}
+
+/// A compiler plugin. Reads and rewrites the AST, and fills the shared [`Context`].
 ///
-/// Plugins serve one or more of three roles:
-///
-/// | Role      | Reads             | Writes to              | Hook            |
-/// |-----------|--------------------|-----------------------|-----------------|
-/// | Transform | `&mut Node`        | mutates node in place | `enter`/`exit`  |
-/// | Analyze   | `&Node`            | `Analysis` fields     | `enter`/`exit`  |
-/// | Guard     | `&Node`, analysis  | nothing               | `finalize()`    |
-///
-/// Transform plugins run first (so analyzers see the final AST), then
-/// analyzers (so guards can read their output).
+/// Override `enter`/`exit` for per-node work (the common case). Override `run`
+/// to own the traversal: walk twice, reorder nodes via `&mut Ast`, or guard
+/// after the walk. Local state lives on the plugin struct; shared state in [`Context`].
 pub trait Plugin {
-    /// Walk each node top-down. Return `false` to skip children.
-    fn enter(&mut self, _node: &mut Node, _analysis: &mut Analysis) -> bool {
-        true
+    /// Run the plugin over the whole tree. Default walks top-down, calling
+    /// `enter` then `exit` on each node.
+    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
+        walk(&mut ast.nodes, ctx, self)
     }
 
-    /// Called after a node's children have been visited.
-    fn exit(&mut self, _node: &mut Node, _analysis: &mut Analysis) {}
+    /// Called before a node's children. Return [`Flow::SkipChildren`] to prune.
+    fn enter(&mut self, _node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+        Ok(Flow::Continue)
+    }
 
-    /// Called once after all nodes have been visited. Return `Err` to reject.
-    fn finalize(&mut self, _analysis: &Analysis) -> Result<(), CompileError> {
+    /// Called after a node's children.
+    fn exit(&mut self, _node: &mut Node, _ctx: &mut Context) -> Result<(), CompileError> {
         Ok(())
     }
 }
 
-/// Runs plugins over the AST in two phases: transform, then analyze.
-pub struct PluginRunner {
-    transform: Vec<Box<dyn Plugin>>,
-    analyze: Vec<Box<dyn Plugin>>,
-}
-
-impl PluginRunner {
-    pub fn new() -> Self {
-        Self {
-            transform: Vec::new(),
-            analyze: Vec::new(),
-        }
-    }
-
-    pub fn add_transform<P: Plugin + 'static>(mut self, plugin: P) -> Self {
-        self.transform.push(Box::new(plugin));
-        self
-    }
-
-    pub fn add_analyze<P: Plugin + 'static>(mut self, plugin: P) -> Self {
-        self.analyze.push(Box::new(plugin));
-        self
-    }
-
-    pub fn run(&mut self, ast: &mut Ast) -> Result<Analysis, CompileError> {
-        // Phase 1: Transform (rewrite AST nodes)
-        let mut unused = Analysis::new();
-        for plugin in &mut self.transform {
-            Self::walk(&mut ast.nodes, plugin.as_mut(), &mut unused);
-        }
-
-        // Phase 2: Analyze (collect facts, validate)
-        let mut analysis = Analysis::new();
-        for plugin in &mut self.analyze {
-            Self::walk(&mut ast.nodes, plugin.as_mut(), &mut analysis);
-            plugin.finalize(&analysis)?;
-        }
-
-        Ok(analysis)
-    }
-
-    fn walk(nodes: &mut Vec<Node>, plugin: &mut dyn Plugin, analysis: &mut Analysis) {
-        for node in nodes {
-            if plugin.enter(node, analysis) {
-                match node {
-                    Node::Element(el) => {
-                        Self::walk(&mut el.children, plugin, analysis);
+/// Recurse the tree, calling `plugin.enter` (then `exit`) on each node. The one
+/// place that knows the AST shape; plugins reuse it instead of reimplementing it.
+pub fn walk<P: Plugin + ?Sized>(
+    nodes: &mut [Node],
+    ctx: &mut Context,
+    plugin: &mut P,
+) -> Result<(), CompileError> {
+    for node in nodes {
+        if plugin.enter(node, ctx)? == Flow::Continue {
+            match node {
+                Node::Element(el) => walk(&mut el.children, ctx, plugin)?,
+                Node::Component(c) => {
+                    walk(&mut c.children, ctx, plugin)?;
+                    for slot in c.slots.values_mut() {
+                        walk(slot, ctx, plugin)?;
                     }
-                    Node::Component(c) => {
-                        Self::walk(&mut c.children, plugin, analysis);
-                        for slot in c.slots.values_mut() {
-                            Self::walk(slot, plugin, analysis);
-                        }
-                    }
-                    Node::Fragment(f) => {
-                        Self::walk(&mut f.children, plugin, analysis);
-                    }
-                    Node::Slot(s) => {
-                        Self::walk(&mut s.fallback, plugin, analysis);
-                    }
-                    Node::If(if_node) => {
-                        Self::walk(&mut if_node.then_branch, plugin, analysis);
-                        for (_, _, branch) in &mut if_node.elif_branches {
-                            Self::walk(branch, plugin, analysis);
-                        }
-                        if let Some(else_branch) = &mut if_node.else_branch {
-                            Self::walk(else_branch, plugin, analysis);
-                        }
-                    }
-                    Node::For(for_node) => {
-                        Self::walk(&mut for_node.body, plugin, analysis);
-                    }
-                    Node::Match(match_node) => {
-                        for case in &mut match_node.cases {
-                            Self::walk(&mut case.body, plugin, analysis);
-                        }
-                    }
-                    Node::While(while_node) => {
-                        Self::walk(&mut while_node.body, plugin, analysis);
-                    }
-                    Node::With(with_node) => {
-                        Self::walk(&mut with_node.body, plugin, analysis);
-                    }
-                    Node::Try(try_node) => {
-                        Self::walk(&mut try_node.body, plugin, analysis);
-                        for except in &mut try_node.except_clauses {
-                            Self::walk(&mut except.body, plugin, analysis);
-                        }
-                        if let Some(else_clause) = &mut try_node.else_clause {
-                            Self::walk(else_clause, plugin, analysis);
-                        }
-                        if let Some(finally_clause) = &mut try_node.finally_clause {
-                            Self::walk(finally_clause, plugin, analysis);
-                        }
-                    }
-                    Node::Definition(def) => {
-                        Self::walk(&mut def.body, plugin, analysis);
-                    }
-                    Node::Text(_)
-                    | Node::Expression(_)
-                    | Node::Comment(_)
-                    | Node::Statement(_)
-                    | Node::Import(_)
-                    | Node::Parameter(_)
-                    | Node::Decorator(_) => {}
                 }
+                Node::Fragment(f) => walk(&mut f.children, ctx, plugin)?,
+                Node::Slot(s) => walk(&mut s.fallback, ctx, plugin)?,
+                Node::If(if_node) => {
+                    walk(&mut if_node.then_branch, ctx, plugin)?;
+                    for (_, _, branch) in &mut if_node.elif_branches {
+                        walk(branch, ctx, plugin)?;
+                    }
+                    if let Some(else_branch) = &mut if_node.else_branch {
+                        walk(else_branch, ctx, plugin)?;
+                    }
+                }
+                Node::For(for_node) => walk(&mut for_node.body, ctx, plugin)?,
+                Node::Match(match_node) => {
+                    for case in &mut match_node.cases {
+                        walk(&mut case.body, ctx, plugin)?;
+                    }
+                }
+                Node::While(while_node) => walk(&mut while_node.body, ctx, plugin)?,
+                Node::With(with_node) => walk(&mut with_node.body, ctx, plugin)?,
+                Node::Try(try_node) => {
+                    walk(&mut try_node.body, ctx, plugin)?;
+                    for except in &mut try_node.except_clauses {
+                        walk(&mut except.body, ctx, plugin)?;
+                    }
+                    if let Some(else_clause) = &mut try_node.else_clause {
+                        walk(else_clause, ctx, plugin)?;
+                    }
+                    if let Some(finally_clause) = &mut try_node.finally_clause {
+                        walk(finally_clause, ctx, plugin)?;
+                    }
+                }
+                Node::Definition(def) => walk(&mut def.body, ctx, plugin)?,
+                Node::Text(_)
+                | Node::Expression(_)
+                | Node::Comment(_)
+                | Node::Statement(_)
+                | Node::Import(_)
+                | Node::Parameter(_)
+                | Node::Decorator(_) => {}
             }
-            plugin.exit(node, analysis);
         }
+        plugin.exit(node, ctx)?;
     }
+    Ok(())
 }
 
-impl Default for PluginRunner {
-    fn default() -> Self {
-        Self::new()
-    }
+/// The standard plugins, in run order: transforms first, then inspectors.
+pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
+    vec![
+        Box::new(ReservedKeywordPlugin),
+        Box::new(HelperDetectionPlugin),
+        Box::new(AsyncDetectionPlugin),
+        Box::new(SlotDetectionPlugin),
+        Box::new(MutableDefaultDetectionPlugin),
+        Box::new(SpreadKwargsPlugin::new()),
+    ]
 }
 
-/// Standard plugins in correct phase order.
-pub fn standard_plugins() -> PluginRunner {
-    PluginRunner::new()
-        // Transform
-        .add_transform(ReservedKeywordPlugin)
-        // Analyze
-        .add_analyze(HelperDetectionPlugin)
-        .add_analyze(AsyncDetectionPlugin)
-        .add_analyze(SlotDetectionPlugin)
-        .add_analyze(MutableDefaultDetectionPlugin)
-        .add_analyze(SpreadKwargsPlugin::new())
+/// Run all standard plugins over the AST, returning the shared context.
+pub fn run(ast: &mut Ast) -> Result<Context, CompileError> {
+    let mut ctx = Context::new();
+    for mut plugin in standard_plugins() {
+        plugin.run(ast, &mut ctx)?;
+    }
+    Ok(ctx)
 }

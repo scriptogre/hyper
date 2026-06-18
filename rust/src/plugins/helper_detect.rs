@@ -1,60 +1,52 @@
-use super::Plugin;
-use super::analysis::Helper;
+use super::{Context, Flow, Helper, Plugin};
 use crate::ast::{AttributeKind, Node};
+use crate::error::CompileError;
 use crate::html;
 
 /// Detects which runtime helpers are needed based on AST structure.
-/// The generator reads metadata.helpers_used to emit the correct imports.
+/// The generator reads ctx.helpers_used to emit the correct imports.
 pub struct HelperDetectionPlugin;
 
-impl HelperDetectionPlugin {
-    fn insert_helper_for_attr(name: &str, metadata: &mut super::Analysis) {
-        match name {
-            "class" => metadata.helpers_used.insert(Helper::RenderClass),
-            "style" => metadata.helpers_used.insert(Helper::RenderStyle),
-            "data" => metadata.helpers_used.insert(Helper::RenderData),
-            "aria" => metadata.helpers_used.insert(Helper::RenderAria),
-            n if html::is_boolean_attribute(n) => metadata.helpers_used.insert(Helper::RenderAttr),
-            _ => metadata.helpers_used.insert(Helper::Escape),
-        };
-    }
-}
-
 impl Plugin for HelperDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
+    fn enter(&mut self, node: &mut Node, ctx: &mut Context) -> Result<Flow, CompileError> {
         match node {
             Node::Expression(expr) => {
-                metadata.helpers_used.insert(Helper::Escape);
+                ctx.helpers_used.insert(Helper::Escape);
                 if expr.expr.contains("safe(") {
-                    metadata.helpers_used.insert(Helper::Safe);
+                    ctx.helpers_used.insert(Helper::Safe);
                 }
             }
             Node::Element(el) => {
                 for attr in &el.attributes {
-                    match &attr.kind {
-                        AttributeKind::Expression { name, .. } => {
-                            Self::insert_helper_for_attr(name, metadata);
-                        }
-                        AttributeKind::Shorthand { name, .. } => match name.as_str() {
-                            "class" | "style" | "data" | "aria" => {
-                                Self::insert_helper_for_attr(name, metadata);
-                            }
-                            _ => {
-                                metadata.helpers_used.insert(Helper::RenderAttr);
-                            }
-                        },
+                    // Reduce each attribute to (name, is_shorthand); spread/template insert directly.
+                    let (name, is_shorthand) = match &attr.kind {
+                        AttributeKind::Expression { name, .. } => (name.as_str(), false),
+                        AttributeKind::Shorthand { name, .. } => (name.as_str(), true),
                         AttributeKind::Spread { .. } => {
-                            metadata.helpers_used.insert(Helper::SpreadAttrs);
+                            ctx.helpers_used.insert(Helper::SpreadAttrs);
+                            continue;
                         }
                         AttributeKind::Template { .. } => {
-                            metadata.helpers_used.insert(Helper::Escape);
+                            ctx.helpers_used.insert(Helper::Escape);
+                            continue;
                         }
-                        _ => {}
-                    }
+                        _ => continue,
+                    };
+
+                    let helper = match name {
+                        "class" => Helper::RenderClass,
+                        "style" => Helper::RenderStyle,
+                        "data" => Helper::RenderData,
+                        "aria" => Helper::RenderAria,
+                        _ if is_shorthand => Helper::RenderAttr,
+                        n if html::is_boolean_attribute(n) => Helper::RenderAttr,
+                        _ => Helper::Escape,
+                    };
+                    ctx.helpers_used.insert(helper);
                 }
             }
             _ => {}
         }
-        true
+        Ok(Flow::Continue)
     }
 }

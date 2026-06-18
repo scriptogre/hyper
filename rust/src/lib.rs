@@ -1,6 +1,6 @@
 //! Hyper transpiler
 //!
-//! Pipeline: Parse → Transform → Analyze → Generate
+//! Pipeline: Parse → Plugins → Generate
 //!
 //! # Example
 //!
@@ -25,9 +25,9 @@ use generate::Generator;
 pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, CompileError> {
     let mut ast = parse::HyperParser::new().parse(source)?;
 
-    let analysis = plugins::standard_plugins().run(&mut ast)?;
+    let ctx = plugins::run(&mut ast)?;
 
-    let mut result = generate::PythonGenerator::new().generate(&ast, &analysis, options);
+    let mut result = generate::PythonGenerator::new().generate(&ast, &ctx, options);
 
     if options.include_ranges {
         generate::validate_python_ranges(source, &result.code, &mut result.ranges);
@@ -41,4 +41,4 @@ pub use ast::{Ast, Node, Position, Span};
 pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{CompileOptions, CompileResult};
 pub use parse::Parser;
-pub use plugins::{Analysis, Plugin};
+pub use plugins::{Context, Flow, Plugin, walk};

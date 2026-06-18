@@ -47,9 +47,9 @@ impl Helper {
 /// when used as `{**name}` on a component or element without explicit declaration.
 pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", "attributes"];
 
-/// Output of the analyze phase. Populated by analyze plugins, consumed by the generator.
+/// Shared context: filled by plugins as they walk the AST, read by the generator.
 #[derive(Debug, Clone, Default)]
-pub struct Analysis {
+pub struct Context {
     pub helpers_used: HashSet<Helper>,
     pub is_async: bool,
     pub slots_used: HashSet<String>,
@@ -60,7 +60,7 @@ pub struct Analysis {
     pub mutable_default_params: HashSet<String>,
 }
 
-impl Analysis {
+impl Context {
     pub fn new() -> Self {
         Self::default()
     }

@@ -1,5 +1,6 @@
-use super::Plugin;
+use super::{Context, Flow, Plugin};
 use crate::ast::Node;
+use crate::error::CompileError;
 
 /// Detects parameters with nullable types and mutable defaults.
 ///
@@ -9,16 +10,16 @@ use crate::ast::Node;
 pub struct MutableDefaultDetectionPlugin;
 
 impl Plugin for MutableDefaultDetectionPlugin {
-    fn enter(&mut self, node: &mut Node, metadata: &mut super::Analysis) -> bool {
+    fn enter(&mut self, node: &mut Node, ctx: &mut Context) -> Result<Flow, CompileError> {
         if let Node::Parameter(param) = node
             && is_nullable_with_mutable_default(
                 param.type_hint.as_deref(),
                 param.default.as_deref(),
             )
         {
-            metadata.mutable_default_params.insert(param.name.clone());
+            ctx.mutable_default_params.insert(param.name.clone());
         }
-        true
+        Ok(Flow::Continue)
     }
 }
 
