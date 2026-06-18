@@ -198,6 +198,12 @@ fn lower_node(node: &Node) -> Result<Vec<Stmt>, CompileError> {
         // A bare definition (decorators are grouped in by `lower_seq`).
         Node::Definition(def) => lower_definition(&[], def),
 
+        // A fragment is just its children with no wrapping element.
+        Node::Fragment(f) => {
+            let refs: Vec<&Node> = f.children.iter().collect();
+            lower_seq(&refs)
+        }
+
         // Transitional: HTML-producing kinds (text, elements, components,
         // fragments, slots) still emit string-constant yields pending the
         // f-string lowering step.
@@ -350,7 +356,6 @@ fn transitional_yield(node: &Node) -> Stmt {
         Node::Text(_) => "text",
         Node::Element(_) => "element",
         Node::Component(_) => "component",
-        Node::Fragment(_) => "fragment",
         Node::Slot(_) => "slot",
         Node::If(_) => "if",
         Node::For(_) => "for",
