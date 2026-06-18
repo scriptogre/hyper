@@ -637,6 +637,21 @@ mod tests {
     use crate::compile_via_ast;
 
     #[test]
+    fn adds_slot_parameters() {
+        let src = "title: str\n\n---\n\n<div>\n    <{...header}>\n        <h1>hi</h1>\n    </{...header}>\n    {...}\n</div>\n";
+        let out = compile_via_ast(src, Some("t")).unwrap();
+        assert!(out.contains("from collections.abc import Iterable"), "{out}");
+        assert!(out.contains("_default_slot: Iterable[str] | None"), "{out}");
+        assert!(out.contains("_header_slot: Iterable[str] | None"), "{out}");
+        // default slot is positional (before the `*,`)
+        let sig = out.lines().find(|l| l.contains("def T")).unwrap();
+        assert!(
+            sig.find("_default_slot").unwrap() < sig.find('*').unwrap(),
+            "{sig}"
+        );
+    }
+
+    #[test]
     fn detects_async_usage() {
         // await inside an interpolation
         let out = compile_via_ast("u: int\n\n---\n\n<p>{await bio(u)}</p>\n", Some("t")).unwrap();

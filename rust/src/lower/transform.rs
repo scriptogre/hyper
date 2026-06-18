@@ -111,6 +111,85 @@ pub fn apply_async(module: &mut ast::ModModule) {
     }
 }
 
+/// Collects slot parameter names referenced by `yield from <name>`. A bare-name
+/// `yield from` is uniquely a slot — component invocations `yield from Name(...)`
+/// yield from a call expression, not a name.
+struct SlotCollector {
+    names: HashSet<String>,
+}
+
+impl<'a> Visitor<'a> for SlotCollector {
+    fn visit_expr(&mut self, expr: &'a Expr) {
+        if let Expr::YieldFrom(yf) = expr {
+            if let Expr::Name(name) = yf.value.as_ref() {
+                let id = name.id.as_str();
+                if id == "_default_slot" || (id.starts_with('_') && id.ends_with("_slot")) {
+                    self.names.insert(id.to_string());
+                }
+            }
+        }
+        visitor::walk_expr(self, expr);
+    }
+}
+
+/// Add slot parameters to the template function signature and import `Iterable`.
+///
+/// `_default_slot` (the `{...}` / `<{...}>` children slot) is a positional
+/// parameter before the `*`; named slots `_<name>_slot` are keyword-only and
+/// sorted. Each is typed `Iterable[str] | None = None`.
+pub fn apply_slots(module: &mut ast::ModModule) {
+    let mut collector = SlotCollector {
+        names: HashSet::new(),
+    };
+    for stmt in &module.body {
+        collector.visit_stmt(stmt);
+    }
+    if collector.names.is_empty() {
+        return;
+    }
+
+    let has_default = collector.names.contains("_default_slot");
+    let mut named: Vec<String> = collector
+        .names
+        .iter()
+        .filter(|n| *n != "_default_slot")
+        .cloned()
+        .collect();
+    named.sort();
+
+    if let Some(Stmt::FunctionDef(func)) = module.body.last_mut() {
+        if has_default {
+            // Positional-or-keyword parameter, before the `*` marker.
+            func.parameters.args.insert(0, slot_param("_default_slot"));
+        }
+        for name in &named {
+            func.parameters.kwonlyargs.push(slot_param(name));
+        }
+    }
+
+    // `from collections.abc import Iterable`, placed just before the hyper import.
+    let import = b::import_from("collections.abc", &[("Iterable", None)], b::SENTINEL);
+    let insert_at = module
+        .body
+        .iter()
+        .position(|stmt| {
+            matches!(
+                stmt,
+                Stmt::ImportFrom(ast::StmtImportFrom { module: Some(m), .. })
+                    if m.as_str() == "hyper"
+            )
+        })
+        .unwrap_or(0);
+    module.body.insert(insert_at, import);
+}
+
+/// Build a slot parameter `name: Iterable[str] | None = None`.
+fn slot_param(name: &str) -> ast::ParameterWithDefault {
+    let annotation = b::parse_expr("Iterable[str] | None").ok();
+    let default = b::parse_expr("None").ok();
+    b::kwonly_param(name, b::SENTINEL, annotation, default)
+}
+
 /// Find the generated `from hyper import …` statement (the one the lowering
 /// inserts), so a pass can rewrite its imported names.
 fn find_hyper_import(body: &mut [Stmt]) -> Option<&mut Stmt> {
