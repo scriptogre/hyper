@@ -7,7 +7,7 @@
 - Plugins renamed verb-first: `RenameReservedKeywords`, `DetectAsync`, `DetectSlots`, `DetectMutableDefaults`, `CollectSpreadKwargs`. (`3968b0b`)
 
 ## Decisions
-- Pipeline: parse, then ordered plugin passes, then generate. Generate stays separate (f-string merging and source mapping are whole-output jobs, not per-node).
+- Pipeline: parse, then ordered plugin passes, then a thin printer. Features own their output by lowering the AST (including f-string grouping and helper choice). The printer is mechanical: it writes each node's string and assigns compiled positions from carried spans. No feature logic lives in it. The only thing inherent to the printer is the output cursor.
 - `Shorthand` stays an `AttributeKind`. It is NOT source-level sugar for `x={x}`: `{x}` has no `=`, and source-mapping is tied to original syntax.
 - Source-mapping must be span-based: read spans, never branch on `AttributeKind`. Currently violated by `injection_analyzer.rs` and `brace_collector.rs`.
 - Desugaring happens on the AST with spans carried forward (rustc/Babel/TS model), never on source text.
@@ -18,7 +18,7 @@
 2. Desugar `Shorthand` into `Expression` as an AST pass, carrying spans forward. Runs before `RenameReservedKeywords`.
 3. Unify the HTML emit table so longhand renders like shorthand (`data` to render_data, `aria` to render_aria, else to render_attr). Behavior change: regenerate expected via `accept_expected` dry-run, review, then apply. Then JetBrains visual check on `kitchen_sink.hyper`.
 4. Delete `helper_detect`; the generator records the helpers it emits and builds imports from that (needs two-phase: emit body, then header). Fixes the `data={x}` dead-import bug.
-5. Vision: each feature becomes a full lowering pass; the generator becomes a near-dumb printer.
+5. Vision: every feature is a lowering pass (including f-string grouping). The printer is dumb: write each node's string, assign positions from carried spans, advance the cursor. The cursor is the only thing inherent to the printer.
 
 ## Also pending
 - dotfiles `adhd.md` provenance-header addition is uncommitted (separate repo).
