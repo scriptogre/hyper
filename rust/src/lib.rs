@@ -16,6 +16,7 @@ pub mod ast;
 pub mod error;
 pub mod generate;
 pub mod html;
+pub mod lower;
 pub mod parse;
 pub mod plugins;
 
@@ -35,6 +36,33 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
     }
 
     Ok(result)
+}
+
+/// Compile via the new Ruff-AST pipeline (Parse → Lower → Print).
+///
+/// Transitional: this lowers the hyper AST to a Ruff [`ast::ModModule`] and
+/// prints it with Ruff's stock code generator. It is not yet source-map-aware
+/// and does not yet match the byte-for-byte output of [`compile`]; it exists so
+/// the lowering pass can be exercised end-to-end while the rest of the new
+/// pipeline (plugins on the Ruff AST, source-map-aware printer) is built out.
+pub fn compile_via_ast(
+    source: &str,
+    function_name: Option<&str>,
+) -> Result<String, CompileError> {
+    use ruff_python_codegen::{Generator, Indentation, Mode};
+    use ruff_source_file::LineEnding;
+
+    let ast = parse::HyperParser::new().parse(source)?;
+    let module = lower::lower(&ast, function_name)?;
+
+    let indent = Indentation::default();
+    let mut code = String::new();
+    for stmt in &module.body {
+        let generator = Generator::new(&indent, LineEnding::default()).with_mode(Mode::Default);
+        code.push_str(&generator.stmt(stmt));
+        code.push('\n');
+    }
+    Ok(code)
 }
 
 pub use ast::{Ast, Node, Position, Span};
