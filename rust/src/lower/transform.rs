@@ -190,6 +190,72 @@ fn slot_param(name: &str) -> ast::ParameterWithDefault {
     b::kwonly_param(name, b::SENTINEL, annotation, default)
 }
 
+/// Collects blessed spread names used via `spread_attrs(<name>)`.
+struct SpreadCollector {
+    names: Vec<String>,
+}
+
+impl<'a> Visitor<'a> for SpreadCollector {
+    fn visit_expr(&mut self, expr: &'a Expr) {
+        if let Expr::Call(call) = expr {
+            if matches!(call.func.as_ref(), Expr::Name(n) if n.id.as_str() == "spread_attrs") {
+                if let [Expr::Name(arg)] = call.arguments.args.as_ref() {
+                    let id = arg.id.as_str();
+                    if crate::plugins::BLESSED_SPREAD_NAMES.contains(&id)
+                        && !self.names.iter().any(|n| n == id)
+                    {
+                        self.names.push(id.to_string());
+                    }
+                }
+            }
+        }
+        visitor::walk_expr(self, expr);
+    }
+}
+
+/// Auto-inject `**kwargs` (or another blessed spread name) into the signature
+/// when a template spreads it without declaring it. Rejects templates that use
+/// more than one distinct blessed spread name.
+pub fn apply_spread_kwargs(module: &mut ast::ModModule) -> Result<(), crate::error::CompileError> {
+    let mut collector = SpreadCollector { names: Vec::new() };
+    for stmt in &module.body {
+        collector.visit_stmt(stmt);
+    }
+
+    if collector.names.len() > 1 {
+        let list = collector
+            .names
+            .iter()
+            .map(|n| format!("{{**{n}}}"))
+            .collect::<Vec<_>>()
+            .join(" and ");
+        return Err(crate::error::CompileError::Generate(format!(
+            "Cannot use {list} in the same template \u{2014} only one spread parameter is allowed per component"
+        )));
+    }
+
+    let Some(name) = collector.names.first() else {
+        return Ok(());
+    };
+    if let Some(Stmt::FunctionDef(func)) = module.body.last_mut() {
+        let already_declared = func
+            .parameters
+            .kwarg
+            .as_ref()
+            .is_some_and(|k| k.name.as_str() == name)
+            || func
+                .parameters
+                .kwonlyargs
+                .iter()
+                .chain(func.parameters.args.iter())
+                .any(|p| p.parameter.name.as_str() == name);
+        if !already_declared {
+            func.parameters.kwarg = Some(Box::new(b::bare_param(name, None)));
+        }
+    }
+    Ok(())
+}
+
 /// Is this annotation nullable (`X | None`, `None | X`, or `Optional[...]`)?
 fn is_nullable(expr: &Expr) -> bool {
     match expr {

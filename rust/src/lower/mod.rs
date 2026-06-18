@@ -536,10 +536,19 @@ pub fn lower(ast: &Ast, function_name: Option<&str>) -> Result<ast::ModModule, C
     // 2. The generated `from hyper import html` (helper plugin will extend this).
     module_body.push(b::import_from("hyper", &[("html", None)], b::SENTINEL));
 
-    // 3. Function parameters (keyword-only, after the bare `*`).
+    // 3. Function parameters. A declared `**name` becomes the `**kwarg`; all
+    //    others are keyword-only (after the bare `*`).
     let mut parameters = b::empty_parameters();
     for param in &part.params {
-        parameters.kwonlyargs.push(lower_parameter(param)?);
+        if let Some(stripped) = param.name.strip_prefix("**") {
+            let annotation = match &param.type_hint {
+                Some(hint) => Some(b::parse_expr(hint)?),
+                None => None,
+            };
+            parameters.kwarg = Some(Box::new(b::bare_param(stripped, annotation)));
+        } else {
+            parameters.kwonlyargs.push(lower_parameter(param)?);
+        }
     }
 
     // 4. Function body.
@@ -635,6 +644,21 @@ mod fixture_tests {
 #[cfg(test)]
 mod tests {
     use crate::compile_via_ast;
+
+    #[test]
+    fn injects_and_guards_spread_kwargs() {
+        // implicit blessed spread → auto-injected **kwargs
+        let out = compile_via_ast("---\n\n<div {**kwargs}></div>\n", Some("t")).unwrap();
+        assert!(out.contains("**kwargs"), "{out}");
+        assert!(out.contains("spread_attrs(kwargs)"), "{out}");
+        // declared **attrs stays a kwarg, not re-injected
+        let out =
+            compile_via_ast("**attrs: Any\n\n---\n\n<div {**attrs}></div>\n", Some("t")).unwrap();
+        assert!(out.contains("**attrs: Any"), "{out}");
+        // more than one distinct blessed spread is rejected
+        let err = compile_via_ast("---\n\n<div {**kwargs}></div>\n<p {**props}></p>\n", Some("t"));
+        assert!(err.is_err(), "expected multi-spread error");
+    }
 
     #[test]
     fn rewrites_mutable_defaults_with_guards() {
