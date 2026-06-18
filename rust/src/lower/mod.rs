@@ -23,7 +23,10 @@ pub mod builders;
 
 use ruff_python_ast::{self as ast, Stmt};
 
-use crate::ast::{Ast, Node, ParameterNode};
+use crate::ast::{
+    Ast, DecoratorNode, DefinitionNode, ForNode, IfNode, MatchNode, Node, ParameterNode, TryNode,
+    WhileNode, WithNode,
+};
 use crate::error::CompileError;
 use builders as b;
 
@@ -108,11 +111,58 @@ fn lower_parameter(param: &ParameterNode) -> Result<ast::ParameterWithDefault, C
     Ok(b::kwonly_param(&param.name, range, annotation, default))
 }
 
+/// Lower a sequence of body nodes into a flat list of Python statements,
+/// grouping leading decorators with the definition they apply to.
+fn lower_seq(nodes: &[&Node]) -> Result<Vec<Stmt>, CompileError> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < nodes.len() {
+        if matches!(nodes[i], Node::Decorator(_)) {
+            // Collect a run of decorators (and intervening comments/blank text)
+            // and attach them to the definition that follows.
+            let mut decorators: Vec<&DecoratorNode> = Vec::new();
+            let mut j = i;
+            while j < nodes.len() {
+                match nodes[j] {
+                    Node::Decorator(d) => {
+                        decorators.push(d);
+                        j += 1;
+                    }
+                    Node::Comment(_) => j += 1,
+                    Node::Text(t) if t.content.trim().is_empty() => j += 1,
+                    _ => break,
+                }
+            }
+            if let Some(Node::Definition(def)) = nodes.get(j).copied() {
+                out.extend(lower_definition(&decorators, def)?);
+                i = j + 1;
+                continue;
+            }
+            // No definition follows; emit the decorators verbatim (rare).
+            for d in &decorators {
+                out.extend(b::parse_stmts(&d.decorator)?);
+            }
+            i = j;
+            continue;
+        }
+        out.extend(lower_node(nodes[i])?);
+        i += 1;
+    }
+    Ok(out)
+}
+
+/// Lower the children of a control-flow branch, defaulting to `pass` when empty
+/// so the produced suite is always valid Python.
+fn lower_children(nodes: &[Node]) -> Result<Vec<Stmt>, CompileError> {
+    let refs: Vec<&Node> = nodes.iter().collect();
+    let mut stmts = lower_seq(&refs)?;
+    if stmts.is_empty() {
+        stmts.push(b::pass_stmt());
+    }
+    Ok(stmts)
+}
+
 /// Lower a single hyper body node into zero or more Python statements.
-///
-/// Phase 1 lowers the structurally simple, self-contained node kinds. The
-/// remaining kinds (elements, components, control flow, slots, definitions) are
-/// emitted as transitional string-constant `yield`s pending Phase 2.
 fn lower_node(node: &Node) -> Result<Vec<Stmt>, CompileError> {
     match node {
         // Blank/structural-only text between header items produces nothing.
@@ -136,10 +186,162 @@ fn lower_node(node: &Node) -> Result<Vec<Stmt>, CompileError> {
         // Comments carry no runtime effect in the lowered Python.
         Node::Comment(_) => Ok(vec![]),
 
-        // Transitional: kinds not yet lowered to real Python AST are emitted as
-        // string-constant yields so the module stays well-formed (Phase 2).
+        // Control flow: reconstruct the header as a Python skeleton, parse it
+        // with Ruff, then graft the recursively-lowered children into the body.
+        Node::If(n) => lower_if(n),
+        Node::For(n) => lower_for(n),
+        Node::While(n) => lower_while(n),
+        Node::With(n) => lower_with(n),
+        Node::Match(n) => lower_match(n),
+        Node::Try(n) => lower_try(n),
+
+        // A bare definition (decorators are grouped in by `lower_seq`).
+        Node::Definition(def) => lower_definition(&[], def),
+
+        // Transitional: HTML-producing kinds (text, elements, components,
+        // fragments, slots) still emit string-constant yields pending the
+        // f-string lowering step.
         other => Ok(vec![transitional_yield(other)]),
     }
+}
+
+/// Strip the trailing block colon that the hyper parser keeps on control-flow
+/// header strings (`"x > 1:"` → `"x > 1"`), so we can append our own.
+fn header(s: &str) -> &str {
+    s.trim_end_matches(':').trim()
+}
+
+/// Parse a reconstructed-header skeleton and return its single statement.
+fn parse_one(src: &str) -> Result<Stmt, CompileError> {
+    b::parse_stmts(src)?
+        .into_iter()
+        .next()
+        .ok_or_else(|| CompileError::Generate(format!("empty skeleton parse: `{src}`")))
+}
+
+fn lower_if(n: &IfNode) -> Result<Vec<Stmt>, CompileError> {
+    let mut src = format!("if {}:\n    pass\n", header(&n.condition));
+    for (cond, _, _) in &n.elif_branches {
+        src.push_str(&format!("elif {}:\n    pass\n", header(cond)));
+    }
+    if n.else_branch.is_some() {
+        src.push_str("else:\n    pass\n");
+    }
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::If(if_stmt) = &mut stmt {
+        if_stmt.body = lower_children(&n.then_branch)?.into_iter().collect();
+        let mut elif_idx = 0;
+        for clause in &mut if_stmt.elif_else_clauses {
+            if clause.test.is_some() {
+                clause.body = lower_children(&n.elif_branches[elif_idx].2)?.into_iter().collect();
+                elif_idx += 1;
+            } else if let Some(else_branch) = &n.else_branch {
+                clause.body = lower_children(else_branch)?.into_iter().collect();
+            }
+        }
+    }
+    Ok(vec![stmt])
+}
+
+fn lower_for(n: &ForNode) -> Result<Vec<Stmt>, CompileError> {
+    let prefix = if n.is_async { "async " } else { "" };
+    let src = format!("{prefix}for {} in {}:\n    pass\n", n.binding.trim(), header(&n.iterable));
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::For(for_stmt) = &mut stmt {
+        for_stmt.body = lower_children(&n.body)?.into_iter().collect();
+    }
+    Ok(vec![stmt])
+}
+
+fn lower_while(n: &WhileNode) -> Result<Vec<Stmt>, CompileError> {
+    let src = format!("while {}:\n    pass\n", header(&n.condition));
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::While(while_stmt) = &mut stmt {
+        while_stmt.body = lower_children(&n.body)?.into_iter().collect();
+    }
+    Ok(vec![stmt])
+}
+
+fn lower_with(n: &WithNode) -> Result<Vec<Stmt>, CompileError> {
+    let prefix = if n.is_async { "async " } else { "" };
+    let src = format!("{prefix}with {}:\n    pass\n", header(&n.items));
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::With(with_stmt) = &mut stmt {
+        with_stmt.body = lower_children(&n.body)?.into_iter().collect();
+    }
+    Ok(vec![stmt])
+}
+
+fn lower_match(n: &MatchNode) -> Result<Vec<Stmt>, CompileError> {
+    let mut src = format!("match {}:\n", header(&n.expr));
+    for case in &n.cases {
+        src.push_str(&format!("    case {}:\n        pass\n", header(&case.pattern)));
+    }
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::Match(match_stmt) = &mut stmt {
+        for (case_ast, case_node) in match_stmt.cases.iter_mut().zip(&n.cases) {
+            case_ast.body = lower_children(&case_node.body)?.into_iter().collect();
+        }
+    }
+    Ok(vec![stmt])
+}
+
+fn lower_try(n: &TryNode) -> Result<Vec<Stmt>, CompileError> {
+    let mut src = String::from("try:\n    pass\n");
+    for clause in &n.except_clauses {
+        match &clause.exception {
+            Some(exc) => src.push_str(&format!("except {}:\n    pass\n", header(exc))),
+            None => src.push_str("except:\n    pass\n"),
+        }
+    }
+    if n.else_clause.is_some() {
+        src.push_str("else:\n    pass\n");
+    }
+    if n.finally_clause.is_some() {
+        src.push_str("finally:\n    pass\n");
+    }
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::Try(try_stmt) = &mut stmt {
+        try_stmt.body = lower_children(&n.body)?.into_iter().collect();
+        for (handler, clause) in try_stmt.handlers.iter_mut().zip(&n.except_clauses) {
+            let ast::ExceptHandler::ExceptHandler(h) = handler;
+            h.body = lower_children(&clause.body)?.into_iter().collect();
+        }
+        if let Some(else_clause) = &n.else_clause {
+            try_stmt.orelse = lower_children(else_clause)?.into_iter().collect();
+        }
+        if let Some(finally_clause) = &n.finally_clause {
+            try_stmt.finalbody = lower_children(finally_clause)?.into_iter().collect();
+        }
+    }
+    Ok(vec![stmt])
+}
+
+/// Lower a function/class definition, reconstructing `decorators + signature`
+/// as a skeleton and grafting the recursively-lowered body.
+fn lower_definition(
+    decorators: &[&DecoratorNode],
+    def: &DefinitionNode,
+) -> Result<Vec<Stmt>, CompileError> {
+    let mut src = String::new();
+    for d in decorators {
+        src.push_str(d.decorator.trim_end());
+        src.push('\n');
+    }
+    src.push_str(def.signature.trim_end());
+    src.push_str("\n    pass\n");
+    let mut stmt = parse_one(&src)?;
+    match &mut stmt {
+        Stmt::FunctionDef(f) => f.body = lower_children(&def.body)?.into_iter().collect(),
+        Stmt::ClassDef(c) => c.body = lower_children(&def.body)?.into_iter().collect(),
+        _ => {
+            return Err(CompileError::Generate(format!(
+                "definition signature did not parse to a def/class: `{}`",
+                def.signature
+            )));
+        }
+    }
+    Ok(vec![stmt])
 }
 
 /// A placeholder `yield "<…>"` for a body node kind Phase 2 will lower properly.
@@ -187,10 +389,7 @@ pub fn lower(ast: &Ast, function_name: Option<&str>) -> Result<ast::ModModule, C
     }
 
     // 4. Function body.
-    let mut func_body: Vec<Stmt> = Vec::new();
-    for node in &part.body {
-        func_body.extend(lower_node(node)?);
-    }
+    let mut func_body = lower_seq(&part.body)?;
     if func_body.is_empty() {
         func_body.push(b::pass_stmt());
     }
@@ -237,5 +436,41 @@ mod tests {
         println!("=== imports ===\n{out}");
         assert!(out.contains("from datetime import datetime"));
         assert!(out.contains("import json"));
+    }
+}
+
+#[cfg(test)]
+mod control_flow_tests {
+    use crate::compile_via_ast;
+
+    fn lower(src: &str) -> String {
+        compile_via_ast(src, Some("t")).unwrap()
+    }
+
+    #[test]
+    fn lowers_if_elif_else() {
+        let out = lower("x: int\n\n---\n\nif x > 1:\n    <a>one</a>\nelif x > 0:\n    <b>zero</b>\nelse:\n    <c>neg</c>\nend\n");
+        println!("{out}");
+        assert!(out.contains("if x > 1:"));
+        assert!(out.contains("elif x > 0:"));
+        assert!(out.contains("else:"));
+    }
+
+    #[test]
+    fn lowers_for_while_with_try_match() {
+        let out = lower("items: list\n\n---\n\nfor i in items:\n    {i}\nend\nwhile items:\n    {items}\nend\nwith open('f') as fh:\n    {fh}\nend\ntry:\n    {items}\nexcept ValueError as e:\n    {e}\nfinally:\n    {items}\nend\nmatch items:\n    case []:\n        {items}\nend\n");
+        println!("{out}");
+        for needle in ["for i in items:", "while items:", "with open('f') as fh:", "try:", "except ValueError as e:", "finally:", "match items:", "case []:"] {
+            assert!(out.contains(needle), "missing: {needle}\n{out}");
+        }
+    }
+
+    #[test]
+    fn lowers_definition_with_decorator() {
+        let out = lower("---\n\n@staticmethod\ndef helper(x: int) -> int:\n    return x * 2\nend\n");
+        println!("{out}");
+        assert!(out.contains("@staticmethod"));
+        assert!(out.contains("def helper(x: int) -> int:"));
+        assert!(out.contains("return x * 2"));
     }
 }
