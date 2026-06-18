@@ -8,7 +8,7 @@ const RESERVED: &[&str] = &["class"];
 
 /// Renames reserved keywords used as identifiers (`class` to `class_`) on params,
 /// component-call kwargs, and expressions. Skips statements, so `class Foo:` stays valid.
-pub struct ReservedKeywordPlugin;
+pub struct RenameReservedKeywords;
 
 /// Rename every whole-word reserved keyword in a Python expression to its safe
 /// form (`class` to `class_`). Skips string literals and attribute access.
@@ -103,7 +103,7 @@ fn rename_value_expr(kind: &mut AttributeKind) {
     }
 }
 
-impl Plugin for ReservedKeywordPlugin {
+impl Plugin for RenameReservedKeywords {
     fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
         match node {
             Node::Parameter(param) => {

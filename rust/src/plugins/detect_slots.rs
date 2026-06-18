@@ -3,9 +3,9 @@ use crate::ast::Node;
 use crate::error::CompileError;
 
 /// Detects slots used in the template
-pub struct SlotDetectionPlugin;
+pub struct DetectSlots;
 
-impl Plugin for SlotDetectionPlugin {
+impl Plugin for DetectSlots {
     fn enter(&mut self, node: &mut Node, ctx: &mut Context) -> Result<Flow, CompileError> {
         match node {
             Node::Slot(slot) => {

@@ -7,9 +7,9 @@ use crate::error::CompileError;
 /// When a parameter is declared as `items: list | None = []`, the `| None`
 /// signals intent to use the None sentinel pattern. This plugin records such
 /// parameters so the generator can rewrite `= []` → `= None` with a guard.
-pub struct MutableDefaultDetectionPlugin;
+pub struct DetectMutableDefaults;
 
-impl Plugin for MutableDefaultDetectionPlugin {
+impl Plugin for DetectMutableDefaults {
     fn enter(&mut self, node: &mut Node, ctx: &mut Context) -> Result<Flow, CompileError> {
         if let Node::Parameter(param) = node
             && is_nullable_with_mutable_default(

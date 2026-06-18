@@ -13,11 +13,11 @@ use crate::error::CompileError;
 ///
 /// Guard (`run`): after the walk, rejects templates that use more than one
 /// distinct blessed spread name.
-pub struct SpreadKwargsPlugin {
+pub struct CollectSpreadKwargs {
     declared_params: HashSet<String>,
 }
 
-impl SpreadKwargsPlugin {
+impl CollectSpreadKwargs {
     pub fn new() -> Self {
         Self {
             declared_params: HashSet::new(),
@@ -41,13 +41,13 @@ impl SpreadKwargsPlugin {
     }
 }
 
-impl Default for SpreadKwargsPlugin {
+impl Default for CollectSpreadKwargs {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Plugin for SpreadKwargsPlugin {
+impl Plugin for CollectSpreadKwargs {
     fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
         walk(&mut ast.nodes, ctx, self)?;
 

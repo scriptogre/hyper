@@ -1,18 +1,18 @@
-mod async_detect;
+mod collect_spread_kwargs;
 mod context;
+mod detect_async;
+mod detect_mutable_defaults;
+mod detect_slots;
 mod helper_detect;
-mod mutable_default_detect;
-mod reserved_keyword;
-mod slot_detect;
-mod spread_kwargs;
+mod rename_reserved_keywords;
 
-pub use async_detect::AsyncDetectionPlugin;
+pub use collect_spread_kwargs::CollectSpreadKwargs;
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
+pub use detect_async::DetectAsync;
+pub use detect_mutable_defaults::DetectMutableDefaults;
+pub use detect_slots::DetectSlots;
 pub use helper_detect::HelperDetectionPlugin;
-pub use mutable_default_detect::MutableDefaultDetectionPlugin;
-pub use reserved_keyword::{ReservedKeywordPlugin, rename_reserved_keywords};
-pub use slot_detect::SlotDetectionPlugin;
-pub use spread_kwargs::SpreadKwargsPlugin;
+pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 
 use crate::ast::{Ast, Node};
 use crate::error::CompileError;
@@ -113,12 +113,12 @@ pub fn walk<P: Plugin + ?Sized>(
 /// The standard plugins, in run order: transforms first, then inspectors.
 pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
-        Box::new(ReservedKeywordPlugin),
+        Box::new(RenameReservedKeywords),
         Box::new(HelperDetectionPlugin),
-        Box::new(AsyncDetectionPlugin),
-        Box::new(SlotDetectionPlugin),
-        Box::new(MutableDefaultDetectionPlugin),
-        Box::new(SpreadKwargsPlugin::new()),
+        Box::new(DetectAsync),
+        Box::new(DetectSlots),
+        Box::new(DetectMutableDefaults),
+        Box::new(CollectSpreadKwargs::new()),
     ]
 }
 

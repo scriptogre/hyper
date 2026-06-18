@@ -3,9 +3,9 @@ use crate::ast::Node;
 use crate::error::CompileError;
 
 /// Detects if the template uses await and should be async
-pub struct AsyncDetectionPlugin;
+pub struct DetectAsync;
 
-impl Plugin for AsyncDetectionPlugin {
+impl Plugin for DetectAsync {
     fn enter(&mut self, node: &mut Node, ctx: &mut Context) -> Result<Flow, CompileError> {
         match node {
             Node::Expression(expr) if expr.expr.contains("await ") => ctx.is_async = true,
