@@ -20,6 +20,7 @@
 //! default; this path is exercised by unit tests via [`crate::compile_via_ast`].
 
 pub mod builders;
+pub mod render;
 
 use ruff_python_ast::{self as ast, Stmt};
 
@@ -117,6 +118,19 @@ fn lower_seq(nodes: &[&Node]) -> Result<Vec<Stmt>, CompileError> {
     let mut out = Vec::new();
     let mut i = 0;
     while i < nodes.len() {
+        // Combine a run of adjacent text/expression/element nodes into a single
+        // yielded (f-)string, mirroring the string generator's grouping.
+        if render::is_combinable(nodes[i]) {
+            let mut j = i + 1;
+            while j < nodes.len() && render::is_combinable(nodes[j]) {
+                j += 1;
+            }
+            if let Some(stmt) = lower_combined_run(&nodes[i..j])? {
+                out.push(stmt);
+            }
+            i = j;
+            continue;
+        }
         if matches!(nodes[i], Node::Decorator(_)) {
             // Collect a run of decorators (and intervening comments/blank text)
             // and attach them to the definition that follows.
@@ -149,6 +163,43 @@ fn lower_seq(nodes: &[&Node]) -> Result<Vec<Stmt>, CompileError> {
         i += 1;
     }
     Ok(out)
+}
+
+/// Lower a combinable run of content nodes into a single yielded (f-)string.
+///
+/// Returns `None` for an all-whitespace run, matching the string generator,
+/// which emits no `yield` for structurally-empty content.
+fn lower_combined_run(nodes: &[&Node]) -> Result<Option<Stmt>, CompileError> {
+    let rendered = render::render_run(nodes);
+    if rendered.content.trim().is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(yield_str_source(&rendered.content, rendered.has_expr)?))
+}
+
+/// Build a `yield "<content>"` / `yield f"<content>"` statement by parsing the
+/// (f-)string source into a real Ruff string/f-string expression.
+fn yield_str_source(content: &str, has_expr: bool) -> Result<Stmt, CompileError> {
+    let source = if has_expr {
+        format!("f\"\"\"{content}\"\"\"")
+    } else {
+        format!("\"\"\"{content}\"\"\"")
+    };
+    let expr = b::parse_expr(&source)?;
+    Ok(b::expr_stmt(b::yield_expr(expr), b::SENTINEL))
+}
+
+/// Lower a non-combinable element (one whose children include a component, slot,
+/// or control flow): yield the open tag, lower the children, yield the close tag.
+fn lower_element(el: &crate::ast::ElementNode) -> Result<Vec<Stmt>, CompileError> {
+    let open = render::render_open_tag(el);
+    let mut stmts = vec![yield_str_source(&open.content, open.has_expr)?];
+    if !el.self_closing {
+        let refs: Vec<&Node> = el.children.iter().collect();
+        stmts.extend(lower_seq(&refs)?);
+        stmts.push(yield_str_source(&format!("</{}>", el.tag), false)?);
+    }
+    Ok(stmts)
 }
 
 /// Lower the children of a control-flow branch, defaulting to `pass` when empty
@@ -203,6 +254,16 @@ fn lower_node(node: &Node) -> Result<Vec<Stmt>, CompileError> {
             let refs: Vec<&Node> = f.children.iter().collect();
             lower_seq(&refs)
         }
+
+        // A non-combinable element (has a component/slot/control-flow child):
+        // yield the open tag, lower children, yield the close tag.
+        Node::Element(el) => lower_element(el),
+
+        // Component invocation → `yield from Name(...)`.
+        Node::Component(c) => lower_component(c),
+
+        // Slot placeholder → conditional `yield from` with fallback.
+        Node::Slot(s) => lower_slot(s),
 
         // Transitional: HTML-producing kinds (text, elements, components,
         // fragments, slots) still emit string-constant yields pending the
@@ -323,6 +384,93 @@ fn lower_try(n: &TryNode) -> Result<Vec<Stmt>, CompileError> {
     Ok(vec![stmt])
 }
 
+/// PascalCase component name → the inner default-slot generator function name,
+/// e.g. `Inner` → `_inner_default_slot`. Mirrors the string generator.
+fn component_to_func_name(name: &str) -> String {
+    let mut result = String::from("_");
+    let mut prev_was_separator = false;
+    for (i, ch) in name.chars().enumerate() {
+        if ch.is_alphanumeric() || ch == '_' {
+            if ch.is_uppercase() && i > 0 && !prev_was_separator {
+                result.push('_');
+            }
+            result.push(ch.to_ascii_lowercase());
+            prev_was_separator = false;
+        } else {
+            if !prev_was_separator && i > 0 && !result.ends_with('_') {
+                result.push('_');
+            }
+            prev_was_separator = true;
+        }
+    }
+    while result.ends_with('_') && result.len() > 1 {
+        result.pop();
+    }
+    result.push_str("_default_slot");
+    result
+}
+
+/// Parameter name a slot binds to: default → `_default_slot`, named → `_<n>_slot`.
+fn slot_param_name(name: Option<&str>) -> String {
+    match name {
+        Some(n) => format!("_{n}_slot"),
+        None => "_default_slot".to_string(),
+    }
+}
+
+/// Lower a component invocation into `yield from Name(...)`. Components with
+/// children get an inner default-slot generator passed as the first argument.
+fn lower_component(c: &crate::ast::ComponentNode) -> Result<Vec<Stmt>, CompileError> {
+    let kwargs = render::component_kwargs(&c.attributes);
+    let name_range = b::span_range(c.name_span);
+
+    if c.children.is_empty() {
+        let call = b::parse_expr(&format!("{}({})", c.name, kwargs))?;
+        return Ok(vec![b::expr_stmt(b::yield_from_expr(call), name_range)]);
+    }
+
+    // With children: emit `def _<name>_default_slot(): <children>` then call it.
+    let func_name = component_to_func_name(&c.name);
+    let body = lower_children(&c.children)?;
+    let inner = b::function_def(&func_name, false, vec![], b::empty_parameters(), body);
+
+    let mut args = format!("{func_name}()");
+    if !kwargs.is_empty() {
+        args.push_str(", ");
+        args.push_str(&kwargs);
+    }
+    let call = b::parse_expr(&format!("{}({})", c.name, args))?;
+    let yield_from = b::expr_stmt(b::yield_from_expr(call), name_range);
+    Ok(vec![inner, yield_from])
+}
+
+/// Lower a slot placeholder into `if <slot> is not None: yield from <slot>`
+/// with the fallback content as the `else` branch.
+fn lower_slot(s: &crate::ast::SlotNode) -> Result<Vec<Stmt>, CompileError> {
+    let slot_var = slot_param_name(s.name.as_deref());
+    let has_fallback = !s.fallback.is_empty();
+
+    let src = if has_fallback {
+        format!("if {slot_var} is not None:\n    pass\nelse:\n    pass\n")
+    } else {
+        format!("if {slot_var} is not None:\n    pass\n")
+    };
+    let mut stmt = parse_one(&src)?;
+    if let Stmt::If(if_stmt) = &mut stmt {
+        let yield_from = b::expr_stmt(
+            b::yield_from_expr(b::name_expr(&slot_var, b::SENTINEL)),
+            b::SENTINEL,
+        );
+        if_stmt.body = std::iter::once(yield_from).collect();
+        if has_fallback {
+            for clause in &mut if_stmt.elif_else_clauses {
+                clause.body = lower_children(&s.fallback)?.into_iter().collect();
+            }
+        }
+    }
+    Ok(vec![stmt])
+}
+
 /// Lower a function/class definition, reconstructing `decorators + signature`
 /// as a skeleton and grafting the recursively-lowered body.
 fn lower_definition(
@@ -419,6 +567,68 @@ pub fn lower(ast: &Ast, function_name: Option<&str>) -> Result<ast::ModModule, C
     ));
 
     Ok(b::module(module_body))
+}
+
+#[cfg(test)]
+mod fixture_tests {
+    use crate::{CompileOptions, compile, compile_via_ast};
+    use std::path::Path;
+
+    /// Every `.hyper` fixture the string pipeline compiles must also lower
+    /// through the new pipeline into *valid, parseable* Python with no
+    /// transitional placeholders left behind.
+    #[test]
+    fn lowers_all_fixtures_to_valid_python() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+        let mut checked = 0;
+        let mut failures: Vec<String> = Vec::new();
+
+        for dir in ["basic", "components"] {
+            let dir = root.join(dir);
+            let Ok(entries) = std::fs::read_dir(&dir) else {
+                continue;
+            };
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("hyper") {
+                    continue;
+                }
+                let src = std::fs::read_to_string(&path).unwrap();
+                let stem = path.file_stem().unwrap().to_str().unwrap();
+
+                // Only fixtures the string pipeline accepts are in scope.
+                let opts = CompileOptions {
+                    function_name: Some(stem.to_string()),
+                    include_ranges: false,
+                };
+                if compile(&src, &opts).is_err() {
+                    continue;
+                }
+                checked += 1;
+
+                match compile_via_ast(&src, Some(stem)) {
+                    Err(e) => failures.push(format!("{stem}: lowering error: {e}")),
+                    Ok(out) if out.contains("__hyper_todo__") => {
+                        failures.push(format!("{stem}: transitional placeholder remains"))
+                    }
+                    Ok(out) => {
+                        if let Err(e) = ruff_python_parser::parse_module(&out) {
+                            failures.push(format!("{stem}: output not valid Python: {e}"));
+                        }
+                    }
+                }
+            }
+        }
+
+        assert!(checked > 0, "no fixtures were checked");
+        assert!(
+            failures.is_empty(),
+            "{}/{} fixtures failed to lower cleanly:\n{}",
+            failures.len(),
+            checked,
+            failures.join("\n")
+        );
+    }
 }
 
 #[cfg(test)]

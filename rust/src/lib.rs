@@ -52,7 +52,15 @@ pub fn compile_via_ast(
     use ruff_python_codegen::{Generator, Indentation, Mode};
     use ruff_source_file::LineEnding;
 
-    let ast = parse::HyperParser::new().parse(source)?;
+    let mut ast = parse::HyperParser::new().parse(source)?;
+
+    // Run the one AST-transform plugin (reserved-keyword renaming) so identifiers
+    // like `class` become `class_` before lowering. The remaining plugins (helper
+    // detection, async/slot/mutable-default/spread analysis) will be reimplemented
+    // as Ruff-AST passes in Phase 3.
+    let mut ctx = plugins::Context::new();
+    plugins::RenameReservedKeywords.run(&mut ast, &mut ctx)?;
+
     let module = lower::lower(&ast, function_name)?;
 
     let indent = Indentation::default();
