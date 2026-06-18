@@ -21,6 +21,7 @@
 
 pub mod builders;
 pub mod render;
+pub mod transform;
 
 use ruff_python_ast::{self as ast, Stmt};
 
@@ -634,6 +635,27 @@ mod fixture_tests {
 #[cfg(test)]
 mod tests {
     use crate::compile_via_ast;
+
+    #[test]
+    fn helper_imports_match_usage() {
+        // escape only
+        let out = compile_via_ast("name: str\n\n---\n\n<p>{name}</p>\n", Some("t")).unwrap();
+        assert!(out.contains("from hyper import html, escape"), "{out}");
+        // class + style + escape, canonical order
+        let out = compile_via_ast(
+            "x: list\n\n---\n\n<div class={x} style={x}>{x}</div>\n",
+            Some("t"),
+        )
+        .unwrap();
+        assert!(
+            out.contains("from hyper import html, escape, render_class, render_style"),
+            "{out}"
+        );
+        // no helpers
+        let out = compile_via_ast("---\n\n<p>static</p>\n", Some("t")).unwrap();
+        assert!(out.contains("from hyper import html\n"), "{out}");
+        assert!(!out.contains("escape"), "{out}");
+    }
 
     #[test]
     fn lowers_only_params() {
