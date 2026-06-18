@@ -1,6 +1,6 @@
 //! Hyper transpiler
 //!
-//! Pipeline: Parse → Plugins → Generate
+//! Pipeline: Parse → Lower → Plugins → Generate
 //!
 //! # Example
 //!
@@ -16,6 +16,7 @@ pub mod ast;
 pub mod error;
 pub mod generate;
 pub mod html;
+pub mod lower;
 pub mod parse;
 pub mod plugins;
 
@@ -23,7 +24,8 @@ use generate::Generator;
 
 /// Compile a `.hyper` source string to Python.
 pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, CompileError> {
-    let mut ast = parse::HyperParser::new().parse(source)?;
+    let nodes = parse::HyperParser::new().parse(source)?;
+    let mut ast = lower::lower(nodes, source);
 
     let ctx = plugins::run(&mut ast)?;
 

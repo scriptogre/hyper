@@ -1459,80 +1459,20 @@ impl Generator for PythonGenerator {
     ) -> CompileResult {
         let mut output = Output::new();
 
-        // Collect parameters, imports, decorators, and body from AST
-        let mut parameters = Vec::new();
-        let mut imports = Vec::new();
-        let mut decorators = Vec::new();
-        let mut header_comments = Vec::new();
-        let mut body_nodes = Vec::new();
-        let mut in_header = true;
-
-        // First pass: identify which decorators lead to definitions
-        // so we can correctly handle decorator-definition grouping
-        let mut decorator_leads_to_def = vec![false; ast.nodes.len()];
-        let mut whitespace_in_decorator_chain = vec![false; ast.nodes.len()];
-
-        for (i, node) in ast.nodes.iter().enumerate() {
-            if matches!(node, Node::Decorator(_)) {
-                let mut found_def = false;
-                for j in (i + 1)..ast.nodes.len() {
-                    match &ast.nodes[j] {
-                        Node::Decorator(_) | Node::Comment(_) => continue,
-                        Node::Text(t) if t.content.trim().is_empty() => continue,
-                        Node::Definition(_) => {
-                            found_def = true;
-                            break;
-                        }
-                        _ => break,
-                    }
-                }
-                decorator_leads_to_def[i] = found_def;
-
-                // Mark whitespace text nodes between this decorator and the next
-                // decorator/definition as part of the decorator chain (suppress them)
-                if found_def {
-                    #[allow(clippy::needless_range_loop)]
-                    for j in (i + 1)..ast.nodes.len() {
-                        match &ast.nodes[j] {
-                            Node::Text(t) if t.content.trim().is_empty() => {
-                                whitespace_in_decorator_chain[j] = true;
-                            }
-                            Node::Decorator(_) | Node::Comment(_) => continue,
-                            _ => break,
-                        }
-                    }
-                }
-            }
-        }
-
-        for (i, node) in ast.nodes.iter().enumerate() {
-            match node {
-                Node::Parameter(param) => {
-                    parameters.push(param);
-                }
-                Node::Import(import) => {
-                    imports.push(import);
-                }
-                Node::Comment(c) if in_header && parameters.is_empty() && imports.is_empty() => {
-                    header_comments.push(c);
-                }
-                Node::Decorator(dec) => {
-                    in_header = false;
-                    if decorator_leads_to_def[i] {
-                        body_nodes.push(node);
-                    } else {
-                        decorators.push(dec);
-                    }
-                }
-                // Skip whitespace text that's between a decorator and its definition
-                Node::Text(t)
-                    if whitespace_in_decorator_chain[i] && t.content.trim().is_empty() => {}
-                _ => {
-                    in_header = false;
-                    body_nodes.push(node);
-                }
-            }
-        }
+        // Frontmatter and body are already split by the `lower` pass.
+        let function = &ast.function;
+        let parameters: Vec<&ParameterNode> = function
+            .params
+            .iter()
+            .filter_map(|n| match n {
+                Node::Parameter(p) => Some(p),
+                _ => None,
+            })
+            .collect();
+        let imports: Vec<&ImportNode> = function.imports.iter().collect();
+        let decorators: Vec<&DecoratorNode> = function.decorators.iter().collect();
+        let header_comments: Vec<&CommentNode> = function.header_comments.iter().collect();
+        let body_nodes: Vec<&Node> = function.body.iter().collect();
 
         // Emit user imports
         for import in &imports {

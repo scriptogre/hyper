@@ -33,7 +33,8 @@ pub trait Plugin {
     /// Run the plugin over the whole tree. Default walks top-down, calling
     /// `enter` then `exit` on each node.
     fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.nodes, ctx, self)
+        walk(&mut ast.function.params, ctx, self)?;
+        walk(&mut ast.function.body, ctx, self)
     }
 
     /// Called before a node's children. Return [`Flow::SkipChildren`] to prune.

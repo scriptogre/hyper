@@ -52,7 +52,8 @@ impl Default for SpreadKwargs {
 
 impl Plugin for SpreadKwargs {
     fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.nodes, ctx, self)?;
+        walk(&mut ast.function.params, ctx, self)?;
+        walk(&mut ast.function.body, ctx, self)?;
 
         // Guard: only one distinct blessed spread name is allowed per template.
         if self.blessed_spreads.len() > 1 {
@@ -71,7 +72,7 @@ impl Plugin for SpreadKwargs {
         if !self.has_explicit_kwargs
             && let Some((name, span)) = self.blessed_spreads.first()
         {
-            ast.nodes.push(Node::Parameter(ParameterNode {
+            ast.function.params.push(Node::Parameter(ParameterNode {
                 name: format!("**{name}"),
                 type_hint: None,
                 default: None,

@@ -8,14 +8,26 @@ pub use crate::parse::tokenizer::{Position, Span};
 /// Abstract Syntax Tree
 #[derive(Debug, Clone)]
 pub struct Ast {
-    pub nodes: Vec<Node>,
+    pub function: Function,
     pub source: Arc<str>,
 }
 
 impl Ast {
-    pub fn new(nodes: Vec<Node>, source: Arc<str>) -> Self {
-        Self { nodes, source }
+    pub fn new(function: Function, source: Arc<str>) -> Self {
+        Self { function, source }
     }
+}
+
+/// The template's top-level function, with frontmatter split from body by the
+/// `lower` pass. `params` and `body` hold `Node`s so plugins can walk them;
+/// the other frontmatter buckets are typed since no plugin visits them.
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub params: Vec<Node>,
+    pub imports: Vec<ImportNode>,
+    pub decorators: Vec<DecoratorNode>,
+    pub header_comments: Vec<CommentNode>,
+    pub body: Vec<Node>,
 }
 
 /// AST Node

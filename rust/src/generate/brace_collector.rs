@@ -14,7 +14,7 @@ use crate::ast::*;
 /// Returns `(open_byte, close_byte)` pairs for each expression brace pair.
 pub fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
     let mut braces = Vec::new();
-    for node in &ast.nodes {
+    for node in ast.function.params.iter().chain(&ast.function.body) {
         collect_braces_node(node, &mut braces);
     }
     braces
@@ -192,7 +192,7 @@ fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
 /// and names (component name, slot `...`, slot name).
 pub fn collect_tag_highlights(ast: &Ast) -> Vec<(usize, usize, TagHighlightKind)> {
     let mut highlights = Vec::new();
-    for node in &ast.nodes {
+    for node in ast.function.params.iter().chain(&ast.function.body) {
         collect_tag_highlights_node(node, &mut highlights);
     }
     highlights

@@ -4,13 +4,13 @@ mod tree_builder;
 pub use tokenizer::{Position, Span, Token, tokenize};
 use tree_builder::TreeBuilder;
 
-use crate::ast::Ast;
+use crate::ast::Node;
 use crate::error::ParseResult;
 use std::sync::Arc;
 
-/// Parser trait - converts source code to AST
+/// Parser trait - converts source code to a flat node stream (lowered later).
 pub trait Parser {
-    fn parse(&self, source: &str) -> ParseResult<Ast>;
+    fn parse(&self, source: &str) -> ParseResult<Vec<Node>>;
 }
 
 /// Hyper template parser
@@ -31,15 +31,11 @@ impl Default for HyperParser {
 }
 
 impl Parser for HyperParser {
-    fn parse(&self, source: &str) -> ParseResult<Ast> {
-        // Tokenize
+    fn parse(&self, source: &str) -> ParseResult<Vec<Node>> {
         let tokens = tokenize(source);
 
-        // Build AST
         let source_arc: Arc<str> = Arc::from(source);
-        let mut builder = TreeBuilder::new(tokens, source_arc.clone());
-        let nodes = builder.build()?;
-
-        Ok(Ast::new(nodes, source_arc))
+        let mut builder = TreeBuilder::new(tokens, source_arc);
+        builder.build()
     }
 }
