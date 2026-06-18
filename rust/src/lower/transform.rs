@@ -25,6 +25,71 @@ const HELPERS: &[&str] = &[
     "spread_attrs",
 ];
 
+/// `typing` names that hyper auto-imports when they appear in annotations.
+const TYPING_NAMES: &[&str] = &["Any", "Callable", "Optional", "Union", "TypeVar"];
+
+/// Collects `typing` names referenced in parameter annotations.
+struct TypingCollector {
+    used: HashSet<&'static str>,
+}
+
+impl<'a> Visitor<'a> for TypingCollector {
+    fn visit_expr(&mut self, expr: &'a Expr) {
+        if let Expr::Name(name) = expr {
+            if let Some(t) = TYPING_NAMES.iter().find(|t| **t == name.id.as_str()) {
+                self.used.insert(t);
+            }
+        }
+        visitor::walk_expr(self, expr);
+    }
+}
+
+/// Add `from typing import …` for any typing constructs used in parameter
+/// annotations, before the other generated imports.
+pub fn apply_typing_imports(module: &mut ast::ModModule) {
+    let mut collector = TypingCollector {
+        used: HashSet::new(),
+    };
+    if let Some(Stmt::FunctionDef(func)) = module.body.last() {
+        for param in func.parameters.kwonlyargs.iter().chain(func.parameters.args.iter()) {
+            if let Some(annotation) = &param.parameter.annotation {
+                collector.visit_expr(annotation);
+            }
+        }
+        if let Some(kwarg) = &func.parameters.kwarg {
+            if let Some(annotation) = &kwarg.annotation {
+                collector.visit_expr(annotation);
+            }
+        }
+    }
+
+    let names: Vec<(&str, Option<&str>)> = TYPING_NAMES
+        .iter()
+        .filter(|t| collector.used.contains(*t))
+        .map(|t| (*t, None))
+        .collect();
+    if names.is_empty() {
+        return;
+    }
+
+    // Insert before the first generated runtime import (collections.abc / hyper),
+    // i.e. after any user imports.
+    let insert_at = module
+        .body
+        .iter()
+        .position(|stmt| {
+            matches!(
+                stmt,
+                Stmt::ImportFrom(ast::StmtImportFrom { module: Some(m), .. })
+                    if matches!(m.as_str(), "collections.abc" | "hyper")
+            )
+        })
+        .unwrap_or(0);
+    module
+        .body
+        .insert(insert_at, b::import_from("typing", &names, b::SENTINEL));
+}
+
 /// Collects the names of helper functions referenced anywhere in the module.
 struct HelperCollector {
     used: HashSet<&'static str>,
