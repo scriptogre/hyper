@@ -62,6 +62,7 @@ pub fn compile_via_ast(
     plugins::RenameReservedKeywords.run(&mut ast, &mut ctx)?;
 
     let mut module = lower::lower(&ast, function_name)?;
+    lower::transform::apply_async(&mut module);
     lower::transform::apply_helper_imports(&mut module);
 
     let indent = Indentation::default();

@@ -637,6 +637,21 @@ mod tests {
     use crate::compile_via_ast;
 
     #[test]
+    fn detects_async_usage() {
+        // await inside an interpolation
+        let out = compile_via_ast("u: int\n\n---\n\n<p>{await bio(u)}</p>\n", Some("t")).unwrap();
+        assert!(out.contains("async def T"), "{out}");
+        // async for
+        let out =
+            compile_via_ast("s: object\n\n---\n\nasync for x in s:\n    {x}\nend\n", Some("t"))
+                .unwrap();
+        assert!(out.contains("async def T"), "{out}");
+        // no async
+        let out = compile_via_ast("x: int\n\n---\n\n<p>{x}</p>\n", Some("t")).unwrap();
+        assert!(out.contains("def T") && !out.contains("async def"), "{out}");
+    }
+
+    #[test]
     fn helper_imports_match_usage() {
         // escape only
         let out = compile_via_ast("name: str\n\n---\n\n<p>{name}</p>\n", Some("t")).unwrap();

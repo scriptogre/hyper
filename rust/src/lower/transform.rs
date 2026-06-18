@@ -65,6 +65,52 @@ pub fn apply_helper_imports(module: &mut ast::ModModule) {
     }
 }
 
+/// Detects `await` / `async for` / `async with` usage within a scope, without
+/// descending into nested function or class definitions (which form their own
+/// async scope).
+struct AsyncDetector {
+    is_async: bool,
+}
+
+impl<'a> Visitor<'a> for AsyncDetector {
+    fn visit_stmt(&mut self, stmt: &'a Stmt) {
+        match stmt {
+            // A nested def/class is its own scope; its async-ness is independent.
+            Stmt::FunctionDef(_) | Stmt::ClassDef(_) => {}
+            Stmt::For(f) if f.is_async => {
+                self.is_async = true;
+                visitor::walk_stmt(self, stmt);
+            }
+            Stmt::With(w) if w.is_async => {
+                self.is_async = true;
+                visitor::walk_stmt(self, stmt);
+            }
+            _ => visitor::walk_stmt(self, stmt),
+        }
+    }
+
+    fn visit_expr(&mut self, expr: &'a Expr) {
+        if matches!(expr, Expr::Await(_)) {
+            self.is_async = true;
+        }
+        visitor::walk_expr(self, expr);
+    }
+}
+
+/// Mark the outer template function `async` when its body uses `await`,
+/// `async for`, or `async with`.
+pub fn apply_async(module: &mut ast::ModModule) {
+    if let Some(Stmt::FunctionDef(func)) = module.body.last_mut() {
+        let mut detector = AsyncDetector { is_async: false };
+        for stmt in &func.body {
+            detector.visit_stmt(stmt);
+        }
+        if detector.is_async {
+            func.is_async = true;
+        }
+    }
+}
+
 /// Find the generated `from hyper import …` statement (the one the lowering
 /// inserts), so a pass can rewrite its imported names.
 fn find_hyper_import(body: &mut [Stmt]) -> Option<&mut Stmt> {
