@@ -637,6 +637,20 @@ mod tests {
     use crate::compile_via_ast;
 
     #[test]
+    fn rewrites_mutable_defaults_with_guards() {
+        let src = "items: list | None = []\ncount: int | None = 0\nplain: list = []\n\n---\n\n<p>{items}</p>\n";
+        let out = compile_via_ast(src, Some("t")).unwrap();
+        assert!(out.contains("items: list | None=None"), "{out}");
+        assert!(out.contains("if items is None:"), "{out}");
+        assert!(out.contains("items = []"), "{out}");
+        // not nullable / not mutable → untouched
+        assert!(out.contains("count: int | None=0"), "{out}");
+        assert!(out.contains("plain: list=[]"), "{out}");
+        assert!(!out.contains("if count is None"), "{out}");
+        assert!(!out.contains("if plain is None"), "{out}");
+    }
+
+    #[test]
     fn adds_slot_parameters() {
         let src = "title: str\n\n---\n\n<div>\n    <{...header}>\n        <h1>hi</h1>\n    </{...header}>\n    {...}\n</div>\n";
         let out = compile_via_ast(src, Some("t")).unwrap();

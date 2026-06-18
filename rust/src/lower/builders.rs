@@ -146,6 +146,29 @@ pub fn import_from(module: &str, names: &[(&str, Option<&str>)], range: TextRang
     })
 }
 
+/// The `None` literal expression.
+pub fn none_literal() -> Expr {
+    Expr::NoneLiteral(ast::ExprNoneLiteral {
+        node_index: AtomicNodeIndex::NONE,
+        range: SENTINEL,
+    })
+}
+
+/// A simple assignment `target = value`.
+pub fn assign(target: &str, value: Expr) -> Stmt {
+    Stmt::Assign(ast::StmtAssign {
+        node_index: AtomicNodeIndex::NONE,
+        range: SENTINEL,
+        targets: vec![Expr::Name(ast::ExprName {
+            node_index: AtomicNodeIndex::NONE,
+            range: SENTINEL,
+            id: ast::name::Name::new(target),
+            ctx: ast::ExprContext::Store,
+        })],
+        value: Box::new(value),
+    })
+}
+
 /// A `pass` statement.
 pub fn pass_stmt() -> Stmt {
     Stmt::Pass(ast::StmtPass {

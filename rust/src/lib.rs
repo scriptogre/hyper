@@ -64,6 +64,7 @@ pub fn compile_via_ast(
     let mut module = lower::lower(&ast, function_name)?;
     lower::transform::apply_async(&mut module);
     lower::transform::apply_slots(&mut module);
+    lower::transform::apply_mutable_defaults(&mut module);
     lower::transform::apply_helper_imports(&mut module);
 
     let indent = Indentation::default();

@@ -190,6 +190,73 @@ fn slot_param(name: &str) -> ast::ParameterWithDefault {
     b::kwonly_param(name, b::SENTINEL, annotation, default)
 }
 
+/// Is this annotation nullable (`X | None`, `None | X`, or `Optional[...]`)?
+fn is_nullable(expr: &Expr) -> bool {
+    match expr {
+        Expr::BinOp(b) if matches!(b.op, ast::Operator::BitOr) => {
+            is_none(&b.left) || is_none(&b.right) || is_nullable(&b.left) || is_nullable(&b.right)
+        }
+        Expr::Subscript(s) => {
+            matches!(s.value.as_ref(), Expr::Name(n) if n.id.as_str() == "Optional")
+        }
+        _ => false,
+    }
+}
+
+fn is_none(expr: &Expr) -> bool {
+    matches!(expr, Expr::NoneLiteral(_))
+}
+
+/// Is this default a mutable literal (`[]`, `{}`, `set()`, `list()`, …)?
+fn is_mutable_default(expr: &Expr) -> bool {
+    match expr {
+        Expr::List(_) | Expr::Dict(_) | Expr::Set(_) => true,
+        Expr::Call(c) => {
+            matches!(c.func.as_ref(), Expr::Name(n) if matches!(n.id.as_str(), "list" | "dict" | "set"))
+        }
+        _ => false,
+    }
+}
+
+/// Rewrite mutable defaults on nullable parameters to `None` and prepend
+/// `if <name> is None: <name> = <original default>` guards to the body. This is
+/// the None-sentinel pattern: `items: list | None = []` is unsafe as written.
+pub fn apply_mutable_defaults(module: &mut ast::ModModule) {
+    let Some(Stmt::FunctionDef(func)) = module.body.last_mut() else {
+        return;
+    };
+
+    // In declaration order: positional params then keyword-only.
+    let mut guards: Vec<(String, Expr)> = Vec::new();
+    for param in func
+        .parameters
+        .args
+        .iter_mut()
+        .chain(func.parameters.kwonlyargs.iter_mut())
+    {
+        let (Some(annotation), Some(default)) = (&param.parameter.annotation, &param.default)
+        else {
+            continue;
+        };
+        if is_nullable(annotation) && is_mutable_default(default) {
+            guards.push((param.parameter.name.id.to_string(), (**default).clone()));
+            param.default = Some(Box::new(b::none_literal()));
+        }
+    }
+
+    for (offset, (name, original)) in guards.into_iter().enumerate() {
+        let mut guard = b::parse_stmts(&format!("if {name} is None:\n    pass\n"))
+            .ok()
+            .and_then(|s| s.into_iter().next());
+        if let Some(Stmt::If(if_stmt)) = guard.as_mut() {
+            if_stmt.body = std::iter::once(b::assign(&name, original)).collect();
+        }
+        if let Some(stmt) = guard {
+            func.body.insert(offset, stmt);
+        }
+    }
+}
+
 /// Find the generated `from hyper import …` statement (the one the lowering
 /// inserts), so a pass can rewrite its imported names.
 fn find_hyper_import(body: &mut [Stmt]) -> Option<&mut Stmt> {
