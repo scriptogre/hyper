@@ -30,81 +30,45 @@ tokenizer uses tree-sitter to disambiguate statements, so removal is non-trivial
 
 ## Status
 
-### Done
+### Done — Phases 1–3 (lowering + all plugins), behind `compile_via_ast`
 - **Ruff deps integrated** (`4484605`).
 - **`lower` module** (`rust/src/lower/`):
   - `builders.rs` — terse constructors for Ruff nodes. Synthetic nodes get the
     `SENTINEL` range (`0..0`); user-written Python gets a real `TextRange` from
     the hyper `Span` via `span_range`. `is_sentinel`/`SENTINEL` are how the
-    future printer will decide "does this output map back to `.hyper`?".
-  - `mod.rs::lower(ast, function_name) -> ast::ModModule`:
-    - partitions top-level nodes (imports / params / orphan decorators / body)
-    - user imports parsed straight through; generated `from hyper import html`
-    - function signature with keyword-only params (annotations + defaults parsed
-      via `ruff_python_parser`)
-    - **body**: Python statements, bare expressions (`yield escape(expr)` /
-      `yield expr`), comments (dropped), **all control flow** (if/elif/else, for
-      incl. async, while, with incl. async, match/case, try/except/else/finally),
-      **definitions** (def/class with decorators), **fragments**.
-- **`compile_via_ast(source, function_name) -> String`** in `lib.rs`: lowers, then
-  prints with Ruff's **stock** `Generator`. Transitional — not source-map-aware,
-  not byte-identical. Exists to exercise the lowering end-to-end. Unit tests live
-  in `lower/mod.rs`.
-- The existing string pipeline (`generate::PythonGenerator`) is **untouched and
-  remains the default**; the whole test suite stays green.
+    Phase-4 printer will decide "does this output map back to `.hyper`?".
+  - `mod.rs::lower(ast, function_name) -> ast::ModModule`: partitions top-level
+    nodes; user imports; `from hyper import html`; signature with kw-only params
+    (and a declared `**name` → the `**kwarg` slot); and the **full body** —
+    statements, expressions, all control flow, definitions, fragments, **text /
+    elements / components / slots**.
+  - `render.rs` — renders a combinable run of text/expression/element nodes into
+    Python f-string *source* (mirroring the string generator's content +
+    attribute rules), which `lower` parses into a real `ExprFString` /
+    `ExprStringLiteral`. Components → `yield from Name(...)` (inner default-slot
+    generator for children); slots → `if <slot> is not None: yield from <slot>`
+    with the fallback as `else`.
+  - `transform.rs` — **all six plugins reimplemented as Ruff-AST passes** (read
+    the real lowered code via a ruff `Visitor`, no `Context`):
+    `apply_async`, `apply_slots` (+`Iterable` import), `apply_mutable_defaults`
+    (guards), `apply_spread_kwargs` (inject/guard `**kwargs`),
+    `apply_typing_imports`, `apply_helper_imports`. Reserved-keyword renaming
+    still reuses the existing hyper-AST `RenameReservedKeywords` transform (run
+    before lowering).
+- **`compile_via_ast(source, function_name) -> String`** in `lib.rs` runs the
+  whole new pipeline and prints with Ruff's **stock** `Generator`. Output is
+  semantically-correct Python but **not yet source-map-aware or byte-identical**.
+- A fixture test asserts **every** `.hyper` fixture the string pipeline accepts
+  also lowers to valid, placeholder-free Python (re-parsed with
+  `ruff_python_parser`). The string pipeline remains the default; suite is green.
 
-### Still transitional (emit `yield "__hyper_todo__:<kind>"` placeholders)
-Text, Element, Component, Slot — i.e. everything that lowers to an **f-string**.
+### Known gaps before Phase 4/5
+- Reserved keyword **attribute/kwarg names** rely on the pre-lowering rename
+  pass; verify coverage when wiring as default.
+- Whitespace/indentation of combined content is left raw (stock printer); the
+  `f"""\…"""` dedented style is Phase 4.
 
 ## Remaining work
-
-### Phase 2b — Text / Element / Component / Slot → f-strings (the big one)
-
-The string generator's centerpiece is content-combining: adjacent
-text/expression/element nodes merge into a single `yield f"""…"""`. The lowered
-equivalent is a Ruff `ExprFString` whose `FStringValue` holds
-`InterpolatedStringElements`:
-- literal HTML (open tags, text, close tags) → `InterpolatedStringLiteralElement`
-- interpolations (`{escape(expr)}`, attribute helpers) → `InterpolatedElement`
-
-Construction chain: `Expr::FString(ExprFString { value: FStringValue::single(
-FString { elements, flags: FStringFlags, … }) })`. Note `Suite = ThinVec<Stmt>`;
-several body fields are `ThinVec`, others (`elif_else_clauses`, `handlers`,
-`cases`, `items`) are `Vec`.
-
-Design notes:
-- **Don't** try to make the stock printer emit hyper's `f"""\…"""` style — that
-  is the job of the Phase-4 printer. For Phase 2b, build structurally-correct
-  FString nodes and assert *semantic* correctness (parse + structure), not byte
-  equality.
-- Port the attribute model from `generate/python.rs`: the 7 `AttributeKind`s and
-  the helper-selection table (`render_attr`/`render_class`/`render_style`/
-  `render_data`/`render_aria`/`render_bool`/…). The plan doc's prior vision was
-  to unify longhand/shorthand into one span-based emit table — do that here.
-- Components → `yield from Name(**kwargs, slot params…)` (`ExprYieldFrom` wrapping
-  `ExprCall`). Slots → conditional `yield from` with fallback.
-- Void/self-closing element rules already validated at parse time; lowering just
-  emits the right literal text.
-- Carry the original `Span` into each node's `TextRange` (via `span_range`) so the
-  Phase-4 printer can recover injection ranges. This is the crux of source maps.
-
-### Phase 3 — Migrate plugins onto the Ruff AST
-
-Rewrite each `plugins/*` pass to mutate `&mut ast::ModModule`; delete
-`plugins/context.rs` and the `Context` plumbing in `generate/mod.rs`.
-- `DetectAsync` → walk for await/async-for/async-with, set
-  `StmtFunctionDef.is_async = true`.
-- `DetectSlots` → detect slot usage, insert slot `Parameter`s into the function
-  arguments, add `from collections.abc import Iterable` import.
-- `HelperDetectionPlugin` → detect which `render_*`/`escape` helpers the lowered
-  body references, build/extend the `from hyper import …` statement. (Lowering
-  currently hardcodes `from hyper import html`; the helper pass should own the
-  full import list — fixes the historical `data={x}` dead-import bug.)
-- `DetectMutableDefaults` → rewrite mutable param defaults to `None`, insert
-  `if x is None: x = …` guard `StmtIf`s at the top of the body.
-- `CollectSpreadKwargs` → detect blessed spread names, add `**kwargs` to args.
-- `RenameReservedKeywords` → walk real `ExprName`/`Identifier` nodes (no more
-  string replacement).
 
 ### Phase 4 — Source-map-aware printer
 
