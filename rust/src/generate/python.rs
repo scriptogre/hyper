@@ -1245,41 +1245,20 @@ impl PythonGenerator {
 
     fn emit_statement(&self, stmt: &StatementNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-
-        let start = output.position();
-
-        // For multiline statements, add indent to each continuation line
-        if stmt.stmt.contains('\n') {
-            let indent_str = "    ".repeat(indent);
-            let lines: Vec<&str> = stmt.stmt.split('\n').collect();
-            for (i, line) in lines.iter().enumerate() {
-                if i > 0 {
-                    output.push(&indent_str);
-                }
-                output.push(line);
-                if i < lines.len() - 1 {
-                    output.newline();
-                }
-            }
+        // Re-indent continuation lines for multiline statements
+        let source = if stmt.stmt.contains('\n') {
+            let continuation_indent = "    ".repeat(indent);
+            stmt.stmt.replace('\n', &format!("\n{continuation_indent}"))
         } else {
-            output.push(&stmt.stmt);
-        }
-
-        let end = output.position();
-
-        // Skip injection for compiler-generated statements (no source location).
-        if !stmt.range.is_synthetic() {
-            output.add_segment(Segment {
-                language: Language::Python,
-                source_start: stmt.range.start.byte,
-                source_end: stmt.range.end.byte,
-                compiled_start: start,
-                compiled_end: end,
-                needs_injection: true,
-                html_prefix: None,
-            });
-        }
-
+            stmt.stmt.clone()
+        };
+        print_code(
+            output,
+            &Code {
+                source,
+                range: stmt.range,
+            },
+        );
         output.newline();
     }
 
