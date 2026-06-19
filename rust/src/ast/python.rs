@@ -1,6 +1,9 @@
 //! Output Python AST. Ruff-faithful (`ruff_python_ast` names/shapes); end goal
-//! is swapping to ruff's crates. Synthetic nodes only for now (no source
-//! ranges); range-carrying variants land when the printer needs source maps.
+//! is swapping to ruff's crates. `Code` is the unparsed-source seam: holds
+//! verbatim Python text plus its `.hyper` source range; shrinks as we adopt
+//! ruff's parser.
+
+use crate::ast::TextRange;
 
 #[derive(Debug, Clone)]
 pub struct Identifier {
@@ -26,4 +29,13 @@ pub struct StmtImportFrom {
     pub module: Option<Identifier>,
     pub names: Vec<Alias>,
     pub level: u32,
+}
+
+/// Verbatim Python source with its `.hyper` range. Synthetic range = no IDE
+/// injection. Used for nodes that aren't lowered into structured AST yet
+/// (user imports, control-flow conditions, statement lines).
+#[derive(Debug, Clone)]
+pub struct Code {
+    pub source: String,
+    pub range: TextRange,
 }

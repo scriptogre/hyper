@@ -3,9 +3,9 @@ use super::{
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_segments_for_component, html_segments_for_element,
 };
-use crate::ast::python::{Alias, Identifier, StmtImportFrom};
+use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
 use crate::ast::*;
-use crate::generate::print::print_import_from;
+use crate::generate::print::{print_code, print_import_from};
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
@@ -1399,18 +1399,13 @@ impl PythonGenerator {
     }
 
     fn emit_import(&self, import: &ImportNode, output: &mut Output, _indent: usize) {
-        let start = output.position();
-        output.push(&import.stmt);
-        let end = output.position();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: import.range.start.byte,
-            source_end: import.range.end.byte,
-            compiled_start: start,
-            compiled_end: end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(
+            output,
+            &Code {
+                source: import.stmt.clone(),
+                range: import.range,
+            },
+        );
         output.newline();
     }
 
