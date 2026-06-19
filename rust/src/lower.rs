@@ -80,6 +80,7 @@ pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
 
     Ast::new(
         Function {
+            is_async: false,
             params,
             imports,
             decorators,

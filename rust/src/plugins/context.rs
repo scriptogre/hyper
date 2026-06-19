@@ -49,7 +49,6 @@ pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", 
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     pub helpers_used: HashSet<Helper>,
-    pub is_async: bool,
     pub slots_used: HashSet<String>,
     /// Parameter names whose mutable defaults should be rewritten to None sentinels.
     /// Detected when type hint is nullable (`| None`) and default is mutable (`[]`, `{}`, etc.).

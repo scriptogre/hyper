@@ -116,7 +116,7 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
         Box::new(RenameReservedKeywords),
         Box::new(HelperDetectionPlugin),
-        Box::new(DetectAsync),
+        Box::new(DetectAsync::default()),
         Box::new(DetectSlots),
         Box::new(DetectMutableDefaults),
         Box::new(SpreadKwargs::new()),

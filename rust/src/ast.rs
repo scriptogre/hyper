@@ -23,6 +23,7 @@ impl Ast {
 /// the other frontmatter buckets are typed since no plugin visits them.
 #[derive(Debug, Clone)]
 pub struct Function {
+    pub is_async: bool,
     pub params: Vec<Node>,
     pub imports: Vec<ImportNode>,
     pub decorators: Vec<DecoratorNode>,

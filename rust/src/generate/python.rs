@@ -1504,7 +1504,7 @@ impl Generator for PythonGenerator {
             .unwrap_or_else(|| "Render".to_string());
 
         // Add async if needed
-        if ctx.is_async {
+        if function.is_async {
             output.push("async def ");
         } else {
             output.push("def ");
