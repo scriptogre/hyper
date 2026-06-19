@@ -4,11 +4,11 @@ use crate::error::CompileError;
 
 /// Marks the function async when the template awaits anything.
 #[derive(Default)]
-pub struct DetectAsync {
+pub struct Async {
     is_async: bool,
 }
 
-impl Plugin for DetectAsync {
+impl Plugin for Async {
     fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
         walk(&mut ast.function.params, ctx, self)?;
         walk(&mut ast.function.body, ctx, self)?;

@@ -1,14 +1,14 @@
 mod context;
-mod detect_async;
 mod detect_slots;
 mod helper_detect;
 mod mutable_defaults;
+mod r#async;
 mod rename_reserved_keywords;
 mod spread_kwargs;
 
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
-pub use detect_async::DetectAsync;
 pub use detect_slots::DetectSlots;
+pub use r#async::Async;
 pub use helper_detect::HelperDetectionPlugin;
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
@@ -116,7 +116,7 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
         Box::new(RenameReservedKeywords),
         Box::new(HelperDetectionPlugin),
-        Box::new(DetectAsync::default()),
+        Box::new(Async::default()),
         Box::new(DetectSlots),
         Box::new(MutableDefaults::default()),
         Box::new(SpreadKwargs::new()),
