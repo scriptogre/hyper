@@ -26,21 +26,21 @@
     {
       "compiled_end": 75,
       "compiled_start": 66,
-      "range_type": "Python",
+      "range_type": "python",
       "source_end": 9,
       "source_start": 0
     },
     {
       "compiled_end": 99,
       "compiled_start": 85,
-      "range_type": "Python",
+      "range_type": "python",
       "source_end": 24,
       "source_start": 10
     },
     {
       "compiled_end": 120,
       "compiled_start": 109,
-      "range_type": "Python",
+      "range_type": "python",
       "source_end": 36,
       "source_start": 25
     }

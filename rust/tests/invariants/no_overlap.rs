@@ -1,15 +1,15 @@
 use crate::helpers::compile;
-use hyper::generate::RangeType;
+use hyper::generate::Language;
 use libtest_mimic::Failed;
 use std::path::PathBuf;
 
 pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let result = compile(path)?;
 
-    for range_type in [RangeType::Python, RangeType::Html] {
+    for range_type in [Language::Python, Language::Html] {
         let type_name = match range_type {
-            RangeType::Python => "Python",
-            RangeType::Html => "HTML",
+            Language::Python => "Python",
+            Language::Html => "HTML",
         };
 
         let mut typed: Vec<_> = result

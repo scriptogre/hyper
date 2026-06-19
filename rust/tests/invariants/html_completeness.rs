@@ -1,5 +1,5 @@
 use crate::helpers::compile;
-use hyper::generate::RangeType;
+use hyper::generate::Language;
 use hyper::parse::tokenizer::{Token, tokenize};
 use libtest_mimic::Failed;
 use std::fs;
@@ -14,7 +14,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let html_ranges: Vec<_> = result
         .ranges
         .iter()
-        .filter(|r| r.range_type == RangeType::Html)
+        .filter(|r| r.range_type == Language::Html)
         .collect();
 
     // Find separator position to distinguish preamble vs body

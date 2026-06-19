@@ -2,6 +2,7 @@ mod common;
 
 use common::{compile_with_ranges, html_injections, html_ranges, python_injections, python_ranges};
 use hyper::CompileOptions;
+use hyper::generate::Language;
 
 #[test]
 fn test_expression_injection() {
@@ -11,7 +12,7 @@ fn test_expression_injection() {
     // Should have one Python injection for the {x} expression
     let py = python_injections(&result);
     assert_eq!(py.len(), 1, "Expected 1 Python injection");
-    assert_eq!(py[0].injection_type, "python");
+    assert_eq!(py[0].language, Language::Python);
 
     let py_ranges = python_ranges(&result);
     // Check that compiled positions are not zero
@@ -949,7 +950,7 @@ fn test_template_attribute_roundtrip() {
     let py_injections: Vec<_> = result
         .injections
         .iter()
-        .filter(|i| i.injection_type == "python")
+        .filter(|i| i.language == Language::Python)
         .collect();
 
     assert!(!py_injections.is_empty(), "Should have Python injections");

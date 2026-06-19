@@ -1,5 +1,5 @@
 use crate::helpers::compile;
-use hyper::generate::RangeType;
+use hyper::generate::Language;
 use hyper::parse::tokenizer::{Token, tokenize};
 use hyper::plugins::rename_reserved_keywords;
 use libtest_mimic::Failed;
@@ -20,7 +20,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let python_ranges: Vec<_> = result
         .ranges
         .iter()
-        .filter(|r| r.range_type == RangeType::Python)
+        .filter(|r| r.range_type == Language::Python)
         .collect();
 
     // Find separator position to distinguish preamble vs body

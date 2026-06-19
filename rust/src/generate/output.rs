@@ -9,17 +9,27 @@ pub struct Mapping {
     pub src_col: usize,
 }
 
-/// Range type for IDE injection
+/// Injection language for IDE language injection
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-pub enum RangeType {
+#[serde(rename_all = "lowercase")]
+pub enum Language {
     Python,
     Html,
+}
+
+impl Language {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Language::Python => "python",
+            Language::Html => "html",
+        }
+    }
 }
 
 /// Range mapping source to compiled positions
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Range {
-    pub range_type: RangeType,
+    pub range_type: Language,
     pub source_start: usize,
     pub source_end: usize,
     pub compiled_start: usize,
@@ -38,7 +48,7 @@ pub struct Range {
 impl Range {
     /// Create a new range with default html_prefix (None).
     pub fn new(
-        range_type: RangeType,
+        range_type: Language,
         source_start: usize,
         source_end: usize,
         compiled_start: usize,
@@ -62,7 +72,7 @@ impl Range {
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Injection {
     #[serde(rename = "type")]
-    pub injection_type: String,
+    pub language: Language,
     pub start: usize, // source start (UTF-16)
     pub end: usize,   // source end (UTF-16)
     pub prefix: String,
@@ -134,7 +144,7 @@ pub fn convert_braces_to_utf16(
 /// `render_class(class_)`). Drop any mismatched ranges to prevent this.
 pub fn validate_python_ranges(source: &str, compiled: &str, ranges: &mut Vec<Range>) {
     ranges.retain(|r| {
-        if r.range_type != RangeType::Python || !r.needs_injection {
+        if r.range_type != Language::Python || !r.needs_injection {
             return true;
         }
         let source_text = match source.get(r.source_start..r.source_end) {
@@ -174,30 +184,25 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
     let byte_to_utf16 = build_byte_to_utf16_map(source);
     let mut injections = Vec::new();
 
-    // Process each type separately (python and html have independent virtual files)
-    for range_type in [RangeType::Python, RangeType::Html] {
-        let type_str = match range_type {
-            RangeType::Python => "python",
-            RangeType::Html => "html",
-        };
-
+    // Process each language separately (python and html have independent virtual files)
+    for language in [Language::Python, Language::Html] {
         let mut type_ranges: Vec<_> = ranges
             .iter()
-            .filter(|r| r.range_type == range_type && r.needs_injection)
+            .filter(|r| r.range_type == language && r.needs_injection)
             .collect();
         // Python: sort by COMPILED position since prefix computation walks
         // the compiled code sequentially. HTML: sort by source position.
-        match range_type {
-            RangeType::Python => type_ranges.sort_by_key(|r| r.compiled_start),
-            RangeType::Html => type_ranges.sort_by_key(|r| r.source_start),
+        match language {
+            Language::Python => type_ranges.sort_by_key(|r| r.compiled_start),
+            Language::Html => type_ranges.sort_by_key(|r| r.source_start),
         }
 
         if type_ranges.is_empty() {
             continue;
         }
 
-        match range_type {
-            RangeType::Python => {
+        match language {
+            Language::Python => {
                 // Python: prefix/suffix from compiled code for virtual Python file
                 let mut prev_end = 0;
                 let range_count = type_ranges.len();
@@ -213,7 +218,7 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
                     };
 
                     injections.push(Injection {
-                        injection_type: type_str.to_string(),
+                        language,
                         start: byte_to_utf16[range.source_start],
                         end: byte_to_utf16[range.source_end],
                         prefix,
@@ -223,13 +228,13 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
                     prev_end = range.compiled_end;
                 }
             }
-            RangeType::Html => {
+            Language::Html => {
                 // HTML: prefix is usually empty (source already contains HTML).
                 // Component-attribute ranges carry an html_prefix (e.g. "<x") so the
                 // virtual HTML fragment has a tag name and JetBrains can parse attrs.
                 for range in &type_ranges {
                     injections.push(Injection {
-                        injection_type: type_str.to_string(),
+                        language,
                         start: byte_to_utf16[range.source_start],
                         end: byte_to_utf16[range.source_end],
                         prefix: range.html_prefix.as_deref().unwrap_or("").to_string(),

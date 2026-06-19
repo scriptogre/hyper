@@ -1,4 +1,5 @@
 use crate::helpers::{compile, substring_utf16};
+use hyper::generate::Language;
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
@@ -10,7 +11,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let python_injections: Vec<_> = result
         .injections
         .iter()
-        .filter(|inj| inj.injection_type == "python")
+        .filter(|inj| inj.language == Language::Python)
         .collect();
 
     if python_injections.is_empty() {

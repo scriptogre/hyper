@@ -9,7 +9,7 @@ pub use injection_analyzer::{
     html_ranges_for_element,
 };
 pub use output::{
-    ExpressionBrace, Injection, Mapping, Output, Range, RangeType, TagHighlight, TagHighlightKind,
+    ExpressionBrace, Injection, Language, Mapping, Output, Range, TagHighlight, TagHighlightKind,
     compute_injections, convert_braces_to_utf16, convert_tag_highlights_to_utf16,
     validate_python_ranges,
 };

@@ -1,5 +1,5 @@
 use crate::helpers::compile;
-use hyper::generate::RangeType;
+use hyper::generate::Language;
 use libtest_mimic::Failed;
 use std::path::PathBuf;
 
@@ -13,7 +13,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let mut python_ranges: Vec<_> = result
         .ranges
         .iter()
-        .filter(|r| r.range_type == RangeType::Python && r.needs_injection)
+        .filter(|r| r.range_type == Language::Python && r.needs_injection)
         .collect();
     python_ranges.sort_by_key(|r| r.compiled_start);
 

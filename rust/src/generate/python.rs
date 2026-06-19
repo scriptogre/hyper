@@ -1,5 +1,5 @@
 use super::{
-    CompileOptions, CompileResult, Generator, Output, Range, RangeType,
+    CompileOptions, CompileResult, Generator, Language, Output, Range,
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_ranges_for_component, html_ranges_for_element,
 };
@@ -265,7 +265,7 @@ impl PythonGenerator {
                 let content_end = expr.range.end.byte - 1; // skip '}'
 
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: content_start,
                     source_end: content_end,
                     compiled_start: start,
@@ -347,7 +347,7 @@ impl PythonGenerator {
                         output.push(&safe_expr);
                         let end = output.position();
                         output.add_range(Range {
-                            range_type: RangeType::Python,
+                            range_type: Language::Python,
                             source_start: content_start,
                             source_end: content_end,
                             compiled_start: start,
@@ -364,7 +364,7 @@ impl PythonGenerator {
                         output.push(&safe_expr);
                         let end = output.position();
                         output.add_range(Range {
-                            range_type: RangeType::Python,
+                            range_type: Language::Python,
                             source_start: content_start,
                             source_end: content_end,
                             compiled_start: start,
@@ -382,7 +382,7 @@ impl PythonGenerator {
                         output.push(&safe_expr);
                         let end = output.position();
                         output.add_range(Range {
-                            range_type: RangeType::Python,
+                            range_type: Language::Python,
                             source_start: content_start,
                             source_end: content_end,
                             compiled_start: start,
@@ -399,7 +399,7 @@ impl PythonGenerator {
                         output.push(&safe_expr);
                         let end = output.position();
                         output.add_range(Range {
-                            range_type: RangeType::Python,
+                            range_type: Language::Python,
                             source_start: content_start,
                             source_end: content_end,
                             compiled_start: start,
@@ -468,7 +468,7 @@ impl PythonGenerator {
                         (s, e)
                     };
                     output.add_range(Range {
-                        range_type: RangeType::Python,
+                        range_type: Language::Python,
                         source_start: content_start,
                         source_end: content_end,
                         compiled_start: start,
@@ -492,7 +492,7 @@ impl PythonGenerator {
                     let e = output.position();
                     output.push(")}");
                     output.add_range(Range {
-                        range_type: RangeType::Python,
+                        range_type: Language::Python,
                         source_start: content_start,
                         source_end: content_end,
                         compiled_start: s,
@@ -521,7 +521,7 @@ impl PythonGenerator {
                             let content_start = range.start.byte + 1;
                             let content_end = range.end.byte;
                             output.add_range(Range {
-                                range_type: RangeType::Python,
+                                range_type: Language::Python,
                                 source_start: content_start,
                                 source_end: content_end,
                                 compiled_start: start,
@@ -578,7 +578,7 @@ impl PythonGenerator {
                             let end = output.position();
                             output.push(")}");
                             output.add_range(Range {
-                                range_type: RangeType::Python,
+                                range_type: Language::Python,
                                 source_start: value_start_byte + expr_byte_start,
                                 source_end: value_start_byte + expr_byte_end,
                                 compiled_start: start,
@@ -701,7 +701,7 @@ impl PythonGenerator {
             output.push("}\"");
             // Source range excludes braces: range.start + 1 to range.end - 1
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: expr.range.start.byte + 1,
                 source_end: expr.range.end.byte - 1,
                 compiled_start: start,
@@ -716,7 +716,7 @@ impl PythonGenerator {
             let end = output.position();
             output.push(")");
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: expr.range.start.byte + 1,
                 source_end: expr.range.end.byte - 1,
                 compiled_start: start,
@@ -731,7 +731,7 @@ impl PythonGenerator {
             let end = output.position();
             output.push(")");
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: expr.range.start.byte + 1,
                 source_end: expr.range.end.byte - 1,
                 compiled_start: start,
@@ -900,7 +900,7 @@ impl PythonGenerator {
         // Add Python range for the component name in the opening tag
         // This enables go-to-definition and highlighting for the name
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: c.name_range.start.byte,
             source_end: c.name_range.end.byte,
             compiled_start: name_compiled_start,
@@ -918,7 +918,7 @@ impl PythonGenerator {
             let close_name_end = cs.end.byte - 2;
             if close_name_end > close_name_start {
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: close_name_start,
                     source_end: close_name_end,
                     compiled_start: 0,
@@ -967,7 +967,7 @@ impl PythonGenerator {
                 output.push(expr);
                 let e = output.position();
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: content_start,
                     source_end: content_end,
                     compiled_start: s,
@@ -990,7 +990,7 @@ impl PythonGenerator {
                 output.push(name);
                 let e = output.position();
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: content_start,
                     source_end: content_end,
                     compiled_start: s,
@@ -1007,7 +1007,7 @@ impl PythonGenerator {
                 output.push(expr.trim());
                 let e = output.position();
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: content_start,
                     source_end: content_end,
                     compiled_start: s,
@@ -1108,7 +1108,7 @@ impl PythonGenerator {
         if !if_node.condition_range.is_synthetic() {
             let source_end = if_node.condition_range.start.byte + condition.len();
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: if_node.condition_range.start.byte,
                 source_end,
                 compiled_start: cond_start,
@@ -1132,7 +1132,7 @@ impl PythonGenerator {
             if !condition_range.is_synthetic() {
                 let source_end = condition_range.start.byte + condition.len();
                 output.add_range(Range {
-                    range_type: RangeType::Python,
+                    range_type: Language::Python,
                     source_start: condition_range.start.byte,
                     source_end,
                     compiled_start: cond_start,
@@ -1172,7 +1172,7 @@ impl PythonGenerator {
         let range_end = output.position();
         let source_end = for_node.iterable_range.start.byte + iterable.len();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: for_node.binding_range.start.byte,
             source_end,
             compiled_start: binding_start,
@@ -1196,7 +1196,7 @@ impl PythonGenerator {
         let expr_end = output.position();
         let source_end = match_node.expr_range.start.byte + expr.len();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: match_node.expr_range.start.byte,
             source_end,
             compiled_start: expr_start,
@@ -1217,7 +1217,7 @@ impl PythonGenerator {
             let pat_end = output.position();
             let source_end = case.pattern_range.start.byte + pattern.len();
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: case.pattern_range.start.byte,
                 source_end,
                 compiled_start: pat_start,
@@ -1242,7 +1242,7 @@ impl PythonGenerator {
         let cond_end = output.position();
         let source_end = while_node.condition_range.start.byte + condition.len();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: while_node.condition_range.start.byte,
             source_end,
             compiled_start: cond_start,
@@ -1271,7 +1271,7 @@ impl PythonGenerator {
         // Calculate source_end based on trimmed content length to avoid including the colon
         let source_end = with_node.items_range.start.byte + items.len();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: with_node.items_range.start.byte,
             source_end,
             compiled_start: items_start,
@@ -1304,7 +1304,7 @@ impl PythonGenerator {
                 if let Some(ref exc_range) = except.exception_range {
                     let source_end = exc_range.start.byte + exception.len();
                     output.add_range(Range {
-                        range_type: RangeType::Python,
+                        range_type: Language::Python,
                         source_start: exc_range.start.byte,
                         source_end,
                         compiled_start: start,
@@ -1364,7 +1364,7 @@ impl PythonGenerator {
         // Skip injection for compiler-generated statements (no source location).
         if !stmt.range.is_synthetic() {
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: stmt.range.start.byte,
                 source_end: stmt.range.end.byte,
                 compiled_start: start,
@@ -1383,7 +1383,7 @@ impl PythonGenerator {
         output.push(&def.signature);
         let end = output.position();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: def.signature_range.start.byte,
             source_end: def.signature_range.end.byte,
             compiled_start: start,
@@ -1401,7 +1401,7 @@ impl PythonGenerator {
         output.push(&import.stmt);
         let end = output.position();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: import.range.start.byte,
             source_end: import.range.end.byte,
             compiled_start: start,
@@ -1418,7 +1418,7 @@ impl PythonGenerator {
         output.push(&dec.decorator);
         let end = output.position();
         output.add_range(Range {
-            range_type: RangeType::Python,
+            range_type: Language::Python,
             source_start: dec.range.start.byte,
             source_end: dec.range.end.byte,
             compiled_start: start,
@@ -1453,7 +1453,7 @@ impl PythonGenerator {
 
         if !param.range.is_synthetic() {
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: param.range.start.byte,
                 source_end: param.range.end.byte,
                 compiled_start: start,
@@ -1505,7 +1505,7 @@ impl Generator for PythonGenerator {
             output.newline();
 
             output.add_range(Range {
-                range_type: RangeType::Python,
+                range_type: Language::Python,
                 source_start: import.range.start.byte,
                 source_end: import.range.end.byte,
                 compiled_start: import_start,

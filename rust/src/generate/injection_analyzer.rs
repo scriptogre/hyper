@@ -4,7 +4,7 @@
 //! - Computing prefix/suffix injections from ranges (for JetBrains virtual files)
 //! - Building HTML injection ranges for element and component tags
 
-use super::output::{Injection, Range, RangeType, compute_injections};
+use super::output::{Injection, Language, Range, compute_injections};
 use crate::ast::*;
 
 /// Analyzes AST and generated code to produce injection ranges and injections.
@@ -36,7 +36,7 @@ impl InjectionAnalyzer {
 
 // ─── HTML range builders ───────────────────────────────────────────────
 //
-// These produce RangeType::Html ranges for the static parts of element
+// These produce Language::Html ranges for the static parts of element
 // and component/slot tags, skipping over embedded expression spans.
 // HTML ranges don't need compiled positions (compiled_start/end = 0)
 // because the virtual HTML file is built from source text directly.
@@ -144,7 +144,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     for (expr_start, expr_end) in &expr_spans {
         if *expr_start > pos && *expr_start <= tag_end {
             ranges.push(Range {
-                range_type: RangeType::Html,
+                range_type: Language::Html,
                 source_start: pos,
                 source_end: *expr_start,
                 compiled_start: 0,
@@ -161,7 +161,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     // Remaining static part of opening tag
     if pos < tag_end {
         ranges.push(Range {
-            range_type: RangeType::Html,
+            range_type: Language::Html,
             source_start: pos,
             source_end: tag_end,
             compiled_start: 0,
@@ -174,7 +174,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     // Closing tag range (e.g. </div>)
     if let Some(close_range) = &el.close_range {
         ranges.push(Range {
-            range_type: RangeType::Html,
+            range_type: Language::Html,
             source_start: close_range.start.byte,
             source_end: close_range.end.byte,
             compiled_start: 0,
@@ -230,7 +230,7 @@ pub fn html_ranges_for_component(
         for (expr_start, expr_end) in &spans {
             if *expr_start > pos {
                 ranges.push(Range {
-                    range_type: RangeType::Html,
+                    range_type: Language::Html,
                     source_start: pos,
                     source_end: *expr_start,
                     compiled_start: 0,
@@ -252,7 +252,7 @@ pub fn html_ranges_for_component(
         // Remaining static part after last expression
         if pos < tag_end {
             ranges.push(Range {
-                range_type: RangeType::Html,
+                range_type: Language::Html,
                 source_start: pos,
                 source_end: tag_end,
                 compiled_start: 0,

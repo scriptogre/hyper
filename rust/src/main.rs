@@ -373,7 +373,7 @@ fn result_to_response(result: hyper::CompileResult, include_injections: bool) ->
                     .ranges
                     .into_iter()
                     .map(|r| DaemonRange {
-                        range_type: format!("{:?}", r.range_type).to_lowercase(),
+                        range_type: r.range_type.as_str().to_string(),
                         source_start: r.source_start,
                         source_end: r.source_end,
                         compiled_start: r.compiled_start,
@@ -390,7 +390,7 @@ fn result_to_response(result: hyper::CompileResult, include_injections: bool) ->
                     .injections
                     .into_iter()
                     .map(|i| DaemonInjection {
-                        injection_type: i.injection_type,
+                        injection_type: i.language.as_str().to_string(),
                         start: i.start,
                         end: i.end,
                         prefix: i.prefix,
