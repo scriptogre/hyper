@@ -1694,7 +1694,7 @@ impl Generator for PythonGenerator {
             };
 
         // Adjust segments and collect IDE metadata when ranges are requested.
-        let (segments, expression_braces, tag_highlights) = if options.include_ranges {
+        let (segments, expression_braces) = if options.include_ranges {
             // Find insertion point (where import_lines were inserted) in pre-insertion coordinates
             let def_pos = code
                 .find("async def ")
@@ -1719,21 +1719,15 @@ impl Generator for PythonGenerator {
             let byte_braces = collect_expression_braces(ast);
             let expression_braces = convert_braces_to_utf16(&ast.source, &byte_braces);
 
-            // Collect tag highlight positions for component/slot tags
-            let byte_tag_highlights = super::collect_tag_highlights(ast);
-            let tag_highlights =
-                super::convert_tag_highlights_to_utf16(&ast.source, &byte_tag_highlights);
-
-            (segments, expression_braces, tag_highlights)
+            (segments, expression_braces)
         } else {
-            (Vec::new(), Vec::new(), Vec::new())
+            (Vec::new(), Vec::new())
         };
 
         CompileResult {
             code,
             segments,
             expression_braces,
-            tag_highlights,
         }
     }
 }

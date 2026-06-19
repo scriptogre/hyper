@@ -3,13 +3,12 @@ mod html_segments;
 mod output;
 mod python;
 
-pub use brace_collector::{collect_expression_braces, collect_tag_highlights};
+pub use brace_collector::collect_expression_braces;
 pub use html_segments::{
     collect_component_attr_expr_spans, html_segments_for_component, html_segments_for_element,
 };
 pub use output::{
-    ExpressionBrace, Language, Output, Segment, TagHighlight, TagHighlightKind,
-    convert_braces_to_utf16, convert_tag_highlights_to_utf16, segments_source_to_utf16,
+    ExpressionBrace, Language, Output, Segment, convert_braces_to_utf16, segments_source_to_utf16,
     validate_python_segments,
 };
 pub use python::PythonGenerator;
@@ -30,7 +29,6 @@ pub struct CompileResult {
     pub code: String,
     pub segments: Vec<Segment>,
     pub expression_braces: Vec<ExpressionBrace>,
-    pub tag_highlights: Vec<TagHighlight>,
 }
 
 /// Generator trait - converts AST to code

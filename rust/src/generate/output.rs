@@ -31,43 +31,6 @@ pub struct ExpressionBrace {
     pub close: usize,
 }
 
-/// Tag highlight kind for IDE syntax coloring of component/slot tags.
-#[derive(Debug, Clone, serde::Serialize)]
-pub enum TagHighlightKind {
-    #[serde(rename = "tag_punctuation")]
-    TagPunctuation,
-    #[serde(rename = "component_name")]
-    ComponentName,
-    #[serde(rename = "slot_keyword")]
-    SlotKeyword,
-    #[serde(rename = "slot_name")]
-    SlotName,
-}
-
-/// A highlight range for component/slot tag syntax (UTF-16 offsets).
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct TagHighlight {
-    pub start: usize,
-    pub end: usize,
-    pub kind: TagHighlightKind,
-}
-
-/// Convert byte-offset tag highlights to UTF-16 offsets.
-pub fn convert_tag_highlights_to_utf16(
-    source: &str,
-    byte_highlights: &[(usize, usize, TagHighlightKind)],
-) -> Vec<TagHighlight> {
-    let byte_to_utf16 = build_byte_to_utf16_map(source);
-    byte_highlights
-        .iter()
-        .map(|(start, end, kind)| TagHighlight {
-            start: byte_to_utf16[*start],
-            end: byte_to_utf16[*end],
-            kind: kind.clone(),
-        })
-        .collect()
-}
-
 /// Convert byte offset pairs to UTF-16 offsets for expression braces.
 pub fn convert_braces_to_utf16(
     source: &str,

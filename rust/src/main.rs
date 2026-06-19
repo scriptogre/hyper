@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use hyper::generate::{ExpressionBrace, Segment, TagHighlight};
+use hyper::generate::{ExpressionBrace, Segment};
 use hyper::{CompileOptions, compile};
 use std::fs;
 use std::io::{self, IsTerminal, Read};
@@ -360,7 +360,6 @@ fn result_to_response(result: hyper::CompileResult, include_injections: bool) ->
         compiled: result.code,
         segments: include_injections.then_some(result.segments),
         expression_braces: include_injections.then_some(result.expression_braces),
-        tag_highlights: include_injections.then_some(result.tag_highlights),
     }
 }
 
@@ -396,6 +395,4 @@ struct DaemonResponse {
     segments: Option<Vec<Segment>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     expression_braces: Option<Vec<ExpressionBrace>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tag_highlights: Option<Vec<TagHighlight>>,
 }
