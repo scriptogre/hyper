@@ -414,7 +414,7 @@ fn test_error_has_position_for_unclosed_element() {
 
     match err {
         hyper::CompileError::Parse(parse_err) => {
-            assert_eq!(parse_err.span.start.line, 0);
+            assert_eq!(parse_err.range.start.line, 0);
             assert!(parse_err.message.contains("never closed"));
         }
         _ => panic!("Expected ParseError, got {:?}", err),
@@ -432,7 +432,7 @@ fn test_error_has_position_for_nested_interactive() {
             assert!(parse_err.message.contains("cannot appear inside"));
             // Error should point to the <button> tag, not <a>
             assert!(
-                parse_err.span.start.col > 0,
+                parse_err.range.start.col > 0,
                 "Should point to <button>, not start of line"
             );
         }
@@ -454,7 +454,7 @@ fn test_error_has_position_for_duplicate_attribute() {
                     || parse_err.message.contains("set twice")
             );
             // Should have position info
-            assert_eq!(parse_err.span.start.line, 0);
+            assert_eq!(parse_err.range.start.line, 0);
         }
         _ => panic!("Expected ParseError"),
     }

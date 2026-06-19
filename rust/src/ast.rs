@@ -1,9 +1,15 @@
+//! The template AST: parsed from `.hyper`, lowered in place by the plugin
+//! passes (so it doubles as the compiler's IR), then printed by the
+//! generator. HTML nodes (Element, Text, Component, Slot) are Hyper-specific;
+//! the Python parts converge toward ruff's AST. The generated Python is a
+//! separate tree.
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
-// Re-export Position and Span from tokenizer to avoid duplication
-// This allows the rest of the codebase to use a single Span type
-pub use crate::parse::tokenizer::{Position, Span};
+// Re-export Position and TextRange from tokenizer to avoid duplication
+// This allows the rest of the codebase to use a single TextRange type
+pub use crate::parse::tokenizer::{Position, TextRange};
 
 /// Abstract Syntax Tree
 #[derive(Debug, Clone)]
@@ -65,14 +71,14 @@ pub enum Node {
 #[derive(Debug, Clone)]
 pub struct TextNode {
     pub content: String,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Comment (Python-style # comment)
 #[derive(Debug, Clone)]
 pub struct CommentNode {
     pub text: String, // includes the # prefix
-    pub span: Span,
+    pub range: TextRange,
     pub inline: bool, // true if comment follows content on the same source line
 }
 
@@ -80,7 +86,7 @@ pub struct CommentNode {
 #[derive(Debug, Clone)]
 pub struct ExpressionNode {
     pub expr: String,
-    pub span: Span,
+    pub range: TextRange,
     pub escape: bool,                // true = escape HTML, false = raw
     pub format_spec: Option<String>, // e.g. "03d", ".2f", ">20"
     pub conversion: Option<char>,    // 'r', 's', or 'a'
@@ -91,31 +97,31 @@ pub struct ExpressionNode {
 #[derive(Debug, Clone)]
 pub struct ElementNode {
     pub tag: String,
-    pub tag_span: Span,
+    pub tag_range: TextRange,
     pub attributes: Vec<Attribute>,
     pub children: Vec<Node>,
     pub self_closing: bool,
-    pub span: Span,
-    pub close_span: Option<Span>, // Span of </tag> closing tag in source
+    pub range: TextRange,
+    pub close_range: Option<TextRange>, // TextRange of </tag> closing tag in source
 }
 
 /// Component invocation
 #[derive(Debug, Clone)]
 pub struct ComponentNode {
     pub name: String,
-    pub name_span: Span,
+    pub name_range: TextRange,
     pub attributes: Vec<Attribute>,
     pub children: Vec<Node>,
     pub slots: HashMap<String, Vec<Node>>,
-    pub span: Span,
-    pub close_span: Option<Span>,
+    pub range: TextRange,
+    pub close_range: Option<TextRange>,
 }
 
 /// Fragment (bare children without wrapper)
 #[derive(Debug, Clone)]
 pub struct FragmentNode {
     pub children: Vec<Node>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Slot placeholder
@@ -123,67 +129,67 @@ pub struct FragmentNode {
 pub struct SlotNode {
     pub name: Option<String>,
     pub fallback: Vec<Node>,
-    pub span: Span,
-    pub close_span: Option<Span>,
+    pub range: TextRange,
+    pub close_range: Option<TextRange>,
 }
 
 /// If/elif/else
 #[derive(Debug, Clone)]
 pub struct IfNode {
     pub condition: String,
-    pub condition_span: Span,
+    pub condition_range: TextRange,
     pub then_branch: Vec<Node>,
-    pub elif_branches: Vec<(String, Span, Vec<Node>)>,
+    pub elif_branches: Vec<(String, TextRange, Vec<Node>)>,
     pub else_branch: Option<Vec<Node>>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// For loop
 #[derive(Debug, Clone)]
 pub struct ForNode {
     pub binding: String, // "item" or "i, item"
-    pub binding_span: Span,
+    pub binding_range: TextRange,
     pub iterable: String, // The Python expression
-    pub iterable_span: Span,
+    pub iterable_range: TextRange,
     pub body: Vec<Node>,
     pub is_async: bool, // async for
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Match/case
 #[derive(Debug, Clone)]
 pub struct MatchNode {
     pub expr: String,
-    pub expr_span: Span,
+    pub expr_range: TextRange,
     pub cases: Vec<CaseNode>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 #[derive(Debug, Clone)]
 pub struct CaseNode {
     pub pattern: String,
-    pub pattern_span: Span,
+    pub pattern_range: TextRange,
     pub body: Vec<Node>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// While loop
 #[derive(Debug, Clone)]
 pub struct WhileNode {
     pub condition: String,
-    pub condition_span: Span,
+    pub condition_range: TextRange,
     pub body: Vec<Node>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// With statement (context manager)
 #[derive(Debug, Clone)]
 pub struct WithNode {
     pub items: String, // "open(file) as f" or "lock, other"
-    pub items_span: Span,
+    pub items_range: TextRange,
     pub body: Vec<Node>,
     pub is_async: bool, // async with
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Try/except/else/finally
@@ -193,22 +199,22 @@ pub struct TryNode {
     pub except_clauses: Vec<ExceptClause>,
     pub else_clause: Option<Vec<Node>>,
     pub finally_clause: Option<Vec<Node>>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 #[derive(Debug, Clone)]
 pub struct ExceptClause {
     pub exception: Option<String>, // None for bare "except:"
-    pub exception_span: Option<Span>,
+    pub exception_range: Option<TextRange>,
     pub body: Vec<Node>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Python statement (assignment, expression statement, etc.)
 #[derive(Debug, Clone)]
 pub struct StatementNode {
     pub stmt: String,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Function or class definition
@@ -216,9 +222,9 @@ pub struct StatementNode {
 pub struct DefinitionNode {
     pub kind: DefinitionKind,
     pub signature: String, // "def foo(x: int):" or "class Foo:"
-    pub signature_span: Span,
+    pub signature_range: TextRange,
     pub body: Vec<Node>,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -231,7 +237,7 @@ pub enum DefinitionKind {
 #[derive(Debug, Clone)]
 pub struct ImportNode {
     pub stmt: String, // "import foo" or "from foo import bar"
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Where a parameter sits in the function signature (mirrors Python's argument
@@ -253,21 +259,21 @@ pub struct ParameterNode {
     pub type_hint: Option<String>,
     pub default: Option<String>,
     pub kind: ParamKind,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Decorator
 #[derive(Debug, Clone)]
 pub struct DecoratorNode {
     pub decorator: String, // "@fragment" or "@app.route('/path')"
-    pub span: Span,
+    pub range: TextRange,
 }
 
 /// Attribute on element or component
 #[derive(Debug, Clone)]
 pub struct Attribute {
     pub kind: AttributeKind,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 #[derive(Debug, Clone)]
@@ -279,7 +285,7 @@ pub enum AttributeKind {
     Expression {
         name: String,
         expr: String,
-        expr_span: Span,
+        expr_range: TextRange,
     },
 
     /// Template: class="{expr} static" (mixed expressions in quoted value)
@@ -292,15 +298,15 @@ pub enum AttributeKind {
     Boolean { name: String },
 
     /// Shorthand: {disabled} — emits name=name
-    Shorthand { name: String, expr_span: Span },
+    Shorthand { name: String, expr_range: TextRange },
 
     /// Spread: {**props} — kwargs unpacking
-    Spread { expr: String, expr_span: Span },
+    Spread { expr: String, expr_range: TextRange },
 
     /// Slot assignment: {...name}
     SlotAssignment {
         name: String,
         expr: Option<String>,
-        expr_span: Option<Span>,
+        expr_range: Option<TextRange>,
     },
 }

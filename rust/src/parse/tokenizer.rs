@@ -25,15 +25,15 @@ impl Default for Position {
     }
 }
 
-/// Span in source code (a range from start position to end position)
+/// TextRange in source code (a range from start position to end position)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Span {
+pub struct TextRange {
     pub start: Position,
     pub end: Position,
 }
 
-impl Span {
-    /// Span for compiler-generated code with no source location. Source mapping
+impl TextRange {
+    /// TextRange for compiler-generated code with no source location. Source mapping
     /// skips synthetic spans, so they produce no IDE injection.
     pub fn synthetic() -> Self {
         let pos = Position {
@@ -57,7 +57,7 @@ impl Span {
 pub struct Attribute {
     pub name: String,
     pub value: AttributeValue,
-    pub span: Span,
+    pub range: TextRange,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -65,15 +65,15 @@ pub enum AttributeValue {
     /// String literal: attr="value" or attr='value'
     String(String),
     /// Expression: attr={expr}
-    Expression(String, Span),
+    Expression(String, TextRange),
     /// Boolean (no value): disabled
     Bool,
     /// Shorthand: {name} — emits name=name
-    Shorthand(String, Span),
+    Shorthand(String, TextRange),
     /// Spread: {**expr} — kwargs unpacking
-    Spread(String, Span),
+    Spread(String, TextRange),
     /// Slot assignment: {...name} assigns element to children_name slot
-    SlotAssignment(String, Span),
+    SlotAssignment(String, TextRange),
 }
 
 /// Tokens produced by the lexer
@@ -81,9 +81,9 @@ pub enum AttributeValue {
 pub enum Token {
     // === Structural ===
     /// Indentation at start of line
-    Indent { level: usize, span: Span },
+    Indent { level: usize, range: TextRange },
     /// Newline (LF or CRLF)
-    Newline { span: Span },
+    Newline { range: TextRange },
     /// End of file
     Eof { position: Position },
 
@@ -92,103 +92,109 @@ pub enum Token {
     ControlStart {
         keyword: String,
         rest: String,
-        span: Span,
-        rest_span: Span,
+        range: TextRange,
+        rest_range: TextRange,
     },
     /// Control flow continuation: else, elif, case, except, finally
     ControlContinuation {
         keyword: String,
         rest: Option<String>,
-        span: Span,
-        rest_span: Option<Span>,
+        range: TextRange,
+        rest_range: Option<TextRange>,
     },
     /// Block terminator: end
-    End { span: Span },
+    End { range: TextRange },
     /// Python statement (assignment, call, import, etc.)
-    PythonStatement { code: String, span: Span },
+    PythonStatement { code: String, range: TextRange },
     /// Comment (including the # prefix)
     Comment {
         text: String,
-        span: Span,
+        range: TextRange,
         inline: bool,
     },
     /// Decorator (@something)
-    Decorator { code: String, span: Span },
+    Decorator { code: String, range: TextRange },
 
     // === Content Domain ===
     /// Raw text/HTML content (no expressions)
-    Text { text: String, span: Span },
+    Text { text: String, range: TextRange },
     /// Expression placeholder: {expr}
-    Expression { code: String, span: Span },
+    Expression { code: String, range: TextRange },
     /// Escaped brace: {{ or }}
-    EscapedBrace { brace: char, span: Span },
+    EscapedBrace { brace: char, range: TextRange },
 
     // === Components ===
     /// Component opening tag: <{Name} attributes>
     ComponentOpen {
         name: String,
-        name_span: Span,
+        name_range: TextRange,
         attributes: Vec<Attribute>,
         self_closing: bool,
-        span: Span,
+        range: TextRange,
     },
     /// Component closing tag: </{Name}>
-    ComponentClose { name: String, span: Span },
+    ComponentClose { name: String, range: TextRange },
 
     // === HTML Elements ===
     /// HTML element opening tag: <tag attributes>
     HtmlElementOpen {
         tag: String,
-        tag_span: Span, // Position of "<tag" (opening bracket + tag name)
+        tag_range: TextRange, // Position of "<tag" (opening bracket + tag name)
         attributes: Vec<Attribute>,
         close_bracket_pos: Position, // Position of ">" or "/>"
         self_closing: bool,
-        span: Span, // Overall span covering entire token
+        range: TextRange, // Overall range covering entire token
     },
     /// HTML element closing tag: </tag>
-    HtmlElementClose { tag: String, span: Span },
+    HtmlElementClose { tag: String, range: TextRange },
 
     // === Slots ===
     /// Slot definition opening: <{...}> or <{...name}>
-    SlotOpen { name: Option<String>, span: Span },
+    SlotOpen {
+        name: Option<String>,
+        range: TextRange,
+    },
     /// Slot definition closing: </{...}> or </{...name}>
-    SlotClose { name: Option<String>, span: Span },
+    SlotClose {
+        name: Option<String>,
+        range: TextRange,
+    },
 
     // === Fragments ===
     /// Fragment definition start: fragment Name:
-    FragmentStart { name: String, span: Span },
+    FragmentStart { name: String, range: TextRange },
 
     // === File Structure ===
     /// Header/body separator: ---
-    Separator { span: Span },
+    Separator { range: TextRange },
 }
 
 impl Token {
-    pub fn span(&self) -> Span {
+    pub fn range(&self) -> TextRange {
         match self {
-            Token::Indent { span, .. } => *span,
-            Token::Newline { span, .. } => *span,
-            Token::Eof { position } => Span {
+            Token::Indent { range, .. } => *range,
+            Token::Newline { range, .. } => *range,
+            Token::Eof { position } => TextRange {
                 start: *position,
                 end: *position,
             },
-            Token::ControlStart { span, .. } => *span,
-            Token::ControlContinuation { span, .. } => *span,
-            Token::End { span, .. } => *span,
-            Token::PythonStatement { span, .. } => *span,
-            Token::Comment { span, .. } => *span,
-            Token::Decorator { span, .. } => *span,
-            Token::Text { span, .. } => *span,
-            Token::Expression { span, .. } => *span,
-            Token::EscapedBrace { span, .. } => *span,
-            Token::ComponentOpen { span, .. } => *span,
-            Token::ComponentClose { span, .. } => *span,
-            Token::HtmlElementOpen { span, .. } => *span,
-            Token::HtmlElementClose { span, .. } => *span,
-            Token::SlotOpen { span, .. } => *span,
-            Token::SlotClose { span, .. } => *span,
-            Token::FragmentStart { span, .. } => *span,
-            Token::Separator { span, .. } => *span,
+            Token::ControlStart { range, .. } => *range,
+            Token::ControlContinuation { range, .. } => *range,
+            Token::End { range, .. } => *range,
+            Token::PythonStatement { range, .. } => *range,
+            Token::Comment { range, .. } => *range,
+            Token::Decorator { range, .. } => *range,
+            Token::Text { range, .. } => *range,
+            Token::Expression { range, .. } => *range,
+            Token::EscapedBrace { range, .. } => *range,
+            Token::ComponentOpen { range, .. } => *range,
+            Token::ComponentClose { range, .. } => *range,
+            Token::HtmlElementOpen { range, .. } => *range,
+            Token::HtmlElementClose { range, .. } => *range,
+            Token::SlotOpen { range, .. } => *range,
+            Token::SlotClose { range, .. } => *range,
+            Token::FragmentStart { range, .. } => *range,
+            Token::Separator { range, .. } => *range,
         }
     }
 }
@@ -263,7 +269,7 @@ impl<'a> Tokenizer<'a> {
         if indent_level > 0 {
             tokens.push(Token::Indent {
                 level: indent_level,
-                span: Span {
+                range: TextRange {
                     start: indent_start,
                     end: self.position,
                 },
@@ -278,7 +284,7 @@ impl<'a> Tokenizer<'a> {
             let nl_start = self.position;
             self.consume_newline();
             tokens.push(Token::Newline {
-                span: Span {
+                range: TextRange {
                     start: nl_start,
                     end: self.position,
                 },
@@ -299,7 +305,7 @@ impl<'a> Tokenizer<'a> {
 
             tokens.push(Token::PythonStatement {
                 code: line_content.to_string(),
-                span: Span {
+                range: TextRange {
                     start: line_start,
                     end: self.position,
                 },
@@ -310,7 +316,7 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span {
+                    range: TextRange {
                         start: nl_start,
                         end: self.position,
                     },
@@ -365,14 +371,14 @@ impl<'a> Tokenizer<'a> {
                 if let RawContentExit::EndKeyword {
                     indent: raw_indent, ..
                 } = &exit_mode
-                    && let Some(Token::Indent { level, span }) = tokens.last().cloned()
+                    && let Some(Token::Indent { level, range }) = tokens.last().cloned()
                 {
                     tokens.pop();
                     let adjusted = level.saturating_sub(*raw_indent);
                     if adjusted > 0 {
                         tokens.push(Token::Indent {
                             level: adjusted,
-                            span,
+                            range,
                         });
                     }
                 }
@@ -382,7 +388,7 @@ impl<'a> Tokenizer<'a> {
                 let text = self.consume_to_eol();
                 tokens.push(Token::Text {
                     text,
-                    span: Span {
+                    range: TextRange {
                         start: text_start,
                         end: self.position,
                     },
@@ -394,7 +400,7 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span {
+                    range: TextRange {
                         start: nl_start,
                         end: self.position,
                     },
@@ -447,7 +453,7 @@ impl<'a> Tokenizer<'a> {
             self.skip_to_eol();
             tokens.push(Token::PythonStatement {
                 code: line_content.to_string(),
-                span: Span {
+                range: TextRange {
                     start: line_start,
                     end: self.position,
                 },
@@ -458,7 +464,7 @@ impl<'a> Tokenizer<'a> {
                 let nl_start = self.position;
                 self.consume_newline();
                 tokens.push(Token::Newline {
-                    span: Span {
+                    range: TextRange {
                         start: nl_start,
                         end: self.position,
                     },
@@ -473,7 +479,7 @@ impl<'a> Tokenizer<'a> {
             let sep_start = self.position;
             self.skip_to_eol();
             tokens.push(Token::Separator {
-                span: Span {
+                range: TextRange {
                     start: sep_start,
                     end: self.position,
                 },
@@ -507,7 +513,7 @@ impl<'a> Tokenizer<'a> {
             let end_start = self.position;
             self.skip_to_eol();
             tokens.push(Token::End {
-                span: Span {
+                range: TextRange {
                     start: end_start,
                     end: self.position,
                 },
@@ -555,7 +561,7 @@ impl<'a> Tokenizer<'a> {
             let nl_start = self.position;
             self.consume_newline();
             tokens.push(Token::Newline {
-                span: Span {
+                range: TextRange {
                     start: nl_start,
                     end: self.position,
                 },
@@ -929,7 +935,7 @@ impl<'a> Tokenizer<'a> {
         let text = self.consume_to_eol();
         tokens.push(Token::Comment {
             text,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -942,7 +948,7 @@ impl<'a> Tokenizer<'a> {
         let code = self.consume_to_eol();
         tokens.push(Token::Decorator {
             code,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -964,7 +970,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::FragmentStart {
             name,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1013,10 +1019,10 @@ impl<'a> Tokenizer<'a> {
                 (effective.to_string(), String::new(), effective.len())
             };
 
-        // Calculate rest_span in source coordinates
+        // Calculate rest_range in source coordinates
         let rest_start_byte = start.byte + leading_ws + rest_offset_in_effective;
         let rest_end_byte = rest_start_byte + rest.len();
-        let rest_span = Span {
+        let rest_range = TextRange {
             start: Position {
                 line: start.line,
                 col: start.col + leading_ws + rest_offset_in_effective,
@@ -1032,11 +1038,11 @@ impl<'a> Tokenizer<'a> {
         tokens.push(Token::ControlStart {
             keyword,
             rest,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
-            rest_span,
+            rest_range,
         });
     }
 
@@ -1047,7 +1053,7 @@ impl<'a> Tokenizer<'a> {
         let leading_ws = code.len() - code.trim_start().len();
 
         // Extract keyword and optional rest
-        let (keyword, rest, rest_span) =
+        let (keyword, rest, rest_range) =
             if let Some(idx) = trimmed.find(|c: char| c.is_whitespace() || c == ':') {
                 let kw = &trimmed[..idx];
                 let after_kw = &trimmed[idx..];
@@ -1058,7 +1064,7 @@ impl<'a> Tokenizer<'a> {
                     let rest_offset = idx + after_kw.len() - after_kw.trim_start().len();
                     let rest_start_byte = start.byte + leading_ws + rest_offset;
                     let rest_end_byte = rest_start_byte + r.len();
-                    let span = Span {
+                    let range = TextRange {
                         start: Position {
                             line: start.line,
                             col: start.col + leading_ws + rest_offset,
@@ -1070,7 +1076,7 @@ impl<'a> Tokenizer<'a> {
                             byte: rest_end_byte,
                         },
                     };
-                    (kw.to_string(), Some(r.to_string()), Some(span))
+                    (kw.to_string(), Some(r.to_string()), Some(range))
                 }
             } else {
                 (trimmed.to_string(), None, None)
@@ -1079,11 +1085,11 @@ impl<'a> Tokenizer<'a> {
         tokens.push(Token::ControlContinuation {
             keyword,
             rest,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
-            rest_span,
+            rest_range,
         });
     }
 
@@ -1109,7 +1115,7 @@ impl<'a> Tokenizer<'a> {
 
             tokens.push(Token::PythonStatement {
                 code,
-                span: Span {
+                range: TextRange {
                     start,
                     end: self.position,
                 },
@@ -1118,7 +1124,7 @@ impl<'a> Tokenizer<'a> {
             // Fallback: just emit as Python statement
             tokens.push(Token::PythonStatement {
                 code: line,
-                span: Span {
+                range: TextRange {
                     start,
                     end: self.position,
                 },
@@ -1167,7 +1173,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::PythonStatement {
             code,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1313,7 +1319,7 @@ impl<'a> Tokenizer<'a> {
                     let comment = self.consume_to_eol();
                     tokens.push(Token::Comment {
                         text: comment,
-                        span: Span {
+                        range: TextRange {
                             start: comment_start,
                             end: self.position,
                         },
@@ -1328,7 +1334,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1340,7 +1346,7 @@ impl<'a> Tokenizer<'a> {
                     self.advance();
                     tokens.push(Token::EscapedBrace {
                         brace: '{',
-                        span: Span {
+                        range: TextRange {
                             start: brace_start,
                             end: self.position,
                         },
@@ -1353,7 +1359,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1365,7 +1371,7 @@ impl<'a> Tokenizer<'a> {
                     self.advance();
                     tokens.push(Token::EscapedBrace {
                         brace: '}',
-                        span: Span {
+                        range: TextRange {
                             start: brace_start,
                             end: self.position,
                         },
@@ -1380,7 +1386,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1399,7 +1405,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1423,7 +1429,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1441,7 +1447,7 @@ impl<'a> Tokenizer<'a> {
                     if !text_buf.is_empty() {
                         tokens.push(Token::Text {
                             text: text_buf.clone(),
-                            span: Span {
+                            range: TextRange {
                                 start: text_start,
                                 end: self.position,
                             },
@@ -1468,7 +1474,7 @@ impl<'a> Tokenizer<'a> {
         if !text_buf.is_empty() {
             tokens.push(Token::Text {
                 text: text_buf,
-                span: Span {
+                range: TextRange {
                     start: text_start,
                     end: self.position,
                 },
@@ -1549,7 +1555,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::Expression {
             code: final_expr,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1577,12 +1583,12 @@ impl<'a> Tokenizer<'a> {
                     name: "**".to_string(),
                     value: AttributeValue::Spread(
                         expr,
-                        Span {
+                        TextRange {
                             start: attr_start,
                             end: attr_end,
                         },
                     ),
-                    span: Span {
+                    range: TextRange {
                         start: attr_start,
                         end: self.position,
                     },
@@ -1599,12 +1605,12 @@ impl<'a> Tokenizer<'a> {
                     name: format!("...{}", slot_name),
                     value: AttributeValue::SlotAssignment(
                         slot_name.trim().to_string(),
-                        Span {
+                        TextRange {
                             start: attr_start,
                             end: attr_end,
                         },
                     ),
-                    span: Span {
+                    range: TextRange {
                         start: attr_start,
                         end: self.position,
                     },
@@ -1618,12 +1624,12 @@ impl<'a> Tokenizer<'a> {
                     name: expr.clone(),
                     value: AttributeValue::Shorthand(
                         expr,
-                        Span {
+                        TextRange {
                             start: attr_start,
                             end: attr_end,
                         },
                     ),
-                    span: Span {
+                    range: TextRange {
                         start: attr_start,
                         end: self.position,
                     },
@@ -1648,7 +1654,7 @@ impl<'a> Tokenizer<'a> {
                     (
                         AttributeValue::Expression(
                             expr,
-                            Span {
+                            TextRange {
                                 start: val_start,
                                 end: self.position,
                             },
@@ -1674,7 +1680,7 @@ impl<'a> Tokenizer<'a> {
                 return Some(Attribute {
                     name: attr_name,
                     value,
-                    span: Span {
+                    range: TextRange {
                         start: attr_start,
                         end: value_end,
                     },
@@ -1684,7 +1690,7 @@ impl<'a> Tokenizer<'a> {
                 return Some(Attribute {
                     name: attr_name,
                     value: AttributeValue::Bool,
-                    span: Span {
+                    range: TextRange {
                         start: attr_start,
                         end: self.position,
                     },
@@ -1706,7 +1712,7 @@ impl<'a> Tokenizer<'a> {
         let name_end = self.position;
         self.advance(); // }
 
-        let name_span = Span {
+        let name_range = TextRange {
             start: name_start,
             end: name_end,
         };
@@ -1729,10 +1735,10 @@ impl<'a> Tokenizer<'a> {
                 self.advance();
                 tokens.push(Token::ComponentOpen {
                     name,
-                    name_span,
+                    name_range,
                     attributes: attrs,
                     self_closing: true,
-                    span: Span {
+                    range: TextRange {
                         start,
                         end: self.position,
                     },
@@ -1743,10 +1749,10 @@ impl<'a> Tokenizer<'a> {
                 self.advance();
                 tokens.push(Token::ComponentOpen {
                     name,
-                    name_span,
+                    name_range,
                     attributes: attrs,
                     self_closing: false,
-                    span: Span {
+                    range: TextRange {
                         start,
                         end: self.position,
                     },
@@ -1770,10 +1776,10 @@ impl<'a> Tokenizer<'a> {
         // Reached end of line without closing
         tokens.push(Token::ComponentOpen {
             name,
-            name_span,
+            name_range,
             attributes: attrs,
             self_closing: false,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1799,7 +1805,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::ComponentClose {
             name,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1835,7 +1841,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::SlotOpen {
             name,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1872,7 +1878,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::SlotClose {
             name,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -1951,14 +1957,14 @@ impl<'a> Tokenizer<'a> {
                 self.advance();
                 tokens.push(Token::HtmlElementOpen {
                     tag,
-                    tag_span: Span {
+                    tag_range: TextRange {
                         start,
                         end: tag_end,
                     },
                     attributes: attrs,
                     close_bracket_pos: close_pos,
                     self_closing: true,
-                    span: Span {
+                    range: TextRange {
                         start,
                         end: self.position,
                     },
@@ -1971,14 +1977,14 @@ impl<'a> Tokenizer<'a> {
                 let is_raw = Self::is_raw_text_element(&tag);
                 tokens.push(Token::HtmlElementOpen {
                     tag: tag.clone(),
-                    tag_span: Span {
+                    tag_range: TextRange {
                         start,
                         end: tag_end,
                     },
                     attributes: attrs,
                     close_bracket_pos: close_pos,
                     self_closing: false,
-                    span: Span {
+                    range: TextRange {
                         start,
                         end: self.position,
                     },
@@ -2002,14 +2008,14 @@ impl<'a> Tokenizer<'a> {
         let is_raw = Self::is_raw_text_element(&tag);
         tokens.push(Token::HtmlElementOpen {
             tag: tag.clone(),
-            tag_span: Span {
+            tag_range: TextRange {
                 start,
                 end: tag_end,
             },
             attributes: attrs,
             close_bracket_pos: self.position, // No actual ">" - use end position
             self_closing: false,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -2037,7 +2043,7 @@ impl<'a> Tokenizer<'a> {
 
         tokens.push(Token::HtmlElementClose {
             tag,
-            span: Span {
+            range: TextRange {
                 start,
                 end: self.position,
             },
@@ -2303,7 +2309,7 @@ impl IncrementalTokenizer {
         let mut map = vec![(0, 0); line_count + 1]; // +1 for safety
 
         for (idx, token) in tokens.iter().enumerate() {
-            let line = token.span().start.line;
+            let line = token.range().start.line;
             if line < map.len() {
                 if map[line].0 == map[line].1 {
                     // First token on this line
@@ -2949,23 +2955,23 @@ mod rest_span_tests {
 
     #[test]
     fn test_rest_span_points_to_condition_only() {
-        // rest_span should point to just the condition part, not the keyword or colon
+        // rest_range should point to just the condition part, not the keyword or colon
         let source = "if is_active:\n";
         let tokens = tokenize(source);
 
         if let Token::ControlStart {
             keyword,
             rest,
-            span: _,
-            rest_span,
+            range: _,
+            rest_range,
         } = &tokens[0]
         {
             assert_eq!(keyword, "if");
             assert_eq!(rest, "is_active:");
-            // rest_span should start after "if " (3 bytes)
-            assert_eq!(rest_span.start.byte, 3);
+            // rest_range should start after "if " (3 bytes)
+            assert_eq!(rest_range.start.byte, 3);
             assert_eq!(
-                &source[rest_span.start.byte..rest_span.end.byte],
+                &source[rest_range.start.byte..rest_range.end.byte],
                 "is_active:"
             );
         } else {

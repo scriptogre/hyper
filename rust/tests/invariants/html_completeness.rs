@@ -19,8 +19,8 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     // Find separator position to distinguish preamble vs body
     let separator_byte = tokens.iter().find_map(|t| {
-        if let Token::Separator { span } = t {
-            Some(span.start.byte)
+        if let Token::Separator { range } = t {
+            Some(range.start.byte)
         } else {
             None
         }
@@ -44,27 +44,27 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     for token in &tokens {
         match token {
-            Token::HtmlElementOpen { span, .. }
-                if in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            Token::HtmlElementOpen { range, .. }
+                if in_body(range.start.byte)
+                    && !has_html_coverage(&html_ranges, range.start.byte, range.end.byte) =>
             {
                 return Err(format!(
                     "HTML element open tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
+                    range.start.byte,
+                    range.end.byte,
+                    &source[range.start.byte..range.end.byte]
                 )
                 .into());
             }
-            Token::HtmlElementClose { span, .. }
-                if in_body(span.start.byte)
-                    && !has_html_coverage(&html_ranges, span.start.byte, span.end.byte) =>
+            Token::HtmlElementClose { range, .. }
+                if in_body(range.start.byte)
+                    && !has_html_coverage(&html_ranges, range.start.byte, range.end.byte) =>
             {
                 return Err(format!(
                     "HTML element close tag at [{},{}] has no HTML range: {:?}",
-                    span.start.byte,
-                    span.end.byte,
-                    &source[span.start.byte..span.end.byte]
+                    range.start.byte,
+                    range.end.byte,
+                    &source[range.start.byte..range.end.byte]
                 )
                 .into());
             }

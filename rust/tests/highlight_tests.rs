@@ -4,7 +4,7 @@
 /// The visible_ansi function converts ANSI codes to visible markers for comparison.
 /// The assert_highlighted helper verifies a word is wrapped in color codes.
 use hyper::error::{ErrorKind, ParseError};
-use hyper::parse::tokenizer::{Position, Span};
+use hyper::parse::tokenizer::{Position, TextRange};
 
 /// Convert ANSI escape sequences to visible markers for comparison
 /// e.g., \x1b[38;5;180m becomes ‹38;5;180›
@@ -50,7 +50,7 @@ fn get_source_line(source: &str) -> String {
     let err = ParseError::new(
         ErrorKind::InvalidSyntax,
         "test",
-        Span {
+        TextRange {
             start: Position {
                 byte: 0,
                 line: 0,
@@ -86,7 +86,7 @@ fn get_error_message_line(message: &str) -> String {
     let err = ParseError::new(
         ErrorKind::InvalidSyntax,
         message,
-        Span {
+        TextRange {
             start: Position {
                 byte: 0,
                 line: 0,
@@ -112,7 +112,7 @@ fn get_help_line(help: &str) -> String {
     let err = ParseError::new(
         ErrorKind::InvalidSyntax,
         "test",
-        Span {
+        TextRange {
             start: Position {
                 byte: 0,
                 line: 0,

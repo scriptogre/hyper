@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::context::BLESSED_SPREAD_NAMES;
 use super::{Context, Flow, Plugin, walk};
-use crate::ast::{Ast, Attribute, AttributeKind, Node, ParamKind, ParameterNode, Span};
+use crate::ast::{Ast, Attribute, AttributeKind, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
 
 /// Auto-injects a `**kwargs` parameter for blessed spread names (kwargs, props,
@@ -15,7 +15,7 @@ use crate::error::CompileError;
 pub struct SpreadKwargs {
     declared_params: HashSet<String>,
     has_explicit_kwargs: bool,
-    blessed_spreads: Vec<(String, Span)>,
+    blessed_spreads: Vec<(String, TextRange)>,
 }
 
 impl SpreadKwargs {
@@ -29,7 +29,7 @@ impl SpreadKwargs {
 
     fn collect_blessed_spreads(&mut self, attributes: &[Attribute]) {
         for attr in attributes {
-            if let AttributeKind::Spread { expr, expr_span } = &attr.kind {
+            if let AttributeKind::Spread { expr, expr_range } = &attr.kind {
                 let name = expr.trim();
                 if self.declared_params.contains(name) {
                     continue;
@@ -37,7 +37,7 @@ impl SpreadKwargs {
                 if BLESSED_SPREAD_NAMES.contains(&name)
                     && !self.blessed_spreads.iter().any(|(n, _)| n == name)
                 {
-                    self.blessed_spreads.push((name.to_string(), *expr_span));
+                    self.blessed_spreads.push((name.to_string(), *expr_range));
                 }
             }
         }
@@ -77,7 +77,7 @@ impl Plugin for SpreadKwargs {
                 type_hint: None,
                 default: None,
                 kind: ParamKind::VarKeyword,
-                span: Span::synthetic(),
+                range: TextRange::synthetic(),
             }));
         }
 

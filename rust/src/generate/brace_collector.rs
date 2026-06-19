@@ -23,8 +23,8 @@ pub fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
 fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
     match node {
         Node::Expression(expr) => {
-            // span covers {expr} with exclusive end
-            braces.push((expr.span.start.byte, expr.span.end.byte - 1));
+            // range covers {expr} with exclusive end
+            braces.push((expr.range.start.byte, expr.range.end.byte - 1));
         }
         Node::Element(el) => {
             for attr in &el.attributes {
@@ -35,10 +35,10 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
             }
         }
         Node::Component(c) => {
-            // Opening tag <{Name}>: { is before name_span, } is at name_span.end
-            braces.push((c.name_span.start.byte - 1, c.name_span.end.byte));
+            // Opening tag <{Name}>: { is before name_range, } is at name_range.end
+            braces.push((c.name_range.start.byte - 1, c.name_range.end.byte));
             // Closing tag </{Name}>: { at start+2, } at end-2
-            if let Some(ref cs) = c.close_span {
+            if let Some(ref cs) = c.close_range {
                 braces.push((cs.start.byte + 2, cs.end.byte - 2));
             }
             for attr in &c.attributes {
@@ -54,16 +54,16 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
             }
         }
         Node::Slot(s) => {
-            if s.close_span.is_some() {
+            if s.close_range.is_some() {
                 // Tag-form slot <{...name}>: { at start+1, } at end-2
-                braces.push((s.span.start.byte + 1, s.span.end.byte - 2));
+                braces.push((s.range.start.byte + 1, s.range.end.byte - 2));
                 // Closing tag </{...name}>: { at start+2, } at end-2
-                if let Some(ref cs) = s.close_span {
+                if let Some(ref cs) = s.close_range {
                     braces.push((cs.start.byte + 2, cs.end.byte - 2));
                 }
             } else {
-                // Inline slot {...}: span covers {..} with exclusive end
-                braces.push((s.span.start.byte, s.span.end.byte - 1));
+                // Inline slot {...}: range covers {..} with exclusive end
+                braces.push((s.range.start.byte, s.range.end.byte - 1));
             }
             for child in &s.fallback {
                 collect_braces_node(child, braces);
@@ -138,24 +138,24 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
 #[allow(clippy::while_let_on_iterator)]
 fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
     match &attr.kind {
-        AttributeKind::Expression { expr_span, .. } => {
-            // expr_span covers {expr} with exclusive end
-            braces.push((expr_span.start.byte, expr_span.end.byte - 1));
+        AttributeKind::Expression { expr_range, .. } => {
+            // expr_range covers {expr} with exclusive end
+            braces.push((expr_range.start.byte, expr_range.end.byte - 1));
         }
-        AttributeKind::Shorthand { expr_span, .. } | AttributeKind::Spread { expr_span, .. } => {
-            // expr_span.end points TO closing brace (not past it)
-            braces.push((expr_span.start.byte, expr_span.end.byte));
+        AttributeKind::Shorthand { expr_range, .. } | AttributeKind::Spread { expr_range, .. } => {
+            // expr_range.end points TO closing brace (not past it)
+            braces.push((expr_range.start.byte, expr_range.end.byte));
         }
         AttributeKind::SlotAssignment {
-            expr_span: Some(span),
+            expr_range: Some(range),
             ..
         } => {
-            // expr_span.end points TO closing brace
-            braces.push((span.start.byte, span.end.byte));
+            // expr_range.end points TO closing brace
+            braces.push((range.start.byte, range.end.byte));
         }
         AttributeKind::Template { name, value } => {
             // Walk value to find {expr} brace positions
-            let value_start_byte = attr.span.start.byte + name.len() + 2; // skip `name="`
+            let value_start_byte = attr.range.start.byte + name.len() + 2; // skip `name="`
             let mut byte_offset = 0;
             let mut chars = value.chars().peekable();
             while let Some(ch) = chars.next() {
@@ -296,10 +296,10 @@ fn highlight_component_tag(
     c: &ComponentNode,
     highlights: &mut Vec<(usize, usize, TagHighlightKind)>,
 ) {
-    let tag_start = c.span.start.byte;
-    let brace_open = c.name_span.start.byte - 1; // `{`
-    let brace_close = c.name_span.end.byte; // `}`
-    let tag_end = c.span.end.byte;
+    let tag_start = c.range.start.byte;
+    let brace_open = c.name_range.start.byte - 1; // `{`
+    let brace_close = c.name_range.end.byte; // `}`
+    let tag_end = c.range.end.byte;
 
     // `<` before `{`
     highlights.push((tag_start, brace_open, TagHighlightKind::TagPunctuation));
@@ -307,8 +307,8 @@ fn highlight_component_tag(
     highlights.push((brace_open, brace_open + 1, TagHighlightKind::TagPunctuation));
     // Component name
     highlights.push((
-        c.name_span.start.byte,
-        c.name_span.end.byte,
+        c.name_range.start.byte,
+        c.name_range.end.byte,
         TagHighlightKind::ComponentName,
     ));
     // `}`
@@ -318,16 +318,16 @@ fn highlight_component_tag(
         TagHighlightKind::TagPunctuation,
     ));
     // `>` or `/>` at end of opening tag.
-    // Self-closing components (no children, no close_span) always end in `/>`,
+    // Self-closing components (no children, no close_range) always end in `/>`,
     // so we highlight the last 2 bytes. Components with bodies end in `>`.
-    if c.children.is_empty() && c.close_span.is_none() {
+    if c.children.is_empty() && c.close_range.is_none() {
         highlights.push((tag_end - 2, tag_end, TagHighlightKind::TagPunctuation));
     } else {
         highlights.push((tag_end - 1, tag_end, TagHighlightKind::TagPunctuation));
     }
 
     // Closing tag: </{Name}>
-    if let Some(ref cs) = c.close_span {
+    if let Some(ref cs) = c.close_range {
         let cs_start = cs.start.byte;
         let cs_end = cs.end.byte;
         // `</`
@@ -353,13 +353,13 @@ fn highlight_component_tag(
 
 /// Emit highlights for a slot tag: `<{...name}>` or `<{...name}>...</{...name}>`
 fn highlight_slot_tag(s: &SlotNode, highlights: &mut Vec<(usize, usize, TagHighlightKind)>) {
-    // Only tag-form slots (with close_span) get highlights
-    if s.close_span.is_none() {
+    // Only tag-form slots (with close_range) get highlights
+    if s.close_range.is_none() {
         return;
     }
 
-    let tag_start = s.span.start.byte;
-    let tag_end = s.span.end.byte;
+    let tag_start = s.range.start.byte;
+    let tag_end = s.range.end.byte;
     let brace_open = tag_start + 1; // `{` after `<`
     let brace_close = tag_end - 2; // `}` before `>`
 
@@ -390,7 +390,7 @@ fn highlight_slot_tag(s: &SlotNode, highlights: &mut Vec<(usize, usize, TagHighl
     highlights.push((tag_end - 1, tag_end, TagHighlightKind::TagPunctuation));
 
     // Closing tag
-    if let Some(ref cs) = s.close_span {
+    if let Some(ref cs) = s.close_range {
         let cs_start = cs.start.byte;
         let cs_end = cs.end.byte;
         // `</`

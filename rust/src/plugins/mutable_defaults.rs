@@ -1,5 +1,5 @@
 use super::{Context, Flow, Plugin, walk};
-use crate::ast::{Ast, IfNode, Node, Span, StatementNode};
+use crate::ast::{Ast, IfNode, Node, StatementNode, TextRange};
 use crate::error::CompileError;
 
 /// Rewrites mutable defaults on nullable params to the None-sentinel pattern.
@@ -20,14 +20,14 @@ impl Plugin for MutableDefaults {
         let guards = self.guards.iter().map(|(name, default)| {
             Node::If(IfNode {
                 condition: format!("{name} is None"),
-                condition_span: Span::synthetic(),
+                condition_range: TextRange::synthetic(),
                 then_branch: vec![Node::Statement(StatementNode {
                     stmt: format!("{name} = {default}"),
-                    span: Span::synthetic(),
+                    range: TextRange::synthetic(),
                 })],
                 elif_branches: Vec::new(),
                 else_branch: None,
-                span: Span::synthetic(),
+                range: TextRange::synthetic(),
             })
         });
         ast.function.body.splice(0..0, guards);
@@ -37,7 +37,10 @@ impl Plugin for MutableDefaults {
 
     fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
         if let Node::Parameter(param) = node
-            && is_nullable_with_mutable_default(param.type_hint.as_deref(), param.default.as_deref())
+            && is_nullable_with_mutable_default(
+                param.type_hint.as_deref(),
+                param.default.as_deref(),
+            )
             && let Some(default) = param.default.take()
         {
             self.guards.push((param.name.clone(), default));

@@ -1,11 +1,11 @@
-use super::tokenizer::{Position, Span, Token};
+use super::tokenizer::{Position, TextRange, Token};
 use crate::ast::*;
 use crate::error::{ErrorKind, ParseError, ParseResult};
 use crate::html;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-type ComponentChildren = (Vec<Node>, HashMap<String, Vec<Node>>, Option<Span>);
+type ComponentChildren = (Vec<Node>, HashMap<String, Vec<Node>>, Option<TextRange>);
 
 /// Builds an AST from a token stream
 pub struct TreeBuilder {
@@ -39,16 +39,16 @@ impl TreeBuilder {
         Ok(nodes)
     }
 
-    /// Get a span at the current position (for EOF or current token)
-    fn current_span(&self) -> Span {
+    /// Get a range at the current position (for EOF or current token)
+    fn current_range(&self) -> TextRange {
         if let Some(token) = self.peek() {
-            token.span()
+            token.range()
         } else {
-            // EOF span - point to end of source
+            // EOF range - point to end of source
             let byte = self.source.len();
             let line = self.source.lines().count().saturating_sub(1);
             let col = self.source.lines().last().map(|l| l.len()).unwrap_or(0);
-            Span {
+            TextRange {
                 start: Position { byte, line, col },
                 end: Position { byte, line, col },
             }
@@ -56,7 +56,7 @@ impl TreeBuilder {
     }
 
     /// Require an 'end' token to close a block
-    fn expect_end(&mut self, block_keyword: &str, open_span: &Span) -> ParseResult<()> {
+    fn expect_end(&mut self, block_keyword: &str, open_range: &TextRange) -> ParseResult<()> {
         if let Some(Token::End { .. }) = self.peek() {
             self.advance();
             Ok(())
@@ -64,9 +64,9 @@ impl TreeBuilder {
             Err(ParseError::new(
                 ErrorKind::UnclosedBlock,
                 format!("This '{}' block is never closed.", block_keyword),
-                self.current_span(),
+                self.current_range(),
             )
-            .with_related(*open_span)
+            .with_related(*open_range)
             .with_help("Close with 'end'")
             .boxed())
         }
@@ -142,11 +142,11 @@ impl TreeBuilder {
         let token = &self.tokens[self.pos];
 
         match token {
-            Token::Newline { span } => {
+            Token::Newline { range } => {
                 if !self.in_header && self.newline_is_content() {
                     let node = Node::Text(TextNode {
                         content: "\n".to_string(),
-                        span: *span,
+                        range: *range,
                     });
                     self.advance();
                     Ok(Some(node))
@@ -155,13 +155,13 @@ impl TreeBuilder {
                     Ok(None)
                 }
             }
-            Token::Indent { level, span } => {
+            Token::Indent { level, range } => {
                 // In content area, preserve indentation as whitespace
                 if !self.in_header && *level > 0 {
                     let spaces = " ".repeat(*level);
                     let node = Node::Text(TextNode {
                         content: spaces,
-                        span: *span,
+                        range: *range,
                     });
                     self.advance();
                     Ok(Some(node))
@@ -172,16 +172,16 @@ impl TreeBuilder {
                 }
             }
 
-            Token::Text { text, span } => {
+            Token::Text { text, range } => {
                 let node = Node::Text(TextNode {
                     content: text.clone(),
-                    span: *span,
+                    range: *range,
                 });
                 self.advance();
                 Ok(Some(node))
             }
 
-            Token::Expression { code, span } => {
+            Token::Expression { code, range } => {
                 // Check if this is a slot reference (tokenizer converts {...} to {children})
                 // Slot names start with "children" (default slot or named slots like children_sidebar)
                 let trimmed = code.trim();
@@ -196,8 +196,8 @@ impl TreeBuilder {
                     let node = Node::Slot(SlotNode {
                         name: slot_name,
                         fallback: Vec::new(),
-                        span: *span,
-                        close_span: None,
+                        range: *range,
+                        close_range: None,
                     });
                     self.advance();
                     Ok(Some(node))
@@ -205,7 +205,7 @@ impl TreeBuilder {
                     let (expr, format_spec, conversion, debug) = Self::parse_expression_parts(code);
                     let node = Node::Expression(ExpressionNode {
                         expr,
-                        span: *span,
+                        range: *range,
                         escape: true, // Default to escaping
                         format_spec,
                         conversion,
@@ -218,20 +218,20 @@ impl TreeBuilder {
 
             Token::HtmlElementOpen {
                 tag,
-                tag_span,
+                tag_range,
                 attributes,
                 self_closing,
-                span,
+                range,
                 ..
             } => {
-                let element_span = *span;
+                let element_range = *range;
                 let element_tag = tag.clone();
-                let element_tag_span = *tag_span;
+                let element_tag_range = *tag_range;
                 let element_attrs = self.convert_attributes(attributes);
                 let is_self_closing = *self_closing;
 
                 // Nesting validation: block elements inside <p>, nested interactive elements
-                self.check_nesting(&element_tag, &element_span)?;
+                self.check_nesting(&element_tag, &element_range)?;
 
                 // Void elements cannot have children or closing tags
                 if !is_self_closing && html::is_void_element(&element_tag) {
@@ -244,7 +244,7 @@ impl TreeBuilder {
                     return Err(ParseError::new(
                         ErrorKind::VoidElementWithContent,
                         format!("<{}> cannot have content or a closing tag.", element_tag),
-                        element_span,
+                        element_range,
                     )
                     .with_help(format!(
                         "<{}> is a void element (like {}). Write it as <{} /> instead.",
@@ -260,24 +260,24 @@ impl TreeBuilder {
                 }
 
                 // Check for duplicate attributes
-                self.check_duplicate_attributes(&element_attrs, &element_span)?;
+                self.check_duplicate_attributes(&element_attrs, &element_range)?;
 
                 self.advance();
 
-                let (children, close_span) = if is_self_closing {
+                let (children, close_range) = if is_self_closing {
                     (Vec::new(), None)
                 } else {
-                    self.parse_until_element_close(&element_tag, &element_span)?
+                    self.parse_until_element_close(&element_tag, &element_range)?
                 };
 
                 Ok(Some(Node::Element(ElementNode {
                     tag: element_tag,
-                    tag_span: element_tag_span,
+                    tag_range: element_tag_range,
                     attributes: element_attrs,
                     children,
                     self_closing: is_self_closing,
-                    span: element_span,
-                    close_span,
+                    range: element_range,
+                    close_range,
                 })))
             }
 
@@ -289,35 +289,35 @@ impl TreeBuilder {
 
             Token::ComponentOpen {
                 name,
-                name_span,
+                name_range,
                 attributes,
                 self_closing,
-                span,
+                range,
             } => {
                 let component_name = name.clone();
-                let component_name_span = *name_span;
+                let component_name_range = *name_range;
                 let component_attrs = self.convert_attributes(attributes);
-                let component_span = *span;
+                let component_range = *range;
                 let is_self_closing = *self_closing;
 
-                self.check_duplicate_attributes(&component_attrs, &component_span)?;
+                self.check_duplicate_attributes(&component_attrs, &component_range)?;
 
                 self.advance();
 
-                let (children, slots, close_span) = if is_self_closing {
+                let (children, slots, close_range) = if is_self_closing {
                     (Vec::new(), HashMap::new(), None)
                 } else {
-                    self.parse_until_component_close(&component_name, &component_span)?
+                    self.parse_until_component_close(&component_name, &component_range)?
                 };
 
                 Ok(Some(Node::Component(ComponentNode {
                     name: component_name,
-                    name_span: component_name_span,
+                    name_range: component_name_range,
                     attributes: component_attrs,
                     children,
                     slots,
-                    span: component_span,
-                    close_span,
+                    range: component_range,
+                    close_range,
                 })))
             }
 
@@ -330,47 +330,51 @@ impl TreeBuilder {
             Token::ControlStart {
                 keyword,
                 rest,
-                span,
-                rest_span,
+                range,
+                rest_range,
             } => {
                 let keyword = keyword.clone();
                 let rest = rest.clone();
-                let span = *span;
-                let rest_span = *rest_span;
-                self.parse_control_flow(&keyword, &rest, &span, &rest_span)
+                let range = *range;
+                let rest_range = *rest_range;
+                self.parse_control_flow(&keyword, &rest, &range, &rest_range)
             }
 
-            Token::PythonStatement { code, span } => {
+            Token::PythonStatement { code, range } => {
                 let code = code.clone();
-                let span = *span;
+                let range = *range;
 
                 // If we're in the header and this looks like a parameter, parse it as such
                 if self.in_header && self.is_parameter_declaration(&code) {
-                    self.parse_parameter(&code, &span)
+                    self.parse_parameter(&code, &range)
                 } else if self.is_import_statement(&code) {
-                    let node = Node::Import(ImportNode { stmt: code, span });
+                    let node = Node::Import(ImportNode { stmt: code, range });
                     self.advance();
                     Ok(Some(node))
                 } else {
-                    let node = Node::Statement(StatementNode { stmt: code, span });
+                    let node = Node::Statement(StatementNode { stmt: code, range });
                     self.advance();
                     Ok(Some(node))
                 }
             }
 
-            Token::Decorator { code, span } => {
+            Token::Decorator { code, range } => {
                 let node = Node::Decorator(DecoratorNode {
                     decorator: code.clone(),
-                    span: *span,
+                    range: *range,
                 });
                 self.advance();
                 Ok(Some(node))
             }
 
-            Token::Comment { text, span, inline } => {
+            Token::Comment {
+                text,
+                range,
+                inline,
+            } => {
                 let node = Node::Comment(CommentNode {
                     text: text.clone(),
-                    span: *span,
+                    range: *range,
                     inline: *inline,
                 });
                 self.advance();
@@ -384,14 +388,14 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::SlotOpen { name, span } => {
+            Token::SlotOpen { name, range } => {
                 let slot_name = name.clone();
-                let slot_span = *span;
+                let slot_range = *range;
 
                 self.advance();
 
-                let (fallback, close_span) = if slot_name.is_some() {
-                    self.parse_until_slot_close(&slot_name, &slot_span)?
+                let (fallback, close_range) = if slot_name.is_some() {
+                    self.parse_until_slot_close(&slot_name, &slot_range)?
                 } else {
                     (Vec::new(), None)
                 };
@@ -399,8 +403,8 @@ impl TreeBuilder {
                 Ok(Some(Node::Slot(SlotNode {
                     name: slot_name,
                     fallback,
-                    span: slot_span,
-                    close_span,
+                    range: slot_range,
+                    close_range,
                 })))
             }
 
@@ -410,11 +414,11 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::EscapedBrace { brace, span } => {
+            Token::EscapedBrace { brace, range } => {
                 // Treat escaped brace as text
                 let node = Node::Text(TextNode {
                     content: brace.to_string(),
-                    span: *span,
+                    range: *range,
                 });
                 self.advance();
                 Ok(Some(node))
@@ -431,10 +435,10 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::FragmentStart { name: _, span } => {
+            Token::FragmentStart { name: _, range } => {
                 let node = Node::Fragment(FragmentNode {
                     children: Vec::new(), // TODO: parse fragment children
-                    span: *span,
+                    range: *range,
                 });
                 self.advance();
                 Ok(Some(node))
@@ -446,24 +450,24 @@ impl TreeBuilder {
         &mut self,
         keyword: &str,
         rest: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
     ) -> ParseResult<Option<Node>> {
         match keyword {
-            "if" => self.parse_if(rest, span, rest_span),
-            "for" => self.parse_for(rest, span, rest_span, false),
-            "async for" => self.parse_for(rest, span, rest_span, true),
-            "while" => self.parse_while(rest, span, rest_span),
-            "match" => self.parse_match(rest, span, rest_span),
-            "with" => self.parse_with(rest, span, rest_span, false),
-            "async with" => self.parse_with(rest, span, rest_span, true),
-            "try" => self.parse_try(span),
-            "def" | "async def" => self.parse_function(keyword, rest, span),
-            "class" => self.parse_class(rest, span),
+            "if" => self.parse_if(rest, range, rest_range),
+            "for" => self.parse_for(rest, range, rest_range, false),
+            "async for" => self.parse_for(rest, range, rest_range, true),
+            "while" => self.parse_while(rest, range, rest_range),
+            "match" => self.parse_match(rest, range, rest_range),
+            "with" => self.parse_with(rest, range, rest_range, false),
+            "async with" => self.parse_with(rest, range, rest_range, true),
+            "try" => self.parse_try(range),
+            "def" | "async def" => self.parse_function(keyword, rest, range),
+            "class" => self.parse_class(rest, range),
             _ => Err(ParseError::new(
                 ErrorKind::InvalidSyntax,
                 format!("'{}' is not a recognized block keyword.", keyword),
-                *span,
+                *range,
             )
             .boxed()),
         }
@@ -472,11 +476,11 @@ impl TreeBuilder {
     fn parse_if(
         &mut self,
         condition: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
     ) -> ParseResult<Option<Node>> {
-        let condition_span = *rest_span;
-        let if_span = *span;
+        let condition_range = *rest_range;
+        let if_range = *range;
 
         self.advance();
         let then_branch = self.parse_until_block_end()?;
@@ -487,18 +491,18 @@ impl TreeBuilder {
         while let Some(Token::ControlContinuation {
             keyword,
             rest,
-            span,
-            rest_span,
+            range,
+            rest_range,
         }) = self.peek()
         {
             match keyword.as_str() {
                 "elif" => {
                     let elif_cond = rest.clone().unwrap_or_default();
-                    // Use rest_span if available, fall back to full span
-                    let elif_span = rest_span.unwrap_or(*span);
+                    // Use rest_range if available, fall back to full range
+                    let elif_range = rest_range.unwrap_or(*range);
                     self.advance();
                     let elif_body = self.parse_until_block_end()?;
-                    elif_branches.push((elif_cond, elif_span, elif_body));
+                    elif_branches.push((elif_cond, elif_range, elif_body));
                 }
                 "else" => {
                     self.advance();
@@ -510,23 +514,23 @@ impl TreeBuilder {
         }
 
         // Require 'end' token
-        self.expect_end("if", &if_span)?;
+        self.expect_end("if", &if_range)?;
 
         Ok(Some(Node::If(IfNode {
             condition: condition.to_string(),
-            condition_span,
+            condition_range,
             then_branch,
             elif_branches,
             else_branch,
-            span: if_span,
+            range: if_range,
         })))
     }
 
     fn parse_for(
         &mut self,
         rest: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
         is_async: bool,
     ) -> ParseResult<Option<Node>> {
         // Parse "binding in iterable"
@@ -536,7 +540,7 @@ impl TreeBuilder {
             return Err(ParseError::new(
                 ErrorKind::InvalidSyntax,
                 format!("This doesn't look like a valid {} loop.", keyword),
-                *span,
+                *range,
             )
             .with_help(format!("Syntax: {} x in items:", keyword))
             .boxed());
@@ -544,76 +548,76 @@ impl TreeBuilder {
 
         let binding = parts[0].trim().to_string();
         let iterable = parts[1].trim().to_string();
-        // Calculate binding span: from rest_span start to end of binding text
-        let binding_span = Span {
-            start: rest_span.start,
+        // Calculate binding range: from rest_range start to end of binding text
+        let binding_range = TextRange {
+            start: rest_range.start,
             end: Position {
-                line: rest_span.start.line,
-                col: rest_span.start.col + parts[0].len(),
-                byte: rest_span.start.byte + parts[0].len(),
+                line: rest_range.start.line,
+                col: rest_range.start.col + parts[0].len(),
+                byte: rest_range.start.byte + parts[0].len(),
             },
         };
-        // Calculate iterable span: rest_span start + offset to "in " + "in ".len()
+        // Calculate iterable range: rest_range start + offset to "in " + "in ".len()
         let binding_and_in_len = parts[0].len() + " in ".len();
-        let iterable_span = Span {
+        let iterable_range = TextRange {
             start: Position {
-                line: rest_span.start.line,
-                col: rest_span.start.col + binding_and_in_len,
-                byte: rest_span.start.byte + binding_and_in_len,
+                line: rest_range.start.line,
+                col: rest_range.start.col + binding_and_in_len,
+                byte: rest_range.start.byte + binding_and_in_len,
             },
-            end: rest_span.end,
+            end: rest_range.end,
         };
-        let for_span = *span;
+        let for_range = *range;
 
         self.advance();
         let body = self.parse_until_block_end()?;
 
         // Require 'end' token
         let keyword = if is_async { "async for" } else { "for" };
-        self.expect_end(keyword, &for_span)?;
+        self.expect_end(keyword, &for_range)?;
 
         Ok(Some(Node::For(ForNode {
             binding,
-            binding_span,
+            binding_range,
             iterable,
-            iterable_span,
+            iterable_range,
             body,
             is_async,
-            span: for_span,
+            range: for_range,
         })))
     }
 
     fn parse_while(
         &mut self,
         condition: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
     ) -> ParseResult<Option<Node>> {
-        let condition_span = *rest_span;
-        let while_span = *span;
+        let condition_range = *rest_range;
+        let while_range = *range;
 
         self.advance();
         let body = self.parse_until_block_end()?;
 
         // Require 'end' token
-        self.expect_end("while", &while_span)?;
+        self.expect_end("while", &while_range)?;
 
         Ok(Some(Node::While(WhileNode {
             condition: condition.to_string(),
-            condition_span,
+            condition_range,
             body,
-            span: while_span,
+            range: while_range,
         })))
     }
 
     fn parse_match(
         &mut self,
         expr: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
     ) -> ParseResult<Option<Node>> {
-        let expr_span = *rest_span;
-        let match_span = *span;
+        let expr_range = *rest_range;
+        let match_range = *range;
 
         self.advance();
         let mut cases = Vec::new();
@@ -624,21 +628,21 @@ impl TreeBuilder {
         while let Some(Token::ControlContinuation {
             keyword,
             rest,
-            span,
-            rest_span,
+            range,
+            rest_range,
         }) = self.peek()
         {
             if keyword == "case" {
                 let pattern = rest.clone().unwrap_or_default();
-                let pattern_span = rest_span.unwrap_or(*span);
-                let case_span = *span;
+                let pattern_range = rest_range.unwrap_or(*range);
+                let case_range = *range;
                 self.advance();
                 let body = self.parse_until_case_end()?;
                 cases.push(CaseNode {
                     pattern,
-                    pattern_span,
+                    pattern_range,
                     body,
-                    span: case_span,
+                    range: case_range,
                 });
 
                 // Skip newlines and indents before next case
@@ -649,44 +653,44 @@ impl TreeBuilder {
         }
 
         // Require 'end' token
-        self.expect_end("match", &match_span)?;
+        self.expect_end("match", &match_range)?;
 
         Ok(Some(Node::Match(MatchNode {
             expr: expr.to_string(),
-            expr_span,
+            expr_range,
             cases,
-            span: match_span,
+            range: match_range,
         })))
     }
 
     fn parse_with(
         &mut self,
         items: &str,
-        span: &Span,
-        rest_span: &Span,
+        range: &TextRange,
+        rest_range: &TextRange,
         is_async: bool,
     ) -> ParseResult<Option<Node>> {
-        let items_span = *rest_span;
-        let with_span = *span;
+        let items_range = *rest_range;
+        let with_range = *range;
 
         self.advance();
         let body = self.parse_until_block_end()?;
 
         // Require 'end' token
         let keyword = if is_async { "async with" } else { "with" };
-        self.expect_end(keyword, &with_span)?;
+        self.expect_end(keyword, &with_range)?;
 
         Ok(Some(Node::With(WithNode {
             items: items.to_string(),
-            items_span,
+            items_range,
             body,
             is_async,
-            span: with_span,
+            range: with_range,
         })))
     }
 
-    fn parse_try(&mut self, span: &Span) -> ParseResult<Option<Node>> {
-        let try_span = *span;
+    fn parse_try(&mut self, range: &TextRange) -> ParseResult<Option<Node>> {
+        let try_range = *range;
 
         self.advance();
         let body = self.parse_until_block_end()?;
@@ -698,22 +702,22 @@ impl TreeBuilder {
         while let Some(Token::ControlContinuation {
             keyword,
             rest,
-            span,
-            rest_span,
+            range,
+            rest_range,
         }) = self.peek()
         {
             match keyword.as_str() {
                 "except" => {
                     let exception = rest.clone();
-                    let exception_span = rest_span.or_else(|| rest.as_ref().map(|_| *span));
-                    let except_span = *span;
+                    let exception_range = rest_range.or_else(|| rest.as_ref().map(|_| *range));
+                    let except_range = *range;
                     self.advance();
                     let except_body = self.parse_until_block_end()?;
                     except_clauses.push(ExceptClause {
                         exception,
-                        exception_span,
+                        exception_range,
                         body: except_body,
-                        span: except_span,
+                        range: except_range,
                     });
                 }
                 "else" => {
@@ -730,14 +734,14 @@ impl TreeBuilder {
         }
 
         // Require 'end' token
-        self.expect_end("try", &try_span)?;
+        self.expect_end("try", &try_range)?;
 
         Ok(Some(Node::Try(TryNode {
             body,
             except_clauses,
             else_clause,
             finally_clause,
-            span: try_span,
+            range: try_range,
         })))
     }
 
@@ -745,54 +749,54 @@ impl TreeBuilder {
         &mut self,
         keyword: &str,
         rest: &str,
-        span: &Span,
+        range: &TextRange,
     ) -> ParseResult<Option<Node>> {
         // Strip trailing colon from rest if present (parsing may include it)
         let rest_trimmed = rest.trim_end_matches(':').trim();
         let signature = format!("{} {}:", keyword, rest_trimmed);
-        let signature_span = *span;
-        let def_span = *span;
+        let signature_range = *range;
+        let def_range = *range;
 
         self.advance();
         let body = if self.in_header {
-            self.parse_header_block_body(def_span.start.col)?
+            self.parse_header_block_body(def_range.start.col)?
         } else {
             let body = self.parse_until_block_end()?;
-            self.expect_end("def", &def_span)?;
+            self.expect_end("def", &def_range)?;
             body
         };
 
         Ok(Some(Node::Definition(DefinitionNode {
             kind: DefinitionKind::Function,
             signature,
-            signature_span,
+            signature_range,
             body,
-            span: def_span,
+            range: def_range,
         })))
     }
 
-    fn parse_class(&mut self, rest: &str, span: &Span) -> ParseResult<Option<Node>> {
+    fn parse_class(&mut self, rest: &str, range: &TextRange) -> ParseResult<Option<Node>> {
         // Strip trailing colon from rest if present (parsing may include it)
         let rest_trimmed = rest.trim_end_matches(':').trim();
         let signature = format!("class {}:", rest_trimmed);
-        let signature_span = *span;
-        let class_span = *span;
+        let signature_range = *range;
+        let class_range = *range;
 
         self.advance();
         let body = if self.in_header {
-            self.parse_header_block_body(class_span.start.col)?
+            self.parse_header_block_body(class_range.start.col)?
         } else {
             let body = self.parse_until_block_end()?;
-            self.expect_end("class", &class_span)?;
+            self.expect_end("class", &class_range)?;
             body
         };
 
         Ok(Some(Node::Definition(DefinitionNode {
             kind: DefinitionKind::Class,
             signature,
-            signature_span,
+            signature_range,
             body,
-            span: class_span,
+            range: class_range,
         })))
     }
 
@@ -883,8 +887,8 @@ impl TreeBuilder {
     fn parse_until_element_close(
         &mut self,
         tag: &str,
-        open_span: &Span,
-    ) -> ParseResult<(Vec<Node>, Option<Span>)> {
+        open_range: &TextRange,
+    ) -> ParseResult<(Vec<Node>, Option<TextRange>)> {
         self.element_stack.push(tag.to_string());
         let mut nodes = Vec::new();
 
@@ -892,13 +896,13 @@ impl TreeBuilder {
             match self.peek() {
                 Some(Token::HtmlElementClose {
                     tag: close_tag,
-                    span: close_span,
+                    range: close_range,
                     ..
                 }) if close_tag == tag => {
-                    let close_span = *close_span;
+                    let close_range = *close_range;
                     self.advance();
                     self.element_stack.pop();
-                    return Ok((nodes, Some(close_span)));
+                    return Ok((nodes, Some(close_range)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {
@@ -912,9 +916,9 @@ impl TreeBuilder {
         Err(ParseError::new(
             ErrorKind::UnclosedElement,
             format!("<{}> is never closed.", tag),
-            self.current_span(),
+            self.current_range(),
         )
-        .with_related(*open_span)
+        .with_related(*open_range)
         .with_help(format!("Close with </{}> or <{} />", tag, tag))
         .boxed())
     }
@@ -922,7 +926,7 @@ impl TreeBuilder {
     fn parse_until_component_close(
         &mut self,
         name: &str,
-        open_span: &Span,
+        open_range: &TextRange,
     ) -> ParseResult<ComponentChildren> {
         let mut children = Vec::new();
         let slots = HashMap::new(); // TODO: parse slots
@@ -931,12 +935,12 @@ impl TreeBuilder {
             match self.peek() {
                 Some(Token::ComponentClose {
                     name: close_name,
-                    span: close_span,
+                    range: close_range,
                     ..
                 }) if close_name == name => {
-                    let close_span = *close_span;
+                    let close_range = *close_range;
                     self.advance();
-                    return Ok((children, slots, Some(close_span)));
+                    return Ok((children, slots, Some(close_range)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {
@@ -949,9 +953,9 @@ impl TreeBuilder {
         Err(ParseError::new(
             ErrorKind::UnclosedComponent,
             format!("<{{{}}}> is never closed.", name),
-            self.current_span(),
+            self.current_range(),
         )
-        .with_related(*open_span)
+        .with_related(*open_range)
         .with_help(format!("Close with </{{{}}}> or <{{{}}} />", name, name))
         .boxed())
     }
@@ -959,20 +963,20 @@ impl TreeBuilder {
     fn parse_until_slot_close(
         &mut self,
         name: &Option<String>,
-        open_span: &Span,
-    ) -> ParseResult<(Vec<Node>, Option<Span>)> {
+        open_range: &TextRange,
+    ) -> ParseResult<(Vec<Node>, Option<TextRange>)> {
         let mut nodes = Vec::new();
 
         while !self.is_at_end() {
             match self.peek() {
                 Some(Token::SlotClose {
                     name: close_name,
-                    span: close_span,
+                    range: close_range,
                     ..
                 }) if close_name == name => {
-                    let close_span = *close_span;
+                    let close_range = *close_range;
                     self.advance();
-                    return Ok((nodes, Some(close_span)));
+                    return Ok((nodes, Some(close_range)));
                 }
                 _ => {
                     if let Some(node) = self.parse_node()? {
@@ -989,9 +993,9 @@ impl TreeBuilder {
         Err(ParseError::new(
             ErrorKind::UnclosedSlot,
             format!("<{{{}}}> is never closed.", slot_name),
-            self.current_span(),
+            self.current_range(),
         )
-        .with_related(*open_span)
+        .with_related(*open_range)
         .with_help(format!("Close with </{{{}}}>", slot_name))
         .boxed())
     }
@@ -1019,45 +1023,45 @@ impl TreeBuilder {
                             }
                         }
                     }
-                    AttributeValue::Expression(code, span) => AttributeKind::Expression {
+                    AttributeValue::Expression(code, range) => AttributeKind::Expression {
                         name: attr.name.clone(),
                         expr: code.clone(),
-                        expr_span: *span,
+                        expr_range: *range,
                     },
                     AttributeValue::Bool => AttributeKind::Boolean {
                         name: attr.name.clone(),
                     },
-                    AttributeValue::Shorthand(name, span) => AttributeKind::Shorthand {
+                    AttributeValue::Shorthand(name, range) => AttributeKind::Shorthand {
                         name: name.clone(),
-                        expr_span: *span,
+                        expr_range: *range,
                     },
-                    AttributeValue::Spread(code, span) => AttributeKind::Spread {
+                    AttributeValue::Spread(code, range) => AttributeKind::Spread {
                         expr: code.clone(),
-                        expr_span: *span,
+                        expr_range: *range,
                     },
-                    AttributeValue::SlotAssignment(name, span) => AttributeKind::SlotAssignment {
+                    AttributeValue::SlotAssignment(name, range) => AttributeKind::SlotAssignment {
                         name: name.clone(),
                         expr: None,
-                        expr_span: Some(*span),
+                        expr_range: Some(*range),
                     },
                 };
 
                 Attribute {
                     kind,
-                    span: attr.span,
+                    range: attr.range,
                 }
             })
             .collect()
     }
 
-    fn check_nesting(&self, child_tag: &str, child_span: &Span) -> ParseResult<()> {
+    fn check_nesting(&self, child_tag: &str, child_range: &TextRange) -> ParseResult<()> {
         if let Some(parent) = self.element_stack.last() {
             // Block elements cannot appear inside <p>
             if html::is_auto_close_element(parent) && html::is_block_element(child_tag) {
                 return Err(ParseError::new(
                     ErrorKind::InvalidNesting,
                     format!("<{}> cannot appear inside <{}>.", child_tag, parent),
-                    *child_span,
+                    *child_range,
                 )
                 .with_help(format!(
                     "Browsers silently close <{}> when they encounter <{}>, so this renders\n\
@@ -1072,7 +1076,7 @@ impl TreeBuilder {
                 return Err(ParseError::new(
                     ErrorKind::InvalidNesting,
                     format!("<{}> cannot appear inside <{}>.", child_tag, parent),
-                    *child_span,
+                    *child_range,
                 )
                 .with_help("Nesting clickable elements is invalid HTML and causes unpredictable behavior across browsers.")
                 .boxed());
@@ -1084,7 +1088,7 @@ impl TreeBuilder {
     fn check_duplicate_attributes(
         &self,
         attrs: &[Attribute],
-        _element_span: &Span,
+        _element_range: &TextRange,
     ) -> ParseResult<()> {
         let mut seen = HashMap::new();
         for attr in attrs {
@@ -1097,17 +1101,17 @@ impl TreeBuilder {
                 AttributeKind::Spread { .. } | AttributeKind::SlotAssignment { .. } => None,
             };
             if let Some(name) = name {
-                if let Some(first_span) = seen.get(name) {
+                if let Some(first_range) = seen.get(name) {
                     return Err(ParseError::new(
                         ErrorKind::DuplicateAttribute,
                         format!("\"{}\" is set twice on this element.", name),
-                        attr.span,
+                        attr.range,
                     )
-                    .with_related(*first_span)
+                    .with_related(*first_range)
                     .with_related_label("first use")
                     .boxed());
                 }
-                seen.insert(name, attr.span);
+                seen.insert(name, attr.range);
             }
         }
         Ok(())
@@ -1333,7 +1337,7 @@ impl TreeBuilder {
         trimmed.starts_with("import ") || trimmed.starts_with("from ")
     }
 
-    fn parse_parameter(&mut self, code: &str, span: &Span) -> ParseResult<Option<Node>> {
+    fn parse_parameter(&mut self, code: &str, range: &TextRange) -> ParseResult<Option<Node>> {
         // Parse "name: type", "name: type = default", or "**kwargs"
         let parts: Vec<&str> = code.splitn(2, ':').collect();
 
@@ -1347,7 +1351,7 @@ impl TreeBuilder {
                 return Err(ParseError::new(
                     ErrorKind::InvalidSyntax,
                     "Hyper components don't support *args.".to_string(),
-                    *span,
+                    *range,
                 )
                 .with_help(
                     "Hyper components use keyword-only arguments, so *args (which captures \
@@ -1374,7 +1378,7 @@ impl TreeBuilder {
             // Not a valid parameter, treat as statement
             let node = Node::Statement(StatementNode {
                 stmt: code.to_string(),
-                span: *span,
+                range: *range,
             });
             self.advance();
             return Ok(Some(node));
@@ -1392,7 +1396,7 @@ impl TreeBuilder {
             type_hint,
             default,
             kind,
-            span: *span,
+            range: *range,
         });
 
         self.advance();

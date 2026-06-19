@@ -47,21 +47,21 @@ pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usi
     let mut spans = Vec::new();
     for attr in attrs {
         match &attr.kind {
-            AttributeKind::Expression { expr_span, .. } => {
+            AttributeKind::Expression { expr_range, .. } => {
                 // Include `={…}` — gap starts at the `=` before `{`
-                let gap_start = expr_span.start.byte.saturating_sub(1);
-                spans.push((gap_start, expr_span.end.byte));
+                let gap_start = expr_range.start.byte.saturating_sub(1);
+                spans.push((gap_start, expr_range.end.byte));
             }
-            AttributeKind::Shorthand { expr_span, .. }
-            | AttributeKind::Spread { expr_span, .. } => {
-                spans.push((expr_span.start.byte, expr_span.end.byte + 1));
+            AttributeKind::Shorthand { expr_range, .. }
+            | AttributeKind::Spread { expr_range, .. } => {
+                spans.push((expr_range.start.byte, expr_range.end.byte + 1));
             }
             AttributeKind::SlotAssignment {
-                expr_span: Some(span),
+                expr_range: Some(range),
                 ..
             } => {
-                let gap_start = span.start.byte.saturating_sub(1);
-                spans.push((gap_start, span.end.byte + 1));
+                let gap_start = range.start.byte.saturating_sub(1);
+                spans.push((gap_start, range.end.byte + 1));
             }
             _ => {}
         }
@@ -71,8 +71,8 @@ pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usi
 
 /// Build HTML injection ranges for an element's opening and closing tags.
 ///
-/// The opening tag span covers `<tag attrs>` or `<tag attrs />`.
-/// The closing tag span covers `</tag>`.
+/// The opening tag range covers `<tag attrs>` or `<tag attrs />`.
+/// The closing tag range covers `</tag>`.
 /// Returns ranges for the static HTML parts, with gaps for expression attributes.
 pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     let mut ranges = Vec::new();
@@ -83,26 +83,26 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     let mut expr_spans = Vec::new();
     for attr in &el.attributes {
         match &attr.kind {
-            AttributeKind::Expression { expr_span, .. } => {
+            AttributeKind::Expression { expr_range, .. } => {
                 // Include the = sign before { so virtual HTML sees a boolean attr
-                let gap_start = expr_span.start.byte.saturating_sub(1);
-                expr_spans.push((gap_start, expr_span.end.byte));
+                let gap_start = expr_range.start.byte.saturating_sub(1);
+                expr_spans.push((gap_start, expr_range.end.byte));
             }
-            AttributeKind::Shorthand { expr_span, .. }
-            | AttributeKind::Spread { expr_span, .. } => {
-                expr_spans.push((expr_span.start.byte, expr_span.end.byte + 1));
+            AttributeKind::Shorthand { expr_range, .. }
+            | AttributeKind::Spread { expr_range, .. } => {
+                expr_spans.push((expr_range.start.byte, expr_range.end.byte + 1));
             }
             AttributeKind::SlotAssignment {
-                expr_span: Some(span),
+                expr_range: Some(range),
                 ..
             } => {
                 // Include the = sign before { so virtual HTML sees a boolean attr
-                let gap_start = span.start.byte.saturating_sub(1);
-                expr_spans.push((gap_start, span.end.byte + 1));
+                let gap_start = range.start.byte.saturating_sub(1);
+                expr_spans.push((gap_start, range.end.byte + 1));
             }
             AttributeKind::Template { name, value } => {
                 // Walk value to find {expr} positions, exclude them from HTML ranges
-                let value_start_byte = attr.span.start.byte + name.len() + 2;
+                let value_start_byte = attr.range.start.byte + name.len() + 2;
                 let mut byte_offset = 0;
                 let mut chars = value.chars().peekable();
                 #[allow(clippy::while_let_on_iterator)]
@@ -137,8 +137,8 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     expr_spans.sort_by_key(|s| s.0);
 
     // Create HTML ranges for the gaps between expressions within the opening tag
-    let tag_start = el.span.start.byte;
-    let tag_end = el.span.end.byte;
+    let tag_start = el.range.start.byte;
+    let tag_end = el.range.end.byte;
     let mut pos = tag_start;
 
     for (expr_start, expr_end) in &expr_spans {
@@ -172,11 +172,11 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
     }
 
     // Closing tag range (e.g. </div>)
-    if let Some(close_span) = &el.close_span {
+    if let Some(close_range) = &el.close_range {
         ranges.push(Range {
             range_type: RangeType::Html,
-            source_start: close_span.start.byte,
-            source_end: close_span.end.byte,
+            source_start: close_range.start.byte,
+            source_end: close_range.end.byte,
             compiled_start: 0,
             compiled_end: 0,
             needs_injection: true,
@@ -196,8 +196,8 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
 /// for expression attributes within the opening tag that must be excluded from
 /// HTML ranges (to avoid overlapping with Python injection ranges).
 pub fn html_ranges_for_component(
-    open_span: &Span,
-    _close_span: Option<&Span>,
+    open_range: &TextRange,
+    _close_range: Option<&TextRange>,
     _brace_open: usize,
     brace_close: usize,
     attr_expr_spans: &[(usize, usize)],
@@ -214,7 +214,7 @@ pub fn html_ranges_for_component(
     // split around any attribute expression spans.
     // The first fragment gets html_prefix "<x" for tag context.
     let after_brace = brace_close + 1;
-    let tag_end = open_span.end.byte;
+    let tag_end = open_range.end.byte;
 
     if tag_end > after_brace {
         // Collect and sort attribute expression spans that fall in this region

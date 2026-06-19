@@ -1,4 +1,4 @@
-use crate::parse::tokenizer::Span;
+use crate::parse::tokenizer::TextRange;
 use std::fmt;
 
 /// Kind of parse error
@@ -38,8 +38,8 @@ impl ErrorKind {
 pub struct ParseError {
     pub kind: ErrorKind,
     pub message: String,
-    pub span: Span,
-    pub related_span: Option<Span>,
+    pub range: TextRange,
+    pub related_range: Option<TextRange>,
     pub related_label: Option<String>,
     pub help: Option<String>,
 }
@@ -50,12 +50,12 @@ pub type ParseResult<T> = Result<T, Box<ParseError>>;
 
 impl ParseError {
     /// Create a new parse error
-    pub fn new(kind: ErrorKind, message: impl Into<String>, span: Span) -> Self {
+    pub fn new(kind: ErrorKind, message: impl Into<String>, range: TextRange) -> Self {
         Self {
             kind,
             message: message.into(),
-            span,
-            related_span: None,
+            range,
+            related_range: None,
             related_label: None,
             help: None,
         }
@@ -66,13 +66,13 @@ impl ParseError {
         Box::new(self)
     }
 
-    /// Add a related span with a label (e.g., "opened here")
-    pub fn with_related(mut self, span: Span) -> Self {
-        self.related_span = Some(span);
+    /// Add a related range with a label (e.g., "opened here")
+    pub fn with_related(mut self, range: TextRange) -> Self {
+        self.related_range = Some(range);
         self
     }
 
-    /// Set the label for the related span
+    /// Set the label for the related range
     pub fn with_related_label(mut self, label: impl Into<String>) -> Self {
         self.related_label = Some(label.into());
         self
@@ -107,10 +107,10 @@ impl ParseError {
         // Leading blank line for visual separation
         output.push('\n');
 
-        // File location at the top: use related_span if available (points to where fix is needed)
-        let loc_span = self.related_span.as_ref().unwrap_or(&self.span);
-        let line = loc_span.start.line + 1;
-        let col = loc_span.start.col + 1;
+        // File location at the top: use related_range if available (points to where fix is needed)
+        let loc_range = self.related_range.as_ref().unwrap_or(&self.range);
+        let line = loc_range.start.line + 1;
+        let col = loc_range.start.col + 1;
         let location = format!("{}:{}:{}", filename, line, col);
         if color {
             // OSC 8 hyperlink: \x1b]8;;URL\x07TEXT\x1b]8;;\x07
@@ -135,8 +135,8 @@ impl ParseError {
         output.push_str(&format!("{}error:{} {}\n", red, reset, message));
 
         // Source context
-        let err_line = self.span.start.line + 1;
-        if let Some(source_line) = source.lines().nth(self.span.start.line) {
+        let err_line = self.range.start.line + 1;
+        if let Some(source_line) = source.lines().nth(self.range.start.line) {
             let line_num_width = format!("{}", err_line).len().max(2);
             let highlighted = if color {
                 highlight_syntax(source_line)
@@ -160,9 +160,9 @@ impl ParseError {
             ));
 
             // Underline: red carets — the primary visual anchor in the code
-            let underline_start = self.span.start.col;
-            let underline_len = if self.span.end.line == self.span.start.line {
-                (self.span.end.col.saturating_sub(self.span.start.col)).max(1)
+            let underline_start = self.range.start.col;
+            let underline_len = if self.range.end.line == self.range.start.line {
+                (self.range.end.col.saturating_sub(self.range.start.col)).max(1)
             } else {
                 source_line.len().saturating_sub(underline_start).max(1)
             };
@@ -182,8 +182,8 @@ impl ParseError {
             ));
         }
 
-        // Related span: dim chrome, normal text — secondary context
-        if let Some(ref related) = self.related_span {
+        // Related range: dim chrome, normal text — secondary context
+        if let Some(ref related) = self.related_range {
             let related_line = related.start.line + 1;
             if let Some(related_source_line) = source.lines().nth(related.start.line) {
                 let line_num_width = format!("{}", related_line).len().max(2);

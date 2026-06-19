@@ -441,10 +441,10 @@ fn error_to_json(e: &hyper::CompileError) -> String {
 
     let (line, col, end_line, end_col) = match e {
         CompileError::Parse(parse_err) => (
-            Some(parse_err.span.start.line),
-            Some(parse_err.span.start.col),
-            Some(parse_err.span.end.line),
-            Some(parse_err.span.end.col),
+            Some(parse_err.range.start.line),
+            Some(parse_err.range.start.col),
+            Some(parse_err.range.end.line),
+            Some(parse_err.range.end.col),
         ),
         CompileError::Generate(_) => (None, None, None, None),
     };

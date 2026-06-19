@@ -1,7 +1,7 @@
 pub mod tokenizer;
 mod tree_builder;
 
-pub use tokenizer::{Position, Span, Token, tokenize};
+pub use tokenizer::{Position, TextRange, Token, tokenize};
 use tree_builder::TreeBuilder;
 
 use crate::ast::Node;

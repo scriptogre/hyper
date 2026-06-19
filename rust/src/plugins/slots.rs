@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use super::{Context, Flow, Plugin, walk};
-use crate::ast::{Ast, Node, ParamKind, ParameterNode, Span};
+use crate::ast::{Ast, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
 
 pub const DEFAULT_SLOT_PARAM: &str = "_default_slot";
@@ -40,7 +40,7 @@ impl Plugin for Slots {
                 type_hint: Some(SLOT_TYPE_HINT.to_string()),
                 default: Some("None".to_string()),
                 kind,
-                span: Span::synthetic(),
+                range: TextRange::synthetic(),
             }));
         }
 

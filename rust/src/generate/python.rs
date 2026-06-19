@@ -261,8 +261,8 @@ impl PythonGenerator {
                 };
 
                 // Source range excludes braces — just the inner expression
-                let content_start = expr.span.start.byte + 1; // skip '{'
-                let content_end = expr.span.end.byte - 1; // skip '}'
+                let content_start = expr.range.start.byte + 1; // skip '{'
+                let content_end = expr.range.end.byte - 1; // skip '}'
 
                 output.add_range(Range {
                     range_type: RangeType::Python,
@@ -329,12 +329,12 @@ impl PythonGenerator {
             AttributeKind::Expression {
                 name,
                 expr,
-                expr_span,
+                expr_range,
             } => {
                 if in_fstring {
-                    // expr_span includes {expr}, skip braces for injection
-                    let content_start = expr_span.start.byte + 1;
-                    let content_end = expr_span.end.byte - 1;
+                    // expr_range includes {expr}, skip braces for injection
+                    let content_start = expr_range.start.byte + 1;
+                    let content_end = expr_range.end.byte - 1;
 
                     // Already renamed in the AST by ReservedKeywordPlugin.
                     let safe_expr = expr.trim().to_string();
@@ -415,15 +415,15 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
             }
-            AttributeKind::Shorthand { name, expr_span } => {
+            AttributeKind::Shorthand { name, expr_range } => {
                 if in_fstring {
                     // Shorthand maps one AST field to two outputs: the HTML attr name
                     // stays, the Python value variable renames. So rename here.
                     let var_name = rename_reserved_keywords(name);
-                    // Shorthand expr_span.end points TO closing brace (not past it),
+                    // Shorthand expr_range.end points TO closing brace (not past it),
                     // so content_end = end.byte gives exclusive end of the name content
-                    let content_start = expr_span.start.byte + 1;
-                    let content_end = expr_span.end.byte;
+                    let content_start = expr_range.start.byte + 1;
+                    let content_end = expr_range.end.byte;
 
                     let (start, end) = if name == "class" {
                         output.push(" ");
@@ -478,13 +478,13 @@ impl PythonGenerator {
                     });
                 }
             }
-            AttributeKind::Spread { expr, expr_span } => {
+            AttributeKind::Spread { expr, expr_range } => {
                 if in_fstring {
                     // Spread expr is already renamed in the AST by ReservedKeywordPlugin.
                     let safe_expr = expr.trim().to_string();
-                    // Spread expr_span: {**expr} — skip 3 chars for "{**"
-                    let content_start = expr_span.start.byte + 3;
-                    let content_end = expr_span.end.byte;
+                    // Spread expr_range: {**expr} — skip 3 chars for "{**"
+                    let content_start = expr_range.start.byte + 3;
+                    let content_end = expr_range.end.byte;
 
                     output.push("{spread_attrs(");
                     let s = output.position();
@@ -505,7 +505,7 @@ impl PythonGenerator {
             AttributeKind::SlotAssignment {
                 name,
                 expr,
-                expr_span,
+                expr_range,
             } => {
                 if let Some(e) = expr {
                     if in_fstring {
@@ -516,10 +516,10 @@ impl PythonGenerator {
                         output.push(e);
                         let end = output.position();
                         output.push("}\"");
-                        if let Some(span) = expr_span {
-                            // SlotAssignment expr_span.end points TO closing brace
-                            let content_start = span.start.byte + 1;
-                            let content_end = span.end.byte;
+                        if let Some(range) = expr_range {
+                            // SlotAssignment expr_range.end points TO closing brace
+                            let content_start = range.start.byte + 1;
+                            let content_end = range.end.byte;
                             output.add_range(Range {
                                 range_type: RangeType::Python,
                                 source_start: content_start,
@@ -543,7 +543,7 @@ impl PythonGenerator {
                     output.push("=\"");
                     // Emit template value with position tracking for each {expr}
                     // value_start_byte: skip past `name="` in the source
-                    let value_start_byte = attr.span.start.byte + name.len() + 2;
+                    let value_start_byte = attr.range.start.byte + name.len() + 2;
                     let mut byte_offset = 0;
                     let mut chars = value.chars().peekable();
                     #[allow(clippy::while_let_on_iterator)]
@@ -699,11 +699,11 @@ impl PythonGenerator {
                 output.push(spec);
             }
             output.push("}\"");
-            // Source range excludes braces: span.start + 1 to span.end - 1
+            // Source range excludes braces: range.start + 1 to range.end - 1
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: expr.span.start.byte + 1,
-                source_end: expr.span.end.byte - 1,
+                source_start: expr.range.start.byte + 1,
+                source_end: expr.range.end.byte - 1,
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
@@ -717,8 +717,8 @@ impl PythonGenerator {
             output.push(")");
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: expr.span.start.byte + 1,
-                source_end: expr.span.end.byte - 1,
+                source_start: expr.range.start.byte + 1,
+                source_end: expr.range.end.byte - 1,
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
@@ -732,8 +732,8 @@ impl PythonGenerator {
             output.push(")");
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: expr.span.start.byte + 1,
-                source_end: expr.span.end.byte - 1,
+                source_start: expr.range.start.byte + 1,
+                source_end: expr.range.end.byte - 1,
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
@@ -901,8 +901,8 @@ impl PythonGenerator {
         // This enables go-to-definition and highlighting for the name
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: c.name_span.start.byte,
-            source_end: c.name_span.end.byte,
+            source_start: c.name_range.start.byte,
+            source_end: c.name_range.end.byte,
             compiled_start: name_compiled_start,
             compiled_end: name_compiled_end,
             needs_injection: true,
@@ -912,7 +912,7 @@ impl PythonGenerator {
         // Add Python range for the component name in the closing tag.
         // needs_injection: false — this is for highlighting only, not for
         // building the virtual Python file (which would duplicate the name).
-        if let Some(ref cs) = c.close_span {
+        if let Some(ref cs) = c.close_range {
             // Closing tag is </{Name}> — name starts at byte+3 (skip "</{"), ends at byte-2 (skip "}>")
             let close_name_start = cs.start.byte + 3;
             let close_name_end = cs.end.byte - 2;
@@ -931,12 +931,12 @@ impl PythonGenerator {
 
         // Add HTML ranges for component tag angle brackets,
         // splitting around attribute expression spans to avoid overlap
-        let brace_open = c.name_span.start.byte - 1;
-        let brace_close = c.name_span.end.byte;
+        let brace_open = c.name_range.start.byte - 1;
+        let brace_close = c.name_range.end.byte;
         let attr_expr_spans = collect_component_attr_expr_spans(&c.attributes);
         for range in html_ranges_for_component(
-            &c.span,
-            c.close_span.as_ref(),
+            &c.range,
+            c.close_range.as_ref(),
             brace_open,
             brace_close,
             &attr_expr_spans,
@@ -957,10 +957,10 @@ impl PythonGenerator {
             AttributeKind::Expression {
                 name,
                 expr,
-                expr_span,
+                expr_range,
             } => {
-                let content_start = expr_span.start.byte + 1;
-                let content_end = expr_span.end.byte - 1;
+                let content_start = expr_range.start.byte + 1;
+                let content_end = expr_range.end.byte - 1;
                 output.push(name);
                 output.push("=");
                 let s = output.position();
@@ -980,10 +980,10 @@ impl PythonGenerator {
                 output.push(name);
                 output.push("=True");
             }
-            AttributeKind::Shorthand { name, expr_span } => {
+            AttributeKind::Shorthand { name, expr_range } => {
                 // name is already renamed in the AST by ReservedKeywordPlugin.
-                let content_start = expr_span.start.byte + 1;
-                let content_end = expr_span.end.byte;
+                let content_start = expr_range.start.byte + 1;
+                let content_end = expr_range.end.byte;
                 output.push(name);
                 output.push("=");
                 let s = output.position();
@@ -999,9 +999,9 @@ impl PythonGenerator {
                     html_prefix: None,
                 });
             }
-            AttributeKind::Spread { expr, expr_span } => {
-                let content_start = expr_span.start.byte + 3;
-                let content_end = expr_span.end.byte;
+            AttributeKind::Spread { expr, expr_range } => {
+                let content_start = expr_range.start.byte + 3;
+                let content_end = expr_range.end.byte;
                 output.push("**");
                 let s = output.position();
                 output.push(expr.trim());
@@ -1080,12 +1080,12 @@ impl PythonGenerator {
 
         // Add HTML ranges for tag-form slot angle brackets (<{...name}> / </{...name}>)
         // Slots have no attributes, so no expression spans to exclude
-        if s.close_span.is_some() {
-            let brace_open = s.span.start.byte + 1;
-            let brace_close = s.span.end.byte - 2;
+        if s.close_range.is_some() {
+            let brace_open = s.range.start.byte + 1;
+            let brace_close = s.range.end.byte - 2;
             for range in html_ranges_for_component(
-                &s.span,
-                s.close_span.as_ref(),
+                &s.range,
+                s.close_range.as_ref(),
                 brace_open,
                 brace_close,
                 &[],
@@ -1105,11 +1105,11 @@ impl PythonGenerator {
         let cond_end = output.position();
         // Track condition for Python injection (skip compiler-generated guards)
         // Adjust source_end to match actual content (trim trailing : and whitespace)
-        if !if_node.condition_span.is_synthetic() {
-            let source_end = if_node.condition_span.start.byte + condition.len();
+        if !if_node.condition_range.is_synthetic() {
+            let source_end = if_node.condition_range.start.byte + condition.len();
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: if_node.condition_span.start.byte,
+                source_start: if_node.condition_range.start.byte,
                 source_end,
                 compiled_start: cond_start,
                 compiled_end: cond_end,
@@ -1122,18 +1122,18 @@ impl PythonGenerator {
 
         self.emit_body_or_pass(&if_node.then_branch, output, indent + 1);
 
-        for (condition, condition_span, body) in &if_node.elif_branches {
+        for (condition, condition_range, body) in &if_node.elif_branches {
             self.indent(output, indent);
             output.push("elif ");
             let condition = condition.trim_end_matches(':').trim();
             let cond_start = output.position();
             output.push(condition);
             let cond_end = output.position();
-            if !condition_span.is_synthetic() {
-                let source_end = condition_span.start.byte + condition.len();
+            if !condition_range.is_synthetic() {
+                let source_end = condition_range.start.byte + condition.len();
                 output.add_range(Range {
                     range_type: RangeType::Python,
-                    source_start: condition_span.start.byte,
+                    source_start: condition_range.start.byte,
                     source_end,
                     compiled_start: cond_start,
                     compiled_end: cond_end,
@@ -1170,10 +1170,10 @@ impl PythonGenerator {
         output.push(" in ");
         output.push(iterable);
         let range_end = output.position();
-        let source_end = for_node.iterable_span.start.byte + iterable.len();
+        let source_end = for_node.iterable_range.start.byte + iterable.len();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: for_node.binding_span.start.byte,
+            source_start: for_node.binding_range.start.byte,
             source_end,
             compiled_start: binding_start,
             compiled_end: range_end,
@@ -1194,10 +1194,10 @@ impl PythonGenerator {
         let expr_start = output.position();
         output.push(expr);
         let expr_end = output.position();
-        let source_end = match_node.expr_span.start.byte + expr.len();
+        let source_end = match_node.expr_range.start.byte + expr.len();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: match_node.expr_span.start.byte,
+            source_start: match_node.expr_range.start.byte,
             source_end,
             compiled_start: expr_start,
             compiled_end: expr_end,
@@ -1215,10 +1215,10 @@ impl PythonGenerator {
             let pat_start = output.position();
             output.push(pattern);
             let pat_end = output.position();
-            let source_end = case.pattern_span.start.byte + pattern.len();
+            let source_end = case.pattern_range.start.byte + pattern.len();
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: case.pattern_span.start.byte,
+                source_start: case.pattern_range.start.byte,
                 source_end,
                 compiled_start: pat_start,
                 compiled_end: pat_end,
@@ -1240,10 +1240,10 @@ impl PythonGenerator {
         let cond_start = output.position();
         output.push(condition);
         let cond_end = output.position();
-        let source_end = while_node.condition_span.start.byte + condition.len();
+        let source_end = while_node.condition_range.start.byte + condition.len();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: while_node.condition_span.start.byte,
+            source_start: while_node.condition_range.start.byte,
             source_end,
             compiled_start: cond_start,
             compiled_end: cond_end,
@@ -1269,10 +1269,10 @@ impl PythonGenerator {
         output.push(items);
         let items_end = output.position();
         // Calculate source_end based on trimmed content length to avoid including the colon
-        let source_end = with_node.items_span.start.byte + items.len();
+        let source_end = with_node.items_range.start.byte + items.len();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: with_node.items_span.start.byte,
+            source_start: with_node.items_range.start.byte,
             source_end,
             compiled_start: items_start,
             compiled_end: items_end,
@@ -1301,11 +1301,11 @@ impl PythonGenerator {
                 let start = output.position();
                 output.push(exception);
                 let end = output.position();
-                if let Some(ref exc_span) = except.exception_span {
-                    let source_end = exc_span.start.byte + exception.len();
+                if let Some(ref exc_range) = except.exception_range {
+                    let source_end = exc_range.start.byte + exception.len();
                     output.add_range(Range {
                         range_type: RangeType::Python,
-                        source_start: exc_span.start.byte,
+                        source_start: exc_range.start.byte,
                         source_end,
                         compiled_start: start,
                         compiled_end: end,
@@ -1362,11 +1362,11 @@ impl PythonGenerator {
         let end = output.position();
 
         // Skip injection for compiler-generated statements (no source location).
-        if !stmt.span.is_synthetic() {
+        if !stmt.range.is_synthetic() {
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: stmt.span.start.byte,
-                source_end: stmt.span.end.byte,
+                source_start: stmt.range.start.byte,
+                source_end: stmt.range.end.byte,
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
@@ -1384,8 +1384,8 @@ impl PythonGenerator {
         let end = output.position();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: def.signature_span.start.byte,
-            source_end: def.signature_span.end.byte,
+            source_start: def.signature_range.start.byte,
+            source_end: def.signature_range.end.byte,
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
@@ -1402,8 +1402,8 @@ impl PythonGenerator {
         let end = output.position();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: import.span.start.byte,
-            source_end: import.span.end.byte,
+            source_start: import.range.start.byte,
+            source_end: import.range.end.byte,
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
@@ -1419,8 +1419,8 @@ impl PythonGenerator {
         let end = output.position();
         output.add_range(Range {
             range_type: RangeType::Python,
-            source_start: dec.span.start.byte,
-            source_end: dec.span.end.byte,
+            source_start: dec.range.start.byte,
+            source_end: dec.range.end.byte,
             compiled_start: start,
             compiled_end: end,
             needs_injection: true,
@@ -1451,11 +1451,11 @@ impl PythonGenerator {
         }
         let end = output.position();
 
-        if !param.span.is_synthetic() {
+        if !param.range.is_synthetic() {
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: param.span.start.byte,
-                source_end: param.span.end.byte,
+                source_start: param.range.start.byte,
+                source_end: param.range.end.byte,
                 compiled_start: start,
                 compiled_end: end,
                 needs_injection: true,
@@ -1506,8 +1506,8 @@ impl Generator for PythonGenerator {
 
             output.add_range(Range {
                 range_type: RangeType::Python,
-                source_start: import.span.start.byte,
-                source_end: import.span.end.byte,
+                source_start: import.range.start.byte,
+                source_end: import.range.end.byte,
                 compiled_start: import_start,
                 compiled_end: import_end,
                 needs_injection: true,
@@ -1607,9 +1607,11 @@ impl Generator for PythonGenerator {
         let (mut code, mappings, tracked_ranges) = output.finish();
 
         // Iterable import is needed when a param is typed with it (slot params).
-        let needs_iterable = parameters
-            .iter()
-            .any(|p| p.type_hint.as_deref().is_some_and(|t| t.contains("Iterable")));
+        let needs_iterable = parameters.iter().any(|p| {
+            p.type_hint
+                .as_deref()
+                .is_some_and(|t| t.contains("Iterable"))
+        });
 
         // Build imports from ctx (populated by HelperDetectionPlugin)
         let mut hyper_imports = vec!["html"];

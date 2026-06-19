@@ -39,7 +39,7 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
     Ok(result)
 }
 
-pub use ast::{Ast, Node, Position, Span};
+pub use ast::{Ast, Node, Position, TextRange};
 pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{CompileOptions, CompileResult};
 pub use parse::Parser;

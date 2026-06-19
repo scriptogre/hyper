@@ -1,15 +1,15 @@
+mod r#async;
 mod context;
 mod helper_detect;
 mod mutable_defaults;
-mod r#async;
 mod rename_reserved_keywords;
 mod slots;
 mod spread_kwargs;
 
+pub use r#async::Async;
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
 pub use helper_detect::HelperDetectionPlugin;
 pub use mutable_defaults::MutableDefaults;
-pub use r#async::Async;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
 pub use spread_kwargs::SpreadKwargs;
