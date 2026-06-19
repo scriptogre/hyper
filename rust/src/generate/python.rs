@@ -1100,25 +1100,9 @@ impl PythonGenerator {
     fn emit_if(&self, if_node: &IfNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
         output.push("if ");
-        // Remove trailing colon from condition if present (parsing includes it)
+        // Strip trailing `:` so it does not land in the injection segment
         let condition = if_node.condition.trim_end_matches(':').trim();
-        let cond_start = output.position();
-        output.push(condition);
-        let cond_end = output.position();
-        // Track condition for Python injection (skip compiler-generated guards)
-        // Adjust source_end to match actual content (trim trailing : and whitespace)
-        if !if_node.condition_range.is_synthetic() {
-            let source_end = if_node.condition_range.start.byte + condition.len();
-            output.add_segment(Segment {
-                language: Language::Python,
-                source_start: if_node.condition_range.start.byte,
-                source_end,
-                compiled_start: cond_start,
-                compiled_end: cond_end,
-                needs_injection: true,
-                html_prefix: None,
-            });
-        }
+        print_code(output, &code_from(condition, if_node.condition_range));
         output.push(":");
         output.newline();
 
@@ -1128,21 +1112,7 @@ impl PythonGenerator {
             self.indent(output, indent);
             output.push("elif ");
             let condition = condition.trim_end_matches(':').trim();
-            let cond_start = output.position();
-            output.push(condition);
-            let cond_end = output.position();
-            if !condition_range.is_synthetic() {
-                let source_end = condition_range.start.byte + condition.len();
-                output.add_segment(Segment {
-                    language: Language::Python,
-                    source_start: condition_range.start.byte,
-                    source_end,
-                    compiled_start: cond_start,
-                    compiled_end: cond_end,
-                    needs_injection: true,
-                    html_prefix: None,
-                });
-            }
+            print_code(output, &code_from(condition, *condition_range));
             output.push(":");
             output.newline();
 
@@ -1165,23 +1135,23 @@ impl PythonGenerator {
         } else {
             output.push("for ");
         }
-        // Remove trailing colon from iterable if present (parsing includes it)
         let iterable = for_node.iterable.trim_end_matches(':').trim();
-        let binding_start = output.position();
-        output.push(&for_node.binding);
-        output.push(" in ");
-        output.push(iterable);
-        let segment_end = output.position();
-        let source_end = for_node.iterable_range.start.byte + iterable.len();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: for_node.binding_range.start.byte,
-            source_end,
-            compiled_start: binding_start,
-            compiled_end: segment_end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        let source = format!("{} in {}", for_node.binding, iterable);
+        let end_byte = for_node.iterable_range.start.byte + iterable.len();
+        print_code(
+            output,
+            &Code {
+                source,
+                range: TextRange {
+                    start: for_node.binding_range.start,
+                    end: Position {
+                        byte: end_byte,
+                        line: 0,
+                        col: 0,
+                    },
+                },
+            },
+        );
         output.push(":");
         output.newline();
 
@@ -1191,42 +1161,16 @@ impl PythonGenerator {
     fn emit_match(&self, match_node: &MatchNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
         output.push("match ");
-        // Remove trailing colon from expr if present (parsing includes it)
         let expr = match_node.expr.trim_end_matches(':').trim();
-        let expr_start = output.position();
-        output.push(expr);
-        let expr_end = output.position();
-        let source_end = match_node.expr_range.start.byte + expr.len();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: match_node.expr_range.start.byte,
-            source_end,
-            compiled_start: expr_start,
-            compiled_end: expr_end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(output, &code_from(expr, match_node.expr_range));
         output.push(":");
         output.newline();
 
         for case in match_node.cases.iter() {
             self.indent(output, indent + 1);
             output.push("case ");
-            // Remove trailing colon from pattern if present
             let pattern = case.pattern.trim_end_matches(':').trim();
-            let pat_start = output.position();
-            output.push(pattern);
-            let pat_end = output.position();
-            let source_end = case.pattern_range.start.byte + pattern.len();
-            output.add_segment(Segment {
-                language: Language::Python,
-                source_start: case.pattern_range.start.byte,
-                source_end,
-                compiled_start: pat_start,
-                compiled_end: pat_end,
-                needs_injection: true,
-                html_prefix: None,
-            });
+            print_code(output, &code_from(pattern, case.pattern_range));
             output.push(":");
             output.newline();
 
@@ -1237,21 +1181,8 @@ impl PythonGenerator {
     fn emit_while(&self, while_node: &WhileNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
         output.push("while ");
-        // Remove trailing colon from condition if present (parsing includes it)
         let condition = while_node.condition.trim_end_matches(':').trim();
-        let cond_start = output.position();
-        output.push(condition);
-        let cond_end = output.position();
-        let source_end = while_node.condition_range.start.byte + condition.len();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: while_node.condition_range.start.byte,
-            source_end,
-            compiled_start: cond_start,
-            compiled_end: cond_end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(output, &code_from(condition, while_node.condition_range));
         output.push(":");
         output.newline();
 
@@ -1265,22 +1196,8 @@ impl PythonGenerator {
         } else {
             output.push("with ");
         }
-        // Remove trailing colon from items if present (parsing includes it)
         let items = with_node.items.trim_end_matches(':').trim();
-        let items_start = output.position();
-        output.push(items);
-        let items_end = output.position();
-        // Calculate source_end based on trimmed content length to avoid including the colon
-        let source_end = with_node.items_range.start.byte + items.len();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: with_node.items_range.start.byte,
-            source_end,
-            compiled_start: items_start,
-            compiled_end: items_end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(output, &code_from(items, with_node.items_range));
         output.push(":");
         output.newline();
 
@@ -1300,21 +1217,8 @@ impl PythonGenerator {
             if let Some(exception) = &except.exception {
                 output.push(" ");
                 let exception = exception.trim_end_matches(':').trim();
-                let start = output.position();
-                output.push(exception);
-                let end = output.position();
-                if let Some(ref exc_range) = except.exception_range {
-                    let source_end = exc_range.start.byte + exception.len();
-                    output.add_segment(Segment {
-                        language: Language::Python,
-                        source_start: exc_range.start.byte,
-                        source_end,
-                        compiled_start: start,
-                        compiled_end: end,
-                        needs_injection: true,
-                        html_prefix: None,
-                    });
-                }
+                let range = except.exception_range.unwrap_or(TextRange::synthetic());
+                print_code(output, &code_from(exception, range));
             }
             output.push(":");
             output.newline();
@@ -1877,5 +1781,27 @@ fn import_from(module: &str, names: &[&str]) -> StmtImportFrom {
             })
             .collect(),
         level: 0,
+    }
+}
+
+/// Build a `Code` whose source spans `[start, start + source.len())` in `.hyper`.
+/// Used for control-flow conditions where trimming `:` only shrinks the tail.
+/// Synthetic input range stays synthetic so the printer skips injection.
+fn code_from(source: &str, range: TextRange) -> Code {
+    let adjusted = if range.is_synthetic() {
+        range
+    } else {
+        TextRange {
+            start: range.start,
+            end: Position {
+                byte: range.start.byte + source.len(),
+                line: 0,
+                col: 0,
+            },
+        }
+    };
+    Code {
+        source: source.to_string(),
+        range: adjusted,
     }
 }
