@@ -41,23 +41,47 @@ current state. When a step lands, delete it from this file.
 
 ## Remaining work
 
-The output Python AST, done incrementally. Order matters; do them top to bottom.
+The output Python AST, built by strangling the generator: add the output AST plus a
+printer, route one construct kind through it at a time, keep every `.expected.*`
+fixture byte-identical per commit, delete the old path last. Easy isolated nodes
+first; the f-string core and the hand-tracked source map are the hard cross-cutting
+parts, so they come later. Order matters; do them top to bottom.
 
-- **Introduce the output AST and finish helpers.** Create `ast/python.rs` (move
-  `ast.rs` to `ast/hyper.rs`). Add `Call`/`Arguments`/`Expr` (with the `Code` seam)
-  plus `StmtImportFrom`/`Alias`/`Identifier`. Lower the helper feature into `Call`s
-  plus an import node; the generator prints them generically. Removes the duplicated
-  helper-selection logic and `helper_detect`; `Context` empties.
-- **Lower the rest of codegen** (elements, attributes, text, control flow) into the
-  output AST. The generator becomes a pure printer; the source map falls out of
-  printing location-carrying nodes (no `add_range`). Also fixes `output.position()`'s
-  O(n^2) UTF-16 recount by tracking byte positions internally and converting once at
-  the end.
-- **Adopt `ruff_python_parser` plus a source-preserving printer.** Parse expressions
-  into real `Expr`, shrink the `Code` seam, converge to ruff's types, then swap to
-  ruff's crates.
+### Wave 1: scaffold, prove the machine on isolated nodes
+1. Split `ast.rs` into `ast/hyper.rs` behind `ast/mod.rs` re-exports (callers
+   unchanged); add `ast/python.rs` with the ruff-faithful types (`Identifier`,
+   `Alias`, `Stmt`, `Expr` with the `Code` seam, `ExprCall`, `Arguments`,
+   `StmtImportFrom`) and a printer module. First real use lands in step 2, so
+   nothing is dead.
+2. **Imports.** Print the `hyper` runtime import (`html` plus helpers) and user
+   imports via the new nodes. No segments here, so it isolates printing from
+   source-mapping.
+3. **Control-flow headers.** `for`/`if`/`while`/`with`/`match`/`try`, conditions as
+   `Code { range }`. Checkpoint: proves the source map falls out of printing on
+   injected text.
+4. **Statements, definitions, decorators.** Verbatim `Code` lines.
 
-## Helper lowering reference (for the helpers step)
+### Wave 2: f-string core and helpers
+5. **FString node.** Text parts plus escaped `{x}` lowered to `escape(Code)`.
+6. **Value helpers.** `render_class`/`render_style` (the quoted-slot family).
+7. **Attribute helpers.** `render_attr`/`render_data`/`render_aria`/`spread_attrs`
+   (the whole-attribute family).
+8. **Template attributes.** Mixed quoted values like `class="{x} y"`.
+9. **Delete `helper_detect`, drop `Context`.** The import set derives from the
+   `Call`s in the lowered tree.
+
+### Wave 3: cleanup
+10. Collapse the duplicated per-attribute emit into one table.
+11. Retire the hand-tracked source map: the printer records every segment from
+    location-carrying nodes. Fixes `output.position()`'s O(n^2) UTF-16 recount by
+    tracking byte positions internally and converting once at the end.
+
+### Wave 4: ruff
+12. Swap the `Code` seam for `ruff_python_parser` plus a source-preserving printer.
+    Parse expressions into real `Expr`, shrink the seam, converge to ruff's types,
+    then depend on ruff's crates.
+
+## Helper lowering reference (Wave 2)
 
 Each dynamic value lowers to a `Call` wrapping the user expression. The user expr
 stays the call's span-carrying argument; the `helper(` and `)` are synthetic.
