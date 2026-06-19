@@ -1,10 +1,10 @@
 mod brace_collector;
-mod injection_analyzer;
+mod html_segments;
 mod output;
 mod python;
 
 pub use brace_collector::{collect_expression_braces, collect_tag_highlights};
-pub use injection_analyzer::{
+pub use html_segments::{
     collect_component_attr_expr_spans, html_segments_for_component, html_segments_for_element,
 };
 pub use output::{
