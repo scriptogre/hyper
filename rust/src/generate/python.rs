@@ -1285,18 +1285,13 @@ impl PythonGenerator {
 
     fn emit_definition(&self, def: &DefinitionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        let start = output.position();
-        output.push(&def.signature);
-        let end = output.position();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: def.signature_range.start.byte,
-            source_end: def.signature_range.end.byte,
-            compiled_start: start,
-            compiled_end: end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(
+            output,
+            &Code {
+                source: def.signature.clone(),
+                range: def.signature_range,
+            },
+        );
         output.newline();
 
         self.emit_body_or_pass(&def.body, output, indent + 1);
@@ -1315,18 +1310,13 @@ impl PythonGenerator {
 
     fn emit_decorator(&self, dec: &DecoratorNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        let start = output.position();
-        output.push(&dec.decorator);
-        let end = output.position();
-        output.add_segment(Segment {
-            language: Language::Python,
-            source_start: dec.range.start.byte,
-            source_end: dec.range.end.byte,
-            compiled_start: start,
-            compiled_end: end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        print_code(
+            output,
+            &Code {
+                source: dec.decorator.clone(),
+                range: dec.range,
+            },
+        );
         output.newline();
     }
 
