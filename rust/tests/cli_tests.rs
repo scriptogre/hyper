@@ -73,7 +73,7 @@ fn stdin_invalid_source_exits_nonzero() {
 // ========================================================================
 
 #[test]
-fn json_output_has_compiled_and_mappings() {
+fn json_output_has_compiled() {
     let mut child = Command::new(hyper_bin())
         .args(["generate", "--stdin", "--json"])
         .stdin(Stdio::piped())
@@ -98,10 +98,6 @@ fn json_output_has_compiled_and_mappings() {
     assert!(
         json.get("compiled").is_some(),
         "JSON should have 'compiled' field"
-    );
-    assert!(
-        json.get("mappings").is_some(),
-        "JSON should have 'mappings' field"
     );
 
     let compiled = json["compiled"].as_str().unwrap();

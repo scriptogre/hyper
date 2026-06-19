@@ -4,7 +4,7 @@
 //! - Computing prefix/suffix injections from ranges (for JetBrains virtual files)
 //! - Building HTML injection ranges for element and component tags
 
-use super::output::{Injection, Language, Range, compute_injections};
+use super::output::{Injection, Language, Segment, compute_injections};
 use crate::ast::*;
 
 /// Analyzes AST and generated code to produce injection ranges and injections.
@@ -21,16 +21,16 @@ impl InjectionAnalyzer {
         Self
     }
 
-    /// Post-process ranges to compute injection prefix/suffix.
+    /// Post-process segments to compute injection prefix/suffix.
     pub fn analyze(
         &self,
         _ast: &Ast,
         code: &str,
         source: &str,
-        ranges: Vec<Range>,
-    ) -> (Vec<Range>, Vec<Injection>) {
-        let injections = compute_injections(code, source, &ranges);
-        (ranges, injections)
+        segments: Vec<Segment>,
+    ) -> (Vec<Segment>, Vec<Injection>) {
+        let injections = compute_injections(code, source, &segments);
+        (segments, injections)
     }
 }
 
@@ -74,7 +74,7 @@ pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usi
 /// The opening tag range covers `<tag attrs>` or `<tag attrs />`.
 /// The closing tag range covers `</tag>`.
 /// Returns ranges for the static HTML parts, with gaps for expression attributes.
-pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
+pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
     let mut ranges = Vec::new();
 
     // Collect expression spans (exclusive end) within the opening tag.
@@ -143,8 +143,8 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
 
     for (expr_start, expr_end) in &expr_spans {
         if *expr_start > pos && *expr_start <= tag_end {
-            ranges.push(Range {
-                range_type: Language::Html,
+            ranges.push(Segment {
+                language: Language::Html,
                 source_start: pos,
                 source_end: *expr_start,
                 compiled_start: 0,
@@ -160,8 +160,8 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
 
     // Remaining static part of opening tag
     if pos < tag_end {
-        ranges.push(Range {
-            range_type: Language::Html,
+        ranges.push(Segment {
+            language: Language::Html,
             source_start: pos,
             source_end: tag_end,
             compiled_start: 0,
@@ -173,8 +173,8 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Range> {
 
     // Closing tag range (e.g. </div>)
     if let Some(close_range) = &el.close_range {
-        ranges.push(Range {
-            range_type: Language::Html,
+        ranges.push(Segment {
+            language: Language::Html,
             source_start: close_range.start.byte,
             source_end: close_range.end.byte,
             compiled_start: 0,
@@ -201,7 +201,7 @@ pub fn html_ranges_for_component(
     _brace_open: usize,
     brace_close: usize,
     attr_expr_spans: &[(usize, usize)],
-) -> Vec<Range> {
+) -> Vec<Segment> {
     let mut ranges = Vec::new();
 
     // NOTE: We intentionally do NOT emit the lone "<" before the component name
@@ -229,8 +229,8 @@ pub fn html_ranges_for_component(
         let mut pos = after_brace;
         for (expr_start, expr_end) in &spans {
             if *expr_start > pos {
-                ranges.push(Range {
-                    range_type: Language::Html,
+                ranges.push(Segment {
+                    language: Language::Html,
                     source_start: pos,
                     source_end: *expr_start,
                     compiled_start: 0,
@@ -251,8 +251,8 @@ pub fn html_ranges_for_component(
 
         // Remaining static part after last expression
         if pos < tag_end {
-            ranges.push(Range {
-                range_type: Language::Html,
+            ranges.push(Segment {
+                language: Language::Html,
                 source_start: pos,
                 source_end: tag_end,
                 compiled_start: 0,

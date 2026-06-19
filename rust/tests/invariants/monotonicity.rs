@@ -10,14 +10,14 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     // Compiled monotonicity is what matters for correct virtual Python reconstruction —
     // source order may differ (e.g. docstrings appear before parameters in source
     // but after them in compiled output).
-    let mut python_ranges: Vec<_> = result
-        .ranges
+    let mut python_segments: Vec<_> = result
+        .segments
         .iter()
-        .filter(|r| r.range_type == Language::Python && r.needs_injection)
+        .filter(|s| s.language == Language::Python && s.needs_injection)
         .collect();
-    python_ranges.sort_by_key(|r| r.compiled_start);
+    python_segments.sort_by_key(|s| s.compiled_start);
 
-    for window in python_ranges.windows(2) {
+    for window in python_segments.windows(2) {
         let a = window[0];
         let b = window[1];
         if a.compiled_end > b.compiled_start {

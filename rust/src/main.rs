@@ -357,27 +357,17 @@ fn render_error(e: &hyper::CompileError, source: &str, filename: &str) {
 fn result_to_response(result: hyper::CompileResult, include_injections: bool) -> DaemonResponse {
     DaemonResponse {
         compiled: result.code,
-        mappings: result
-            .mappings
-            .into_iter()
-            .map(|m| DaemonMapping {
-                gen_line: m.gen_line,
-                gen_col: m.gen_col,
-                src_line: m.src_line,
-                src_col: m.src_col,
-            })
-            .collect(),
-        ranges: if include_injections {
+        segments: if include_injections {
             Some(
                 result
-                    .ranges
+                    .segments
                     .into_iter()
-                    .map(|r| DaemonRange {
-                        range_type: r.range_type.as_str().to_string(),
-                        source_start: r.source_start,
-                        source_end: r.source_end,
-                        compiled_start: r.compiled_start,
-                        compiled_end: r.compiled_end,
+                    .map(|s| DaemonSegment {
+                        language: s.language.as_str().to_string(),
+                        source_start: s.source_start,
+                        source_end: s.source_end,
+                        compiled_start: s.compiled_start,
+                        compiled_end: s.compiled_end,
                     })
                     .collect(),
             )
@@ -464,9 +454,8 @@ fn error_to_json(e: &hyper::CompileError) -> String {
 #[derive(serde::Serialize)]
 struct DaemonResponse {
     compiled: String,
-    mappings: Vec<DaemonMapping>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    ranges: Option<Vec<DaemonRange>>,
+    segments: Option<Vec<DaemonSegment>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     injections: Option<Vec<DaemonInjection>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -476,17 +465,9 @@ struct DaemonResponse {
 }
 
 #[derive(serde::Serialize)]
-struct DaemonMapping {
-    gen_line: usize,
-    gen_col: usize,
-    src_line: usize,
-    src_col: usize,
-}
-
-#[derive(serde::Serialize)]
-struct DaemonRange {
+struct DaemonSegment {
     #[serde(rename = "type")]
-    range_type: String,
+    language: String,
     source_start: usize,
     source_end: usize,
     compiled_start: usize,

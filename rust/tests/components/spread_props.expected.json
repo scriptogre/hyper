@@ -113,116 +113,116 @@
       "type": "html"
     }
   ],
-  "ranges": [
+  "segments": [
     {
       "compiled_end": 78,
       "compiled_start": 67,
-      "range_type": "python",
+      "language": "python",
       "source_end": 11,
       "source_start": 0
     },
     {
       "compiled_end": 98,
       "compiled_start": 88,
-      "range_type": "python",
+      "language": "python",
       "source_end": 22,
       "source_start": 12
     },
     {
       "compiled_end": 132,
       "compiled_start": 127,
-      "range_type": "python",
+      "language": "python",
       "source_end": 46,
       "source_start": 41
     },
     {
       "compiled_end": 124,
       "compiled_start": 118,
-      "range_type": "python",
+      "language": "python",
       "source_end": 36,
       "source_start": 30
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 38,
       "source_start": 37
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 50,
       "source_start": 47
     },
     {
       "compiled_end": 167,
       "compiled_start": 162,
-      "range_type": "python",
+      "language": "python",
       "source_end": 73,
       "source_start": 68
     },
     {
       "compiled_end": 176,
       "compiled_start": 171,
-      "range_type": "python",
+      "language": "python",
       "source_end": 83,
       "source_start": 78
     },
     {
       "compiled_end": 155,
       "compiled_start": 149,
-      "range_type": "python",
+      "language": "python",
       "source_end": 59,
       "source_start": 53
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 66,
       "source_start": 60
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 75,
       "source_start": 74
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 87,
       "source_start": 84
     },
     {
       "compiled_end": 222,
       "compiled_start": 217,
-      "range_type": "python",
+      "language": "python",
       "source_end": 115,
       "source_start": 110
     },
     {
       "compiled_end": 199,
       "compiled_start": 193,
-      "range_type": "python",
+      "language": "python",
       "source_end": 96,
       "source_start": 90
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 107,
       "source_start": 97
     },
     {
       "compiled_end": 31,
       "compiled_start": 31,
-      "range_type": "html",
+      "language": "html",
       "source_end": 119,
       "source_start": 116
     }

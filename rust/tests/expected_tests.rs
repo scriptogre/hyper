@@ -115,7 +115,7 @@ fn run_injection_test(path: &PathBuf) -> Result<(), Failed> {
         Ok(result) => {
             let actual = serde_json::json!({
                 "injections": result.injections,
-                "ranges": result.ranges,
+                "segments": result.segments,
             });
 
             if actual != expected {

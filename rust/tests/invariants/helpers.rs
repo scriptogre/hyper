@@ -34,3 +34,15 @@ pub fn substring_utf16(s: &str, start: usize, end: usize) -> String {
 pub fn utf16_len(s: &str) -> usize {
     s.encode_utf16().count()
 }
+
+/// Convert a byte offset in `s` to its UTF-16 offset.
+pub fn byte_to_utf16(s: &str, byte_pos: usize) -> usize {
+    let mut utf16 = 0;
+    for (b, ch) in s.char_indices() {
+        if b >= byte_pos {
+            return utf16;
+        }
+        utf16 += ch.len_utf16();
+    }
+    utf16
+}

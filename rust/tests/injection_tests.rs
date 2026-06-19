@@ -1,6 +1,8 @@
 mod common;
 
-use common::{compile_with_ranges, html_injections, html_ranges, python_injections, python_ranges};
+use common::{
+    compile_with_ranges, html_injections, html_segments, python_injections, python_segments,
+};
 use hyper::CompileOptions;
 use hyper::generate::Language;
 
@@ -14,7 +16,7 @@ fn test_expression_injection() {
     assert_eq!(py.len(), 1, "Expected 1 Python injection");
     assert_eq!(py[0].language, Language::Python);
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
     // Check that compiled positions are not zero
     assert!(
         py_ranges[0].compiled_start > 0,
@@ -55,7 +57,7 @@ fn test_parameter_injection() {
     );
 
     // Python ranges should have valid compiled positions
-    for (i, range) in python_ranges(&result).iter().enumerate() {
+    for (i, range) in python_segments(&result).iter().enumerate() {
         assert!(
             range.compiled_end > range.compiled_start,
             "Range {} has invalid compiled positions: {} -> {}",
@@ -72,7 +74,7 @@ fn test_text_expression_injection() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_injections(&result);
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
 
     assert_eq!(py.len(), 1);
     assert_eq!(py_ranges.len(), 1);
@@ -102,7 +104,7 @@ fn test_class_attribute_injection() {
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, r#"active and "active""#);
 }
@@ -115,7 +117,7 @@ fn test_style_attribute_injection() {
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert!(
         source_text.starts_with("{"),
@@ -132,7 +134,7 @@ fn test_spread_attribute_injection() {
     let py = python_injections(&result);
     assert_eq!(py.len(), 1);
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, "aria_attrs");
 }
@@ -158,7 +160,7 @@ y: int
     );
 
     // All Python ranges should have valid positions
-    for (i, range) in python_ranges(&result).iter().enumerate() {
+    for (i, range) in python_segments(&result).iter().enumerate() {
         assert!(
             range.compiled_end > range.compiled_start,
             "Range {} has invalid positions",
@@ -174,7 +176,7 @@ y: int
     }
 
     // Should also have HTML ranges
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(!html.is_empty(), "Should have HTML ranges for element tags");
 }
 
@@ -194,7 +196,7 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
     let py = python_injections(&result);
     assert!(!py.is_empty(), "Expected at least 1 Python injection");
 
-    for range in &python_ranges(&result) {
+    for range in &python_segments(&result) {
         assert!(range.compiled_end > range.compiled_start);
         assert!(range.source_end > range.source_start);
     }
@@ -215,7 +217,7 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
     let py = python_injections(&result);
     assert!(!py.is_empty(), "Expected at least 1 Python injection");
 
-    for range in &python_ranges(&result) {
+    for range in &python_segments(&result) {
         assert!(range.compiled_end > range.compiled_start);
         assert!(range.source_end > range.source_start);
     }
@@ -278,7 +280,7 @@ fn test_shorthand_attribute_injection() {
     let py = python_injections(&result);
     assert_eq!(py.len(), 1, "Expected 1 Python injection for shorthand");
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, "disabled");
 }
@@ -303,7 +305,7 @@ while running:
 end"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py_ranges = python_ranges(&result);
+    let py_ranges = python_segments(&result);
 
     // Expected Python ranges:
     // 2 params + 5 attrs + 2 text exprs + 3 control flow + 2 nested exprs = 14
@@ -334,7 +336,7 @@ end"#;
     }
 
     // Should have HTML ranges for element tags
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(!html.is_empty(), "Should have HTML ranges");
 
     // HTML ranges should cover source content
@@ -369,7 +371,7 @@ fn test_text_expression_range_excludes_braces() {
     let source = "<div>Hello {name}!</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     // Find the range for the text expression
     let expr_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
@@ -389,7 +391,7 @@ fn test_complex_expression_range_excludes_braces() {
     let source = r#"<div>{count + 1}</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let expr_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "count + 1"
@@ -470,7 +472,7 @@ fn test_html_range_source_text_simple() {
     let source = "<div>Hello</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(!html.is_empty());
 
     // Each HTML range should extract valid HTML text from source
@@ -491,7 +493,7 @@ fn test_html_range_source_text_with_attributes() {
     let source = r#"<div class={active} id="main">Content</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     // HTML ranges should split around the {active} expression
     assert!(
         html.len() >= 2,
@@ -523,11 +525,11 @@ fn test_html_ranges_void_element() {
     let source = r#"<img src={url} alt="photo" />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(!html.is_empty(), "Void elements should have HTML ranges");
 
     // Should split around {url} expression
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     assert!(
         !py.is_empty(),
         "Should have Python range for url expression"
@@ -539,7 +541,7 @@ fn test_html_ranges_void_element() {
 // ========================================================================
 
 #[test]
-fn test_no_overlap_python_html_ranges() {
+fn test_no_overlap_python_html_segments() {
     // Test across multiple templates
     let templates = vec![
         "<div class={x}>Hello {name}</div>",
@@ -551,8 +553,8 @@ fn test_no_overlap_python_html_ranges() {
     for source in templates {
         let result = compile_with_ranges(source, "Test");
 
-        let py = python_ranges(&result);
-        let html = html_ranges(&result);
+        let py = python_segments(&result);
+        let html = html_segments(&result);
 
         for h in &html {
             for p in &py {
@@ -658,7 +660,7 @@ fn test_if_condition_has_python_range() {
     let source = "if active:\n    <div>yes</div>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     // Should have a range for the "active" condition
     let has_condition = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
@@ -678,7 +680,7 @@ fn test_for_loop_has_python_range() {
     let source = "for item in items:\n    <li>{item}</li>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     // Must have a range that covers the binding AND iterable together
     let has_binding_and_iterable = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
@@ -708,7 +710,7 @@ fn test_for_loop_binding_in_range() {
     let source = "for item in items:\n    <li>{item}</li>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     // The for-loop should have a range covering "item in items" (binding + iterable)
     let loop_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
@@ -728,7 +730,7 @@ fn test_while_condition_has_python_range() {
     let source = "while running:\n    <p>Loading</p>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let has_condition = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("running")
@@ -744,7 +746,7 @@ fn test_except_clause_has_python_range() {
     let source = "try:\n    {x}\nexcept ValueError as e:\n    {e}\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let has_except = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "ValueError as e"
@@ -763,7 +765,7 @@ fn test_html_ranges_basic() {
     let source = "<div>Hello</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(
         !html.is_empty(),
         "Should have HTML ranges for static element"
@@ -791,7 +793,7 @@ fn test_html_ranges_with_expression() {
     let source = "<div class={x}>Hello {name}!</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
     assert!(
         html.len() >= 2,
         "Should have multiple HTML ranges (split around expressions), got {}",
@@ -799,7 +801,7 @@ fn test_html_ranges_with_expression() {
     );
 
     // Verify HTML ranges don't overlap with expression spans
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     for h in &html {
         for p in &py {
             let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
@@ -829,7 +831,7 @@ fn test_template_attribute_single_expression() {
     let source = r#"<button class="btn btn-{variant}">Click</button>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     // Should have a Python range for the {variant} expression
     let variant_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
@@ -856,7 +858,7 @@ fn test_template_attribute_multiple_expressions() {
     let source = r#"<div data-info="{id}-{variant}">Info</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let id_range = py
         .iter()
         .find(|r| &source[r.source_start..r.source_end] == "id");
@@ -879,7 +881,7 @@ fn test_template_attribute_adjacent_expressions() {
     let source = r#"<span data-key="{a}{b}">text</span>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let a_range = py
         .iter()
         .find(|r| &source[r.source_start..r.source_end] == "a");
@@ -896,8 +898,8 @@ fn test_template_attribute_html_range_splits() {
     let source = r#"<a href="/users/{id}" class="link">Go</a>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
-    let py = python_ranges(&result);
+    let html = html_segments(&result);
+    let py = python_segments(&result);
 
     // HTML ranges should split around the {id} expression in the template attribute
     assert!(
@@ -982,7 +984,7 @@ fn test_decorator_has_python_range() {
     let source = "@fragment\ndef Badge(text: str):\n    <span>{text}</span>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let has_decorator = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "@fragment"
@@ -1005,7 +1007,7 @@ fn test_def_signature_has_python_range() {
     let source = "def Badge(text: str):\n    <span>{text}</span>\nend";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let has_def = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("def Badge(text: str):")
@@ -1028,7 +1030,7 @@ fn test_standalone_expression_has_python_range() {
     let source = "def Badge(text: str):\n    <span>{text}</span>\nend\n{Badge(\"New\")}";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let has_call = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "Badge(\"New\")"
@@ -1112,7 +1114,7 @@ fn test_component_tag_no_lone_angle_bracket_html() {
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
 
     // No HTML range should start at byte 0 (the lone "<")
     let has_lone_lt = html
@@ -1154,13 +1156,13 @@ fn test_component_tag_no_lone_angle_bracket_html() {
 }
 
 #[test]
-fn test_slot_tag_no_html_ranges() {
+fn test_slot_tag_no_html_segments() {
     // Slot tags <{...header}> have no attributes, so they produce no
     // HTML ranges for the opening/closing tag (only for child content)
     let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
 
     // Only the child <h1>...</h1> should have HTML ranges, not the slot tags
     for r in &html {
@@ -1180,7 +1182,7 @@ fn test_component_name_has_python_range() {
     let source = "<{Badge} text=\"Sale\" />";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let name_start = source.find("Badge").unwrap();
     let name_end = name_start + "Badge".len();
     let has_name = py
@@ -1207,7 +1209,7 @@ fn test_component_close_name_has_python_range() {
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let close_name_start = source.rfind("Card").unwrap();
     let close_name_end = close_name_start + "Card".len();
     let has_close_name = py
@@ -1243,7 +1245,7 @@ fn test_dict_in_attribute_expression() {
     let source = r#"<div class={["card", {"sale": on_sale}]}>text</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let expr_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("card") && text.contains("on_sale")
@@ -1279,7 +1281,7 @@ fn test_string_with_brace_in_attribute_expression() {
     let source = r#"<div class={get_class("}")}>text</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_ranges(&result);
+    let py = python_segments(&result);
     let expr_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("get_class")
@@ -1510,8 +1512,8 @@ fn test_component_html_ranges_no_overlap_with_expression_attrs() {
     let source = r#"<{Badge} text={format_name(name)} />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
-    let py = python_ranges(&result);
+    let html = html_segments(&result);
+    let py = python_segments(&result);
 
     for h in &html {
         for p in &py {
@@ -1536,8 +1538,8 @@ fn test_component_html_ranges_no_overlap_with_shorthand_attrs() {
     let source = r#"<{Badge} {is_active} />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
-    let py = python_ranges(&result);
+    let html = html_segments(&result);
+    let py = python_segments(&result);
 
     for h in &html {
         for p in &py {
@@ -1562,7 +1564,7 @@ fn test_component_with_mixed_attrs_html_splits() {
     let source = r#"<{Badge} text="Sale" badge_variant="danger" />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html = html_ranges(&result);
+    let html = html_segments(&result);
 
     // The HTML range after the component name should cover the static attributes
     let has_text_attr = html.iter().any(|r| {

@@ -1,4 +1,4 @@
-use crate::helpers::compile;
+use crate::helpers::{byte_to_utf16, compile};
 use hyper::generate::Language;
 use hyper::parse::tokenizer::{Token, tokenize};
 use hyper::plugins::rename_reserved_keywords;
@@ -17,10 +17,10 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let result = compile(path)?;
     let tokens = tokenize(&source);
 
-    let python_ranges: Vec<_> = result
-        .ranges
+    let python_segments: Vec<_> = result
+        .segments
         .iter()
-        .filter(|r| r.range_type == Language::Python)
+        .filter(|s| s.language == Language::Python)
         .collect();
 
     // Find separator position to distinguish preamble vs body
@@ -34,10 +34,14 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     let in_body = |byte: usize| -> bool { separator_byte.is_none_or(|sep| byte > sep) };
 
-    let is_covered = |start: usize, end: usize| -> bool {
-        python_ranges
+    // Segment source positions are UTF-16. Token positions are bytes.
+    // Convert bytes to UTF-16 at each call.
+    let is_covered = |byte_start: usize, byte_end: usize| -> bool {
+        let start = byte_to_utf16(&source, byte_start);
+        let end = byte_to_utf16(&source, byte_end);
+        python_segments
             .iter()
-            .any(|r| r.source_start <= start && r.source_end >= end)
+            .any(|s| s.source_start <= start && s.source_end >= end)
     };
 
     /// Trim trailing `:` and whitespace from a rest_range to match what the

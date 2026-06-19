@@ -6,18 +6,18 @@ use std::path::PathBuf;
 pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let result = compile(path)?;
 
-    for range_type in [Language::Python, Language::Html] {
-        let type_name = match range_type {
+    for language in [Language::Python, Language::Html] {
+        let type_name = match language {
             Language::Python => "Python",
             Language::Html => "HTML",
         };
 
         let mut typed: Vec<_> = result
-            .ranges
+            .segments
             .iter()
-            .filter(|r| r.range_type == range_type)
+            .filter(|s| s.language == language)
             .collect();
-        typed.sort_by_key(|r| (r.source_start, r.source_end));
+        typed.sort_by_key(|s| (s.source_start, s.source_end));
 
         for window in typed.windows(2) {
             let a = window[0];

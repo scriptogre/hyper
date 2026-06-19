@@ -9,9 +9,9 @@ pub use injection_analyzer::{
     html_ranges_for_element,
 };
 pub use output::{
-    ExpressionBrace, Injection, Language, Mapping, Output, Range, TagHighlight, TagHighlightKind,
+    ExpressionBrace, Injection, Language, Output, Segment, TagHighlight, TagHighlightKind,
     compute_injections, convert_braces_to_utf16, convert_tag_highlights_to_utf16,
-    validate_python_ranges,
+    segments_source_to_utf16, validate_python_ranges,
 };
 pub use python::PythonGenerator;
 
@@ -29,8 +29,7 @@ pub struct CompileOptions {
 #[derive(Debug, Clone)]
 pub struct CompileResult {
     pub code: String,
-    pub mappings: Vec<Mapping>,
-    pub ranges: Vec<Range>,
+    pub segments: Vec<Segment>,
     pub injections: Vec<Injection>,
     pub expression_braces: Vec<ExpressionBrace>,
     pub tag_highlights: Vec<TagHighlight>,

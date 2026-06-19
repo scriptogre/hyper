@@ -1,4 +1,4 @@
-use crate::helpers::compile;
+use crate::helpers::{byte_to_utf16, compile};
 use hyper::generate::Language;
 use hyper::parse::tokenizer::{Token, tokenize};
 use libtest_mimic::Failed;
@@ -11,10 +11,10 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let result = compile(path)?;
     let tokens = tokenize(&source);
 
-    let html_ranges: Vec<_> = result
-        .ranges
+    let html_segments: Vec<_> = result
+        .segments
         .iter()
-        .filter(|r| r.range_type == Language::Html)
+        .filter(|s| s.language == Language::Html)
         .collect();
 
     // Find separator position to distinguish preamble vs body
@@ -28,45 +28,47 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
 
     let in_body = |byte: usize| -> bool { separator_byte.is_none_or(|sep| byte > sep) };
 
-    /// Check if any HTML range overlaps with a source byte range.
-    /// We use "overlaps" rather than "covers" because HTML ranges may be split
-    /// around expression attributes (e.g., `<div class={x}>` has separate ranges
+    /// Check if any HTML segment overlaps a UTF-16 source range.
+    /// "overlaps" rather than "covers" because HTML segments may split around
+    /// expression attributes (e.g. `<div class={x}>` has separate segments
     /// for `<div class=` and `>`).
     fn has_html_coverage(
-        html_ranges: &[&hyper::generate::Range],
-        start: usize,
-        end: usize,
+        html_segments: &[&hyper::generate::Segment],
+        start_u16: usize,
+        end_u16: usize,
     ) -> bool {
-        html_ranges
+        html_segments
             .iter()
-            .any(|r| r.source_start < end && r.source_end > start)
+            .any(|s| s.source_start < end_u16 && s.source_end > start_u16)
     }
 
     for token in &tokens {
         match token {
-            Token::HtmlElementOpen { range, .. }
-                if in_body(range.start.byte)
-                    && !has_html_coverage(&html_ranges, range.start.byte, range.end.byte) =>
-            {
-                return Err(format!(
-                    "HTML element open tag at [{},{}] has no HTML range: {:?}",
-                    range.start.byte,
-                    range.end.byte,
-                    &source[range.start.byte..range.end.byte]
-                )
-                .into());
+            Token::HtmlElementOpen { range, .. } if in_body(range.start.byte) => {
+                let start_u16 = byte_to_utf16(&source, range.start.byte);
+                let end_u16 = byte_to_utf16(&source, range.end.byte);
+                if !has_html_coverage(&html_segments, start_u16, end_u16) {
+                    return Err(format!(
+                        "HTML element open tag at [{},{}] has no HTML range: {:?}",
+                        range.start.byte,
+                        range.end.byte,
+                        &source[range.start.byte..range.end.byte]
+                    )
+                    .into());
+                }
             }
-            Token::HtmlElementClose { range, .. }
-                if in_body(range.start.byte)
-                    && !has_html_coverage(&html_ranges, range.start.byte, range.end.byte) =>
-            {
-                return Err(format!(
-                    "HTML element close tag at [{},{}] has no HTML range: {:?}",
-                    range.start.byte,
-                    range.end.byte,
-                    &source[range.start.byte..range.end.byte]
-                )
-                .into());
+            Token::HtmlElementClose { range, .. } if in_body(range.start.byte) => {
+                let start_u16 = byte_to_utf16(&source, range.start.byte);
+                let end_u16 = byte_to_utf16(&source, range.end.byte);
+                if !has_html_coverage(&html_segments, start_u16, end_u16) {
+                    return Err(format!(
+                        "HTML element close tag at [{},{}] has no HTML range: {:?}",
+                        range.start.byte,
+                        range.end.byte,
+                        &source[range.start.byte..range.end.byte]
+                    )
+                    .into());
+                }
             }
             // Component and slot tags don't require full HTML coverage:
             // - The component name gets a Python injection range

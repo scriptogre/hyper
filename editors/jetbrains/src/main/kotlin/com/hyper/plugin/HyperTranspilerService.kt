@@ -81,15 +81,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
     }
 
     @Serializable
-    data class Mapping(
-        val gen_line: Int,
-        val gen_col: Int,
-        val src_line: Int,
-        val src_col: Int
-    )
-
-    @Serializable
-    data class Range(
+    data class Segment(
         val type: String,  // "python" or "html"
         val source_start: Int,
         val source_end: Int,
@@ -115,8 +107,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
     @Serializable
     data class TranspileResultJson(
         val compiled: String,
-        val mappings: List<Mapping>,
-        val ranges: List<Range>? = null,
+        val segments: List<Segment>? = null,
         val injections: List<InjectionJson>? = null,
         val expression_braces: List<ExpressionBraceJson>? = null,
         val tag_highlights: List<TagHighlightJson>? = null
@@ -124,7 +115,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
     /**
      * Computed injection with prefix/suffix for JetBrains language injection.
-     * Computed from Range + compiled code.
+     * Computed from Segment + compiled code.
      */
     data class Injection(
         val start: Int,       // source start (UTF-16)
@@ -139,8 +130,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
      */
     data class TranspileResult(
         val code: String,
-        val mappings: List<Mapping>,
-        val ranges: List<Range>,
+        val segments: List<Segment>,
         val injections: List<Injection>,
         val expressionBraces: List<ExpressionBraceJson>,
         val tagHighlights: List<TagHighlightJson>
@@ -196,7 +186,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         }
 
         val parsed = json.decodeFromString<TranspileResultJson>(jsonString)
-        val ranges = parsed.ranges ?: emptyList()
+        val segments = parsed.segments ?: emptyList()
 
         // Use injections from transpiler (already computed with prefix/suffix)
         val injections = parsed.injections?.map { inj ->
@@ -211,8 +201,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
         return TranspileResult(
             code = parsed.compiled,
-            mappings = parsed.mappings,
-            ranges = ranges,
+            segments = segments,
             injections = injections,
             expressionBraces = parsed.expression_braces ?: emptyList(),
             tagHighlights = parsed.tag_highlights ?: emptyList()

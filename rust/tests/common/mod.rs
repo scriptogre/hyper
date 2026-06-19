@@ -2,7 +2,7 @@
 
 use hyper::CompileOptions;
 use hyper::CompileResult;
-use hyper::generate::{Injection, Language, Range};
+use hyper::generate::{Injection, Language, Segment};
 
 /// Compile source with default options (no ranges, default function name).
 pub fn compile(source: &str) -> String {
@@ -23,11 +23,11 @@ pub fn compile_with_ranges(source: &str, name: &str) -> CompileResult {
     .unwrap()
 }
 
-pub fn python_ranges(result: &CompileResult) -> Vec<&Range> {
+pub fn python_segments(result: &CompileResult) -> Vec<&Segment> {
     result
-        .ranges
+        .segments
         .iter()
-        .filter(|r| r.range_type == Language::Python)
+        .filter(|s| s.language == Language::Python)
         .collect()
 }
 
@@ -39,11 +39,11 @@ pub fn python_injections(result: &CompileResult) -> Vec<&Injection> {
         .collect()
 }
 
-pub fn html_ranges(result: &CompileResult) -> Vec<&Range> {
+pub fn html_segments(result: &CompileResult) -> Vec<&Segment> {
     result
-        .ranges
+        .segments
         .iter()
-        .filter(|r| r.range_type == Language::Html)
+        .filter(|s| s.language == Language::Html)
         .collect()
 }
 

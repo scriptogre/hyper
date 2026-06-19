@@ -1,14 +1,3 @@
-use crate::ast::Position;
-
-/// Line-level source mapping
-#[derive(Debug, Clone)]
-pub struct Mapping {
-    pub gen_line: usize,
-    pub gen_col: usize,
-    pub src_line: usize,
-    pub src_col: usize,
-}
-
 /// Injection language for IDE language injection
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -26,16 +15,17 @@ impl Language {
     }
 }
 
-/// Range mapping source to compiled positions
+/// Source-to-compiled span. Source offsets are UTF-16 (after
+/// `segments_source_to_utf16` runs); compiled offsets are UTF-16.
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct Range {
-    pub range_type: Language,
+pub struct Segment {
+    pub language: Language,
     pub source_start: usize,
     pub source_end: usize,
     pub compiled_start: usize,
     pub compiled_end: usize,
-    /// Whether this range should produce an IDE injection.
-    /// Set to false for ranges that don't need language injection (like parameters in frontmatter).
+    /// Whether this segment should produce an IDE injection.
+    /// Set to false for segments that don't need language injection (like parameters in frontmatter).
     #[serde(skip)]
     pub needs_injection: bool,
     /// Optional prefix for HTML injections (e.g. `<x` for component attribute fragments
@@ -43,28 +33,6 @@ pub struct Range {
     #[serde(skip)]
     #[serde(default)]
     pub html_prefix: Option<String>,
-}
-
-impl Range {
-    /// Create a new range with default html_prefix (None).
-    pub fn new(
-        range_type: Language,
-        source_start: usize,
-        source_end: usize,
-        compiled_start: usize,
-        compiled_end: usize,
-        needs_injection: bool,
-    ) -> Self {
-        Self {
-            range_type,
-            source_start,
-            source_end,
-            compiled_start,
-            compiled_end,
-            needs_injection,
-            html_prefix: None,
-        }
-    }
 }
 
 /// Computed injection with prefix/suffix for IDE language injection.
@@ -142,16 +110,16 @@ pub fn convert_braces_to_utf16(
 /// JetBrains inserts SOURCE text at each injection point. If source ≠ compiled,
 /// the virtual Python file is malformed (e.g. `render_class(class)` instead of
 /// `render_class(class_)`). Drop any mismatched ranges to prevent this.
-pub fn validate_python_ranges(source: &str, compiled: &str, ranges: &mut Vec<Range>) {
-    ranges.retain(|r| {
-        if r.range_type != Language::Python || !r.needs_injection {
+pub fn validate_python_ranges(source: &str, compiled: &str, segments: &mut Vec<Segment>) {
+    segments.retain(|s| {
+        if s.language != Language::Python || !s.needs_injection {
             return true;
         }
-        let source_text = match source.get(r.source_start..r.source_end) {
-            Some(s) => s,
+        let source_text = match source.get(s.source_start..s.source_end) {
+            Some(t) => t,
             None => return false,
         };
-        let compiled_text = substring_utf16(compiled, r.compiled_start, r.compiled_end);
+        let compiled_text = substring_utf16(compiled, s.compiled_start, s.compiled_end);
         // Normalize: strip leading whitespace from each line for comparison.
         // This allows multiline statements where only indentation differs.
         normalize_indent(source_text) == normalize_indent(&compiled_text)
@@ -179,25 +147,25 @@ fn normalize_indent(s: &str) -> String {
 /// Source positions in ranges are byte offsets. This function converts them to UTF-16
 /// code unit offsets for the injection start/end fields, since JetBrains TextRange
 /// uses UTF-16 offsets.
-pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Injection> {
+pub fn compute_injections(code: &str, source: &str, segments: &[Segment]) -> Vec<Injection> {
     // Build byte-to-UTF-16 mapping for source string
     let byte_to_utf16 = build_byte_to_utf16_map(source);
     let mut injections = Vec::new();
 
     // Process each language separately (python and html have independent virtual files)
     for language in [Language::Python, Language::Html] {
-        let mut type_ranges: Vec<_> = ranges
+        let mut type_segments: Vec<_> = segments
             .iter()
-            .filter(|r| r.range_type == language && r.needs_injection)
+            .filter(|s| s.language == language && s.needs_injection)
             .collect();
         // Python: sort by COMPILED position since prefix computation walks
         // the compiled code sequentially. HTML: sort by source position.
         match language {
-            Language::Python => type_ranges.sort_by_key(|r| r.compiled_start),
-            Language::Html => type_ranges.sort_by_key(|r| r.source_start),
+            Language::Python => type_segments.sort_by_key(|s| s.compiled_start),
+            Language::Html => type_segments.sort_by_key(|s| s.source_start),
         }
 
-        if type_ranges.is_empty() {
+        if type_segments.is_empty() {
             continue;
         }
 
@@ -205,39 +173,39 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
             Language::Python => {
                 // Python: prefix/suffix from compiled code for virtual Python file
                 let mut prev_end = 0;
-                let range_count = type_ranges.len();
+                let count = type_segments.len();
 
-                for (index, range) in type_ranges.iter().enumerate() {
-                    let is_last = index == range_count - 1;
+                for (index, seg) in type_segments.iter().enumerate() {
+                    let is_last = index == count - 1;
 
-                    let prefix = substring_utf16(code, prev_end, range.compiled_start);
+                    let prefix = substring_utf16(code, prev_end, seg.compiled_start);
                     let suffix = if is_last {
-                        substring_utf16_to_end(code, range.compiled_end)
+                        substring_utf16_to_end(code, seg.compiled_end)
                     } else {
                         String::new()
                     };
 
                     injections.push(Injection {
                         language,
-                        start: byte_to_utf16[range.source_start],
-                        end: byte_to_utf16[range.source_end],
+                        start: byte_to_utf16[seg.source_start],
+                        end: byte_to_utf16[seg.source_end],
                         prefix,
                         suffix,
                     });
 
-                    prev_end = range.compiled_end;
+                    prev_end = seg.compiled_end;
                 }
             }
             Language::Html => {
                 // HTML: prefix is usually empty (source already contains HTML).
-                // Component-attribute ranges carry an html_prefix (e.g. "<x") so the
+                // Component-attribute segments carry an html_prefix (e.g. "<x") so the
                 // virtual HTML fragment has a tag name and JetBrains can parse attrs.
-                for range in &type_ranges {
+                for seg in &type_segments {
                     injections.push(Injection {
                         language,
-                        start: byte_to_utf16[range.source_start],
-                        end: byte_to_utf16[range.source_end],
-                        prefix: range.html_prefix.as_deref().unwrap_or("").to_string(),
+                        start: byte_to_utf16[seg.source_start],
+                        end: byte_to_utf16[seg.source_end],
+                        prefix: seg.html_prefix.as_deref().unwrap_or("").to_string(),
                         suffix: String::new(),
                     });
                 }
@@ -246,6 +214,16 @@ pub fn compute_injections(code: &str, source: &str, ranges: &[Range]) -> Vec<Inj
     }
 
     injections
+}
+
+/// Convert each segment's `source_start`/`source_end` from byte to UTF-16 offsets.
+/// Compiled offsets are left untouched (already UTF-16).
+pub fn segments_source_to_utf16(source: &str, segments: &mut [Segment]) {
+    let byte_to_utf16 = build_byte_to_utf16_map(source);
+    for seg in segments {
+        seg.source_start = byte_to_utf16[seg.source_start];
+        seg.source_end = byte_to_utf16[seg.source_end];
+    }
 }
 
 /// Build a mapping from byte offset → UTF-16 code unit offset for a string.
@@ -284,7 +262,7 @@ fn substring_utf16_to_end(s: &str, start: usize) -> String {
     String::from_utf16_lossy(&utf16_units[start..])
 }
 
-/// Output buffer that accumulates generated code with mappings.
+/// Output buffer that accumulates generated code with segments.
 ///
 /// Supports formatting-aware position tracking via `skip_next()` and
 /// `begin_dedent()` / `end_dedent()`. When active, `push()` discards
@@ -295,8 +273,7 @@ pub struct Output {
     lines: Vec<String>,
     current_line: String,
     line_number: usize,
-    mappings: Vec<Mapping>,
-    ranges: Vec<Range>,
+    segments: Vec<Segment>,
     // Formatting-aware position tracking
     skip_remaining: usize, // characters left to skip (for leading whitespace)
     dedent_amount: usize,  // spaces to strip at each line start (0 = inactive)
@@ -309,8 +286,7 @@ impl Output {
             lines: Vec::new(),
             current_line: String::new(),
             line_number: 0,
-            mappings: Vec::new(),
-            ranges: Vec::new(),
+            segments: Vec::new(),
             skip_remaining: 0,
             dedent_amount: 0,
             dedent_skip_remaining: 0,
@@ -353,19 +329,6 @@ impl Output {
         }
     }
 
-    /// Add text with source mapping
-    pub fn push_mapped(&mut self, text: &str, source_pos: Position) {
-        let start_col = self.current_line.len();
-        self.current_line.push_str(text);
-
-        self.mappings.push(Mapping {
-            gen_line: self.line_number,
-            gen_col: start_col,
-            src_line: source_pos.line,
-            src_col: 0, // TODO: track column in Position
-        });
-    }
-
     /// Add a newline
     pub fn newline(&mut self) {
         self.current_line.push('\n');
@@ -373,9 +336,9 @@ impl Output {
         self.line_number += 1;
     }
 
-    /// Add a range mapping
-    pub fn add_range(&mut self, range: Range) {
-        self.ranges.push(range);
+    /// Add a segment
+    pub fn add_segment(&mut self, segment: Segment) {
+        self.segments.push(segment);
     }
 
     /// Get current UTF-16 position in output
@@ -387,29 +350,29 @@ impl Output {
     }
 
     /// Finish and return the generated code
-    pub fn finish(mut self) -> (String, Vec<Mapping>, Vec<Range>) {
+    pub fn finish(mut self) -> (String, Vec<Segment>) {
         // Push final line if not empty (no trailing newline for last line)
         if !self.current_line.is_empty() {
             self.lines.push(std::mem::take(&mut self.current_line));
         }
 
         let code = self.lines.join("");
-        (code, self.mappings, self.ranges)
+        (code, self.segments)
     }
 
-    /// Transfer ranges from another Output, adjusting compiled positions by an offset.
+    /// Transfer segments from another Output, adjusting compiled positions by an offset.
     /// The offset is the compiled position where the other output's content starts in this output.
-    pub fn transfer_ranges(&mut self, other_ranges: Vec<Range>, compiled_offset: usize) {
-        for mut range in other_ranges {
-            range.compiled_start += compiled_offset;
-            range.compiled_end += compiled_offset;
-            self.ranges.push(range);
+    pub fn transfer_segments(&mut self, other_segments: Vec<Segment>, compiled_offset: usize) {
+        for mut seg in other_segments {
+            seg.compiled_start += compiled_offset;
+            seg.compiled_end += compiled_offset;
+            self.segments.push(seg);
         }
     }
 
-    /// Get the accumulated ranges (for extracting from a temporary buffer)
-    pub fn take_ranges(&mut self) -> Vec<Range> {
-        std::mem::take(&mut self.ranges)
+    /// Get the accumulated segments (for extracting from a temporary buffer)
+    pub fn take_segments(&mut self) -> Vec<Segment> {
+        std::mem::take(&mut self.segments)
     }
 
     /// Skip the next `n` characters pushed to this buffer.

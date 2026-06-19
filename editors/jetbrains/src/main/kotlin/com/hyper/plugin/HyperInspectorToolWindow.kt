@@ -44,9 +44,9 @@ class HyperInspectorToolWindowFactory : ToolWindowFactory {
         toolWindow.contentManager.addContent(compiledContent)
 
         // Tab 2: Injection ranges debugging
-        val rangesPanel = HyperRangesPanel(project, toolWindow)
-        val rangesContent = contentFactory.createContent(rangesPanel, "Ranges", false)
-        toolWindow.contentManager.addContent(rangesContent)
+        val segmentsPanel = HyperSegmentsPanel(project, toolWindow)
+        val segmentsContent = contentFactory.createContent(segmentsPanel, "Segments", false)
+        toolWindow.contentManager.addContent(segmentsContent)
 
         // Tab 3: Actual injections with prefix/suffix
         val injectionsPanel = HyperInjectionsPanel(project, toolWindow)
@@ -163,7 +163,7 @@ class HyperCompiledOutputPanel(
             // Use filename (without extension) as function name to match actual compilation
             val functionName = file.nameWithoutExtension
             val result = service.transpile(text, includeInjection = true, functionName = functionName)
-            updateEditorText(result.code, result.ranges)
+            updateEditorText(result.code, result.segments)
 
             // Set up document listener for live updates
             setupDocumentListener(textEditor)
@@ -193,7 +193,7 @@ class HyperCompiledOutputPanel(
         listenerDisposable = newDisposable
     }
 
-    private fun updateEditorText(text: String, ranges: List<HyperTranspilerService.Range> = emptyList()) {
+    private fun updateEditorText(text: String, segments: List<HyperTranspilerService.Segment> = emptyList()) {
         // Write actions must be on EDT, so wrap in invokeLater
         com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
             com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction {
@@ -219,8 +219,8 @@ class HyperCompiledOutputPanel(
                 backgroundColor = boilerplateColor
             }
 
-            if (ranges.isEmpty()) {
-                // No ranges - everything is boilerplate
+            if (segments.isEmpty()) {
+                // No segments, everything is boilerplate
                 markupModel.addRangeHighlighter(
                     0,
                     textLength,
@@ -231,42 +231,42 @@ class HyperCompiledOutputPanel(
                 return@invokeLater
             }
 
-            val sortedRanges = ranges.sortedBy { it.compiled_start }
+            val sortedSegments = segments.sortedBy { it.compiled_start }
 
-            // Highlight ranges and gaps (boilerplate)
+            // Highlight segments and gaps (boilerplate)
             var currentPos = 0
-            for (range in sortedRanges) {
-                val rangeStart = range.compiled_start.coerceIn(0, textLength)
-                val rangeEnd = range.compiled_end.coerceIn(0, textLength)
+            for (segment in sortedSegments) {
+                val segmentStart = segment.compiled_start.coerceIn(0, textLength)
+                val segmentEnd = segment.compiled_end.coerceIn(0, textLength)
 
-                // Highlight gap before this range as boilerplate
-                if (currentPos < rangeStart) {
+                // Highlight gap before this segment as boilerplate
+                if (currentPos < segmentStart) {
                     markupModel.addRangeHighlighter(
                         currentPos,
-                        rangeStart,
+                        segmentStart,
                         HighlighterLayer.SELECTION - 1,
                         boilerplateAttributes,
                         HighlighterTargetArea.EXACT_RANGE
                     )
                 }
 
-                // Highlight this range based on type
-                if (rangeStart < rangeEnd) {
-                    val attributes = when (range.type) {
+                // Highlight this segment based on type
+                if (segmentStart < segmentEnd) {
+                    val attributes = when (segment.type) {
                         "python" -> pythonAttributes
                         "html" -> htmlAttributes
                         else -> boilerplateAttributes
                     }
                     markupModel.addRangeHighlighter(
-                        rangeStart,
-                        rangeEnd,
+                        segmentStart,
+                        segmentEnd,
                         HighlighterLayer.SELECTION - 1,
                         attributes,
                         HighlighterTargetArea.EXACT_RANGE
                     )
                 }
 
-                currentPos = maxOf(currentPos, rangeEnd)
+                currentPos = maxOf(currentPos, segmentEnd)
             }
 
             // Highlight remaining text as boilerplate
@@ -292,7 +292,7 @@ class HyperCompiledOutputPanel(
     }
 }
 
-class HyperRangesPanel(
+class HyperSegmentsPanel(
     private val project: Project,
     toolWindow: ToolWindow
 ) : JPanel(BorderLayout()), Disposable {
@@ -354,13 +354,13 @@ class HyperRangesPanel(
         val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
 
         if (!file.name.endsWith(".hyper")) {
-            updateRangesText("# Open a .hyper file to see injection ranges")
+            updateSegmentsText("# Open a .hyper file to see injection segments")
             return
         }
 
         val sourceText = textEditor.document.text
         if (sourceText.isBlank()) {
-            updateRangesText("# Empty file")
+            updateSegmentsText("# Empty file")
             return
         }
 
@@ -369,39 +369,39 @@ class HyperRangesPanel(
             val functionName = file.nameWithoutExtension
             val result = service.transpile(sourceText, includeInjection = true, functionName = functionName)
 
-            val formatted = formatRanges(sourceText, result.code, result.ranges)
-            updateRangesText(formatted)
+            val formatted = formatSegments(sourceText, result.code, result.segments)
+            updateSegmentsText(formatted)
 
             // Set up document listener for live updates
             setupDocumentListener(textEditor)
         } catch (e: Exception) {
-            updateRangesText("# Error: ${e.message}")
+            updateSegmentsText("# Error: ${e.message}")
         }
     }
 
-    private fun formatRanges(sourceText: String, compiledText: String, ranges: List<HyperTranspilerService.Range>): String {
+    private fun formatSegments(sourceText: String, compiledText: String, segments: List<HyperTranspilerService.Segment>): String {
         val sb = StringBuilder()
 
-        val pythonRanges = ranges.filter { it.type == "python" }
-        val htmlRanges = ranges.filter { it.type == "html" }
+        val pythonSegments = segments.filter { it.type == "python" }
+        val htmlSegments = segments.filter { it.type == "html" }
 
-        sb.appendLine("RANGES  (source → compiled)")
+        sb.appendLine("SEGMENTS  (source → compiled)")
         sb.appendLine("━".repeat(80))
         sb.appendLine()
-        sb.appendLine("Python: ${pythonRanges.size}    HTML: ${htmlRanges.size}")
+        sb.appendLine("Python: ${pythonSegments.size}    HTML: ${htmlSegments.size}")
         sb.appendLine()
 
-        if (ranges.isEmpty()) {
-            sb.appendLine("No ranges.")
+        if (segments.isEmpty()) {
+            sb.appendLine("No segments.")
             return sb.toString()
         }
 
-        for (range in ranges) {
-            val sourceSnippet = safeSubstring(sourceText, range.source_start, range.source_end)
-            val compiledSnippet = safeSubstring(compiledText, range.compiled_start, range.compiled_end)
+        for (segment in segments) {
+            val sourceSnippet = safeSubstring(sourceText, segment.source_start, segment.source_end)
+            val compiledSnippet = safeSubstring(compiledText, segment.compiled_start, segment.compiled_end)
 
-            val typeLabel = if (range.type == "python") "PY  " else "HTML"
-            sb.appendLine("$typeLabel  source[${range.source_start}:${range.source_end}] → compiled[${range.compiled_start}:${range.compiled_end}]")
+            val typeLabel = if (segment.type == "python") "PY  " else "HTML"
+            sb.appendLine("$typeLabel  source[${segment.source_start}:${segment.source_end}] → compiled[${segment.compiled_start}:${segment.compiled_end}]")
             sb.appendLine("      ${formatSnippet(sourceSnippet)} → ${formatSnippet(compiledSnippet)}")
             sb.appendLine()
         }
@@ -426,7 +426,7 @@ class HyperRangesPanel(
         listenerDisposable?.let { Disposer.dispose(it) }
         listenerDisposable = null
 
-        val newDisposable = Disposer.newDisposable(this, "HyperRanges document listener")
+        val newDisposable = Disposer.newDisposable(this, "HyperSegments document listener")
 
         val documentListener = object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
@@ -439,7 +439,7 @@ class HyperRangesPanel(
         listenerDisposable = newDisposable
     }
 
-    private fun updateRangesText(text: String) {
+    private fun updateSegmentsText(text: String) {
         com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
             com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction {
                 document.setText(text)

@@ -92,95 +92,95 @@
       "type": "html"
     }
   ],
-  "ranges": [
+  "segments": [
     {
       "compiled_end": 29,
       "compiled_start": 0,
-      "range_type": "python",
+      "language": "python",
       "source_end": 29,
       "source_start": 0
     },
     {
       "compiled_end": 41,
       "compiled_start": 30,
-      "range_type": "python",
+      "language": "python",
       "source_end": 41,
       "source_start": 30
     },
     {
       "compiled_end": 66,
       "compiled_start": 42,
-      "range_type": "python",
+      "language": "python",
       "source_end": 66,
       "source_start": 42
     },
     {
       "compiled_end": 147,
       "compiled_start": 138,
-      "range_type": "python",
+      "language": "python",
       "source_end": 77,
       "source_start": 68
     },
     {
       "compiled_end": 205,
       "compiled_start": 179,
-      "range_type": "python",
+      "language": "python",
       "source_end": 114,
       "source_start": 88
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 87,
       "source_start": 84
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 119,
       "source_start": 115
     },
     {
       "compiled_end": 261,
       "compiled_start": 225,
-      "range_type": "python",
+      "language": "python",
       "source_end": 162,
       "source_start": 126
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 125,
       "source_start": 120
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 169,
       "source_start": 163
     },
     {
       "compiled_end": 301,
       "compiled_start": 284,
-      "range_type": "python",
+      "language": "python",
       "source_end": 194,
       "source_start": 177
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 176,
       "source_start": 170
     },
     {
       "compiled_end": 0,
       "compiled_start": 0,
-      "range_type": "html",
+      "language": "html",
       "source_end": 202,
       "source_start": 195
     }
