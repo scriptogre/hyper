@@ -32,7 +32,7 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
     let mut result = generate::PythonGenerator::new().generate(&ast, &ctx, options);
 
     if options.include_ranges {
-        generate::validate_python_ranges(source, &result.code, &mut result.segments);
+        generate::validate_python_segments(source, &result.code, &mut result.segments);
         result.injections = generate::compute_injections(&result.code, source, &result.segments);
         // Convert source offsets from byte to UTF-16 last, after validation and
         // injection computation (both expect byte offsets).

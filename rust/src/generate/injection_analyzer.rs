@@ -1,13 +1,13 @@
-//! Injection analyzer — computes IDE injection ranges from AST and generated code.
+//! Injection analyzer. Computes IDE injection segments from AST and generated code.
 //!
 //! This module handles:
-//! - Computing prefix/suffix injections from ranges (for JetBrains virtual files)
-//! - Building HTML injection ranges for element and component tags
+//! - Computing prefix/suffix injections from segments (for JetBrains virtual files)
+//! - Building HTML injection segments for element and component tags
 
 use super::output::{Injection, Language, Segment, compute_injections};
 use crate::ast::*;
 
-/// Analyzes AST and generated code to produce injection ranges and injections.
+/// Analyzes AST and generated code to produce injection segments and injections.
 pub struct InjectionAnalyzer;
 
 impl Default for InjectionAnalyzer {
@@ -34,15 +34,15 @@ impl InjectionAnalyzer {
     }
 }
 
-// ─── HTML range builders ───────────────────────────────────────────────
+// ─── HTML segment builders ───────────────────────────────────────────────
 //
-// These produce Language::Html ranges for the static parts of element
+// These produce Language::Html segments for the static parts of element
 // and component/slot tags, skipping over embedded expression spans.
-// HTML ranges don't need compiled positions (compiled_start/end = 0)
+// HTML segments don't need compiled positions (compiled_start/end = 0)
 // because the virtual HTML file is built from source text directly.
 
 /// Collect expression spans from component/slot attributes that must be
-/// excluded from HTML ranges.  Returns `(start, exclusive_end)` byte pairs.
+/// excluded from HTML segments.  Returns `(start, exclusive_end)` byte pairs.
 pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usize)> {
     let mut spans = Vec::new();
     for attr in attrs {
@@ -69,13 +69,13 @@ pub fn collect_component_attr_expr_spans(attrs: &[Attribute]) -> Vec<(usize, usi
     spans
 }
 
-/// Build HTML injection ranges for an element's opening and closing tags.
+/// Build HTML injection segments for an element's opening and closing tags.
 ///
-/// The opening tag range covers `<tag attrs>` or `<tag attrs />`.
-/// The closing tag range covers `</tag>`.
-/// Returns ranges for the static HTML parts, with gaps for expression attributes.
-pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
-    let mut ranges = Vec::new();
+/// The opening tag segment covers `<tag attrs>` or `<tag attrs />`.
+/// The closing tag segment covers `</tag>`.
+/// Returns segments for the static HTML parts, with gaps for expression attributes.
+pub fn html_segments_for_element(el: &ElementNode) -> Vec<Segment> {
+    let mut segments = Vec::new();
 
     // Collect expression spans (exclusive end) within the opening tag.
     // Dynamic spans already use exclusive end (past '}').
@@ -101,7 +101,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
                 expr_spans.push((gap_start, range.end.byte + 1));
             }
             AttributeKind::Template { name, value } => {
-                // Walk value to find {expr} positions, exclude them from HTML ranges
+                // Walk value to find {expr} positions, exclude them from HTML segments
                 let value_start_byte = attr.range.start.byte + name.len() + 2;
                 let mut byte_offset = 0;
                 let mut chars = value.chars().peekable();
@@ -136,14 +136,14 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
     // Sort by start position
     expr_spans.sort_by_key(|s| s.0);
 
-    // Create HTML ranges for the gaps between expressions within the opening tag
+    // Create HTML segments for the gaps between expressions within the opening tag
     let tag_start = el.range.start.byte;
     let tag_end = el.range.end.byte;
     let mut pos = tag_start;
 
     for (expr_start, expr_end) in &expr_spans {
         if *expr_start > pos && *expr_start <= tag_end {
-            ranges.push(Segment {
+            segments.push(Segment {
                 language: Language::Html,
                 source_start: pos,
                 source_end: *expr_start,
@@ -160,7 +160,7 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
 
     // Remaining static part of opening tag
     if pos < tag_end {
-        ranges.push(Segment {
+        segments.push(Segment {
             language: Language::Html,
             source_start: pos,
             source_end: tag_end,
@@ -171,9 +171,9 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
         });
     }
 
-    // Closing tag range (e.g. </div>)
+    // Closing tag segment (e.g. </div>)
     if let Some(close_range) = &el.close_range {
-        ranges.push(Segment {
+        segments.push(Segment {
             language: Language::Html,
             source_start: close_range.start.byte,
             source_end: close_range.end.byte,
@@ -184,28 +184,28 @@ pub fn html_ranges_for_element(el: &ElementNode) -> Vec<Segment> {
         });
     }
 
-    ranges
+    segments
 }
 
-/// Build HTML injection ranges for component/slot tag angle brackets.
+/// Build HTML injection segments for component/slot tag angle brackets.
 ///
-/// For `<{Card}>`, creates ranges for `<` and `>`, skipping `{Card}`.
-/// For `</{Card}>`, creates ranges for `</` and `>`, skipping `{Card}`.
+/// For `<{Card}>`, creates segments for `<` and `>`, skipping `{Card}`.
+/// For `</{Card}>`, creates segments for `</` and `>`, skipping `{Card}`.
 ///
 /// The `attr_expr_spans` parameter contains (start, exclusive_end) byte positions
 /// for expression attributes within the opening tag that must be excluded from
-/// HTML ranges (to avoid overlapping with Python injection ranges).
-pub fn html_ranges_for_component(
+/// HTML segments (to avoid overlapping with Python injection segments).
+pub fn html_segments_for_component(
     open_range: &TextRange,
     _close_range: Option<&TextRange>,
     _brace_open: usize,
     brace_close: usize,
     attr_expr_spans: &[(usize, usize)],
 ) -> Vec<Segment> {
-    let mut ranges = Vec::new();
+    let mut segments = Vec::new();
 
     // NOTE: We intentionally do NOT emit the lone "<" before the component name
-    // brace as an HTML range. A lone "<" is unparseable HTML and would pollute
+    // brace as an HTML segment. A lone "<" is unparseable HTML and would pollute
     // the virtual HTML document. Instead, we give the attribute-region fragments
     // an html_prefix of "<x" so the virtual HTML sees a valid tag like
     // `<x text="Sale" />`, enabling attribute highlighting.
@@ -229,7 +229,7 @@ pub fn html_ranges_for_component(
         let mut pos = after_brace;
         for (expr_start, expr_end) in &spans {
             if *expr_start > pos {
-                ranges.push(Segment {
+                segments.push(Segment {
                     language: Language::Html,
                     source_start: pos,
                     source_end: *expr_start,
@@ -251,7 +251,7 @@ pub fn html_ranges_for_component(
 
         // Remaining static part after last expression
         if pos < tag_end {
-            ranges.push(Segment {
+            segments.push(Segment {
                 language: Language::Html,
                 source_start: pos,
                 source_end: tag_end,
@@ -264,10 +264,10 @@ pub fn html_ranges_for_component(
     }
 
     // Closing tag: </{Card}> or </{...header}>
-    // We don't emit HTML ranges for the closing tag fragments ("</" and ">")
+    // We don't emit HTML segments for the closing tag fragments ("</" and ">")
     // because they're unparseable HTML on their own and would pollute the
     // virtual HTML document. The component/slot closing tag gets its coloring
     // from the TextMate grammar / annotator instead.
 
-    ranges
+    segments
 }

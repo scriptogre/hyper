@@ -112,7 +112,7 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                     continue;
                 }
                 // Skip multiline statements — continuation lines get re-indented,
-                // so source != compiled and validate_python_ranges drops the range
+                // so source != compiled and validate_python_segments drops the segment
                 if code.contains('\n') {
                     continue;
                 }

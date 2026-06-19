@@ -5,13 +5,13 @@ mod python;
 
 pub use brace_collector::{collect_expression_braces, collect_tag_highlights};
 pub use injection_analyzer::{
-    InjectionAnalyzer, collect_component_attr_expr_spans, html_ranges_for_component,
-    html_ranges_for_element,
+    InjectionAnalyzer, collect_component_attr_expr_spans, html_segments_for_component,
+    html_segments_for_element,
 };
 pub use output::{
     ExpressionBrace, Injection, Language, Output, Segment, TagHighlight, TagHighlightKind,
     compute_injections, convert_braces_to_utf16, convert_tag_highlights_to_utf16,
-    segments_source_to_utf16, validate_python_ranges,
+    segments_source_to_utf16, validate_python_segments,
 };
 pub use python::PythonGenerator;
 

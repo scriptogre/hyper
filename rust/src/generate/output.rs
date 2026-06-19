@@ -106,11 +106,11 @@ pub fn convert_braces_to_utf16(
         .collect()
 }
 
-/// Validate Python injection ranges by checking that source text matches compiled text.
+/// Validate Python injection segments by checking that source text matches compiled text.
 /// JetBrains inserts SOURCE text at each injection point. If source ≠ compiled,
 /// the virtual Python file is malformed (e.g. `render_class(class)` instead of
-/// `render_class(class_)`). Drop any mismatched ranges to prevent this.
-pub fn validate_python_ranges(source: &str, compiled: &str, segments: &mut Vec<Segment>) {
+/// `render_class(class_)`). Drop any mismatched segments to prevent this.
+pub fn validate_python_segments(source: &str, compiled: &str, segments: &mut Vec<Segment>) {
     segments.retain(|s| {
         if s.language != Language::Python || !s.needs_injection {
             return true;

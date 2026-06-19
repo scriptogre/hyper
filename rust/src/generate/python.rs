@@ -1,7 +1,7 @@
 use super::{
     CompileOptions, CompileResult, Generator, Language, Output, Segment,
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
-    html_ranges_for_component, html_ranges_for_element,
+    html_segments_for_component, html_segments_for_element,
 };
 use crate::ast::*;
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
@@ -108,8 +108,8 @@ impl PythonGenerator {
     /// If trailing_comment is Some, the comment is appended inline after the closing `"""`.
     ///
     /// Uses a two-phase approach:
-    ///   Phase 1 — Emit to a temp buffer for content analysis (ranges discarded).
-    ///   Phase 2 — Emit to real output with skip/dedent active (ranges correct by construction).
+    ///   Phase 1: Emit to a temp buffer for content analysis (segments discarded).
+    ///   Phase 2: Emit to real output with skip/dedent active (segments correct by construction).
     fn emit_combined_nodes(
         &self,
         nodes: &[&Node],
@@ -121,7 +121,7 @@ impl PythonGenerator {
 
         // ── Phase 1: Analyze ──
         // Emit to a temp buffer to get the raw content string.
-        // Ranges from this pass are discarded.
+        // Segments from this pass are discarded.
         let mut temp = Output::new();
         for node in nodes {
             self.emit_node_content(node, &mut temp, has_expressions);
@@ -170,7 +170,7 @@ impl PythonGenerator {
         // Emit content with formatting-aware Output:
         //   skip_next  → discard leading whitespace
         //   begin_dedent → strip anchor-indent spaces at each content line start
-        // Ranges recorded by emit_node_content are correct because
+        // Segments recorded by emit_node_content are correct because
         // Output.position() reflects the actual post-skip/dedent output.
         output.skip_next(info.leading_skip);
         if info.anchor_indent > 0 {
@@ -260,7 +260,7 @@ impl PythonGenerator {
                     (start, end)
                 };
 
-                // Source range excludes braces — just the inner expression
+                // Source segment excludes braces, just the inner expression
                 let content_start = expr.range.start.byte + 1; // skip '{'
                 let content_end = expr.range.end.byte - 1; // skip '}'
 
@@ -306,8 +306,8 @@ impl PythonGenerator {
             output.push(">");
         }
 
-        // Add HTML injection ranges for this element's static HTML parts
-        for seg in html_ranges_for_element(el) {
+        // Add HTML injection segments for this element's static HTML parts
+        for seg in html_segments_for_element(el) {
             output.add_segment(seg);
         }
     }
@@ -787,8 +787,8 @@ impl PythonGenerator {
             output.newline();
         }
 
-        // Add HTML injection ranges for this element
-        for seg in html_ranges_for_element(el) {
+        // Add HTML injection segments for this element
+        for seg in html_segments_for_element(el) {
             output.add_segment(seg);
         }
     }
@@ -897,7 +897,7 @@ impl PythonGenerator {
             output.newline();
         }
 
-        // Add Python range for the component name in the opening tag
+        // Add Python segment for the component name in the opening tag
         // This enables go-to-definition and highlighting for the name
         output.add_segment(Segment {
             language: Language::Python,
@@ -909,7 +909,7 @@ impl PythonGenerator {
             html_prefix: None,
         });
 
-        // Add Python range for the component name in the closing tag.
+        // Add Python segment for the component name in the closing tag.
         // needs_injection: false — this is for highlighting only, not for
         // building the virtual Python file (which would duplicate the name).
         if let Some(ref cs) = c.close_range {
@@ -929,12 +929,12 @@ impl PythonGenerator {
             }
         }
 
-        // Add HTML ranges for component tag angle brackets,
+        // Add HTML segments for component tag angle brackets,
         // splitting around attribute expression spans to avoid overlap
         let brace_open = c.name_range.start.byte - 1;
         let brace_close = c.name_range.end.byte;
         let attr_expr_spans = collect_component_attr_expr_spans(&c.attributes);
-        for seg in html_ranges_for_component(
+        for seg in html_segments_for_component(
             &c.range,
             c.close_range.as_ref(),
             brace_open,
@@ -1078,12 +1078,12 @@ impl PythonGenerator {
         output.push(">");
         output.newline();
 
-        // Add HTML ranges for tag-form slot angle brackets (<{...name}> / </{...name}>)
+        // Add HTML segments for tag-form slot angle brackets (<{...name}> / </{...name}>)
         // Slots have no attributes, so no expression spans to exclude
         if s.close_range.is_some() {
             let brace_open = s.range.start.byte + 1;
             let brace_close = s.range.end.byte - 2;
-            for seg in html_ranges_for_component(
+            for seg in html_segments_for_component(
                 &s.range,
                 s.close_range.as_ref(),
                 brace_open,
@@ -1169,14 +1169,14 @@ impl PythonGenerator {
         output.push(&for_node.binding);
         output.push(" in ");
         output.push(iterable);
-        let range_end = output.position();
+        let segment_end = output.position();
         let source_end = for_node.iterable_range.start.byte + iterable.len();
         output.add_segment(Segment {
             language: Language::Python,
             source_start: for_node.binding_range.start.byte,
             source_end,
             compiled_start: binding_start,
-            compiled_end: range_end,
+            compiled_end: segment_end,
             needs_injection: true,
             html_prefix: None,
         });
