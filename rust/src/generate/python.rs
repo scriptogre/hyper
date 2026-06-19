@@ -3,7 +3,9 @@ use super::{
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_segments_for_component, html_segments_for_element,
 };
+use crate::ast::python::{Alias, Identifier, StmtImportFrom};
 use crate::ast::*;
+use crate::generate::print::print_import_from;
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
@@ -1652,19 +1654,22 @@ impl Generator for PythonGenerator {
 
         // Add typing imports if needed
         if !typing_imports.is_empty() {
-            import_lines.push_str(&format!(
-                "from typing import {}\n",
-                typing_imports.join(", ")
-            ));
+            import_lines.push_str(&print_import_from(&import_from("typing", &typing_imports)));
+            import_lines.push('\n');
         }
 
         // Add Iterable import if needed
         if needs_iterable {
-            import_lines.push_str("from collections.abc import Iterable\n");
+            import_lines.push_str(&print_import_from(&import_from(
+                "collections.abc",
+                &["Iterable"],
+            )));
+            import_lines.push('\n');
         }
 
         // Add hyper imports
-        import_lines.push_str(&format!("from hyper import {}\n", hyper_imports.join(", ")));
+        import_lines.push_str(&print_import_from(&import_from("hyper", &hyper_imports)));
+        import_lines.push('\n');
         import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)
 
         // Add header comments (above --- separator)
@@ -1864,4 +1869,18 @@ fn to_pascal_case(s: &str) -> String {
             }
         })
         .collect()
+}
+
+fn import_from(module: &str, names: &[&str]) -> StmtImportFrom {
+    StmtImportFrom {
+        module: Some(Identifier::new(module)),
+        names: names
+            .iter()
+            .map(|n| Alias {
+                name: Identifier::new(*n),
+                asname: None,
+            })
+            .collect(),
+        level: 0,
+    }
 }
