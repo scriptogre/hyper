@@ -32,6 +32,26 @@ pub struct Span {
     pub end: Position,
 }
 
+impl Span {
+    /// Span for compiler-generated code with no source location. Source mapping
+    /// skips synthetic spans, so they produce no IDE injection.
+    pub fn synthetic() -> Self {
+        let pos = Position {
+            byte: usize::MAX,
+            line: 0,
+            col: 0,
+        };
+        Self {
+            start: pos,
+            end: pos,
+        }
+    }
+
+    pub fn is_synthetic(&self) -> bool {
+        self.start.byte == usize::MAX
+    }
+}
+
 /// Component attribute
 #[derive(Debug, Clone, PartialEq)]
 pub struct Attribute {

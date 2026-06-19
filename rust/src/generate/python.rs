@@ -1118,18 +1118,20 @@ impl PythonGenerator {
         let cond_start = output.position();
         output.push(condition);
         let cond_end = output.position();
-        // Track condition for Python injection
+        // Track condition for Python injection (skip compiler-generated guards)
         // Adjust source_end to match actual content (trim trailing : and whitespace)
-        let source_end = if_node.condition_span.start.byte + condition.len();
-        output.add_range(Range {
-            range_type: RangeType::Python,
-            source_start: if_node.condition_span.start.byte,
-            source_end,
-            compiled_start: cond_start,
-            compiled_end: cond_end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        if !if_node.condition_span.is_synthetic() {
+            let source_end = if_node.condition_span.start.byte + condition.len();
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: if_node.condition_span.start.byte,
+                source_end,
+                compiled_start: cond_start,
+                compiled_end: cond_end,
+                needs_injection: true,
+                html_prefix: None,
+            });
+        }
         output.push(":");
         output.newline();
 
@@ -1142,16 +1144,18 @@ impl PythonGenerator {
             let cond_start = output.position();
             output.push(condition);
             let cond_end = output.position();
-            let source_end = condition_span.start.byte + condition.len();
-            output.add_range(Range {
-                range_type: RangeType::Python,
-                source_start: condition_span.start.byte,
-                source_end,
-                compiled_start: cond_start,
-                compiled_end: cond_end,
-                needs_injection: true,
-                html_prefix: None,
-            });
+            if !condition_span.is_synthetic() {
+                let source_end = condition_span.start.byte + condition.len();
+                output.add_range(Range {
+                    range_type: RangeType::Python,
+                    source_start: condition_span.start.byte,
+                    source_end,
+                    compiled_start: cond_start,
+                    compiled_end: cond_end,
+                    needs_injection: true,
+                    html_prefix: None,
+                });
+            }
             output.push(":");
             output.newline();
 
@@ -1372,15 +1376,18 @@ impl PythonGenerator {
 
         let end = output.position();
 
-        output.add_range(Range {
-            range_type: RangeType::Python,
-            source_start: stmt.span.start.byte,
-            source_end: stmt.span.end.byte,
-            compiled_start: start,
-            compiled_end: end,
-            needs_injection: true,
-            html_prefix: None,
-        });
+        // Skip injection for compiler-generated statements (no source location).
+        if !stmt.span.is_synthetic() {
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: stmt.span.start.byte,
+                source_end: stmt.span.end.byte,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+                html_prefix: None,
+            });
+        }
 
         output.newline();
     }
@@ -1534,9 +1541,6 @@ impl Generator for PythonGenerator {
             || has_named_slots
             || star_star_kwargs.is_some();
 
-        // Collect params with mutable defaults that need None sentinel guards
-        let mut mutable_default_guards: Vec<(&str, &str)> = Vec::new();
-
         if !has_any_params {
             output.push("():");
             output.newline();
@@ -1566,20 +1570,13 @@ impl Generator for PythonGenerator {
                 let param_start = output.position();
                 output.push(&param.name);
 
-                let needs_sentinel = ctx.mutable_default_params.contains(&param.name);
-
                 if let Some(type_hint) = &param.type_hint {
                     output.push(": ");
                     output.push(type_hint);
                 }
                 if let Some(default) = &param.default {
-                    if needs_sentinel {
-                        output.push(" = None");
-                        mutable_default_guards.push((&param.name, default));
-                    } else {
-                        output.push(" = ");
-                        output.push(default);
-                    }
+                    output.push(" = ");
+                    output.push(default);
                 }
                 let param_end = output.position();
 
@@ -1626,27 +1623,12 @@ impl Generator for PythonGenerator {
             output.newline();
         }
 
-        // Emit mutable default guards (if any)
-        for (name, default) in &mutable_default_guards {
-            self.indent(&mut output, 1);
-            output.push("if ");
-            output.push(name);
-            output.push(" is None:");
-            output.newline();
-            self.indent(&mut output, 2);
-            output.push(name);
-            output.push(" = ");
-            output.push(default);
-            output.newline();
-        }
-
-        // Emit body (using yield instead of _parts)
+        // Emit body. Mutable-default guards are already prepended to the body
+        // by DetectMutableDefaults, so an empty body means a genuinely empty one.
         if body_nodes.is_empty() || self.is_effectively_empty(&body_nodes) {
-            if mutable_default_guards.is_empty() {
-                self.indent(&mut output, 1);
-                output.push("pass");
-                output.newline();
-            }
+            self.indent(&mut output, 1);
+            output.push("pass");
+            output.newline();
         } else {
             self.emit_nodes(&body_nodes, &mut output, 1);
         }
