@@ -4,6 +4,7 @@
       "compiled_end": 81,
       "compiled_start": 71,
       "language": "python",
+      "needs_injection": true,
       "source_end": 10,
       "source_start": 0
     },
@@ -11,6 +12,7 @@
       "compiled_end": 102,
       "compiled_start": 91,
       "language": "python",
+      "needs_injection": true,
       "source_end": 22,
       "source_start": 11
     },
@@ -18,6 +20,7 @@
       "compiled_end": 141,
       "compiled_start": 130,
       "language": "python",
+      "needs_injection": true,
       "source_end": 55,
       "source_start": 44
     },
@@ -25,6 +28,7 @@
       "compiled_end": 181,
       "compiled_start": 150,
       "language": "python",
+      "needs_injection": true,
       "source_end": 91,
       "source_start": 60
     },
@@ -32,6 +36,7 @@
       "compiled_end": 212,
       "compiled_start": 194,
       "language": "python",
+      "needs_injection": true,
       "source_end": 118,
       "source_start": 100
     },
@@ -39,6 +44,7 @@
       "compiled_end": 238,
       "compiled_start": 221,
       "language": "python",
+      "needs_injection": true,
       "source_end": 149,
       "source_start": 132
     },
@@ -46,6 +52,7 @@
       "compiled_end": 308,
       "compiled_start": 298,
       "language": "python",
+      "needs_injection": true,
       "source_end": 204,
       "source_start": 194
     },
@@ -53,6 +60,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 193,
       "source_start": 189
     },
@@ -60,6 +68,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 210,
       "source_start": 205
     },
@@ -67,6 +76,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 176,
       "source_start": 158
     },
@@ -74,6 +84,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 225,
       "source_start": 219
     },
@@ -81,6 +92,7 @@
       "compiled_end": 376,
       "compiled_start": 365,
       "language": "python",
+      "needs_injection": true,
       "source_end": 280,
       "source_start": 269
     },
@@ -88,6 +100,7 @@
       "compiled_end": 417,
       "compiled_start": 385,
       "language": "python",
+      "needs_injection": true,
       "source_end": 317,
       "source_start": 285
     },
@@ -95,6 +108,7 @@
       "compiled_end": 448,
       "compiled_start": 430,
       "language": "python",
+      "needs_injection": true,
       "source_end": 344,
       "source_start": 326
     },
@@ -102,6 +116,7 @@
       "compiled_end": 490,
       "compiled_start": 457,
       "language": "python",
+      "needs_injection": true,
       "source_end": 391,
       "source_start": 358
     },
@@ -109,6 +124,7 @@
       "compiled_end": 529,
       "compiled_start": 525,
       "language": "python",
+      "needs_injection": true,
       "source_end": 409,
       "source_start": 405
     },
@@ -116,6 +132,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 404,
       "source_start": 400
     },
@@ -123,6 +140,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 415,
       "source_start": 410
     },
@@ -130,6 +148,7 @@
       "compiled_end": 565,
       "compiled_start": 548,
       "language": "python",
+      "needs_injection": true,
       "source_end": 446,
       "source_start": 429
     },
@@ -137,6 +156,7 @@
       "compiled_end": 629,
       "compiled_start": 611,
       "language": "python",
+      "needs_injection": true,
       "source_end": 494,
       "source_start": 476
     },
@@ -144,6 +164,7 @@
       "compiled_end": 669,
       "compiled_start": 647,
       "language": "python",
+      "needs_injection": true,
       "source_end": 534,
       "source_start": 512
     },
@@ -151,6 +172,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 459,
       "source_start": 455
     },
@@ -158,6 +180,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 564,
       "source_start": 559
     },
@@ -165,6 +188,7 @@
       "compiled_end": 748,
       "compiled_start": 730,
       "language": "python",
+      "needs_injection": true,
       "source_end": 618,
       "source_start": 600
     },
@@ -172,6 +196,7 @@
       "compiled_end": 766,
       "compiled_start": 753,
       "language": "python",
+      "needs_injection": true,
       "source_end": 632,
       "source_start": 619
     }

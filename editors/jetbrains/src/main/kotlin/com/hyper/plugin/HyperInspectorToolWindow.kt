@@ -252,7 +252,7 @@ class HyperCompiledOutputPanel(
 
                 // Highlight this segment based on type
                 if (segmentStart < segmentEnd) {
-                    val attributes = when (segment.type) {
+                    val attributes = when (segment.language) {
                         "python" -> pythonAttributes
                         "html" -> htmlAttributes
                         else -> boilerplateAttributes
@@ -382,8 +382,8 @@ class HyperSegmentsPanel(
     private fun formatSegments(sourceText: String, compiledText: String, segments: List<HyperTranspilerService.Segment>): String {
         val sb = StringBuilder()
 
-        val pythonSegments = segments.filter { it.type == "python" }
-        val htmlSegments = segments.filter { it.type == "html" }
+        val pythonSegments = segments.filter { it.language == "python" }
+        val htmlSegments = segments.filter { it.language == "html" }
 
         sb.appendLine("SEGMENTS  (source → compiled)")
         sb.appendLine("━".repeat(80))
@@ -400,7 +400,7 @@ class HyperSegmentsPanel(
             val sourceSnippet = safeSubstring(sourceText, segment.source_start, segment.source_end)
             val compiledSnippet = safeSubstring(compiledText, segment.compiled_start, segment.compiled_end)
 
-            val typeLabel = if (segment.type == "python") "PY  " else "HTML"
+            val typeLabel = if (segment.language == "python") "PY  " else "HTML"
             sb.appendLine("$typeLabel  source[${segment.source_start}:${segment.source_end}] → compiled[${segment.compiled_start}:${segment.compiled_end}]")
             sb.appendLine("      ${formatSnippet(sourceSnippet)} → ${formatSnippet(compiledSnippet)}")
             sb.appendLine()

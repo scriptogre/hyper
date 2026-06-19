@@ -4,6 +4,7 @@
       "compiled_end": 75,
       "compiled_start": 66,
       "language": "python",
+      "needs_injection": true,
       "source_end": 9,
       "source_start": 0
     },
@@ -11,6 +12,7 @@
       "compiled_end": 99,
       "compiled_start": 85,
       "language": "python",
+      "needs_injection": true,
       "source_end": 24,
       "source_start": 10
     },
@@ -18,6 +20,7 @@
       "compiled_end": 120,
       "compiled_start": 109,
       "language": "python",
+      "needs_injection": true,
       "source_end": 36,
       "source_start": 25
     }

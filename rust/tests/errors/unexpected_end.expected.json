@@ -4,6 +4,7 @@
       "compiled_end": 31,
       "compiled_start": 31,
       "language": "html",
+      "needs_injection": true,
       "source_end": 5,
       "source_start": 0
     },
@@ -11,6 +12,7 @@
       "compiled_end": 31,
       "compiled_start": 31,
       "language": "html",
+      "needs_injection": true,
       "source_end": 18,
       "source_start": 12
     }

@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use hyper::generate::{ExpressionBrace, Segment, TagHighlight};
 use hyper::{CompileOptions, compile};
 use std::fs;
 use std::io::{self, IsTerminal, Read};
@@ -357,57 +358,9 @@ fn render_error(e: &hyper::CompileError, source: &str, filename: &str) {
 fn result_to_response(result: hyper::CompileResult, include_injections: bool) -> DaemonResponse {
     DaemonResponse {
         compiled: result.code,
-        segments: if include_injections {
-            Some(
-                result
-                    .segments
-                    .into_iter()
-                    .map(|s| DaemonSegment {
-                        language: s.language.as_str().to_string(),
-                        source_start: s.source_start,
-                        source_end: s.source_end,
-                        compiled_start: s.compiled_start,
-                        compiled_end: s.compiled_end,
-                        needs_injection: s.needs_injection,
-                        html_prefix: s.html_prefix,
-                    })
-                    .collect(),
-            )
-        } else {
-            None
-        },
-        expression_braces: if include_injections {
-            Some(
-                result
-                    .expression_braces
-                    .into_iter()
-                    .map(|b| DaemonExpressionBrace {
-                        open: b.open,
-                        close: b.close,
-                    })
-                    .collect(),
-            )
-        } else {
-            None
-        },
-        tag_highlights: if include_injections {
-            Some(
-                result
-                    .tag_highlights
-                    .into_iter()
-                    .map(|t| DaemonTagHighlight {
-                        start: t.start,
-                        end: t.end,
-                        kind: serde_json::to_value(&t.kind)
-                            .ok()
-                            .and_then(|v| v.as_str().map(String::from))
-                            .unwrap_or_default(),
-                    })
-                    .collect(),
-            )
-        } else {
-            None
-        },
+        segments: include_injections.then_some(result.segments),
+        expression_braces: include_injections.then_some(result.expression_braces),
+        tag_highlights: include_injections.then_some(result.tag_highlights),
     }
 }
 
@@ -440,35 +393,9 @@ fn error_to_json(e: &hyper::CompileError) -> String {
 struct DaemonResponse {
     compiled: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    segments: Option<Vec<DaemonSegment>>,
+    segments: Option<Vec<Segment>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    expression_braces: Option<Vec<DaemonExpressionBrace>>,
+    expression_braces: Option<Vec<ExpressionBrace>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tag_highlights: Option<Vec<DaemonTagHighlight>>,
-}
-
-#[derive(serde::Serialize)]
-struct DaemonSegment {
-    #[serde(rename = "type")]
-    language: String,
-    source_start: usize,
-    source_end: usize,
-    compiled_start: usize,
-    compiled_end: usize,
-    needs_injection: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    html_prefix: Option<String>,
-}
-
-#[derive(serde::Serialize)]
-struct DaemonExpressionBrace {
-    open: usize,
-    close: usize,
-}
-
-#[derive(serde::Serialize)]
-struct DaemonTagHighlight {
-    start: usize,
-    end: usize,
-    kind: String,
+    tag_highlights: Option<Vec<TagHighlight>>,
 }

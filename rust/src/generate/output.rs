@@ -6,15 +6,6 @@ pub enum Language {
     Html,
 }
 
-impl Language {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Language::Python => "python",
-            Language::Html => "html",
-        }
-    }
-}
-
 /// Source-to-compiled span. Source offsets are UTF-16 (after
 /// `segments_source_to_utf16` runs); compiled offsets are UTF-16.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -25,13 +16,11 @@ pub struct Segment {
     pub compiled_start: usize,
     pub compiled_end: usize,
     /// Whether this segment should produce an IDE injection.
-    /// Set to false for segments that don't need language injection (like parameters in frontmatter).
-    #[serde(skip)]
+    /// False for highlight-only segments (e.g. a component's closing-tag name).
     pub needs_injection: bool,
     /// Optional prefix for HTML injections (e.g. `<x` for component attribute fragments
     /// that need a synthetic tag name so the HTML parser can highlight attributes).
-    #[serde(skip)]
-    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub html_prefix: Option<String>,
 }
 

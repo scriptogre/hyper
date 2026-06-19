@@ -66,7 +66,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
             val python = segments
                 .asSequence()
-                .filter { it.type == "python" && it.needs_injection }
+                .filter { it.language == "python" && it.needs_injection }
                 .sortedBy { it.compiled_start }
                 .toList()
             if (python.isNotEmpty()) {
@@ -96,7 +96,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
             for (seg in segments
                 .asSequence()
-                .filter { it.type == "html" && it.needs_injection }
+                .filter { it.language == "html" && it.needs_injection }
                 .sortedBy { it.source_start }) {
                 out.add(
                     Injection(
@@ -136,7 +136,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
     @Serializable
     data class Segment(
-        val type: String,  // "python" or "html"
+        val language: String,  // "python" or "html"
         val source_start: Int,
         val source_end: Int,
         val compiled_start: Int,

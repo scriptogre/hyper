@@ -4,6 +4,7 @@
       "compiled_end": 98,
       "compiled_start": 74,
       "language": "python",
+      "needs_injection": true,
       "source_end": 24,
       "source_start": 0
     },
@@ -11,6 +12,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 84,
       "source_start": 77
     },
@@ -18,6 +20,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 405,
       "source_start": 397
     },
@@ -25,6 +28,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 461,
       "source_start": 453
     },
@@ -32,6 +36,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 643,
       "source_start": 634
     },
@@ -39,6 +44,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 700,
       "source_start": 669
     },
@@ -46,6 +52,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 761,
       "source_start": 753
     },
@@ -53,6 +60,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 789,
       "source_start": 784
     },
@@ -60,6 +68,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 942,
       "source_start": 936
     },
@@ -67,6 +76,7 @@
       "compiled_end": 1146,
       "compiled_start": 1135,
       "language": "python",
+      "needs_injection": true,
       "source_end": 1002,
       "source_start": 991
     },
@@ -74,6 +84,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 990,
       "source_start": 987
     },
@@ -81,6 +92,7 @@
       "compiled_end": 39,
       "compiled_start": 39,
       "language": "html",
+      "needs_injection": true,
       "source_end": 1007,
       "source_start": 1003
     }

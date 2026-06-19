@@ -20,7 +20,7 @@ class HyperInjectionAlgorithmTest {
 
         val segments = listOf(
             Segment(
-                type = "python",
+                language = "python",
                 source_start = nameSourceStart,
                 source_end = nameSourceEnd,
                 compiled_start = nameCompiledStart,
@@ -53,12 +53,12 @@ class HyperInjectionAlgorithmTest {
 
         val segments = listOf(
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 0, source_end = 1,
                 compiled_start = 4, compiled_end = 5  // covers "x"
             ),
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 2, source_end = 3,
                 compiled_start = 10, compiled_end = 11 // covers "y"
             )
@@ -82,12 +82,12 @@ class HyperInjectionAlgorithmTest {
 
         val segments = listOf(
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 2, source_end = 3,
                 compiled_start = 10, compiled_end = 11
             ),
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 0, source_end = 1,
                 compiled_start = 4, compiled_end = 5
             )
@@ -107,12 +107,12 @@ class HyperInjectionAlgorithmTest {
 
         val segments = listOf(
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 0, source_end = 1,
                 compiled_start = 4, compiled_end = 5
             ),
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 5, source_end = 6,
                 compiled_start = 0, compiled_end = 0,
                 needs_injection = false
@@ -131,12 +131,12 @@ class HyperInjectionAlgorithmTest {
 
         val segments = listOf(
             Segment(
-                type = "html",
+                language = "html",
                 source_start = 0, source_end = 5,
                 compiled_start = 0, compiled_end = 0
             ),
             Segment(
-                type = "html",
+                language = "html",
                 source_start = 6, source_end = 12,
                 compiled_start = 0, compiled_end = 0
             )
@@ -157,7 +157,7 @@ class HyperInjectionAlgorithmTest {
         // parser sees a valid synthetic tag (e.g. "<x ...").
         val segments = listOf(
             Segment(
-                type = "html",
+                language = "html",
                 source_start = 9, source_end = 21,
                 compiled_start = 0, compiled_end = 0,
                 html_prefix = "<x"
@@ -175,12 +175,12 @@ class HyperInjectionAlgorithmTest {
     fun htmlSegmentsSortBySourceStart() {
         val segments = listOf(
             Segment(
-                type = "html",
+                language = "html",
                 source_start = 50, source_end = 55,
                 compiled_start = 0, compiled_end = 0
             ),
             Segment(
-                type = "html",
+                language = "html",
                 source_start = 5, source_end = 10,
                 compiled_start = 0, compiled_end = 0
             )
@@ -199,7 +199,7 @@ class HyperInjectionAlgorithmTest {
         val compiled = "abc"
         val segments = listOf(
             Segment(
-                type = "python",
+                language = "python",
                 source_start = 0, source_end = 1,
                 compiled_start = 100, compiled_end = 200
             )

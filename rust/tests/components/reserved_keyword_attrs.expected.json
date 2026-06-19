@@ -4,6 +4,7 @@
       "compiled_end": 144,
       "compiled_start": 124,
       "language": "python",
+      "needs_injection": true,
       "source_end": 36,
       "source_start": 16
     },
@@ -11,6 +12,7 @@
       "compiled_end": 220,
       "compiled_start": 216,
       "language": "python",
+      "needs_injection": true,
       "source_end": 73,
       "source_start": 69
     },
@@ -18,13 +20,16 @@
       "compiled_end": 247,
       "compiled_start": 243,
       "language": "python",
+      "needs_injection": true,
       "source_end": 86,
       "source_start": 82
     },
     {
       "compiled_end": 53,
       "compiled_start": 53,
+      "html_prefix": "<x",
       "language": "html",
+      "needs_injection": true,
       "source_end": 114,
       "source_start": 87
     },
@@ -32,6 +37,7 @@
       "compiled_end": 53,
       "compiled_start": 53,
       "language": "html",
+      "needs_injection": true,
       "source_end": 54,
       "source_start": 41
     },
@@ -39,6 +45,7 @@
       "compiled_end": 53,
       "compiled_start": 53,
       "language": "html",
+      "needs_injection": true,
       "source_end": 67,
       "source_start": 62
     },
@@ -46,6 +53,7 @@
       "compiled_end": 53,
       "compiled_start": 53,
       "language": "html",
+      "needs_injection": true,
       "source_end": 75,
       "source_start": 74
     },
@@ -53,6 +61,7 @@
       "compiled_end": 53,
       "compiled_start": 53,
       "language": "html",
+      "needs_injection": true,
       "source_end": 124,
       "source_start": 115
     }
