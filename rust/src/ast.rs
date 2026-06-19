@@ -234,12 +234,25 @@ pub struct ImportNode {
     pub span: Span,
 }
 
+/// Where a parameter sits in the function signature (mirrors Python's argument
+/// categories: `args` / `kwonlyargs` / `kwarg`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParamKind {
+    /// Positional-or-keyword, before the `*` marker (e.g. the default slot).
+    Positional,
+    /// Keyword-only, after the `*` marker (user params, named slots).
+    KeywordOnly,
+    /// `**kwargs`.
+    VarKeyword,
+}
+
 /// Template parameter (in header)
 #[derive(Debug, Clone)]
 pub struct ParameterNode {
     pub name: String,
     pub type_hint: Option<String>,
     pub default: Option<String>,
+    pub kind: ParamKind,
     pub span: Span,
 }
 

@@ -4,22 +4,7 @@ use super::{
     html_ranges_for_component, html_ranges_for_element,
 };
 use crate::ast::*;
-use crate::plugins::{Helper, rename_reserved_keywords};
-
-/// Parameter that receives a component's default-slot content.
-const DEFAULT_SLOT_PARAM: &str = "_default_slot";
-
-/// Type annotation shared by every slot parameter in a component signature.
-const SLOT_PARAM_DECL: &str = ": Iterable[str] | None = None,";
-
-/// Name of the parameter a slot binds to: default -> `_default_slot`,
-/// named -> `_<name>_slot`. Single source of truth for slot param naming.
-fn slot_param_name(name: Option<&str>) -> String {
-    match name {
-        Some(n) => format!("_{n}_slot"),
-        None => DEFAULT_SLOT_PARAM.to_string(),
-    }
-}
+use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
 
@@ -1449,6 +1434,37 @@ impl PythonGenerator {
             output.push("    ");
         }
     }
+
+    /// Emit one signature parameter (`name: type = default,`). User params map
+    /// back to source for injection; synthetic (slot) params do not.
+    fn emit_signature_param(&self, param: &ParameterNode, output: &mut Output, sig_indent: &str) {
+        output.push(sig_indent);
+        let start = output.position();
+        output.push(&param.name);
+        if let Some(type_hint) = &param.type_hint {
+            output.push(": ");
+            output.push(type_hint);
+        }
+        if let Some(default) = &param.default {
+            output.push(" = ");
+            output.push(default);
+        }
+        let end = output.position();
+
+        if !param.span.is_synthetic() {
+            output.add_range(Range {
+                range_type: RangeType::Python,
+                source_start: param.span.start.byte,
+                source_end: param.span.end.byte,
+                compiled_start: start,
+                compiled_end: end,
+                needs_injection: true,
+                html_prefix: None,
+            });
+        }
+        output.push(",");
+        output.newline();
+    }
 }
 
 impl Default for PythonGenerator {
@@ -1518,28 +1534,24 @@ impl Generator for PythonGenerator {
         }
         output.push(&func_name);
 
-        // Determine if we have slots (for _default_slot parameter)
-        let has_default_slot = ctx.slots_used.contains("");
-        let has_named_slots = ctx.slots_used.iter().any(|s| !s.is_empty());
+        // Partition params by where they sit in the signature.
+        let positional: Vec<&ParameterNode> = parameters
+            .iter()
+            .copied()
+            .filter(|p| p.kind == ParamKind::Positional)
+            .collect();
+        let keyword_only: Vec<&ParameterNode> = parameters
+            .iter()
+            .copied()
+            .filter(|p| p.kind == ParamKind::KeywordOnly)
+            .collect();
+        let var_keyword = parameters
+            .iter()
+            .copied()
+            .find(|p| p.kind == ParamKind::VarKeyword);
 
-        // Separate regular params from **kwargs
-        // Note: *args is rejected at parse time - hyper uses keyword-only params
-        let mut regular_params: Vec<_> = Vec::new();
-        let mut star_star_kwargs: Option<&ParameterNode> = None;
-
-        for param in &parameters {
-            if param.name.starts_with("**") {
-                star_star_kwargs = Some(param);
-            } else {
-                regular_params.push(param);
-            }
-        }
-
-        // Multi-line signature when there are any parameters
-        let has_any_params = has_default_slot
-            || !regular_params.is_empty()
-            || has_named_slots
-            || star_star_kwargs.is_some();
+        let has_any_params =
+            !positional.is_empty() || !keyword_only.is_empty() || var_keyword.is_some();
 
         if !has_any_params {
             output.push("():");
@@ -1547,68 +1559,27 @@ impl Generator for PythonGenerator {
         } else {
             output.push("(");
             output.newline();
-            let sig_indent = "        "; // 8 spaces — double indent for continuation
+            let sig_indent = "        "; // 8 spaces, double indent for continuation
 
-            // _default_slot parameter (positional, before keyword-only marker)
-            if has_default_slot {
-                output.push(sig_indent);
-                output.push(DEFAULT_SLOT_PARAM);
-                output.push(SLOT_PARAM_DECL);
-                output.newline();
+            // Positional params (before the keyword-only marker): the default slot.
+            for param in &positional {
+                self.emit_signature_param(param, &mut output, sig_indent);
             }
 
-            // Keyword-only marker — only when there are user-declared params
-            if !regular_params.is_empty() {
+            // Keyword-only marker, only when keyword-only params follow.
+            if !keyword_only.is_empty() {
                 output.push(sig_indent);
                 output.push("*,");
                 output.newline();
             }
 
-            // Regular user parameters (keyword-only, after *)
-            for param in regular_params.iter() {
-                output.push(sig_indent);
-                let param_start = output.position();
-                output.push(&param.name);
-
-                if let Some(type_hint) = &param.type_hint {
-                    output.push(": ");
-                    output.push(type_hint);
-                }
-                if let Some(default) = &param.default {
-                    output.push(" = ");
-                    output.push(default);
-                }
-                let param_end = output.position();
-
-                output.add_range(Range {
-                    range_type: RangeType::Python,
-                    source_start: param.span.start.byte,
-                    source_end: param.span.end.byte,
-                    compiled_start: param_start,
-                    compiled_end: param_end,
-                    needs_injection: true,
-                    html_prefix: None,
-                });
-                output.push(",");
-                output.newline();
+            // Keyword-only params: user params, then named slots.
+            for param in &keyword_only {
+                self.emit_signature_param(param, &mut output, sig_indent);
             }
 
-            // Named slot parameters
-            if has_named_slots {
-                let mut sorted_slots: Vec<_> =
-                    ctx.slots_used.iter().filter(|s| !s.is_empty()).collect();
-                sorted_slots.sort();
-
-                for slot_name in sorted_slots {
-                    output.push(sig_indent);
-                    output.push(&slot_param_name(Some(slot_name)));
-                    output.push(SLOT_PARAM_DECL);
-                    output.newline();
-                }
-            }
-
-            // **kwargs: explicit, or injected by the SpreadKwargs plugin
-            if let Some(kwargs) = star_star_kwargs {
+            // **kwargs (explicit or injected by SpreadKwargs); never an injection.
+            if let Some(kwargs) = var_keyword {
                 output.push(sig_indent);
                 output.push(&kwargs.name);
                 if let Some(type_hint) = &kwargs.type_hint {
@@ -1635,10 +1606,10 @@ impl Generator for PythonGenerator {
 
         let (mut code, mappings, tracked_ranges) = output.finish();
 
-        // Determine if we need Iterable import (for _default_slot parameter)
-        let has_default_slot = ctx.slots_used.contains("");
-        let has_named_slots = ctx.slots_used.iter().any(|s| !s.is_empty());
-        let needs_iterable = has_default_slot || has_named_slots;
+        // Iterable import is needed when a param is typed with it (slot params).
+        let needs_iterable = parameters
+            .iter()
+            .any(|p| p.type_hint.as_deref().is_some_and(|t| t.contains("Iterable")));
 
         // Build imports from ctx (populated by HelperDetectionPlugin)
         let mut hyper_imports = vec!["html"];

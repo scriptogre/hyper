@@ -1380,10 +1380,18 @@ impl TreeBuilder {
             return Ok(Some(node));
         };
 
+        // Hyper components use keyword-only params; **kwargs is the one exception.
+        let kind = if name.starts_with("**") {
+            ParamKind::VarKeyword
+        } else {
+            ParamKind::KeywordOnly
+        };
+
         let node = Node::Parameter(ParameterNode {
             name,
             type_hint,
             default,
+            kind,
             span: *span,
         });
 

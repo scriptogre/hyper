@@ -1,17 +1,17 @@
 mod context;
-mod detect_slots;
 mod helper_detect;
 mod mutable_defaults;
 mod r#async;
 mod rename_reserved_keywords;
+mod slots;
 mod spread_kwargs;
 
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
-pub use detect_slots::DetectSlots;
-pub use r#async::Async;
 pub use helper_detect::HelperDetectionPlugin;
 pub use mutable_defaults::MutableDefaults;
+pub use r#async::Async;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
+pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
 pub use spread_kwargs::SpreadKwargs;
 
 use crate::ast::{Ast, Node};
@@ -117,7 +117,7 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
         Box::new(RenameReservedKeywords),
         Box::new(HelperDetectionPlugin),
         Box::new(Async::default()),
-        Box::new(DetectSlots),
+        Box::new(Slots::default()),
         Box::new(MutableDefaults::default()),
         Box::new(SpreadKwargs::new()),
     ]

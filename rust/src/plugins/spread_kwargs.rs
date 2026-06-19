@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::context::BLESSED_SPREAD_NAMES;
 use super::{Context, Flow, Plugin, walk};
-use crate::ast::{Ast, Attribute, AttributeKind, Node, ParameterNode, Span};
+use crate::ast::{Ast, Attribute, AttributeKind, Node, ParamKind, ParameterNode, Span};
 use crate::error::CompileError;
 
 /// Auto-injects a `**kwargs` parameter for blessed spread names (kwargs, props,
@@ -70,13 +70,14 @@ impl Plugin for SpreadKwargs {
 
         // Transform: inject `**name` into the signature, unless one is declared.
         if !self.has_explicit_kwargs
-            && let Some((name, span)) = self.blessed_spreads.first()
+            && let Some((name, _)) = self.blessed_spreads.first()
         {
             ast.function.params.push(Node::Parameter(ParameterNode {
                 name: format!("**{name}"),
                 type_hint: None,
                 default: None,
-                span: *span,
+                kind: ParamKind::VarKeyword,
+                span: Span::synthetic(),
             }));
         }
 

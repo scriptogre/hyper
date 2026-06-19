@@ -49,19 +49,10 @@ pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", 
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     pub helpers_used: HashSet<Helper>,
-    pub slots_used: HashSet<String>,
 }
 
 impl Context {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn uses_children(&self) -> bool {
-        self.slots_used.contains("children")
-    }
-
-    pub fn get_slot_names(&self) -> Vec<String> {
-        self.slots_used.iter().cloned().collect()
     }
 }
