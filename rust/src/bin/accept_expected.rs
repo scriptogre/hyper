@@ -125,11 +125,10 @@ fn process_file(path: &Path, write: bool) -> bool {
                 },
             );
             if let Ok(r) = result_with_ranges
-                && (!r.injections.is_empty() || !r.segments.is_empty())
+                && !r.segments.is_empty()
             {
                 let expected_json = path.with_extension("expected.json");
                 let json = serde_json::json!({
-                    "injections": r.injections,
                     "segments": r.segments,
                 });
                 let content = serde_json::to_string_pretty(&json).unwrap();

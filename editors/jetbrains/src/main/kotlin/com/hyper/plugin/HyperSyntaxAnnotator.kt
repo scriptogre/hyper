@@ -4,6 +4,7 @@ import com.hyper.plugin.psi.HyperTypes
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -11,6 +12,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+
+/** Carries the source TextAttributesKey on an enforced highlight so tests can read it back
+ *  (the platform drops `forcedTextAttributesKey` under `enforcedTextAttributes`). */
+internal class HyperTagHighlightGroup(val key: TextAttributesKey) : ProblemGroup {
+    override fun getProblemName(): String = "Hyper:${key.externalName}"
+}
 
 /**
  * Annotator for sub-line syntax highlighting in .hyper files.
@@ -333,6 +340,7 @@ class HyperSyntaxAnnotator : Annotator {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(TextRange(start, end))
             .enforcedTextAttributes(attrs)
+            .problemGroup(HyperTagHighlightGroup(key))
             .create()
     }
 

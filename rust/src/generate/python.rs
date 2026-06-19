@@ -1693,8 +1693,8 @@ impl Generator for PythonGenerator {
                 import_lines.len()
             };
 
-        // Compute injection segments and injections using the analyzer (if requested)
-        let (segments, injections, expression_braces, tag_highlights) = if options.include_ranges {
+        // Adjust segments and collect IDE metadata when ranges are requested.
+        let (segments, expression_braces, tag_highlights) = if options.include_ranges {
             // Find insertion point (where import_lines were inserted) in pre-insertion coordinates
             let def_pos = code
                 .find("async def ")
@@ -1704,7 +1704,7 @@ impl Generator for PythonGenerator {
 
             // Adjust tracked segments by the import line offset, but only for segments
             // at or after the insertion point (user imports come before it)
-            let adjusted_segments: Vec<crate::generate::Segment> = tracked_segments
+            let segments: Vec<crate::generate::Segment> = tracked_segments
                 .into_iter()
                 .map(|mut s| {
                     if s.compiled_start >= pre_insertion_def_pos {
@@ -1715,10 +1715,6 @@ impl Generator for PythonGenerator {
                 })
                 .collect();
 
-            let analyzer = super::InjectionAnalyzer::new();
-            let (segments, injections) =
-                analyzer.analyze(ast, &code, &ast.source, adjusted_segments);
-
             // Collect expression brace positions from the AST
             let byte_braces = collect_expression_braces(ast);
             let expression_braces = convert_braces_to_utf16(&ast.source, &byte_braces);
@@ -1728,15 +1724,14 @@ impl Generator for PythonGenerator {
             let tag_highlights =
                 super::convert_tag_highlights_to_utf16(&ast.source, &byte_tag_highlights);
 
-            (segments, injections, expression_braces, tag_highlights)
+            (segments, expression_braces, tag_highlights)
         } else {
-            (Vec::new(), Vec::new(), Vec::new(), Vec::new())
+            (Vec::new(), Vec::new(), Vec::new())
         };
 
         CompileResult {
             code,
             segments,
-            injections,
             expression_braces,
             tag_highlights,
         }

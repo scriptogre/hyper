@@ -33,9 +33,7 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
 
     if options.include_ranges {
         generate::validate_python_segments(source, &result.code, &mut result.segments);
-        result.injections = generate::compute_injections(&result.code, source, &result.segments);
-        // Convert source offsets from byte to UTF-16 last, after validation and
-        // injection computation (both expect byte offsets).
+        // Convert source offsets from byte to UTF-16 last; validation expects byte offsets.
         generate::segments_source_to_utf16(source, &mut result.segments);
     }
 

@@ -56,28 +56,5 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
         }
     }
 
-    // Injection positions are UTF-16 (converted from byte offsets in compute_injections)
-    for (i, inj) in result.injections.iter().enumerate() {
-        if inj.start > source_utf16_len {
-            return Err(format!(
-                "Injection {} start ({}) > source UTF-16 length ({})",
-                i, inj.start, source_utf16_len,
-            )
-            .into());
-        }
-        if inj.end > source_utf16_len {
-            return Err(format!(
-                "Injection {} end ({}) > source UTF-16 length ({})",
-                i, inj.end, source_utf16_len,
-            )
-            .into());
-        }
-        if inj.start > inj.end {
-            return Err(
-                format!("Injection {} start ({}) > end ({})", i, inj.start, inj.end,).into(),
-            );
-        }
-    }
-
     Ok(())
 }

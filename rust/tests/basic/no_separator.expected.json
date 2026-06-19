@@ -1,34 +1,4 @@
 {
-  "injections": [
-    {
-      "end": 5,
-      "prefix": "",
-      "start": 0,
-      "suffix": "",
-      "type": "html"
-    },
-    {
-      "end": 37,
-      "prefix": "",
-      "start": 31,
-      "suffix": "",
-      "type": "html"
-    },
-    {
-      "end": 44,
-      "prefix": "",
-      "start": 38,
-      "suffix": "",
-      "type": "html"
-    },
-    {
-      "end": 63,
-      "prefix": "",
-      "start": 56,
-      "suffix": "",
-      "type": "html"
-    }
-  ],
   "segments": [
     {
       "compiled_end": 31,

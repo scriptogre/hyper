@@ -368,23 +368,8 @@ fn result_to_response(result: hyper::CompileResult, include_injections: bool) ->
                         source_end: s.source_end,
                         compiled_start: s.compiled_start,
                         compiled_end: s.compiled_end,
-                    })
-                    .collect(),
-            )
-        } else {
-            None
-        },
-        injections: if include_injections {
-            Some(
-                result
-                    .injections
-                    .into_iter()
-                    .map(|i| DaemonInjection {
-                        injection_type: i.language.as_str().to_string(),
-                        start: i.start,
-                        end: i.end,
-                        prefix: i.prefix,
-                        suffix: i.suffix,
+                        needs_injection: s.needs_injection,
+                        html_prefix: s.html_prefix,
                     })
                     .collect(),
             )
@@ -457,8 +442,6 @@ struct DaemonResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     segments: Option<Vec<DaemonSegment>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    injections: Option<Vec<DaemonInjection>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     expression_braces: Option<Vec<DaemonExpressionBrace>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tag_highlights: Option<Vec<DaemonTagHighlight>>,
@@ -472,16 +455,9 @@ struct DaemonSegment {
     source_end: usize,
     compiled_start: usize,
     compiled_end: usize,
-}
-
-#[derive(serde::Serialize)]
-struct DaemonInjection {
-    #[serde(rename = "type")]
-    injection_type: String,
-    start: usize,
-    end: usize,
-    prefix: String,
-    suffix: String,
+    needs_injection: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    html_prefix: Option<String>,
 }
 
 #[derive(serde::Serialize)]

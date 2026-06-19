@@ -1,45 +1,8 @@
-//! Injection analyzer. Computes IDE injection segments from AST and generated code.
-//!
-//! This module handles:
-//! - Computing prefix/suffix injections from segments (for JetBrains virtual files)
-//! - Building HTML injection segments for element and component tags
+//! HTML segment builders for element, component, and slot tags. They emit
+//! `Language::Html` segments for static tag parts; compiled positions are unused.
 
-use super::output::{Injection, Language, Segment, compute_injections};
+use super::output::{Language, Segment};
 use crate::ast::*;
-
-/// Analyzes AST and generated code to produce injection segments and injections.
-pub struct InjectionAnalyzer;
-
-impl Default for InjectionAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl InjectionAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
-    /// Post-process segments to compute injection prefix/suffix.
-    pub fn analyze(
-        &self,
-        _ast: &Ast,
-        code: &str,
-        source: &str,
-        segments: Vec<Segment>,
-    ) -> (Vec<Segment>, Vec<Injection>) {
-        let injections = compute_injections(code, source, &segments);
-        (segments, injections)
-    }
-}
-
-// ─── HTML segment builders ───────────────────────────────────────────────
-//
-// These produce Language::Html segments for the static parts of element
-// and component/slot tags, skipping over embedded expression spans.
-// HTML segments don't need compiled positions (compiled_start/end = 0)
-// because the virtual HTML file is built from source text directly.
 
 /// Collect expression spans from component/slot attributes that must be
 /// excluded from HTML segments.  Returns `(start, exclusive_end)` byte pairs.

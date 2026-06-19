@@ -35,18 +35,6 @@ pub struct Segment {
     pub html_prefix: Option<String>,
 }
 
-/// Computed injection with prefix/suffix for IDE language injection.
-/// JetBrains concatenates: prefix + source_content + suffix for each injection.
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct Injection {
-    #[serde(rename = "type")]
-    pub language: Language,
-    pub start: usize, // source start (UTF-16)
-    pub end: usize,   // source end (UTF-16)
-    pub prefix: String,
-    pub suffix: String,
-}
-
 /// Expression brace position in source (UTF-16 offsets)
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ExpressionBrace {
@@ -133,89 +121,6 @@ fn normalize_indent(s: &str) -> String {
         .join("\n")
 }
 
-/// Compute prefix/suffix injections from ranges + compiled code.
-/// JetBrains concatenates: prefix1 + source1 + suffix1 + prefix2 + source2 + suffix2...
-/// So we set suffix="" for all but the last injection per type.
-///
-/// For Python: prefix/suffix come from the compiled code, building a virtual Python file
-/// where source expressions are embedded in their compiled context.
-///
-/// For HTML: prefix/suffix are empty — the virtual HTML file is just the source HTML
-/// fragments concatenated. This gives JetBrains enough context for tag completion
-/// and attribute suggestions.
-///
-/// Source positions in ranges are byte offsets. This function converts them to UTF-16
-/// code unit offsets for the injection start/end fields, since JetBrains TextRange
-/// uses UTF-16 offsets.
-pub fn compute_injections(code: &str, source: &str, segments: &[Segment]) -> Vec<Injection> {
-    // Build byte-to-UTF-16 mapping for source string
-    let byte_to_utf16 = build_byte_to_utf16_map(source);
-    let mut injections = Vec::new();
-
-    // Process each language separately (python and html have independent virtual files)
-    for language in [Language::Python, Language::Html] {
-        let mut type_segments: Vec<_> = segments
-            .iter()
-            .filter(|s| s.language == language && s.needs_injection)
-            .collect();
-        // Python: sort by COMPILED position since prefix computation walks
-        // the compiled code sequentially. HTML: sort by source position.
-        match language {
-            Language::Python => type_segments.sort_by_key(|s| s.compiled_start),
-            Language::Html => type_segments.sort_by_key(|s| s.source_start),
-        }
-
-        if type_segments.is_empty() {
-            continue;
-        }
-
-        match language {
-            Language::Python => {
-                // Python: prefix/suffix from compiled code for virtual Python file
-                let mut prev_end = 0;
-                let count = type_segments.len();
-
-                for (index, seg) in type_segments.iter().enumerate() {
-                    let is_last = index == count - 1;
-
-                    let prefix = substring_utf16(code, prev_end, seg.compiled_start);
-                    let suffix = if is_last {
-                        substring_utf16_to_end(code, seg.compiled_end)
-                    } else {
-                        String::new()
-                    };
-
-                    injections.push(Injection {
-                        language,
-                        start: byte_to_utf16[seg.source_start],
-                        end: byte_to_utf16[seg.source_end],
-                        prefix,
-                        suffix,
-                    });
-
-                    prev_end = seg.compiled_end;
-                }
-            }
-            Language::Html => {
-                // HTML: prefix is usually empty (source already contains HTML).
-                // Component-attribute segments carry an html_prefix (e.g. "<x") so the
-                // virtual HTML fragment has a tag name and JetBrains can parse attrs.
-                for seg in &type_segments {
-                    injections.push(Injection {
-                        language,
-                        start: byte_to_utf16[seg.source_start],
-                        end: byte_to_utf16[seg.source_end],
-                        prefix: seg.html_prefix.as_deref().unwrap_or("").to_string(),
-                        suffix: String::new(),
-                    });
-                }
-            }
-        }
-    }
-
-    injections
-}
-
 /// Convert each segment's `source_start`/`source_end` from byte to UTF-16 offsets.
 /// Compiled offsets are left untouched (already UTF-16).
 pub fn segments_source_to_utf16(source: &str, segments: &mut [Segment]) {
@@ -250,16 +155,6 @@ fn substring_utf16(s: &str, start: usize, end: usize) -> String {
     let start = start.min(end);
 
     String::from_utf16_lossy(&utf16_units[start..end])
-}
-
-/// Extract substring from UTF-16 position to end
-fn substring_utf16_to_end(s: &str, start: usize) -> String {
-    let utf16_units: Vec<u16> = s.encode_utf16().collect();
-    if start >= utf16_units.len() {
-        return String::new();
-    }
-
-    String::from_utf16_lossy(&utf16_units[start..])
 }
 
 /// Output buffer that accumulates generated code with segments.

@@ -5,13 +5,12 @@ mod python;
 
 pub use brace_collector::{collect_expression_braces, collect_tag_highlights};
 pub use injection_analyzer::{
-    InjectionAnalyzer, collect_component_attr_expr_spans, html_segments_for_component,
-    html_segments_for_element,
+    collect_component_attr_expr_spans, html_segments_for_component, html_segments_for_element,
 };
 pub use output::{
-    ExpressionBrace, Injection, Language, Output, Segment, TagHighlight, TagHighlightKind,
-    compute_injections, convert_braces_to_utf16, convert_tag_highlights_to_utf16,
-    segments_source_to_utf16, validate_python_segments,
+    ExpressionBrace, Language, Output, Segment, TagHighlight, TagHighlightKind,
+    convert_braces_to_utf16, convert_tag_highlights_to_utf16, segments_source_to_utf16,
+    validate_python_segments,
 };
 pub use python::PythonGenerator;
 
@@ -30,7 +29,6 @@ pub struct CompileOptions {
 pub struct CompileResult {
     pub code: String,
     pub segments: Vec<Segment>,
-    pub injections: Vec<Injection>,
     pub expression_braces: Vec<ExpressionBrace>,
     pub tag_highlights: Vec<TagHighlight>,
 }

@@ -1,20 +1,4 @@
 {
-  "injections": [
-    {
-      "end": 5,
-      "prefix": "",
-      "start": 0,
-      "suffix": "",
-      "type": "html"
-    },
-    {
-      "end": 18,
-      "prefix": "",
-      "start": 12,
-      "suffix": "",
-      "type": "html"
-    }
-  ],
   "segments": [
     {
       "compiled_end": 31,

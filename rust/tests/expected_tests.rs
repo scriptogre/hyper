@@ -114,13 +114,12 @@ fn run_injection_test(path: &PathBuf) -> Result<(), Failed> {
     match compile(&source, &options) {
         Ok(result) => {
             let actual = serde_json::json!({
-                "injections": result.injections,
                 "segments": result.segments,
             });
 
             if actual != expected {
                 Err(format!(
-                    "Injection mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
+                    "Segments mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
                     serde_json::to_string_pretty(&expected).unwrap(),
                     serde_json::to_string_pretty(&actual).unwrap()
                 )

@@ -25,7 +25,8 @@ sourceSets {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    // Match PyCharm 2025.1's bundled kotlinx-serialization; an older pin shadows it and hangs test startup.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     intellijPlatform {
         pycharmCommunity("2025.1")
@@ -73,7 +74,7 @@ tasks {
             rootProject.file("../../rust/target/debug/hyper").absolutePath)
         systemProperty("java.awt.headless", "true")
         systemProperty("idea.classpath.index.enabled", "false")
-        jvmArgs = listOf("-Xmx2g")
+        jvmArgs = listOf("-Xmx4g", "-XX:+UseG1GC")
         workingDir = project.projectDir
     }
 }

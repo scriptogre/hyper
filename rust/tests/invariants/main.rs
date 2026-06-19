@@ -10,7 +10,6 @@ mod helpers;
 mod html_completeness;
 mod monotonicity;
 mod no_overlap;
-mod roundtrip;
 mod semantic;
 
 use libtest_mimic::{Arguments, Trial};
@@ -43,13 +42,6 @@ fn collect_tests() -> Vec<Trial> {
             .with_extension("")
             .to_string_lossy()
             .replace('/', "::");
-
-        // Test A: Virtual Python round-trip
-        let p = path.clone();
-        tests.push(Trial::test(
-            format!("roundtrip::{}", test_name),
-            move || roundtrip::run(&p),
-        ));
 
         // Test B: Compiled position monotonicity
         let p = path.clone();

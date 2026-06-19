@@ -35,22 +35,18 @@ class HyperAnnotatorTest : BasePlatformTestCase() {
         return File(testDataPath, relativePath).readText()
     }
 
-    /**
-     * Find all highlights with a specific TextAttributesKey and return
-     * the text they cover, using the original source text for extraction.
-     *
-     * We match only on `forcedTextAttributesKey` because that is what
-     * `holder.newSilentAnnotation(...).textAttributes(key).create()` sets.
-     * Matching on `type.attributesKey` is too broad and picks up unrelated
-     * IntelliJ-internal highlights.
-     */
+    /** Find highlights with a given key. Enforced highlights lose `forcedTextAttributesKey`,
+     *  so this also matches the `HyperTagHighlightGroup` ProblemGroup that carries it. */
     private fun highlightedTexts(
         highlights: List<HighlightInfo>,
         key: TextAttributesKey,
         source: String
     ): List<String> {
         return highlights
-            .filter { it.forcedTextAttributesKey == key }
+            .filter {
+                it.forcedTextAttributesKey == key ||
+                    (it.problemGroup as? HyperTagHighlightGroup)?.key == key
+            }
             .filter { it.startOffset >= 0 && it.endOffset <= source.length }
             .map { source.substring(it.startOffset, it.endOffset) }
     }

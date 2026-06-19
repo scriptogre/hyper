@@ -57,6 +57,60 @@ class HyperTranspilerService(private val project: Project) : Disposable {
             val ext = if (osName == "windows") ".exe" else ""
             return "hyper-$osName-$archName$ext"
         }
+
+        /** Build prefix/suffix injections from segments + compiled code (inverse of the
+         *  transpiler's old compute_injections). Bounds-guarded so a bad offset can't crash the IDE. */
+        internal fun buildInjections(code: String, segments: List<Segment>): List<Injection> {
+            val codeLen = code.length
+            val out = ArrayList<Injection>(segments.size)
+
+            val python = segments
+                .asSequence()
+                .filter { it.type == "python" && it.needs_injection }
+                .sortedBy { it.compiled_start }
+                .toList()
+            if (python.isNotEmpty()) {
+                var prevEnd = 0
+                val last = python.size - 1
+                for ((i, seg) in python.withIndex()) {
+                    val prefixStart = prevEnd.coerceIn(0, codeLen)
+                    val prefixEnd = seg.compiled_start.coerceIn(prefixStart, codeLen)
+                    val prefix = code.substring(prefixStart, prefixEnd)
+                    val suffix = if (i == last) {
+                        code.substring(seg.compiled_end.coerceIn(0, codeLen))
+                    } else {
+                        ""
+                    }
+                    out.add(
+                        Injection(
+                            type = "python",
+                            start = seg.source_start,
+                            end = seg.source_end,
+                            prefix = prefix,
+                            suffix = suffix
+                        )
+                    )
+                    prevEnd = seg.compiled_end
+                }
+            }
+
+            for (seg in segments
+                .asSequence()
+                .filter { it.type == "html" && it.needs_injection }
+                .sortedBy { it.source_start }) {
+                out.add(
+                    Injection(
+                        type = "html",
+                        start = seg.source_start,
+                        end = seg.source_end,
+                        prefix = seg.html_prefix ?: "",
+                        suffix = ""
+                    )
+                )
+            }
+
+            return out
+        }
     }
 
     // Daemon process management
@@ -86,16 +140,9 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         val source_start: Int,
         val source_end: Int,
         val compiled_start: Int,
-        val compiled_end: Int
-    )
-
-    @Serializable
-    data class InjectionJson(
-        val type: String,
-        val start: Int,
-        val end: Int,
-        val prefix: String,
-        val suffix: String
+        val compiled_end: Int,
+        val needs_injection: Boolean = true,
+        val html_prefix: String? = null
     )
 
     @Serializable
@@ -108,7 +155,6 @@ class HyperTranspilerService(private val project: Project) : Disposable {
     data class TranspileResultJson(
         val compiled: String,
         val segments: List<Segment>? = null,
-        val injections: List<InjectionJson>? = null,
         val expression_braces: List<ExpressionBraceJson>? = null,
         val tag_highlights: List<TagHighlightJson>? = null
     )
@@ -169,11 +215,8 @@ class HyperTranspilerService(private val project: Project) : Disposable {
         val endCol: Int?
     )
 
-    /**
-     * Parse JSON response - injections are computed by the transpiler.
-     */
+    /** Parse the daemon JSON and rebuild the IDE injection list from segments + compiled code. */
     private fun parseResponse(jsonString: String): TranspileResult {
-        // Check if response is an error
         if (jsonString.contains("\"error\"") && !jsonString.contains("\"compiled\"")) {
             val errorJson = json.decodeFromString<ErrorResponseJson>(jsonString)
             throw TranspileException(
@@ -187,17 +230,7 @@ class HyperTranspilerService(private val project: Project) : Disposable {
 
         val parsed = json.decodeFromString<TranspileResultJson>(jsonString)
         val segments = parsed.segments ?: emptyList()
-
-        // Use injections from transpiler (already computed with prefix/suffix)
-        val injections = parsed.injections?.map { inj ->
-            Injection(
-                start = inj.start,
-                end = inj.end,
-                prefix = inj.prefix,
-                suffix = inj.suffix,
-                type = inj.type
-            )
-        } ?: emptyList()
+        val injections = buildInjections(parsed.compiled, segments)
 
         return TranspileResult(
             code = parsed.compiled,

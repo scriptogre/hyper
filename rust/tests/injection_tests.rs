@@ -1,23 +1,17 @@
 mod common;
 
-use common::{
-    compile_with_ranges, html_injections, html_segments, python_injections, python_segments,
-};
+use common::{compile_with_ranges, html_segments, python_segments};
 use hyper::CompileOptions;
 use hyper::generate::Language;
 
 #[test]
-fn test_expression_injection() {
+fn test_expression_segment() {
     let source = "<button aria={x}>y</button>";
     let result = compile_with_ranges(source, "Test");
 
-    // Should have one Python injection for the {x} expression
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1, "Expected 1 Python injection");
-    assert_eq!(py[0].language, Language::Python);
-
     let py_ranges = python_segments(&result);
-    // Check that compiled positions are not zero
+    assert_eq!(py_ranges.len(), 1, "Expected 1 Python segment");
+    assert_eq!(py_ranges[0].language, Language::Python);
     assert!(
         py_ranges[0].compiled_start > 0,
         "Compiled start should not be 0"
@@ -34,30 +28,25 @@ fn test_expression_injection() {
         "Source range should be 1 char (just 'x'), not 3 ('{{x}}')"
     );
 
-    // Should also have HTML injection ranges for the static HTML parts
-    let html = html_injections(&result);
-    assert!(!html.is_empty(), "Should have HTML injection ranges");
-
-    // HTML injections should have empty prefix/suffix
-    for inj in &html {
-        assert!(inj.prefix.is_empty(), "HTML prefix should be empty");
-        assert!(inj.suffix.is_empty(), "HTML suffix should be empty");
+    let html = html_segments(&result);
+    assert!(!html.is_empty(), "Should have HTML segments");
+    for seg in &html {
+        assert!(
+            seg.html_prefix.is_none(),
+            "Element HTML segment should not carry an html_prefix"
+        );
     }
 }
 
 #[test]
-fn test_parameter_injection() {
+fn test_parameter_segment() {
     let source = "x: str\n---\n<div>{x}</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert!(
-        !py.is_empty(),
-        "Expected at least 1 Python injection (expr)"
-    );
+    let py_ranges = python_segments(&result);
+    assert!(!py_ranges.is_empty(), "Expected at least 1 Python segment");
 
-    // Python ranges should have valid compiled positions
-    for (i, range) in python_segments(&result).iter().enumerate() {
+    for (i, range) in py_ranges.iter().enumerate() {
         assert!(
             range.compiled_end > range.compiled_start,
             "Range {} has invalid compiled positions: {} -> {}",
@@ -69,14 +58,11 @@ fn test_parameter_injection() {
 }
 
 #[test]
-fn test_text_expression_injection() {
+fn test_text_expression_segment() {
     let source = "<div>{name}</div>";
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
     let py_ranges = python_segments(&result);
-
-    assert_eq!(py.len(), 1);
     assert_eq!(py_ranges.len(), 1);
 
     let range = py_ranges[0];
@@ -88,36 +74,26 @@ fn test_text_expression_injection() {
         range.source_end <= source.len(),
         "Range should be within source bounds"
     );
-
-    // Verify the injection creates valid Python code
-    assert!(
-        py[0].prefix.contains("def "),
-        "Should contain function definition"
-    );
 }
 
 #[test]
-fn test_class_attribute_injection() {
+fn test_class_attribute_segment() {
     let source = r#"<div class={active and "active"}>Content</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1);
-
     let py_ranges = python_segments(&result);
+    assert_eq!(py_ranges.len(), 1);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, r#"active and "active""#);
 }
 
 #[test]
-fn test_style_attribute_injection() {
+fn test_style_attribute_segment() {
     let source = r#"<div style={{"color": color}}>Text</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1);
-
     let py_ranges = python_segments(&result);
+    assert_eq!(py_ranges.len(), 1);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert!(
         source_text.starts_with("{"),
@@ -127,14 +103,12 @@ fn test_style_attribute_injection() {
 }
 
 #[test]
-fn test_spread_attribute_injection() {
+fn test_spread_attribute_segment() {
     let source = r#"<button aria={aria_attrs}>Close</button>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1);
-
     let py_ranges = python_segments(&result);
+    assert_eq!(py_ranges.len(), 1);
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, "aria_attrs");
 }
@@ -151,16 +125,15 @@ y: int
 </div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
+    let py_ranges = python_segments(&result);
     // x in class, y in text, z in aria + params
     assert!(
-        py.len() >= 3,
-        "Expected at least 3 Python injections, got {}",
-        py.len()
+        py_ranges.len() >= 3,
+        "Expected at least 3 Python segments, got {}",
+        py_ranges.len()
     );
 
-    // All Python ranges should have valid positions
-    for (i, range) in python_segments(&result).iter().enumerate() {
+    for (i, range) in py_ranges.iter().enumerate() {
         assert!(
             range.compiled_end > range.compiled_start,
             "Range {} has invalid positions",
@@ -175,12 +148,11 @@ y: int
         );
     }
 
-    // Should also have HTML ranges
     let html = html_segments(&result);
     assert!(!html.is_empty(), "Should have HTML ranges for element tags");
 }
 
-/// Tests that injection ranges are correct when the template uses an explicit `---`
+/// Tests that segments are correct when the template uses an explicit `---`
 /// separator between parameters and body. Compare with `test_parameters_without_separator`.
 #[test]
 fn test_parameters_with_separator() {
@@ -193,16 +165,16 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
 <button aria={aria_attrs}>Close</button>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert!(!py.is_empty(), "Expected at least 1 Python injection");
+    let py_ranges = python_segments(&result);
+    assert!(!py_ranges.is_empty(), "Expected at least 1 Python segment");
 
-    for range in &python_segments(&result) {
+    for range in &py_ranges {
         assert!(range.compiled_end > range.compiled_start);
         assert!(range.source_end > range.source_start);
     }
 }
 
-/// Tests that injection ranges are correct when there is NO `---` separator.
+/// Tests that segments are correct when there is NO `---` separator.
 /// The parser must infer where parameters end and body begins.
 /// Compare with `test_parameters_with_separator`.
 #[test]
@@ -214,73 +186,26 @@ aria_attrs = {"label": "Close dialog", "hidden": is_hidden, "live": "polite"}
 <button aria={aria_attrs}>Close</button>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert!(!py.is_empty(), "Expected at least 1 Python injection");
+    let py_ranges = python_segments(&result);
+    assert!(!py_ranges.is_empty(), "Expected at least 1 Python segment");
 
-    for range in &python_segments(&result) {
+    for range in &py_ranges {
         assert!(range.compiled_end > range.compiled_start);
         assert!(range.source_end > range.source_start);
     }
 }
 
 #[test]
-fn test_injection_prefix_suffix_correctness() {
-    let source = r#"x: str
-
-print("test")
-
----
-
-<button aria={x}>
-    y
-</button>"#;
-    let result = compile_with_ranges(source, "Test");
-
-    let py = python_injections(&result);
-    assert!(
-        py.len() >= 2,
-        "Expected at least 2 Python injections (statement + expression)"
-    );
-
-    // The print statement should now have its own injection range
-    let stmt_injection = py
-        .iter()
-        .find(|inj| {
-            let source_slice = &source[inj.start..inj.end];
-            source_slice.contains("print")
-        })
-        .expect("Should find injection for the print statement");
-    let source_slice = &source[stmt_injection.start..stmt_injection.end];
-    assert_eq!(
-        source_slice.trim(),
-        "print(\"test\")",
-        "Statement injection should map to the print statement in source"
-    );
-
-    let expr_injection = py
-        .iter()
-        .find(|inj| {
-            let text = &source[inj.start..inj.end];
-            text == "x"
-        })
-        .expect("Should find expression injection for 'x'");
-
-    assert!(
-        expr_injection.prefix.contains("aria"),
-        "Expression injection prefix should contain 'aria'. Got: {:?}",
-        expr_injection.prefix
-    );
-}
-
-#[test]
-fn test_shorthand_attribute_injection() {
+fn test_shorthand_attribute_segment() {
     let source = r#"<div {disabled}>Content</div>"#;
     let result = compile_with_ranges(source, "Test");
 
-    let py = python_injections(&result);
-    assert_eq!(py.len(), 1, "Expected 1 Python injection for shorthand");
-
     let py_ranges = python_segments(&result);
+    assert_eq!(
+        py_ranges.len(),
+        1,
+        "Expected 1 Python segment for shorthand"
+    );
     let source_text = &source[py_ranges[0].source_start..py_ranges[0].source_end];
     assert_eq!(source_text, "disabled");
 }
@@ -335,11 +260,10 @@ end"#;
         );
     }
 
-    // Should have HTML ranges for element tags
     let html = html_segments(&result);
     assert!(!html.is_empty(), "Should have HTML ranges");
 
-    // HTML ranges should cover source content
+    // HTML ranges should cover source content; static element HTML carries no prefix.
     for (i, range) in html.iter().enumerate() {
         assert!(
             range.source_end > range.source_start,
@@ -353,12 +277,10 @@ end"#;
             range.source_end,
             source.len()
         );
-    }
-
-    // HTML injections should have empty prefix/suffix
-    for inj in &html_injections(&result) {
-        assert!(inj.prefix.is_empty(), "HTML prefix should be empty");
-        assert!(inj.suffix.is_empty(), "HTML suffix should be empty");
+        assert!(
+            range.html_prefix.is_none(),
+            "Element HTML segment should not carry an html_prefix"
+        );
     }
 }
 
@@ -372,7 +294,6 @@ fn test_text_expression_range_excludes_braces() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
-    // Find the range for the text expression
     let expr_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "name"
@@ -433,7 +354,6 @@ fn test_error_has_position_for_nested_interactive() {
     match err {
         hyper::CompileError::Parse(parse_err) => {
             assert!(parse_err.message.contains("cannot appear inside"));
-            // Error should point to the <button> tag, not <a>
             assert!(
                 parse_err.range.start.col > 0,
                 "Should point to <button>, not start of line"
@@ -456,7 +376,6 @@ fn test_error_has_position_for_duplicate_attribute() {
                     || parse_err.message.contains("duplicate")
                     || parse_err.message.contains("set twice")
             );
-            // Should have position info
             assert_eq!(parse_err.range.start.line, 0);
         }
         _ => panic!("Expected ParseError"),
@@ -475,7 +394,6 @@ fn test_html_range_source_text_simple() {
     let html = html_segments(&result);
     assert!(!html.is_empty());
 
-    // Each HTML range should extract valid HTML text from source
     for (i, range) in html.iter().enumerate() {
         let text = &source[range.source_start..range.source_end];
         assert!(!text.is_empty(), "HTML range {} should not be empty", i);
@@ -494,14 +412,12 @@ fn test_html_range_source_text_with_attributes() {
     let result = compile_with_ranges(source, "Test");
 
     let html = html_segments(&result);
-    // HTML ranges should split around the {active} expression
     assert!(
         html.len() >= 2,
         "Should have at least 2 HTML ranges, got {}",
         html.len()
     );
 
-    // First HTML range: "<div class=" (before expression)
     let first_text = &source[html[0].source_start..html[0].source_end];
     assert!(
         first_text.starts_with("<div"),
@@ -509,7 +425,6 @@ fn test_html_range_source_text_with_attributes() {
         first_text
     );
 
-    // Verify no HTML range contains the expression braces
     for range in &html {
         let text = &source[range.source_start..range.source_end];
         assert!(
@@ -528,7 +443,6 @@ fn test_html_ranges_void_element() {
     let html = html_segments(&result);
     assert!(!html.is_empty(), "Void elements should have HTML ranges");
 
-    // Should split around {url} expression
     let py = python_segments(&result);
     assert!(
         !py.is_empty(),
@@ -542,7 +456,6 @@ fn test_html_ranges_void_element() {
 
 #[test]
 fn test_no_overlap_python_html_segments() {
-    // Test across multiple templates
     let templates = vec![
         "<div class={x}>Hello {name}</div>",
         r#"<input type="text" value={val} />"#,
@@ -570,88 +483,6 @@ fn test_no_overlap_python_html_segments() {
 }
 
 // ========================================================================
-// Injection prefix+suffix reconstruction
-// ========================================================================
-
-#[test]
-fn test_injection_reconstruction_produces_valid_python() {
-    let source = "name: str\n---\n<div>{name}</div>";
-    let result = compile_with_ranges(source, "Test");
-
-    let py = python_injections(&result);
-    assert!(!py.is_empty());
-
-    // Reconstruct full code from injections
-    // Each injection's prefix + source[start..end] + suffix should produce valid-looking Python
-    for inj in &py {
-        let source_slice = &source[inj.start..inj.end];
-        let combined = format!("{}{}{}", inj.prefix, source_slice, inj.suffix);
-
-        // The combined code should contain the original source expression
-        assert!(
-            combined.contains(source_slice),
-            "Reconstructed code should contain source slice {:?}",
-            source_slice
-        );
-    }
-
-    // At least one injection (the first) should reconstruct to code containing "def"
-    let first = &py[0];
-    let first_combined = format!(
-        "{}{}{}",
-        first.prefix,
-        &source[first.start..first.end],
-        first.suffix
-    );
-    assert!(
-        first_combined.contains("def "),
-        "First injection reconstruction should contain 'def': {:?}",
-        first_combined
-    );
-}
-
-#[test]
-fn test_injection_reconstruction_with_multiple_expressions() {
-    let source = r#"<div class={active}>Hello {name}!</div>"#;
-    let result = compile_with_ranges(source, "Test");
-
-    let py = python_injections(&result);
-    assert!(py.len() >= 2, "Should have at least 2 Python injections");
-
-    // Verify each injection is self-consistent
-    for (i, inj) in py.iter().enumerate() {
-        assert!(
-            inj.start < inj.end,
-            "Injection {} has invalid range: {} >= {}",
-            i,
-            inj.start,
-            inj.end
-        );
-        assert!(
-            inj.end <= source.len(),
-            "Injection {} end {} exceeds source len {}",
-            i,
-            inj.end,
-            source.len()
-        );
-
-        // Verify the suffix of one injection connects to the prefix of the next
-        if i + 1 < py.len() {
-            let next = &py[i + 1];
-            // The gap between injections in the source should be bridged by suffix+prefix
-            let bridge = format!("{}{}", inj.suffix, next.prefix);
-            // The bridge should contain the compiled equivalent of the gap
-            assert!(
-                !bridge.is_empty(),
-                "Bridge between injections {} and {} should not be empty",
-                i,
-                i + 1
-            );
-        }
-    }
-}
-
-// ========================================================================
 // Control flow expression ranges
 // ========================================================================
 
@@ -661,7 +492,6 @@ fn test_if_condition_has_python_range() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
-    // Should have a range for the "active" condition
     let has_condition = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("active")
@@ -681,7 +511,6 @@ fn test_for_loop_has_python_range() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
-    // Must have a range that covers the binding AND iterable together
     let has_binding_and_iterable = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("item in items")
@@ -694,7 +523,6 @@ fn test_for_loop_has_python_range() {
             .collect::<Vec<_>>()
     );
 
-    // Must also have a range for the {item} expression inside the body
     let has_item_expr = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "item" && r.source_start > source.find('{').unwrap()
@@ -711,7 +539,6 @@ fn test_for_loop_binding_in_range() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
-    // The for-loop should have a range covering "item in items" (binding + iterable)
     let loop_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "item in items"
@@ -771,7 +598,6 @@ fn test_html_ranges_basic() {
         "Should have HTML ranges for static element"
     );
 
-    // The HTML range covers the opening tag <div>
     let first = html[0];
     let tag_text = &source[first.source_start..first.source_end];
     assert!(
@@ -780,11 +606,11 @@ fn test_html_ranges_basic() {
         tag_text
     );
 
-    // HTML injections should have empty prefix/suffix
-    let html_inj = html_injections(&result);
-    for inj in &html_inj {
-        assert!(inj.prefix.is_empty());
-        assert!(inj.suffix.is_empty());
+    for seg in &html {
+        assert!(
+            seg.html_prefix.is_none(),
+            "Element HTML segment should not carry an html_prefix"
+        );
     }
 }
 
@@ -800,15 +626,11 @@ fn test_html_ranges_with_expression() {
         html.len()
     );
 
-    // Verify HTML ranges don't overlap with expression spans
     let py = python_segments(&result);
     for h in &html {
         for p in &py {
             let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
-            // HTML ranges should not overlap with the expression braces
-            // (they might be adjacent but not overlapping)
             if overlaps {
-                // Check it's just adjacency, not overlap
                 assert!(
                     h.source_end <= p.source_start || h.source_start >= p.source_end,
                     "HTML range [{},{}] overlaps with Python range [{},{}]",
@@ -832,7 +654,6 @@ fn test_template_attribute_single_expression() {
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
-    // Should have a Python range for the {variant} expression
     let variant_range = py.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text == "variant"
@@ -845,7 +666,6 @@ fn test_template_attribute_single_expression() {
             .collect::<Vec<_>>()
     );
 
-    // Verify compiled text is also 'variant' (expression should match)
     let range = variant_range.unwrap();
     assert!(
         range.compiled_end > range.compiled_start,
@@ -872,7 +692,6 @@ fn test_template_attribute_multiple_expressions() {
         "Should have Python range for 'variant'"
     );
 
-    // id should come before variant in source
     assert!(id_range.unwrap().source_start < variant_range.unwrap().source_start);
 }
 
@@ -901,14 +720,12 @@ fn test_template_attribute_html_range_splits() {
     let html = html_segments(&result);
     let py = python_segments(&result);
 
-    // HTML ranges should split around the {id} expression in the template attribute
     assert!(
         html.len() >= 2,
         "Should have at least 2 HTML ranges (split around template expression), got {}",
         html.len()
     );
 
-    // No HTML range should contain the expression braces
     for h in &html {
         let text = &source[h.source_start..h.source_end];
         assert!(
@@ -918,7 +735,6 @@ fn test_template_attribute_html_range_splits() {
         );
     }
 
-    // Python range should exist for the expression
     let id_range = py
         .iter()
         .find(|r| &source[r.source_start..r.source_end] == "id");
@@ -927,7 +743,6 @@ fn test_template_attribute_html_range_splits() {
         "Should have Python range for 'id' in template attribute"
     );
 
-    // No overlap between HTML and Python ranges
     for h in &html {
         for p in &py {
             let overlaps = h.source_start < p.source_end && h.source_end > p.source_start;
@@ -938,41 +753,6 @@ fn test_template_attribute_html_range_splits() {
             );
         }
     }
-}
-
-#[test]
-fn test_template_attribute_roundtrip() {
-    // Verify the virtual Python reconstruction works for template attributes
-    let source = r#"name: str
----
-<div class="item-{name}">text</div>"#;
-    let result = compile_with_ranges(source, "Test");
-
-    // Reconstruct virtual Python from injections
-    let py_injections: Vec<_> = result
-        .injections
-        .iter()
-        .filter(|i| i.language == Language::Python)
-        .collect();
-
-    assert!(!py_injections.is_empty(), "Should have Python injections");
-
-    let mut virtual_python = String::new();
-    for inj in &py_injections {
-        virtual_python.push_str(&inj.prefix);
-        // Use UTF-16 substring since injection positions are UTF-16
-        let units: Vec<u16> = source.encode_utf16().collect();
-        let end = inj.end.min(units.len());
-        let start = inj.start.min(end);
-        let slice = String::from_utf16_lossy(&units[start..end]);
-        virtual_python.push_str(&slice);
-        virtual_python.push_str(&inj.suffix);
-    }
-
-    assert_eq!(
-        virtual_python, result.code,
-        "Virtual Python from injections should match compiled code"
-    );
 }
 
 // ========================================================================
@@ -1046,13 +826,11 @@ fn test_standalone_expression_has_python_range() {
 
 #[test]
 fn test_component_tag_braces_in_expression_braces() {
-    // <{Card}> opening and </{Card}> closing braces should be in expression_braces
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
     let braces = &result.expression_braces;
 
-    // Opening tag <{Card}>: { at byte 1, } at byte 6
     let has_open = braces.iter().any(|b| b.open == 1 && b.close == 6);
     assert!(
         has_open,
@@ -1060,7 +838,6 @@ fn test_component_tag_braces_in_expression_braces() {
         braces
     );
 
-    // Closing tag </{Card}>: { at byte 24, } at byte 29
     let close_brace_open = source.rfind("/{").unwrap() + 1;
     let close_brace_close = source.rfind("}").unwrap();
     let has_close = braces
@@ -1075,13 +852,11 @@ fn test_component_tag_braces_in_expression_braces() {
 
 #[test]
 fn test_named_slot_tag_braces_in_expression_braces() {
-    // <{...header}> and </{...header}> braces should be in expression_braces
     let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
     let result = compile_with_ranges(source, "Test");
 
     let braces = &result.expression_braces;
 
-    // Opening tag <{...header}>: { at byte 1, } at byte 11
     let open_brace = source.find('{').unwrap();
     let open_close = source.find('}').unwrap();
     let has_open = braces
@@ -1093,7 +868,6 @@ fn test_named_slot_tag_braces_in_expression_braces() {
         open_brace, open_close, braces
     );
 
-    // Closing tag </{...header}>: find the closing { and }
     let close_brace_open = source.rfind("/{").unwrap() + 1;
     let close_brace_close = source.rfind('}').unwrap();
     let has_close = braces
@@ -1108,15 +882,12 @@ fn test_named_slot_tag_braces_in_expression_braces() {
 
 #[test]
 fn test_component_tag_no_lone_angle_bracket_html() {
-    // Component tags should NOT emit lone "<", ">", "</" as HTML ranges —
-    // they're unparseable HTML fragments that pollute the virtual document.
-    // Instead, the attribute region gets a "<x" prefix for tag context.
+    // Component tags emit no lone "<"/">"/"</" segments (unparseable HTML); the attr region carries an "<x" prefix.
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
     let html = html_segments(&result);
 
-    // No HTML range should start at byte 0 (the lone "<")
     let has_lone_lt = html
         .iter()
         .any(|r| r.source_start == 0 && r.source_end == 1);
@@ -1132,7 +903,6 @@ fn test_component_tag_no_lone_angle_bracket_html() {
             .collect::<Vec<_>>()
     );
 
-    // The ">" after {Card} should be in an HTML range WITH a "<x" prefix
     let gt_range = html.iter().find(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains(">") && r.source_start > 0 && r.source_start < source.find('\n').unwrap()
@@ -1158,13 +928,12 @@ fn test_component_tag_no_lone_angle_bracket_html() {
 #[test]
 fn test_slot_tag_no_html_segments() {
     // Slot tags <{...header}> have no attributes, so they produce no
-    // HTML ranges for the opening/closing tag (only for child content)
+    // HTML ranges for the opening/closing tag (only for child content).
     let source = "<{...header}>\n    <h1>Fallback</h1>\n</{...header}>";
     let result = compile_with_ranges(source, "Test");
 
     let html = html_segments(&result);
 
-    // Only the child <h1>...</h1> should have HTML ranges, not the slot tags
     for r in &html {
         let text = &source[r.source_start..r.source_end];
         assert!(
@@ -1177,8 +946,6 @@ fn test_slot_tag_no_html_segments() {
 
 #[test]
 fn test_component_name_has_python_range() {
-    // The component name inside braces should have a Python injection range
-    // so the IDE can resolve it (go-to-definition, highlighting)
     let source = "<{Badge} text=\"Sale\" />";
     let result = compile_with_ranges(source, "Test");
 
@@ -1205,7 +972,6 @@ fn test_component_name_has_python_range() {
 
 #[test]
 fn test_component_close_name_has_python_range() {
-    // The closing tag component name should also have a Python range
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";
     let result = compile_with_ranges(source, "Test");
 
@@ -1230,18 +996,12 @@ fn test_component_close_name_has_python_range() {
     );
 }
 
-// Note: slot names (e.g. "header" in <{...header}>) are Hyper syntax, not Python
-// expressions. They compile to _header_slot, not header. No Python injection range
-// is emitted — styling comes from the TextMate grammar / annotator instead.
-
 // ========================================================================
 // Nested braces in attribute expressions
 // ========================================================================
 
 #[test]
 fn test_dict_in_attribute_expression() {
-    // Dict literal inside attribute expression: class={["card", {"sale": on_sale}]}
-    // The tokenizer must track bracket depth to find the correct closing }
     let source = r#"<div class={["card", {"sale": on_sale}]}>text</div>"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1258,7 +1018,6 @@ fn test_dict_in_attribute_expression() {
             .collect::<Vec<_>>()
     );
 
-    // The captured expression should include the closing }]
     let range = expr_range.unwrap();
     let text = &source[range.source_start..range.source_end];
     assert_eq!(
@@ -1266,7 +1025,6 @@ fn test_dict_in_attribute_expression() {
         "Expression should include full list with nested dict"
     );
 
-    // The compiled output should produce valid Python
     assert!(
         result.code.contains(r#"["card", {"sale": on_sale}]"#),
         "Compiled code should contain full expression. Got:\n{}",
@@ -1276,8 +1034,6 @@ fn test_dict_in_attribute_expression() {
 
 #[test]
 fn test_string_with_brace_in_attribute_expression() {
-    // A string literal containing "}" inside an attribute expression
-    // must not terminate the expression early
     let source = r#"<div class={get_class("}")}>text</div>"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1308,7 +1064,6 @@ fn test_string_with_brace_in_attribute_expression() {
 
 #[test]
 fn test_shorthand_on_html_element() {
-    // {disabled} on an HTML element renders as a single attribute
     let source = r#"<button {disabled}>Click</button>"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1321,7 +1076,6 @@ fn test_shorthand_on_html_element() {
 
 #[test]
 fn test_shorthand_on_component() {
-    // {disabled} on a component passes as a keyword argument
     let source = r#"<{Button} {disabled} />"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1334,7 +1088,6 @@ fn test_shorthand_on_component() {
 
 #[test]
 fn test_spread_on_component() {
-    // {**props} on a component unpacks as kwargs
     let source = r#"<{Card} {**props} />"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1347,7 +1100,6 @@ fn test_spread_on_component() {
 
 #[test]
 fn test_spread_on_html_element() {
-    // {**attrs} on an HTML element spreads as individual attributes
     let source = r#"<div {**attrs}>Content</div>"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1360,7 +1112,6 @@ fn test_spread_on_html_element() {
 
 #[test]
 fn test_shorthand_and_spread_together_on_component() {
-    // Mixing shorthand and spread on a component
     let source = r#"<{Card} {disabled} label="hi" {**props} />"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1402,7 +1153,6 @@ fn test_implicit_spread_all_blessed_names() {
 
 #[test]
 fn test_non_blessed_spread_no_injection() {
-    // Non-blessed name → no injection, variable must be in scope at runtime
     let source = "my_dict: dict\n---\n<{Card} {**my_dict} />\n";
     let result = compile_with_ranges(source, "Test");
 
@@ -1420,17 +1170,14 @@ fn test_non_blessed_spread_no_injection() {
 
 #[test]
 fn test_explicit_param_prevents_injection() {
-    // Explicitly declared props: dict → no auto-injection
     let source = "props: dict\n---\n<{Card} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
-    // Should have props as a regular keyword param, not **props
     assert!(
         result.code.contains("Card(**props)"),
         "Should emit Card(**props) at call site. Got:\n{}",
         result.code
     );
-    // The signature should NOT have **props — props is a regular param
     assert!(
         !result.code.contains("**props):"),
         "Should NOT inject **props when props is explicitly declared. Got:\n{}",
@@ -1440,7 +1187,6 @@ fn test_explicit_param_prevents_injection() {
 
 #[test]
 fn test_explicit_starstar_param_prevents_injection() {
-    // Explicitly declared **props in header → use it, no double injection
     let source = "**props\n---\n<{Card} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
@@ -1453,11 +1199,9 @@ fn test_explicit_starstar_param_prevents_injection() {
 
 #[test]
 fn test_same_blessed_name_multiple_components() {
-    // Same blessed name on multiple components → inject once
     let source = "<{Card} {**props} />\n<{Button} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
-    // Should have **props in the signature (multi-line format)
     assert!(
         result.code.contains("**props,"),
         "Should inject **props once. Got:\n{}",
@@ -1467,7 +1211,6 @@ fn test_same_blessed_name_multiple_components() {
 
 #[test]
 fn test_multiple_different_blessed_names_error() {
-    // Two different blessed names → compile error
     let source = "<{Card} {**props} />\n<{Button} {**attrs} />\n";
 
     let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
@@ -1485,12 +1228,10 @@ fn test_multiple_different_blessed_names_error() {
 
 #[test]
 fn test_implicit_spread_with_regular_params() {
-    // Blessed spread alongside regular params
     let source =
         "title: str\ncount: int = 0\n---\n<{Card} title={title} count={count} {**props} />\n";
     let result = compile_with_ranges(source, "Test");
 
-    // Multi-line signature should have *, params, and **props
     assert!(
         result.code.contains("*,")
             && result.code.contains("title: str,")
@@ -1507,8 +1248,6 @@ fn test_implicit_spread_with_regular_params() {
 
 #[test]
 fn test_component_html_ranges_no_overlap_with_expression_attrs() {
-    // Component with expression attributes: the HTML range after the component name
-    // must split around the expression {format_name(name)}, not overlap it
     let source = r#"<{Badge} text={format_name(name)} />"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1534,7 +1273,6 @@ fn test_component_html_ranges_no_overlap_with_expression_attrs() {
 
 #[test]
 fn test_component_html_ranges_no_overlap_with_shorthand_attrs() {
-    // Component with shorthand attribute: {is_active} is both an HTML gap and a Python range
     let source = r#"<{Badge} {is_active} />"#;
     let result = compile_with_ranges(source, "Test");
 
@@ -1560,13 +1298,11 @@ fn test_component_html_ranges_no_overlap_with_shorthand_attrs() {
 
 #[test]
 fn test_component_with_mixed_attrs_html_splits() {
-    // Component with static + expression + shorthand: HTML ranges should split properly
     let source = r#"<{Badge} text="Sale" badge_variant="danger" />"#;
     let result = compile_with_ranges(source, "Test");
 
     let html = html_segments(&result);
 
-    // The HTML range after the component name should cover the static attributes
     let has_text_attr = html.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
         text.contains("text=")
@@ -1586,57 +1322,51 @@ fn test_component_with_mixed_attrs_html_splits() {
 
 #[test]
 fn test_component_attr_html_has_tag_prefix() {
-    // Component attribute HTML fragments need a synthetic tag prefix so JetBrains
-    // can parse the attributes (HTML parser requires <tagname before attrs)
+    // Attribute fragments need a synthetic tag prefix to parse; the transpiler marks
+    // the first attribute-region segment with html_prefix = Some("<x").
     let source = r#"<{Badge} text="Sale" badge_variant="danger" />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html_inj = html_injections(&result);
-
-    // Should have exactly one HTML injection (the attribute region with prefix)
-    // The lone "<" and closing tag fragments are no longer emitted
+    let html = html_segments(&result);
+    let prefixed: Vec<_> = html
+        .iter()
+        .filter(|s| s.html_prefix.as_deref() == Some("<x"))
+        .collect();
     assert_eq!(
-        html_inj.len(),
+        prefixed.len(),
         1,
-        "Expected 1 HTML injection for component attrs. Got: {:?}",
-        html_inj
-            .iter()
-            .map(|i| (&source[i.start..i.end], &i.prefix))
+        "Expected 1 HTML segment with '<x' prefix. Got: {:?}",
+        html.iter()
+            .map(|s| (&source[s.source_start..s.source_end], &s.html_prefix))
             .collect::<Vec<_>>()
     );
 
-    // The injection should have a synthetic tag prefix
-    assert_eq!(
-        html_inj[0].prefix, "<x",
-        "Component attr HTML injection should have '<x' prefix for tag context"
-    );
-
-    // The source content should be the attribute region
-    let text = &source[html_inj[0].start..html_inj[0].end];
+    let text = &source[prefixed[0].source_start..prefixed[0].source_end];
     assert!(
         text.contains("text="),
-        "HTML injection should cover attributes, got: {:?}",
+        "Prefixed HTML segment should cover attributes, got: {:?}",
         text
     );
 }
 
 #[test]
-fn test_component_no_attrs_no_html_injection() {
-    // A bare component <{Badge} /> with no real attributes should have minimal HTML
+fn test_component_no_attrs_has_tag_prefix() {
+    // A bare component <{Badge} /> with no real attributes still gets the " />"
+    // fragment marked with html_prefix = "<x" so it parses as <x />.
     let source = r#"<{Badge} />"#;
     let result = compile_with_ranges(source, "Test");
 
-    let html_inj = html_injections(&result);
-
-    // The " />" fragment gets the prefix, so it becomes valid HTML: <x />
+    let html = html_segments(&result);
+    let prefixed: Vec<_> = html
+        .iter()
+        .filter(|s| s.html_prefix.as_deref() == Some("<x"))
+        .collect();
     assert_eq!(
-        html_inj.len(),
+        prefixed.len(),
         1,
-        "Expected 1 HTML injection for ' />'. Got: {:?}",
-        html_inj
-            .iter()
-            .map(|i| (&source[i.start..i.end], &i.prefix))
+        "Expected 1 HTML segment with '<x' prefix. Got: {:?}",
+        html.iter()
+            .map(|s| (&source[s.source_start..s.source_end], &s.html_prefix))
             .collect::<Vec<_>>()
     );
-    assert_eq!(html_inj[0].prefix, "<x");
 }
