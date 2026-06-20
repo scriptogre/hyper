@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use crate::ast::python::{Arguments, Code, Expr, ExprCall, ExprName, Identifier};
+use crate::ast::python::{Arguments, Code, Expr, ExprCall, ExprName, Identifier, StringLiteral};
 use crate::ast::{Ast, ExpressionNode, Function, Node, Position, TextRange};
 
 pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
@@ -135,8 +135,9 @@ fn interp_code(source: &str, brace_range: TextRange) -> Code {
     code_span(source, brace_range.start.byte + 1, brace_range.end.byte - 1)
 }
 
-/// `helper(arg)` where `arg` is verbatim user `Code`. Used for the value-slot
-/// helpers (`escape`, `render_class`, `render_style`).
+/// `helper(arg)` where `arg` is verbatim user `Code`. Used for single-argument
+/// helpers (`escape`, `render_class`, `render_style`, `render_data`,
+/// `render_aria`, `spread_attrs`).
 pub fn helper_call(name: &str, arg: Code) -> Expr {
     Expr::Call(ExprCall {
         func: Box::new(Expr::Name(ExprName {
@@ -144,6 +145,23 @@ pub fn helper_call(name: &str, arg: Code) -> Expr {
         })),
         arguments: Arguments {
             args: vec![Expr::Code(arg)],
+        },
+    })
+}
+
+/// `render_attr("name", arg)`: the static attribute name plus the user `Code`.
+pub fn render_attr_call(attr_name: &str, arg: Code) -> Expr {
+    Expr::Call(ExprCall {
+        func: Box::new(Expr::Name(ExprName {
+            id: Identifier::new("render_attr"),
+        })),
+        arguments: Arguments {
+            args: vec![
+                Expr::StringLiteral(StringLiteral {
+                    value: attr_name.to_string(),
+                }),
+                Expr::Code(arg),
+            ],
         },
     })
 }

@@ -6,7 +6,7 @@ use super::{
 use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
 use crate::ast::*;
 use crate::generate::print::{print_code, print_expr, print_import_from};
-use crate::lower::{code_span, helper_call, lower_interpolation};
+use crate::lower::{code_span, helper_call, lower_interpolation, render_attr_call};
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
@@ -356,22 +356,10 @@ impl PythonGenerator {
                         output.push("}\"");
                     } else if self.is_boolean_attribute(name) {
                         // Boolean attrs: entire attribute is conditional
-                        output.push("{render_attr(\"");
-                        output.push(name);
-                        output.push("\", ");
-                        let start = output.position();
-                        output.push(&safe_expr);
-                        let end = output.position();
-                        output.add_segment(Segment {
-                            language: Language::Python,
-                            source_start: content_start,
-                            source_end: content_end,
-                            compiled_start: start,
-                            compiled_end: end,
-                            needs_injection: true,
-                            html_prefix: None,
-                        });
-                        output.push(")}");
+                        output.push("{");
+                        let code = code_span(safe_expr, content_start, content_end);
+                        print_expr(output, &render_attr_call(name, code));
+                        output.push("}");
                     } else {
                         output.push(" ");
                         output.push(name);
@@ -425,63 +413,34 @@ impl PythonGenerator {
                         return;
                     }
 
-                    let (start, end) = if name == "data" {
-                        output.push("{render_data(");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
+                    let code = code_span(var_name, content_start, content_end);
+                    if name == "data" {
+                        output.push("{");
+                        print_expr(output, &helper_call("render_data", code));
+                        output.push("}");
                     } else if name == "aria" {
-                        output.push("{render_aria(");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
+                        output.push("{");
+                        print_expr(output, &helper_call("render_aria", code));
+                        output.push("}");
                     } else {
-                        output.push("{render_attr(\"");
-                        output.push(name);
-                        output.push("\", ");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}");
-                        (s, e)
-                    };
-                    output.add_segment(Segment {
-                        language: Language::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: start,
-                        compiled_end: end,
-                        needs_injection: true,
-                        html_prefix: None,
-                    });
+                        output.push("{");
+                        print_expr(output, &render_attr_call(name, code));
+                        output.push("}");
+                    }
                 }
             }
             AttributeKind::Spread { expr, expr_range } => {
                 if in_fstring {
                     // Spread expr is already renamed in the AST by ReservedKeywordPlugin.
                     let safe_expr = expr.trim().to_string();
-                    // Spread expr_range: {**expr} — skip 3 chars for "{**"
+                    // Spread expr_range is {**expr}; skip 3 chars for "{**"
                     let content_start = expr_range.start.byte + 3;
                     let content_end = expr_range.end.byte;
 
-                    output.push("{spread_attrs(");
-                    let s = output.position();
-                    output.push(&safe_expr);
-                    let e = output.position();
-                    output.push(")}");
-                    output.add_segment(Segment {
-                        language: Language::Python,
-                        source_start: content_start,
-                        source_end: content_end,
-                        compiled_start: s,
-                        compiled_end: e,
-                        needs_injection: true,
-                        html_prefix: None,
-                    });
+                    output.push("{");
+                    let code = code_span(safe_expr, content_start, content_end);
+                    print_expr(output, &helper_call("spread_attrs", code));
+                    output.push("}");
                 }
             }
             AttributeKind::SlotAssignment {

@@ -46,7 +46,13 @@ pub struct Code {
 pub enum Expr {
     Call(ExprCall),
     Name(ExprName),
+    StringLiteral(StringLiteral),
     Code(Code),
+}
+
+#[derive(Debug, Clone)]
+pub struct StringLiteral {
+    pub value: String,
 }
 
 #[derive(Debug, Clone)]

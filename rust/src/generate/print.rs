@@ -40,6 +40,11 @@ pub fn print_code(output: &mut Output, code: &Code) {
 pub fn print_expr(output: &mut Output, expr: &Expr) {
     match expr {
         Expr::Name(name) => output.push(&name.id.id),
+        Expr::StringLiteral(s) => {
+            output.push("\"");
+            output.push(&s.value);
+            output.push("\"");
+        }
         Expr::Code(code) => print_code(output, code),
         Expr::Call(call) => {
             print_expr(output, &call.func);
