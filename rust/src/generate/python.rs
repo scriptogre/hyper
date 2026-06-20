@@ -513,20 +513,14 @@ impl PythonGenerator {
                             let expr_byte_end = byte_offset - 1; // before '}'
                             // Template value is parsed here, so rename the extracted expr.
                             let safe_expr = rename_reserved_keywords(expr.trim());
-                            output.push("{escape(");
-                            let start = output.position();
-                            output.push(&safe_expr);
-                            let end = output.position();
-                            output.push(")}");
-                            output.add_segment(Segment {
-                                language: Language::Python,
-                                source_start: value_start_byte + expr_byte_start,
-                                source_end: value_start_byte + expr_byte_end,
-                                compiled_start: start,
-                                compiled_end: end,
-                                needs_injection: true,
-                                html_prefix: None,
-                            });
+                            output.push("{");
+                            let code = code_span(
+                                safe_expr,
+                                value_start_byte + expr_byte_start,
+                                value_start_byte + expr_byte_end,
+                            );
+                            print_expr(output, &helper_call("escape", code));
+                            output.push("}");
                         } else if ch == '"' {
                             output.push("&quot;");
                             byte_offset += ch.len_utf8();
