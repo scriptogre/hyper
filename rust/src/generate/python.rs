@@ -6,7 +6,7 @@ use super::{
 use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
 use crate::ast::*;
 use crate::generate::print::{print_code, print_expr, print_import_from};
-use crate::lower::lower_interpolation;
+use crate::lower::{code_span, helper_call, lower_interpolation};
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
@@ -343,37 +343,17 @@ impl PythonGenerator {
                     if name == "class" {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{render_class(");
-                        let start = output.position();
-                        output.push(&safe_expr);
-                        let end = output.position();
-                        output.add_segment(Segment {
-                            language: Language::Python,
-                            source_start: content_start,
-                            source_end: content_end,
-                            compiled_start: start,
-                            compiled_end: end,
-                            needs_injection: true,
-                            html_prefix: None,
-                        });
-                        output.push(")}\"");
+                        output.push("=\"{");
+                        let code = code_span(safe_expr, content_start, content_end);
+                        print_expr(output, &helper_call("render_class", code));
+                        output.push("}\"");
                     } else if name == "style" {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{render_style(");
-                        let start = output.position();
-                        output.push(&safe_expr);
-                        let end = output.position();
-                        output.add_segment(Segment {
-                            language: Language::Python,
-                            source_start: content_start,
-                            source_end: content_end,
-                            compiled_start: start,
-                            compiled_end: end,
-                            needs_injection: true,
-                            html_prefix: None,
-                        });
-                        output.push(")}\"");
+                        output.push("=\"{");
+                        let code = code_span(safe_expr, content_start, content_end);
+                        print_expr(output, &helper_call("render_style", code));
+                        output.push("}\"");
                     } else if self.is_boolean_attribute(name) {
                         // Boolean attrs: entire attribute is conditional
                         output.push("{render_attr(\"");
@@ -395,20 +375,10 @@ impl PythonGenerator {
                     } else {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{escape(");
-                        let start = output.position();
-                        output.push(&safe_expr);
-                        let end = output.position();
-                        output.add_segment(Segment {
-                            language: Language::Python,
-                            source_start: content_start,
-                            source_end: content_end,
-                            compiled_start: start,
-                            compiled_end: end,
-                            needs_injection: true,
-                            html_prefix: None,
-                        });
-                        output.push(")}\"");
+                        output.push("=\"{");
+                        let code = code_span(safe_expr, content_start, content_end);
+                        print_expr(output, &helper_call("escape", code));
+                        output.push("}\"");
                     }
                 }
             }
@@ -426,25 +396,36 @@ impl PythonGenerator {
                     let content_start = expr_range.start.byte + 1;
                     let content_end = expr_range.end.byte;
 
-                    let (start, end) = if name == "class" {
+                    if name == "class" {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{render_class(");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}\"");
-                        (s, e)
-                    } else if name == "style" {
+                        output.push("=\"{");
+                        print_expr(
+                            output,
+                            &helper_call(
+                                "render_class",
+                                code_span(var_name, content_start, content_end),
+                            ),
+                        );
+                        output.push("}\"");
+                        return;
+                    }
+                    if name == "style" {
                         output.push(" ");
                         output.push(name);
-                        output.push("=\"{render_style(");
-                        let s = output.position();
-                        output.push(&var_name);
-                        let e = output.position();
-                        output.push(")}\"");
-                        (s, e)
-                    } else if name == "data" {
+                        output.push("=\"{");
+                        print_expr(
+                            output,
+                            &helper_call(
+                                "render_style",
+                                code_span(var_name, content_start, content_end),
+                            ),
+                        );
+                        output.push("}\"");
+                        return;
+                    }
+
+                    let (start, end) = if name == "data" {
                         output.push("{render_data(");
                         let s = output.position();
                         output.push(&var_name);

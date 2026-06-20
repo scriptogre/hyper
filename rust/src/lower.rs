@@ -100,38 +100,47 @@ pub fn lower_interpolation(expr: &ExpressionNode) -> Option<Expr> {
     if has_format_extras || !expr.escape {
         return None;
     }
-    Some(escape_call(interp_code(&expr.expr, expr.range)))
+    Some(helper_call("escape", interp_code(&expr.expr, expr.range)))
 }
 
-/// `Code` for an interpolation: source is the printed expr text; range is the
-/// `{expr}` span minus its braces. Synthetic stays synthetic. Source length is
-/// independent of the span (they differ after keyword renames), so this is not
-/// `code_from`.
-fn interp_code(source: &str, brace_range: TextRange) -> Code {
-    let range = if brace_range.is_synthetic() {
-        brace_range
-    } else {
-        TextRange {
+/// `Code` spanning explicit source bytes. Source text is independent of the span
+/// (they differ after keyword renames), so callers pass both.
+pub fn code_span(source: impl Into<String>, start_byte: usize, end_byte: usize) -> Code {
+    Code {
+        source: source.into(),
+        range: TextRange {
             start: Position {
-                byte: brace_range.start.byte + 1,
-                ..brace_range.start
+                byte: start_byte,
+                line: 0,
+                col: 0,
             },
             end: Position {
-                byte: brace_range.end.byte - 1,
-                ..brace_range.end
+                byte: end_byte,
+                line: 0,
+                col: 0,
             },
-        }
-    };
-    Code {
-        source: source.to_string(),
-        range,
+        },
     }
 }
 
-fn escape_call(arg: Code) -> Expr {
+/// `Code` for an interpolation: source is the printed expr text; range is the
+/// `{expr}` span minus its braces. Synthetic stays synthetic.
+fn interp_code(source: &str, brace_range: TextRange) -> Code {
+    if brace_range.is_synthetic() {
+        return Code {
+            source: source.to_string(),
+            range: brace_range,
+        };
+    }
+    code_span(source, brace_range.start.byte + 1, brace_range.end.byte - 1)
+}
+
+/// `helper(arg)` where `arg` is verbatim user `Code`. Used for the value-slot
+/// helpers (`escape`, `render_class`, `render_style`).
+pub fn helper_call(name: &str, arg: Code) -> Expr {
     Expr::Call(ExprCall {
         func: Box::new(Expr::Name(ExprName {
-            id: Identifier::new("escape"),
+            id: Identifier::new(name),
         })),
         arguments: Arguments {
             args: vec![Expr::Code(arg)],
