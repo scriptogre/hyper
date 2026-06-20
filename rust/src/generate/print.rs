@@ -47,6 +47,10 @@ pub fn print_expr(output: &mut Output, expr: &Expr) {
         }
         Expr::Code(code) => print_code(output, code),
         Expr::Call(call) => {
+            // Every Call we build wraps a helper; user calls stay inside Code.
+            if let Expr::Name(func) = call.func.as_ref() {
+                output.use_helper(&func.id.id);
+            }
             print_expr(output, &call.func);
             output.push("(");
             for (i, arg) in call.arguments.args.iter().enumerate() {

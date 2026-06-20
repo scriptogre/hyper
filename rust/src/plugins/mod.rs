@@ -1,6 +1,5 @@
 mod r#async;
 mod context;
-mod helper_detect;
 mod mutable_defaults;
 mod rename_reserved_keywords;
 mod slots;
@@ -8,7 +7,6 @@ mod spread_kwargs;
 
 pub use r#async::Async;
 pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
-pub use helper_detect::HelperDetectionPlugin;
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
@@ -115,7 +113,6 @@ pub fn walk<P: Plugin + ?Sized>(
 pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
         Box::new(RenameReservedKeywords),
-        Box::new(HelperDetectionPlugin),
         Box::new(Async::default()),
         Box::new(Slots::default()),
         Box::new(MutableDefaults::default()),

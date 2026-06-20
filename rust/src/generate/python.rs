@@ -224,6 +224,9 @@ impl PythonGenerator {
                 }
             }
             Node::Expression(expr) if in_fstring => {
+                if expr.expr.contains("safe(") {
+                    output.use_helper("safe");
+                }
                 if let Some(lowered) = lower_interpolation(expr) {
                     output.push("{");
                     print_expr(output, &lowered);
@@ -614,6 +617,9 @@ impl PythonGenerator {
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
+        if expr.expr.contains("safe(") {
+            output.use_helper("safe");
+        }
         if let Some(lowered) = lower_interpolation(expr) {
             output.push("yield ");
             print_expr(output, &lowered);
@@ -946,7 +952,11 @@ impl PythonGenerator {
             AttributeKind::Template { name, value } => {
                 output.push(name);
                 output.push("=f\"");
-                output.push(&self.convert_template_expressions(value));
+                let converted = self.convert_template_expressions(value);
+                if converted.contains("escape(") {
+                    output.use_helper("escape");
+                }
+                output.push(&converted);
                 output.push("\"");
             }
             AttributeKind::SlotAssignment { .. } => {
@@ -1272,7 +1282,7 @@ impl Generator for PythonGenerator {
     fn generate(
         &self,
         ast: &Ast,
-        ctx: &crate::plugins::Context,
+        _ctx: &crate::plugins::Context,
         options: &CompileOptions,
     ) -> CompileResult {
         let mut output = Output::new();
@@ -1399,6 +1409,14 @@ impl Generator for PythonGenerator {
             self.emit_nodes(&body_nodes, &mut output, 1);
         }
 
+        // Hyper runtime imports, in Helper::ALL order, for helpers actually emitted.
+        let mut hyper_imports = vec!["html"];
+        for helper in Helper::ALL {
+            if output.helper_used(helper.import_name()) {
+                hyper_imports.push(helper.import_name());
+            }
+        }
+
         let (mut code, tracked_segments) = output.finish();
 
         // Iterable import is needed when a param is typed with it (slot params).
@@ -1407,15 +1425,6 @@ impl Generator for PythonGenerator {
                 .as_deref()
                 .is_some_and(|t| t.contains("Iterable"))
         });
-
-        // Build imports from ctx (populated by HelperDetectionPlugin)
-        let mut hyper_imports = vec!["html"];
-
-        for helper in Helper::ALL {
-            if ctx.helpers_used.contains(helper) {
-                hyper_imports.push(helper.import_name());
-            }
-        }
 
         // Detect typing constructs needed from parameter type hints
         let mut typing_imports: Vec<&str> = Vec::new();

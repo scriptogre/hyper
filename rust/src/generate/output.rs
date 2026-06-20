@@ -121,6 +121,8 @@ pub struct Output {
     current_line: String,
     line_number: usize,
     segments: Vec<Segment>,
+    // Runtime helpers emitted so far; drives the `from hyper import ...` line.
+    helpers: std::collections::BTreeSet<String>,
     // Formatting-aware position tracking
     skip_remaining: usize, // characters left to skip (for leading whitespace)
     dedent_amount: usize,  // spaces to strip at each line start (0 = inactive)
@@ -134,10 +136,20 @@ impl Output {
             current_line: String::new(),
             line_number: 0,
             segments: Vec::new(),
+            helpers: std::collections::BTreeSet::new(),
             skip_remaining: 0,
             dedent_amount: 0,
             dedent_skip_remaining: 0,
         }
+    }
+
+    /// Record a runtime helper as used (e.g. `escape`, `render_class`, `safe`).
+    pub fn use_helper(&mut self, name: &str) {
+        self.helpers.insert(name.to_string());
+    }
+
+    pub fn helper_used(&self, name: &str) -> bool {
+        self.helpers.contains(name)
     }
 
     /// Add text without mapping.
