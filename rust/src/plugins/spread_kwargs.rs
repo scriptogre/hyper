@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::context::BLESSED_SPREAD_NAMES;
-use super::{Context, Flow, Plugin, walk};
+use super::{Flow, Plugin, walk};
 use crate::ast::{Ast, Attribute, AttributeKind, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
 
@@ -51,9 +51,9 @@ impl Default for SpreadKwargs {
 }
 
 impl Plugin for SpreadKwargs {
-    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, ctx, self)?;
-        walk(&mut ast.function.body, ctx, self)?;
+    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
+        walk(&mut ast.function.params, self)?;
+        walk(&mut ast.function.body, self)?;
 
         // Guard: only one distinct blessed spread name is allowed per template.
         if self.blessed_spreads.len() > 1 {
@@ -84,7 +84,7 @@ impl Plugin for SpreadKwargs {
         Ok(())
     }
 
-    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
             Node::Parameter(param) => {
                 if param.name.starts_with("**") {

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 /// Runtime helpers that can be imported from the hyper runtime
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Helper {
@@ -44,15 +42,3 @@ impl Helper {
 /// Spread names that are automatically injected into the function signature
 /// when used as `{**name}` on a component or element without explicit declaration.
 pub const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", "attributes"];
-
-/// Shared context: filled by plugins as they walk the AST, read by the generator.
-#[derive(Debug, Clone, Default)]
-pub struct Context {
-    pub helpers_used: HashSet<Helper>,
-}
-
-impl Context {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}

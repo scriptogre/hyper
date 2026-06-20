@@ -1,4 +1,4 @@
-use super::{Context, Flow, Plugin, walk};
+use super::{Flow, Plugin, walk};
 use crate::ast::{Ast, IfNode, Node, StatementNode, TextRange};
 use crate::error::CompileError;
 
@@ -13,9 +13,9 @@ pub struct MutableDefaults {
 }
 
 impl Plugin for MutableDefaults {
-    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, ctx, self)?;
-        walk(&mut ast.function.body, ctx, self)?;
+    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
+        walk(&mut ast.function.params, self)?;
+        walk(&mut ast.function.body, self)?;
 
         let guards = self.guards.iter().map(|(name, default)| {
             Node::If(IfNode {
@@ -35,7 +35,7 @@ impl Plugin for MutableDefaults {
         Ok(())
     }
 
-    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         if let Node::Parameter(param) = node
             && is_nullable_with_mutable_default(
                 param.type_hint.as_deref(),

@@ -27,9 +27,9 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
     let nodes = parse::HyperParser::new().parse(source)?;
     let mut ast = lower::lower(nodes, source);
 
-    let ctx = plugins::run(&mut ast)?;
+    plugins::run(&mut ast)?;
 
-    let mut result = generate::PythonGenerator::new().generate(&ast, &ctx, options);
+    let mut result = generate::PythonGenerator::new().generate(&ast, options);
 
     if options.include_ranges {
         generate::validate_python_segments(source, &result.code, &mut result.segments);
@@ -44,4 +44,4 @@ pub use ast::{Ast, Node, Position, TextRange};
 pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{CompileOptions, CompileResult};
 pub use parse::Parser;
-pub use plugins::{Context, Flow, Plugin, walk};
+pub use plugins::{Flow, Plugin, walk};

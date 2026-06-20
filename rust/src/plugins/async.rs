@@ -1,4 +1,4 @@
-use super::{Context, Flow, Plugin, walk};
+use super::{Flow, Plugin, walk};
 use crate::ast::{Ast, Node};
 use crate::error::CompileError;
 
@@ -9,14 +9,14 @@ pub struct Async {
 }
 
 impl Plugin for Async {
-    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, ctx, self)?;
-        walk(&mut ast.function.body, ctx, self)?;
+    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
+        walk(&mut ast.function.params, self)?;
+        walk(&mut ast.function.body, self)?;
         ast.function.is_async = self.is_async;
         Ok(())
     }
 
-    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
             Node::Expression(expr) if expr.expr.contains("await ") => self.is_async = true,
             Node::Statement(stmt) if stmt.stmt.contains("await ") => self.is_async = true,

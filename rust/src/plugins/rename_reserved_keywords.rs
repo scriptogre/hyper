@@ -1,4 +1,4 @@
-use super::{Context, Flow, Plugin};
+use super::{Flow, Plugin};
 use crate::ast::{AttributeKind, Node};
 use crate::error::CompileError;
 
@@ -104,7 +104,7 @@ fn rename_value_expr(kind: &mut AttributeKind) {
 }
 
 impl Plugin for RenameReservedKeywords {
-    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
             Node::Parameter(param) => {
                 param.name = rename_reserved_keywords(&param.name);

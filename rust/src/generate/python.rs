@@ -1279,12 +1279,7 @@ impl Default for PythonGenerator {
 }
 
 impl Generator for PythonGenerator {
-    fn generate(
-        &self,
-        ast: &Ast,
-        _ctx: &crate::plugins::Context,
-        options: &CompileOptions,
-    ) -> CompileResult {
+    fn generate(&self, ast: &Ast, options: &CompileOptions) -> CompileResult {
         let mut output = Output::new();
 
         // Frontmatter and body are already split by the `lower` pass.

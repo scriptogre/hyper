@@ -15,7 +15,6 @@ pub use output::{
 pub use python::PythonGenerator;
 
 use crate::ast::Ast;
-use crate::plugins::Context;
 
 /// Generator options
 #[derive(Debug, Clone, Default)]
@@ -34,5 +33,5 @@ pub struct CompileResult {
 
 /// Generator trait - converts AST to code
 pub trait Generator {
-    fn generate(&self, ast: &Ast, ctx: &Context, options: &CompileOptions) -> CompileResult;
+    fn generate(&self, ast: &Ast, options: &CompileOptions) -> CompileResult;
 }

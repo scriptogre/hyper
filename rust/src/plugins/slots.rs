@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use super::{Context, Flow, Plugin, walk};
+use super::{Flow, Plugin, walk};
 use crate::ast::{Ast, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
 
@@ -25,9 +25,9 @@ pub struct Slots {
 }
 
 impl Plugin for Slots {
-    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, ctx, self)?;
-        walk(&mut ast.function.body, ctx, self)?;
+    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
+        walk(&mut ast.function.params, self)?;
+        walk(&mut ast.function.body, self)?;
 
         for name in &self.names {
             let (param_name, kind) = if name.is_empty() {
@@ -47,7 +47,7 @@ impl Plugin for Slots {
         Ok(())
     }
 
-    fn enter(&mut self, node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
             Node::Slot(slot) => {
                 self.names.insert(slot.name.clone().unwrap_or_default());

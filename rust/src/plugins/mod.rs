@@ -6,7 +6,7 @@ mod slots;
 mod spread_kwargs;
 
 pub use r#async::Async;
-pub use context::{BLESSED_SPREAD_NAMES, Context, Helper};
+pub use context::{BLESSED_SPREAD_NAMES, Helper};
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
@@ -22,79 +22,75 @@ pub enum Flow {
     SkipChildren,
 }
 
-/// A compiler plugin. Reads and rewrites the AST, and fills the shared [`Context`].
+/// A compiler plugin. Reads and rewrites the AST.
 ///
 /// Override `enter`/`exit` for per-node work (the common case). Override `run`
 /// to own the traversal: walk twice, reorder nodes via `&mut Ast`, or guard
-/// after the walk. Local state lives on the plugin struct; shared state in [`Context`].
+/// after the walk. Local state lives on the plugin struct.
 pub trait Plugin {
     /// Run the plugin over the whole tree. Default walks top-down, calling
     /// `enter` then `exit` on each node.
-    fn run(&mut self, ast: &mut Ast, ctx: &mut Context) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, ctx, self)?;
-        walk(&mut ast.function.body, ctx, self)
+    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
+        walk(&mut ast.function.params, self)?;
+        walk(&mut ast.function.body, self)
     }
 
     /// Called before a node's children. Return [`Flow::SkipChildren`] to prune.
-    fn enter(&mut self, _node: &mut Node, _ctx: &mut Context) -> Result<Flow, CompileError> {
+    fn enter(&mut self, _node: &mut Node) -> Result<Flow, CompileError> {
         Ok(Flow::Continue)
     }
 
     /// Called after a node's children.
-    fn exit(&mut self, _node: &mut Node, _ctx: &mut Context) -> Result<(), CompileError> {
+    fn exit(&mut self, _node: &mut Node) -> Result<(), CompileError> {
         Ok(())
     }
 }
 
 /// Recurse the tree, calling `plugin.enter` (then `exit`) on each node. The one
 /// place that knows the AST shape; plugins reuse it instead of reimplementing it.
-pub fn walk<P: Plugin + ?Sized>(
-    nodes: &mut [Node],
-    ctx: &mut Context,
-    plugin: &mut P,
-) -> Result<(), CompileError> {
+pub fn walk<P: Plugin + ?Sized>(nodes: &mut [Node], plugin: &mut P) -> Result<(), CompileError> {
     for node in nodes {
-        if plugin.enter(node, ctx)? == Flow::Continue {
+        if plugin.enter(node)? == Flow::Continue {
             match node {
-                Node::Element(el) => walk(&mut el.children, ctx, plugin)?,
+                Node::Element(el) => walk(&mut el.children, plugin)?,
                 Node::Component(c) => {
-                    walk(&mut c.children, ctx, plugin)?;
+                    walk(&mut c.children, plugin)?;
                     for slot in c.slots.values_mut() {
-                        walk(slot, ctx, plugin)?;
+                        walk(slot, plugin)?;
                     }
                 }
-                Node::Fragment(f) => walk(&mut f.children, ctx, plugin)?,
-                Node::Slot(s) => walk(&mut s.fallback, ctx, plugin)?,
+                Node::Fragment(f) => walk(&mut f.children, plugin)?,
+                Node::Slot(s) => walk(&mut s.fallback, plugin)?,
                 Node::If(if_node) => {
-                    walk(&mut if_node.then_branch, ctx, plugin)?;
+                    walk(&mut if_node.then_branch, plugin)?;
                     for (_, _, branch) in &mut if_node.elif_branches {
-                        walk(branch, ctx, plugin)?;
+                        walk(branch, plugin)?;
                     }
                     if let Some(else_branch) = &mut if_node.else_branch {
-                        walk(else_branch, ctx, plugin)?;
+                        walk(else_branch, plugin)?;
                     }
                 }
-                Node::For(for_node) => walk(&mut for_node.body, ctx, plugin)?,
+                Node::For(for_node) => walk(&mut for_node.body, plugin)?,
                 Node::Match(match_node) => {
                     for case in &mut match_node.cases {
-                        walk(&mut case.body, ctx, plugin)?;
+                        walk(&mut case.body, plugin)?;
                     }
                 }
-                Node::While(while_node) => walk(&mut while_node.body, ctx, plugin)?,
-                Node::With(with_node) => walk(&mut with_node.body, ctx, plugin)?,
+                Node::While(while_node) => walk(&mut while_node.body, plugin)?,
+                Node::With(with_node) => walk(&mut with_node.body, plugin)?,
                 Node::Try(try_node) => {
-                    walk(&mut try_node.body, ctx, plugin)?;
+                    walk(&mut try_node.body, plugin)?;
                     for except in &mut try_node.except_clauses {
-                        walk(&mut except.body, ctx, plugin)?;
+                        walk(&mut except.body, plugin)?;
                     }
                     if let Some(else_clause) = &mut try_node.else_clause {
-                        walk(else_clause, ctx, plugin)?;
+                        walk(else_clause, plugin)?;
                     }
                     if let Some(finally_clause) = &mut try_node.finally_clause {
-                        walk(finally_clause, ctx, plugin)?;
+                        walk(finally_clause, plugin)?;
                     }
                 }
-                Node::Definition(def) => walk(&mut def.body, ctx, plugin)?,
+                Node::Definition(def) => walk(&mut def.body, plugin)?,
                 Node::Text(_)
                 | Node::Expression(_)
                 | Node::Comment(_)
@@ -104,7 +100,7 @@ pub fn walk<P: Plugin + ?Sized>(
                 | Node::Decorator(_) => {}
             }
         }
-        plugin.exit(node, ctx)?;
+        plugin.exit(node)?;
     }
     Ok(())
 }
@@ -120,11 +116,10 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     ]
 }
 
-/// Run all standard plugins over the AST, returning the shared context.
-pub fn run(ast: &mut Ast) -> Result<Context, CompileError> {
-    let mut ctx = Context::new();
+/// Run all standard plugins over the AST.
+pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
     for mut plugin in standard_plugins() {
-        plugin.run(ast, &mut ctx)?;
+        plugin.run(ast)?;
     }
-    Ok(ctx)
+    Ok(())
 }
