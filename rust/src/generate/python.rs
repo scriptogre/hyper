@@ -5,7 +5,8 @@ use super::{
 };
 use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
 use crate::ast::*;
-use crate::generate::print::{print_code, print_import_from};
+use crate::generate::print::{print_code, print_expr, print_import_from};
+use crate::lower::lower_interpolation;
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
 
 pub struct PythonGenerator;
@@ -223,10 +224,17 @@ impl PythonGenerator {
                 }
             }
             Node::Expression(expr) if in_fstring => {
+                if let Some(lowered) = lower_interpolation(expr) {
+                    output.push("{");
+                    print_expr(output, &lowered);
+                    output.push("}");
+                    return;
+                }
+
                 let has_format_extras =
                     expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
                 let (start, end) = if has_format_extras {
-                    // Format spec, conversion, or debug — emit raw (no escape wrapper)
+                    // Format spec, conversion, or debug: emit raw (no escape wrapper)
                     output.push("{");
                     let start = output.position();
                     output.push(&expr.expr);
@@ -243,15 +251,6 @@ impl PythonGenerator {
                     }
                     let end = output.position();
                     output.push("}");
-                    (start, end)
-                } else if expr.escape {
-                    // Use direct escape() call inside f-string
-                    // Track just the expression text for IDE highlighting
-                    output.push("{escape(");
-                    let start = output.position();
-                    output.push(&expr.expr);
-                    let end = output.position();
-                    output.push(")}");
                     (start, end)
                 } else {
                     let start = output.position();
@@ -681,10 +680,17 @@ impl PythonGenerator {
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
+        if let Some(lowered) = lower_interpolation(expr) {
+            output.push("yield ");
+            print_expr(output, &lowered);
+            output.newline();
+            return;
+        }
+
         let has_format_extras =
             expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
         if has_format_extras {
-            // Format spec, conversion, or debug — emit as f-string
+            // Format spec, conversion, or debug: emit as f-string
             output.push("yield f\"{");
             let start = output.position();
             output.push(&expr.expr);
@@ -702,21 +708,6 @@ impl PythonGenerator {
             }
             output.push("}\"");
             // Source range excludes braces: range.start + 1 to range.end - 1
-            output.add_segment(Segment {
-                language: Language::Python,
-                source_start: expr.range.start.byte + 1,
-                source_end: expr.range.end.byte - 1,
-                compiled_start: start,
-                compiled_end: end,
-                needs_injection: true,
-                html_prefix: None,
-            });
-        } else if expr.escape {
-            output.push("yield escape(");
-            let start = output.position();
-            output.push(&expr.expr);
-            let end = output.position();
-            output.push(")");
             output.add_segment(Segment {
                 language: Language::Python,
                 source_start: expr.range.start.byte + 1,

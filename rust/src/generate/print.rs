@@ -1,7 +1,7 @@
 //! Printer for output AST nodes. Renders to source text byte-identical to the
 //! prior `format!` paths; caller owns trailing newlines.
 
-use crate::ast::python::{Alias, Code, StmtImportFrom};
+use crate::ast::python::{Alias, Code, Expr, StmtImportFrom};
 use crate::generate::{Language, Output, Segment};
 
 pub fn print_import_from(stmt: &StmtImportFrom) -> String {
@@ -32,6 +32,26 @@ pub fn print_code(output: &mut Output, code: &Code) {
             needs_injection: true,
             html_prefix: None,
         });
+    }
+}
+
+/// Print an output expression. `Code` records its own source segment via
+/// `print_code`; synthetic scaffolding (`escape`, parens) carries no range.
+pub fn print_expr(output: &mut Output, expr: &Expr) {
+    match expr {
+        Expr::Name(name) => output.push(&name.id.id),
+        Expr::Code(code) => print_code(output, code),
+        Expr::Call(call) => {
+            print_expr(output, &call.func);
+            output.push("(");
+            for (i, arg) in call.arguments.args.iter().enumerate() {
+                if i > 0 {
+                    output.push(", ");
+                }
+                print_expr(output, arg);
+            }
+            output.push(")");
+        }
     }
 }
 

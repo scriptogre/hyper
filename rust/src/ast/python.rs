@@ -39,3 +39,28 @@ pub struct Code {
     pub source: String,
     pub range: TextRange,
 }
+
+/// Output expression. `Code` is the verbatim-source seam; `Call`/`Name` are
+/// structured nodes lowering builds (compiler-invented calls like `escape(x)`).
+#[derive(Debug, Clone)]
+pub enum Expr {
+    Call(ExprCall),
+    Name(ExprName),
+    Code(Code),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExprCall {
+    pub func: Box<Expr>,
+    pub arguments: Arguments,
+}
+
+#[derive(Debug, Clone)]
+pub struct Arguments {
+    pub args: Vec<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExprName {
+    pub id: Identifier,
+}
