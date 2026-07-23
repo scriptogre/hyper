@@ -19,8 +19,8 @@ class HyperConfig(AppConfig):
     so Hyper looks in exactly the places that backend does: the ``DIRS`` you
     list, plus every app's ``templates/`` dir when ``APP_DIRS`` is on.
 
-    Drop a ``.hyper`` file (compiled to its ``.py`` sibling) anywhere you would
-    put a template, and it's discovered. No configuration. Read results via
+    Drop a ``.hyper`` file anywhere you would put a template, and Hyper compiles
+    and discovers it in memory. Read results via
     ``apps.get_app_config("hyper").components``.
     """
 

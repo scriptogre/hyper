@@ -2,12 +2,13 @@
 
 ## 0.1.0
 
-Initial release.
+Initial alpha release.
 
-- Rust transpiler compiling `.hyper` templates to type-safe Python
-- Component model with props, slots, and `@html` decorator
-- Full Python control flow (`if`, `for`, `while`, `match`, `try`, `with`, `async`)
-- Streaming generator output
-- Content collections with Markdown, JSON, YAML, TOML support
-- JetBrains IDE plugin with Python code intelligence
-- TextMate syntax bundle
+- Import `.hyper` files without a build step or generated Python
+- Compose callable components with typed props, slots, and nested components
+- Stream directly from each component's generated function
+- Use Python control flow, imports, functions, classes, and async code
+- Write multiline HTML and component tags
+- Render components through FastAPI, Django, and Jinja
+- Load Markdown, JSON, YAML, and TOML content collections
+- Edit with JetBrains, TextMate, and VS Code support

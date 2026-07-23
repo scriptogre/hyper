@@ -24,7 +24,7 @@ template can use ``{% hyper Component arg=value %}`` without ``{% load %}``:
     }]
 
 At startup the app looks wherever Django looks for templates (every ``DIRS``
-entry, plus each app's ``templates/`` when ``APP_DIRS`` is on) and imports the
-compiled ``.py`` sibling of every ``.hyper`` file. The context processor then
-hands those components to every template.
+entry, plus each app's ``templates/`` when ``APP_DIRS`` is on) and compiles each
+``.hyper`` file in memory. The context processor hands those components to every
+template.
 """

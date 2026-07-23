@@ -1,58 +1,139 @@
 # Hyper
 
 [![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/hyperhtml.svg)](https://pypi.org/project/hyperhtml/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Backend-neutral, type-safe HTML templates for Python, powered by Rust.
+Write type-safe HTML in `.hyper` files and import it directly from Python. Hyper compiles templates in memory, with no CLI, build step, or generated `.py` files.
 
-```
+```bash
 uv add hyperhtml
 ```
 
-Write `.hyper` files and import them like Python components. No build step, no generated `.py` files.
+Requires Python 3.10 or newer.
 
-### Quick Start
+## Render a component
 
-**1. Write a template.** Props go above the `---`, template body below.
+Create `app/templates/Greeting.hyper`:
 
 ```hyper
-# app/components/Greeting.hyper
-
 name: str
-
 ---
-
 <h1>Hello, {name}!</h1>
 ```
 
-**2. Use it.**
+Import it in a FastAPI endpoint:
 
 ```python
-from app.components import Greeting
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+from app.templates import Greeting
+
+app = FastAPI()
 
 @app.get("/", response_class=HTMLResponse)
-def index():
+def home():
     return Greeting(name="World")
 ```
 
-Hyper compiles `Greeting.hyper` on import and caches it for the life of the process.
+The response is:
 
-### Features
+```html
+<h1>Hello, World!</h1>
+```
 
-#### Components
+Hyper compiles `Greeting.hyper` on first import and caches it for the life of the process.
 
-Components compose like HTML elements. Children go in the default slot with `{...}`.
+## Use Django
+
+Return a component directly from a Django view:
+
+```python
+from django.http import HttpResponse
+
+from app.templates import Greeting
+
+
+def home(request):
+    return HttpResponse(Greeting(name="World"))
+```
+
+To call Hyper components from Django templates, install the extra:
+
+```bash
+uv add "hyperhtml[django]"
+```
+
+Add the app, context processor, and builtin to your existing Django settings:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "hyperhtml.integrations.django",
+]
+
+TEMPLATES = [{
+    # ...
+    "OPTIONS": {
+        "context_processors": [
+            # ...
+            "hyperhtml.integrations.django.context_processors.components",
+        ],
+        "builtins": [
+            "hyperhtml.integrations.django.templatetags.hyper",
+        ],
+    },
+}]
+```
+
+Components in Django template directories become available by name:
+
+```django
+{% hyper Greeting name=user.first_name / %}
+```
+
+## Use Jinja
+
+Install the Jinja extra:
+
+```bash
+uv add "hyperhtml[jinja2]"
+```
+
+Add the extension to an environment with a filesystem loader:
+
+```python
+from jinja2 import Environment, FileSystemLoader
+
+from hyperhtml.integrations.jinja2 import HyperExtension
+
+
+env = Environment(
+    loader=FileSystemLoader("templates"),
+    extensions=[HyperExtension],
+)
+```
+
+`.hyper` files under `templates/` become Jinja globals:
+
+```jinja
+{{ Greeting(name="Ada") }}
+```
+
+Both Jinja and Django preserve Hyper output as safe HTML. Hyper still escapes values passed into components.
+
+## Compose components
+
+Components compose like HTML elements:
 
 ```hyper
 # app/components/ProductCard.hyper
-
 name: str
 price: float
 image: str
 on_sale: bool = False
-
 ---
-
 <div class={["card", {"sale": on_sale}]}>
     <img src={image} alt={name} />
     <h3>{name}</h3>
@@ -65,23 +146,26 @@ on_sale: bool = False
 
 ```hyper
 # app/pages/Store.hyper
-from app.layouts import Layout
 from app.components import ProductCard
+from app.models import Product
 
 products: list[Product]
-
 ---
-
-<{Layout} title="Store">
+<main>
     for product in products:
-        <{ProductCard} name={product.name} price={product.price} image={product.image} on_sale={product.on_sale} />
+        <{ProductCard}
+            name={product.name}
+            price={product.price}
+            image={product.image}
+            on_sale={product.on_sale}
+        />
     end
-</{Layout}>
+</main>
 ```
 
-#### Control flow
+## Use control flow
 
-The template body is the function body. Any valid Python works. Blocks end with `end`.
+The template body accepts Python control flow. Blocks end with `end`:
 
 ```hyper
 from app.enums import Status
@@ -89,53 +173,50 @@ from app.models import Product
 
 status: Status
 products: list[Product]
-
 ---
-
 match status:
     case Status.LOADING:
-        <div class="spinner" />
+        <div class="spinner"></div>
     case Status.ERROR:
         <p class="error">Something went wrong</p>
     case Status.OK:
         if not products:
             <p>No products found</p>
         else:
-            <ul>
-                for product in products:
-                    <li>{product.name}</li>
-                end
-            </ul>
+            for product in products:
+                <p>{product.name}</p>
+            end
         end
 end
 ```
 
-#### Streaming
+## Stream a response
 
-Every component is a generator, so streaming works out of the box:
+Every component exposes its generated function as `.stream`:
 
 ```python
 from fastapi.responses import StreamingResponse
+
 from app.pages import Store
+
 
 @app.get("/store")
 def store():
-    return StreamingResponse(Store.stream(products=products), media_type="text/html")
+    return StreamingResponse(
+        Store.stream(products=products),
+        media_type="text/html",
+    )
 ```
 
-### IDE Support
+## IDE support
 
-- **JetBrains** (PyCharm, IntelliJ) — Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation for IDE analysis
-- **TextMate / VS Code** — Syntax highlighting
+- **JetBrains:** syntax highlighting, Python language injection, and compiler diagnostics
+- **TextMate and VS Code:** syntax highlighting
 
-### Acknowledgements
-
-Hyper's component and attribute syntax was inspired by [tdom](https://github.com/t-strings/tdom).
-
-### Contributing
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### License
+## License
 
 [MIT](LICENSE)

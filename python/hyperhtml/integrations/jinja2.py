@@ -6,8 +6,8 @@ loader paths become available as Jinja globals automatically:
     env = Environment(loader=FileSystemLoader("templates"))
     env.add_extension("hyperhtml.integrations.jinja2.HyperExtension")
 
-    # templates/Greeting.hyper compiled to templates/Greeting.py
-    # In any Jinja template:    {{ Greeting(name="Ada") }}
+    # templates/Greeting.hyper becomes a Jinja global.
+    # In any Jinja template: {{ Greeting(name="Ada") }}
 
 For components that don't live next to Jinja templates, use the escape hatch
 the extension attaches to the env:
@@ -75,8 +75,8 @@ class HyperExtension(Extension):
     """Jinja2 extension: discovers and registers Hyper components.
 
     At init time, walks the environment's loader for `.hyper` files. For each,
-    imports the sibling `.py` and registers every `@component` callable
-    (those carry `__hyper__ = True`) into `env.globals` keyed by function name.
+    compiles it in memory and registers every `@component` callable in
+    `env.globals` keyed by function name.
 
     Also attaches `env.register_components(*sources)` for components that
     don't live next to Jinja templates. Accepts packages, single callables, or

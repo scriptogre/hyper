@@ -1,7 +1,7 @@
 """Tests for hyperhtml.integrations.jinja2.HyperExtension.
 
-Verifies that adding the extension to a Jinja2 env auto-discovers compiled
-Hyper components living next to Jinja templates, exposes them as globals,
+Verifies that adding the extension to a Jinja2 env auto-discovers Hyper
+components living next to Jinja templates, exposes them as globals,
 and the rendered output is treated as safe HTML (no double-escaping).
 """
 

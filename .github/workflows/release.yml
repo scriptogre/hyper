@@ -6,8 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
   build:
@@ -67,10 +66,13 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
   github-release:
-    needs: [build, sdist]
+    needs: [build, sdist, publish]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v8

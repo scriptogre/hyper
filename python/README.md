@@ -15,7 +15,7 @@ Requires Python 3.10+.
 Write a component in `.hyper`:
 
 ```hyper
-# Greeting.hyper
+# app/templates/Greeting.hyper
 name: str
 ---
 <h1>Hello {name}</h1>
@@ -24,14 +24,14 @@ name: str
 Import it like a Python component:
 
 ```python
-from Greeting import Greeting
+from app.templates import Greeting
 
 Greeting(name="Ada")        # HtmlResult('<h1>Hello Ada</h1>')
 ```
 
 The import hook compiles `.hyper` files in memory. It does not write `.py` files.
 
-A compiled component is a plain `@html`-decorated callable. It escapes its own
+A compiled component is a plain `@component` callable. It escapes its own
 arguments and marks its output safe under MarkupSafe.
 
 ## Integrations
