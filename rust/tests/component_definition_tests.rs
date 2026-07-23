@@ -86,6 +86,83 @@ end
 }
 
 #[test]
+fn component_call_binds_single_element_named_slot() {
+    let code = compile_code(
+        r#"from app.components import Card
+---
+<{Card} title="Delete item">
+    <p>This cannot be undone.</p>
+    <button {...actions}>Delete</button>
+</{Card}>
+"#,
+    );
+    let page = code.find("def Page(").expect("page definition");
+    let page_code = &code[page..];
+
+    assert!(page_code.contains("def _card_content():"));
+    assert!(page_code.contains("def _card_actions():"));
+    assert!(page_code.contains("yield \"\"\"<button>Delete</button>\"\"\""));
+    assert!(page_code.contains("actions=_card_actions()"));
+    assert!(!page_code.contains("slot:actions"));
+    assert!(!page_code.contains("actions: Iterable[str]"));
+}
+
+#[test]
+fn component_call_binds_explicit_named_slot_wrapper() {
+    let code = compile_code(
+        r#"from app.components import Card
+---
+<{Card} title="Delete item">
+    <p>This cannot be undone.</p>
+    <{...actions}>
+        <button>Delete</button>
+    </{...actions}>
+</{Card}>
+"#,
+    );
+    let page = code.find("def Page(").expect("page definition");
+    let page_code = &code[page..];
+
+    assert!(page_code.contains("def _card_content():"));
+    assert!(page_code.contains("def _card_actions():"));
+    assert!(page_code.contains("yield \"\"\"<button>Delete</button>\"\"\""));
+    assert!(page_code.contains("actions=_card_actions()"));
+    assert!(!page_code.contains("actions: Iterable[str]"));
+    assert!(!page_code.contains("if actions is not None:"));
+}
+
+#[test]
+fn named_slot_binding_preserves_component_namespaces() {
+    let code = compile_code(
+        r#"---
+<{UI.Card}>
+    <button {...actions}>Save</button>
+</{UI.Card}>
+"#,
+    );
+
+    assert!(code.contains("def _u_i_card_actions():"));
+    assert!(code.contains("yield from UI.Card.stream("));
+    assert!(code.contains("actions=_u_i_card_actions()"));
+}
+
+#[test]
+fn duplicate_named_slot_fills_are_rejected() {
+    let source = r#"---
+<{Card}>
+    <button {...actions}>Save</button>
+    <button {...actions}>Cancel</button>
+</{Card}>
+"#;
+    let error = compile(source, &CompileOptions::default())
+        .expect_err("duplicate named slot fills should fail");
+    let message = error.render(source, "Page.hyper");
+
+    assert!(message.contains("`actions` slot is filled more than once"));
+    assert!(message.contains("first fill"));
+}
+
+#[test]
 fn nested_components_attach_to_their_direct_parent() {
     let code = compile_code(
         r#"---

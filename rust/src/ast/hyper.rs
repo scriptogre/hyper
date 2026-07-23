@@ -153,6 +153,8 @@ pub struct FragmentNode {
 pub struct SlotNode {
     pub name: Option<String>,
     pub fallback: Vec<Node>,
+    /// A caller-side wrapper bound to a component invocation.
+    pub is_fill: bool,
     pub range: TextRange,
     pub close_range: Option<TextRange>,
 }
@@ -333,5 +335,7 @@ pub enum AttributeKind {
         name: String,
         expr: Option<String>,
         expr_range: Option<TextRange>,
+        /// Set when the component-slot plugin moves this node into a named fill.
+        bound: bool,
     },
 }

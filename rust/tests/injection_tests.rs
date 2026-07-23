@@ -881,6 +881,33 @@ fn test_named_slot_tag_braces_in_expression_braces() {
 }
 
 #[test]
+fn test_component_named_fill_braces_survive_binding() {
+    let source = r#"<{Card}>
+    <button {...actions}>Save</button>
+</{Card}>
+<{Card}>
+    <{...actions}>
+        <button>Save</button>
+    </{...actions}>
+</{Card}>"#;
+    let result = compile_with_ranges(source, "Test");
+    let markers: Vec<_> = source.match_indices("{...actions}").collect();
+
+    assert_eq!(markers.len(), 3);
+    for (open, marker) in markers {
+        let close = open + marker.len() - 1;
+        assert!(
+            result
+                .expression_braces
+                .iter()
+                .any(|braces| braces.open == open && braces.close == close),
+            "Named fill braces should be tracked at ({open}, {close}). Got: {:?}",
+            result.expression_braces
+        );
+    }
+}
+
+#[test]
 fn test_component_tag_no_lone_angle_bracket_html() {
     // Component tags emit no lone "<"/">"/"</" segments (unparseable HTML); the attr region carries an "<x" prefix.
     let source = "<{Card}>\n    <p>hi</p>\n</{Card}>";

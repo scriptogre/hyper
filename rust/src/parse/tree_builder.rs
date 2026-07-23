@@ -220,6 +220,7 @@ impl TreeBuilder {
                     let node = Node::Slot(SlotNode {
                         name: slot_name,
                         fallback: Vec::new(),
+                        is_fill: false,
                         range: *range,
                         close_range: None,
                     });
@@ -442,6 +443,7 @@ impl TreeBuilder {
                 Ok(Some(Node::Slot(SlotNode {
                     name: slot_name,
                     fallback,
+                    is_fill: false,
                     range: slot_range,
                     close_range,
                 })))
@@ -980,7 +982,8 @@ impl TreeBuilder {
         open_range: &TextRange,
     ) -> ParseResult<ComponentChildren> {
         let mut children = Vec::new();
-        let slots = HashMap::new(); // TODO: parse slots
+        // Caller slot syntax binds after parsing, in the component-slot plugin.
+        let slots = HashMap::new();
 
         while !self.is_at_end() {
             match self.peek() {
@@ -1094,6 +1097,7 @@ impl TreeBuilder {
                         name: name.clone(),
                         expr: None,
                         expr_range: Some(*range),
+                        bound: false,
                     },
                 };
 

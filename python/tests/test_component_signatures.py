@@ -217,6 +217,55 @@ end
     assert "keyword-only" in message.lower()
 
 
+@pytest.mark.parametrize(
+    "actions_fill",
+    [
+        "<button {...actions}>Delete</button>",
+        """<{...actions}>
+        <button>Delete</button>
+    </{...actions}>""",
+    ],
+    ids=["single-element", "explicit-wrapper"],
+)
+def test_hyper_component_named_slot_composition(
+    tmp_path, monkeypatch, actions_fill
+):
+    monkeypatch.syspath_prepend(str(tmp_path))
+    write(
+        tmp_path / "app" / "components" / "Card.hyper",
+        """title: str
+---
+<article>
+    <h2>{title}</h2>
+    <main>{...}</main>
+    <footer>
+        <{...actions}>
+            <button>Cancel</button>
+        </{...actions}>
+    </footer>
+</article>
+""",
+    )
+    write(
+        tmp_path / "app" / "pages" / "Confirm.hyper",
+        f"""from app.components import Card
+---
+<{{Card}} title="Delete item">
+    <p>This cannot be undone.</p>
+    {actions_fill}
+</{{Card}}>
+""",
+    )
+
+    from app.pages import Confirm
+
+    assert Confirm() == (
+        "<article><h2>Delete item</h2><main><p>This cannot be undone.</p></main>"
+        "<footer><button>Delete</button></footer></article>"
+    )
+    assert "actions" not in inspect.signature(Confirm).parameters
+
+
 def test_component_tags_pass_declared_props_by_keyword(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(tmp_path))
     write(

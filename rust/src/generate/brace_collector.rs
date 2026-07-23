@@ -50,6 +50,11 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
             for child in &c.children {
                 collect_braces_node(child, braces);
             }
+            for slot in c.slots.values() {
+                for child in slot {
+                    collect_braces_node(child, braces);
+                }
+            }
         }
         Node::Fragment(f) => {
             for child in &f.children {

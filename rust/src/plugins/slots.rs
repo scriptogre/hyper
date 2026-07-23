@@ -90,7 +90,7 @@ impl Plugin for Slots {
 
     fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
-            Node::Slot(slot) => {
+            Node::Slot(slot) if !slot.is_fill => {
                 self.names
                     .insert(slot.name.clone().unwrap_or_default(), slot.range);
             }

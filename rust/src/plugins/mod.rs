@@ -1,5 +1,6 @@
 mod r#async;
 mod component_control_flow;
+mod component_slots;
 mod components;
 mod context;
 mod mutable_defaults;
@@ -9,6 +10,7 @@ mod spread_kwargs;
 
 pub use r#async::Async;
 pub use component_control_flow::ComponentControlFlow;
+pub use component_slots::ComponentSlots;
 pub use components::Components;
 pub use context::{BLESSED_SPREAD_NAMES, Helper};
 pub use mutable_defaults::MutableDefaults;
@@ -112,6 +114,7 @@ pub fn walk<P: Plugin + ?Sized>(nodes: &mut [Node], plugin: &mut P) -> Result<()
 /// The standard plugins, in run order: transforms first, then inspectors.
 pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
+        Box::new(ComponentSlots),
         Box::new(RenameReservedKeywords),
         Box::new(Async::default()),
         Box::new(Slots::default()),

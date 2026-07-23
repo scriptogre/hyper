@@ -33,6 +33,10 @@ impl PythonGenerator {
                 let children: Vec<&Node> = fragment.children.iter().collect();
                 self.is_effectively_empty(&children)
             }
+            Node::Slot(slot) if slot.is_fill => {
+                let fallback: Vec<&Node> = slot.fallback.iter().collect();
+                self.is_effectively_empty(&fallback)
+            }
             _ => false,
         })
     }
@@ -109,7 +113,9 @@ impl PythonGenerator {
                 el.attributes.iter().any(|attr| {
                     !matches!(
                         attr.kind,
-                        AttributeKind::Static { .. } | AttributeKind::Boolean { .. }
+                        AttributeKind::Static { .. }
+                            | AttributeKind::Boolean { .. }
+                            | AttributeKind::SlotAssignment { .. }
                     )
                 }) || el
                     .children
@@ -355,41 +361,7 @@ impl PythonGenerator {
                 output.push(name);
                 return;
             }
-            AttributeKind::SlotAssignment {
-                name,
-                expr,
-                expr_range,
-            } => {
-                if let Some(e) = expr {
-                    if in_fstring {
-                        output.push(" slot:");
-                        output.push(name);
-                        output.push("=\"{");
-                        let start = output.position();
-                        output.push(e);
-                        let end = output.position();
-                        output.push("}\"");
-                        if let Some(range) = expr_range {
-                            // SlotAssignment expr_range.end points TO closing brace
-                            let content_start = range.start.byte + 1;
-                            let content_end = range.end.byte;
-                            output.add_segment(Segment {
-                                language: Language::Python,
-                                source_start: content_start,
-                                source_end: content_end,
-                                compiled_start: start,
-                                compiled_end: end,
-                                needs_injection: true,
-                                html_prefix: None,
-                            });
-                        }
-                    }
-                } else {
-                    output.push(" slot:");
-                    output.push(name);
-                }
-                return;
-            }
+            AttributeKind::SlotAssignment { .. } => return,
             AttributeKind::Template { name, value } => {
                 if in_fstring {
                     output.push(" ");
@@ -715,14 +687,11 @@ impl PythonGenerator {
         }
     }
 
-    /// Generate the local function name for a component call's content,
-    /// e.g. `Inner` becomes `_inner_content`.
-    fn component_to_func_name(&self, name: &str) -> String {
-        // Convert PascalCase to snake_case and prefix with _
-        // Skip non-identifier characters (brackets, quotes, dots, etc.)
+    /// Generate a local function name for one component call slot.
+    fn component_to_func_name(&self, component: &str, slot: Option<&str>) -> String {
         let mut result = String::from("_");
         let mut prev_was_separator = false;
-        for (i, ch) in name.chars().enumerate() {
+        for (i, ch) in component.chars().enumerate() {
             if ch.is_alphanumeric() || ch == '_' {
                 if ch.is_uppercase() && i > 0 && !prev_was_separator {
                     result.push('_');
@@ -730,93 +699,97 @@ impl PythonGenerator {
                 result.push(ch.to_ascii_lowercase());
                 prev_was_separator = false;
             } else {
-                // Non-identifier character acts as a separator
                 if !prev_was_separator && i > 0 && !result.ends_with('_') {
                     result.push('_');
                 }
                 prev_was_separator = true;
             }
         }
-        // Trim trailing underscore from separators
         while result.ends_with('_') && result.len() > 1 {
             result.pop();
         }
         result.push('_');
-        result.push_str(DEFAULT_SLOT_PARAM);
+        result.push_str(slot.unwrap_or(DEFAULT_SLOT_PARAM));
         result
     }
 
     fn emit_component(&self, c: &ComponentNode, output: &mut Output, indent: usize) {
-        let has_children = !c.children.is_empty();
-        let name_compiled_start;
-        let name_compiled_end;
+        let has_content = !c.children.is_empty();
+        let mut named_slots: Vec<_> = c.slots.iter().collect();
+        named_slots.sort_by_key(|(name, _)| *name);
+        let has_body = has_content || !named_slots.is_empty();
 
-        if has_children {
-            // Generate inner function name from component name
-            let func_name = self.component_to_func_name(&c.name);
-
-            // Emit comment for opening tag
+        if has_body {
             self.indent(output, indent);
             output.push("# <{");
             output.push(&c.name);
             output.push("}>");
             output.newline();
+        }
 
-            // Emit inner function definition
+        if has_content {
+            let func_name = self.component_to_func_name(&c.name, None);
             self.indent(output, indent);
             output.push("def ");
             output.push(&func_name);
             output.push("():");
             output.newline();
-
-            // Emit children inside the inner function
             self.emit_body_or_pass(&c.children, output, indent + 1);
+        }
 
-            // Emit yield from with component call
+        for (name, body) in &named_slots {
+            let func_name = self.component_to_func_name(&c.name, Some(name));
             self.indent(output, indent);
-            output.push("yield from ");
-            name_compiled_start = output.position();
-            output.push(&c.name);
-            name_compiled_end = output.position();
-            output.push(".stream(content=");
+            output.push("def ");
             output.push(&func_name);
-            output.push("()");
-
-            // Emit attributes as keyword arguments
-            for attr in &c.attributes {
-                output.push(", ");
-                self.emit_component_attribute(attr, output);
-            }
-
-            output.push(")");
+            output.push("():");
             output.newline();
+            self.emit_body_or_pass(body, output, indent + 1);
+        }
 
-            // Emit comment for closing tag
+        self.indent(output, indent);
+        output.push("yield from ");
+        let name_compiled_start = output.position();
+        output.push(&c.name);
+        let name_compiled_end = output.position();
+        output.push(".stream(");
+
+        let mut first = true;
+        if has_content {
+            output.push(DEFAULT_SLOT_PARAM);
+            output.push("=");
+            output.push(&self.component_to_func_name(&c.name, None));
+            output.push("()");
+            first = false;
+        }
+        for (name, _) in &named_slots {
+            if !first {
+                output.push(", ");
+            }
+            output.push(name);
+            output.push("=");
+            output.push(&self.component_to_func_name(&c.name, Some(name)));
+            output.push("()");
+            first = false;
+        }
+        for attr in &c.attributes {
+            if matches!(attr.kind, AttributeKind::SlotAssignment { .. }) {
+                continue;
+            }
+            if !first {
+                output.push(", ");
+            }
+            self.emit_component_attribute(attr, output);
+            first = false;
+        }
+        output.push(")");
+        output.newline();
+
+        if has_body {
             self.indent(output, indent);
             output.push("# </{");
             output.push(&c.name);
             output.push("}>");
-            output.newline();
-        } else {
-            // No children - simple yield from
-            self.indent(output, indent);
-            output.push("yield from ");
-            name_compiled_start = output.position();
-            output.push(&c.name);
-            name_compiled_end = output.position();
-            output.push(".stream(");
-
-            // Emit attributes as keyword arguments
-            let mut first = true;
-            for attr in &c.attributes {
-                if !first {
-                    output.push(", ");
-                }
-                first = false;
-                self.emit_component_attribute(attr, output);
-            }
-
-            output.push(")");
             output.newline();
         }
 
@@ -961,6 +934,25 @@ impl PythonGenerator {
     }
 
     fn emit_slot(&self, s: &SlotNode, output: &mut Output, indent: usize) {
+        if s.is_fill {
+            let refs: Vec<&Node> = s.fallback.iter().collect();
+            self.emit_nodes(&refs, output, indent);
+            if s.close_range.is_some() {
+                let brace_open = s.range.start.byte + 1;
+                let brace_close = s.range.end.byte - 2;
+                for seg in html_segments_for_component(
+                    &s.range,
+                    s.close_range.as_ref(),
+                    brace_open,
+                    brace_close,
+                    &[],
+                ) {
+                    output.add_segment(seg);
+                }
+            }
+            return;
+        }
+
         // Emit conditional yield from for slot content
         let slot_var = slot_param_name(s.name.as_deref());
 
