@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/hyperhtml.svg)](https://pypi.org/project/hyperhtml/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Write HTML with Python. Import `.hyper` files without a build step or generated `.py` files.
+Write type-safe HTML in `.hyper` files. Import components directly from Python.
 
 ```bash
 uv add hyperhtml
