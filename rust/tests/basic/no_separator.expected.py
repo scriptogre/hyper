@@ -1,7 +1,7 @@
-from hyper import html
+from hyperhtml import component
 
 
-@html
+@component
 def NoSeparator():
     yield """\
 <div>No separator, just content</div>

@@ -6,8 +6,17 @@ use super::{
 use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
 use crate::ast::*;
 use crate::generate::print::{print_code, print_expr, print_import_from};
+use crate::html;
 use crate::lower::{code_span, helper_call, lower_interpolation, render_attr_call};
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
+
+/// Where a dynamic attribute's helper call lands in the f-string.
+enum Scaffold<'a> {
+    /// ` name="{<expr>}"`. Attribute name stays static, helper fills value slot.
+    Value(&'a str),
+    /// `{<expr>}`. Helper emits or omits attribute name and value.
+    Whole,
+}
 
 pub struct PythonGenerator;
 
@@ -19,7 +28,11 @@ impl PythonGenerator {
     /// Check if a list of nodes contains only whitespace/newline text (no real content)
     fn is_effectively_empty(&self, nodes: &[&Node]) -> bool {
         nodes.iter().all(|node| match node {
-            Node::Text(t) => t.content.trim().is_empty(),
+            Node::Text(text) => text.content.trim().is_empty(),
+            Node::Fragment(fragment) => {
+                let children: Vec<&Node> = fragment.children.iter().collect();
+                self.is_effectively_empty(&children)
+            }
             _ => false,
         })
     }
@@ -296,7 +309,11 @@ impl PythonGenerator {
         }
 
         if el.self_closing {
-            output.push(" />");
+            output.push(if html::is_void_element(&el.tag) {
+                ">"
+            } else {
+                " />"
+            });
         } else {
             output.push(">");
 
@@ -322,129 +339,21 @@ impl PythonGenerator {
 
     /// Emit attribute content as part of a string literal
     fn emit_element_attribute(&self, attr: &Attribute, output: &mut Output, in_fstring: bool) {
-        match &attr.kind {
+        // Non-dynamic arms each emit and return. Dynamic arms build a
+        // (scaffold, helper call) pair that the shared block below emits.
+        let (scaffold, expr) = match &attr.kind {
             AttributeKind::Static { name, value } => {
                 output.push(" ");
                 output.push(name);
                 output.push("=\"");
                 output.push(&escape_html_attr_quotes(value));
                 output.push("\"");
-            }
-            AttributeKind::Expression {
-                name,
-                expr,
-                expr_range,
-            } => {
-                if in_fstring {
-                    // expr_range includes {expr}, skip braces for injection
-                    let content_start = expr_range.start.byte + 1;
-                    let content_end = expr_range.end.byte - 1;
-
-                    // Already renamed in the AST by ReservedKeywordPlugin.
-                    let safe_expr = expr.trim().to_string();
-
-                    if name == "class" {
-                        output.push(" ");
-                        output.push(name);
-                        output.push("=\"{");
-                        let code = code_span(safe_expr, content_start, content_end);
-                        print_expr(output, &helper_call("render_class", code));
-                        output.push("}\"");
-                    } else if name == "style" {
-                        output.push(" ");
-                        output.push(name);
-                        output.push("=\"{");
-                        let code = code_span(safe_expr, content_start, content_end);
-                        print_expr(output, &helper_call("render_style", code));
-                        output.push("}\"");
-                    } else if self.is_boolean_attribute(name) {
-                        // Boolean attrs: entire attribute is conditional
-                        output.push("{");
-                        let code = code_span(safe_expr, content_start, content_end);
-                        print_expr(output, &render_attr_call(name, code));
-                        output.push("}");
-                    } else {
-                        output.push(" ");
-                        output.push(name);
-                        output.push("=\"{");
-                        let code = code_span(safe_expr, content_start, content_end);
-                        print_expr(output, &helper_call("escape", code));
-                        output.push("}\"");
-                    }
-                }
+                return;
             }
             AttributeKind::Boolean { name } => {
                 output.push(" ");
                 output.push(name);
-            }
-            AttributeKind::Shorthand { name, expr_range } => {
-                if in_fstring {
-                    // Shorthand maps one AST field to two outputs: the HTML attr name
-                    // stays, the Python value variable renames. So rename here.
-                    let var_name = rename_reserved_keywords(name);
-                    // Shorthand expr_range.end points TO closing brace (not past it),
-                    // so content_end = end.byte gives exclusive end of the name content
-                    let content_start = expr_range.start.byte + 1;
-                    let content_end = expr_range.end.byte;
-
-                    if name == "class" {
-                        output.push(" ");
-                        output.push(name);
-                        output.push("=\"{");
-                        print_expr(
-                            output,
-                            &helper_call(
-                                "render_class",
-                                code_span(var_name, content_start, content_end),
-                            ),
-                        );
-                        output.push("}\"");
-                        return;
-                    }
-                    if name == "style" {
-                        output.push(" ");
-                        output.push(name);
-                        output.push("=\"{");
-                        print_expr(
-                            output,
-                            &helper_call(
-                                "render_style",
-                                code_span(var_name, content_start, content_end),
-                            ),
-                        );
-                        output.push("}\"");
-                        return;
-                    }
-
-                    let code = code_span(var_name, content_start, content_end);
-                    if name == "data" {
-                        output.push("{");
-                        print_expr(output, &helper_call("render_data", code));
-                        output.push("}");
-                    } else if name == "aria" {
-                        output.push("{");
-                        print_expr(output, &helper_call("render_aria", code));
-                        output.push("}");
-                    } else {
-                        output.push("{");
-                        print_expr(output, &render_attr_call(name, code));
-                        output.push("}");
-                    }
-                }
-            }
-            AttributeKind::Spread { expr, expr_range } => {
-                if in_fstring {
-                    // Spread expr is already renamed in the AST by ReservedKeywordPlugin.
-                    let safe_expr = expr.trim().to_string();
-                    // Spread expr_range is {**expr}; skip 3 chars for "{**"
-                    let content_start = expr_range.start.byte + 3;
-                    let content_end = expr_range.end.byte;
-
-                    output.push("{");
-                    let code = code_span(safe_expr, content_start, content_end);
-                    print_expr(output, &helper_call("spread_attrs", code));
-                    output.push("}");
-                }
+                return;
             }
             AttributeKind::SlotAssignment {
                 name,
@@ -479,6 +388,7 @@ impl PythonGenerator {
                     output.push(" slot:");
                     output.push(name);
                 }
+                return;
             }
             AttributeKind::Template { name, value } => {
                 if in_fstring {
@@ -534,6 +444,81 @@ impl PythonGenerator {
                     }
                     output.push("\"");
                 }
+                return;
+            }
+
+            AttributeKind::Expression {
+                name,
+                expr,
+                expr_range,
+            } => {
+                if !in_fstring {
+                    return;
+                }
+                // Already renamed in the AST by ReservedKeywordPlugin.
+                let safe_expr = expr.trim().to_string();
+                // expr_range includes {expr}, skip braces for injection.
+                let content_start = expr_range.start.byte + 1;
+                let content_end = expr_range.end.byte - 1;
+                let code = code_span(safe_expr, content_start, content_end);
+                match name.as_str() {
+                    "class" => (Scaffold::Value(name), helper_call("render_class", code)),
+                    "style" => (Scaffold::Value(name), helper_call("render_style", code)),
+                    n if self.is_boolean_attribute(n) => {
+                        (Scaffold::Whole, render_attr_call(name, code))
+                    }
+                    _ => (Scaffold::Value(name), helper_call("escape", code)),
+                }
+            }
+
+            AttributeKind::Shorthand { name, expr_range } => {
+                if !in_fstring {
+                    return;
+                }
+                // Shorthand maps one AST field to two outputs: HTML attr name
+                // stays, Python value variable renames. Rename here.
+                let var_name = rename_reserved_keywords(name);
+                // Shorthand expr_range.end points TO closing brace (not past it),
+                // so content_end = end.byte gives exclusive end of name content.
+                let content_start = expr_range.start.byte + 1;
+                let content_end = expr_range.end.byte;
+                let code = code_span(var_name, content_start, content_end);
+                match name.as_str() {
+                    "class" => (Scaffold::Value(name), helper_call("render_class", code)),
+                    "style" => (Scaffold::Value(name), helper_call("render_style", code)),
+                    "data" => (Scaffold::Whole, helper_call("render_data", code)),
+                    "aria" => (Scaffold::Whole, helper_call("render_aria", code)),
+                    _ => (Scaffold::Whole, render_attr_call(name, code)),
+                }
+            }
+
+            AttributeKind::Spread { expr, expr_range } => {
+                if !in_fstring {
+                    return;
+                }
+                // Already renamed in the AST by ReservedKeywordPlugin.
+                let safe_expr = expr.trim().to_string();
+                // Spread expr_range is {**expr}; skip 3 chars for "{**".
+                let content_start = expr_range.start.byte + 3;
+                let content_end = expr_range.end.byte;
+                let code = code_span(safe_expr, content_start, content_end);
+                (Scaffold::Whole, helper_call("spread_attrs", code))
+            }
+        };
+
+        // Shared scaffold emission for dynamic arms.
+        match scaffold {
+            Scaffold::Value(name) => {
+                output.push(" ");
+                output.push(name);
+                output.push("=\"{");
+                print_expr(output, &expr);
+                output.push("}\"");
+            }
+            Scaffold::Whole => {
+                output.push("{");
+                print_expr(output, &expr);
+                output.push("}");
             }
         }
     }
@@ -702,7 +687,11 @@ impl PythonGenerator {
         }
 
         if el.self_closing {
-            output.push(" />\"\"\"");
+            output.push(if html::is_void_element(&el.tag) {
+                ">\"\"\""
+            } else {
+                " />\"\"\""
+            });
             output.newline();
         } else {
             output.push(">\"\"\"");
@@ -726,8 +715,8 @@ impl PythonGenerator {
         }
     }
 
-    /// Generate the name of the local buffer function that holds a component
-    /// call's default-slot content, e.g. `Inner` -> `_inner_default_slot`.
+    /// Generate the local function name for a component call's content,
+    /// e.g. `Inner` becomes `_inner_content`.
     fn component_to_func_name(&self, name: &str) -> String {
         // Convert PascalCase to snake_case and prefix with _
         // Skip non-identifier characters (brackets, quotes, dots, etc.)
@@ -752,6 +741,7 @@ impl PythonGenerator {
         while result.ends_with('_') && result.len() > 1 {
             result.pop();
         }
+        result.push('_');
         result.push_str(DEFAULT_SLOT_PARAM);
         result
     }
@@ -788,7 +778,7 @@ impl PythonGenerator {
             name_compiled_start = output.position();
             output.push(&c.name);
             name_compiled_end = output.position();
-            output.push("(");
+            output.push(".stream(content=");
             output.push(&func_name);
             output.push("()");
 
@@ -814,7 +804,7 @@ impl PythonGenerator {
             name_compiled_start = output.position();
             output.push(&c.name);
             name_compiled_end = output.position();
-            output.push("(");
+            output.push(".stream(");
 
             // Emit attributes as keyword arguments
             let mut first = true;
@@ -1270,6 +1260,107 @@ impl PythonGenerator {
         output.push(",");
         output.newline();
     }
+
+    fn function_parameters<'a>(&self, function: &'a Function) -> Vec<&'a ParameterNode> {
+        function
+            .params
+            .iter()
+            .filter_map(|node| match node {
+                Node::Parameter(param) => Some(param),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn emit_render_function(
+        &self,
+        name: &str,
+        name_range: Option<TextRange>,
+        function: &Function,
+        output: &mut Output,
+    ) {
+        for decorator in &function.decorators {
+            self.emit_decorator(decorator, output, 0);
+        }
+
+        if function.is_async {
+            output.push("async def ");
+        } else {
+            output.push("def ");
+        }
+        let name_start = output.position();
+        output.push(name);
+        if let Some(range) = name_range {
+            output.add_segment(Segment {
+                language: Language::Python,
+                source_start: range.start.byte,
+                source_end: range.end.byte,
+                compiled_start: name_start,
+                compiled_end: output.position(),
+                needs_injection: true,
+                html_prefix: None,
+            });
+        }
+
+        let parameters = self.function_parameters(function);
+        let positional: Vec<&ParameterNode> = parameters
+            .iter()
+            .copied()
+            .filter(|param| param.kind == ParamKind::Positional)
+            .collect();
+        let keyword_only: Vec<&ParameterNode> = parameters
+            .iter()
+            .copied()
+            .filter(|param| param.kind == ParamKind::KeywordOnly)
+            .collect();
+        let var_keyword = parameters
+            .iter()
+            .copied()
+            .find(|param| param.kind == ParamKind::VarKeyword);
+
+        if positional.is_empty() && keyword_only.is_empty() && var_keyword.is_none() {
+            output.push("():");
+            output.newline();
+        } else {
+            output.push("(");
+            output.newline();
+            let indent = "        ";
+
+            for param in positional {
+                self.emit_signature_param(param, output, indent);
+            }
+            if !keyword_only.is_empty() {
+                output.push(indent);
+                output.push("*,");
+                output.newline();
+            }
+            for param in keyword_only {
+                self.emit_signature_param(param, output, indent);
+            }
+            if let Some(param) = var_keyword {
+                output.push(indent);
+                output.push(&param.name);
+                if let Some(type_hint) = &param.type_hint {
+                    output.push(": ");
+                    output.push(type_hint);
+                }
+                output.push(",");
+                output.newline();
+            }
+
+            output.push("):");
+            output.newline();
+        }
+
+        let body: Vec<&Node> = function.body.iter().collect();
+        if body.is_empty() || self.is_effectively_empty(&body) {
+            self.indent(output, 1);
+            output.push("yield from ()");
+            output.newline();
+        } else {
+            self.emit_nodes(&body, output, 1);
+        }
+    }
 }
 
 impl Default for PythonGenerator {
@@ -1284,18 +1375,13 @@ impl Generator for PythonGenerator {
 
         // Frontmatter and body are already split by the `lower` pass.
         let function = &ast.function;
-        let parameters: Vec<&ParameterNode> = function
-            .params
-            .iter()
-            .filter_map(|n| match n {
-                Node::Parameter(p) => Some(p),
-                _ => None,
-            })
-            .collect();
+        let parameters = self.function_parameters(function);
+        let mut all_parameters = parameters.clone();
+        for definition in &ast.definitions {
+            all_parameters.extend(self.function_parameters(&definition.function));
+        }
         let imports: Vec<&ImportNode> = function.imports.iter().collect();
-        let decorators: Vec<&DecoratorNode> = function.decorators.iter().collect();
         let header_comments: Vec<&CommentNode> = function.header_comments.iter().collect();
-        let body_nodes: Vec<&Node> = function.body.iter().collect();
 
         // Emit user imports
         for import in &imports {
@@ -1314,98 +1400,43 @@ impl Generator for PythonGenerator {
                 html_prefix: None,
             });
         }
-
-        // Note: orphaned decorators (not attached to inner defs) are applied to
-        // the outer template function, emitted later alongside @html in the
-        // import block insertion step.
-
-        // Emit function signature with parameters
-        let func_name = options
+        let runtime_import_offset = output.position();
+        let function_name = options
             .function_name
             .as_deref()
             .map(to_pascal_case)
             .unwrap_or_else(|| "Render".to_string());
 
-        // Add async if needed
-        if function.is_async {
-            output.push("async def ");
-        } else {
-            output.push("def ");
+        if ast.mode == FileMode::Library {
+            // Library statements define names used by component defaults and decorators.
+            let body: Vec<&Node> = function.body.iter().collect();
+            if !self.is_effectively_empty(&body) {
+                self.emit_nodes(&body, &mut output, 0);
+                output.newline();
+                output.newline();
+            }
         }
-        output.push(&func_name);
 
-        // Partition params by where they sit in the signature.
-        let positional: Vec<&ParameterNode> = parameters
-            .iter()
-            .copied()
-            .filter(|p| p.kind == ParamKind::Positional)
-            .collect();
-        let keyword_only: Vec<&ParameterNode> = parameters
-            .iter()
-            .copied()
-            .filter(|p| p.kind == ParamKind::KeywordOnly)
-            .collect();
-        let var_keyword = parameters
-            .iter()
-            .copied()
-            .find(|p| p.kind == ParamKind::VarKeyword);
-
-        let has_any_params =
-            !positional.is_empty() || !keyword_only.is_empty() || var_keyword.is_some();
-
-        if !has_any_params {
-            output.push("():");
+        for definition in &ast.definitions {
+            self.emit_render_function(
+                &definition.name,
+                Some(definition.name_range),
+                &definition.function,
+                &mut output,
+            );
             output.newline();
-        } else {
-            output.push("(");
-            output.newline();
-            let sig_indent = "        "; // 8 spaces, double indent for continuation
-
-            // Positional params (before the keyword-only marker): the default slot.
-            for param in &positional {
-                self.emit_signature_param(param, &mut output, sig_indent);
-            }
-
-            // Keyword-only marker, only when keyword-only params follow.
-            if !keyword_only.is_empty() {
-                output.push(sig_indent);
-                output.push("*,");
-                output.newline();
-            }
-
-            // Keyword-only params: user params, then named slots.
-            for param in &keyword_only {
-                self.emit_signature_param(param, &mut output, sig_indent);
-            }
-
-            // **kwargs (explicit or injected by SpreadKwargs); never an injection.
-            if let Some(kwargs) = var_keyword {
-                output.push(sig_indent);
-                output.push(&kwargs.name);
-                if let Some(type_hint) = &kwargs.type_hint {
-                    output.push(": ");
-                    output.push(type_hint);
-                }
-                output.push(",");
-                output.newline();
-            }
-
-            output.push("):");
             output.newline();
         }
 
-        // Emit body. Mutable-default guards are already prepended to the body
-        // by DetectMutableDefaults, so an empty body means a genuinely empty one.
-        if body_nodes.is_empty() || self.is_effectively_empty(&body_nodes) {
-            self.indent(&mut output, 1);
-            output.push("pass");
-            output.newline();
-        } else {
-            self.emit_nodes(&body_nodes, &mut output, 1);
+        if ast.mode == FileMode::ImplicitComponent {
+            self.emit_render_function(&function_name, None, function, &mut output);
         }
 
         // Hyper runtime imports, in Helper::ALL order, for helpers actually emitted.
-        let mut hyper_imports = vec!["html"];
+        let mut hyper_imports = Vec::new();
+        if ast.mode == FileMode::ImplicitComponent || !ast.definitions.is_empty() {
+            hyper_imports.push("component");
+        }
         for helper in Helper::ALL {
             if output.helper_used(helper.import_name()) {
                 hyper_imports.push(helper.import_name());
@@ -1415,7 +1446,7 @@ impl Generator for PythonGenerator {
         let (mut code, tracked_segments) = output.finish();
 
         // Iterable import is needed when a param is typed with it (slot params).
-        let needs_iterable = parameters.iter().any(|p| {
+        let needs_iterable = all_parameters.iter().any(|p| {
             p.type_hint
                 .as_deref()
                 .is_some_and(|t| t.contains("Iterable"))
@@ -1423,7 +1454,7 @@ impl Generator for PythonGenerator {
 
         // Detect typing constructs needed from parameter type hints
         let mut typing_imports: Vec<&str> = Vec::new();
-        let all_type_hints: String = parameters
+        let all_type_hints: String = all_parameters
             .iter()
             .filter_map(|p| p.type_hint.as_ref())
             .cloned()
@@ -1464,9 +1495,14 @@ impl Generator for PythonGenerator {
             import_lines.push('\n');
         }
 
-        // Add hyper imports
-        import_lines.push_str(&print_import_from(&import_from("hyper", &hyper_imports)));
-        import_lines.push('\n');
+        // Add Hyper runtime imports
+        if !hyper_imports.is_empty() {
+            import_lines.push_str(&print_import_from(&import_from(
+                "hyperhtml",
+                &hyper_imports,
+            )));
+            import_lines.push('\n');
+        }
         import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)
 
         // Add header comments (above --- separator)
@@ -1475,41 +1511,17 @@ impl Generator for PythonGenerator {
             import_lines.push('\n');
         }
 
-        // Add user decorators for the outer template function (before @html)
-        for dec in &decorators {
-            import_lines.push_str(&dec.decorator);
-            import_lines.push('\n');
-        }
-
-        // Add @html decorator
-        import_lines.push_str("@html\n");
-
-        // Insert imports before function definition
-        // Search for "async def" first to avoid matching "def" inside "async def"
-        let import_offset =
-            if let Some(def_pos) = code.find("async def ").or_else(|| code.find("def ")) {
-                code.insert_str(def_pos, &import_lines);
-                import_lines.len()
-            } else {
-                code.insert_str(0, &import_lines);
-                import_lines.len()
-            };
+        let import_offset = import_lines.len();
+        code.insert_str(runtime_import_offset, &import_lines);
 
         // Adjust segments and collect IDE metadata when ranges are requested.
         let (segments, expression_braces) = if options.include_ranges {
-            // Find insertion point (where import_lines were inserted) in pre-insertion coordinates
-            let def_pos = code
-                .find("async def ")
-                .or_else(|| code.find("def "))
-                .unwrap_or(0);
-            let pre_insertion_def_pos = def_pos - import_offset;
-
             // Adjust tracked segments by the import line offset, but only for segments
             // at or after the insertion point (user imports come before it)
             let segments: Vec<crate::generate::Segment> = tracked_segments
                 .into_iter()
                 .map(|mut s| {
-                    if s.compiled_start >= pre_insertion_def_pos {
+                    if s.compiled_start >= runtime_import_offset {
                         s.compiled_start += import_offset;
                         s.compiled_end += import_offset;
                     }
@@ -1528,6 +1540,8 @@ impl Generator for PythonGenerator {
 
         CompileResult {
             code,
+            file_mode: ast.mode,
+            component_name: (ast.mode == FileMode::ImplicitComponent).then_some(function_name),
             segments,
             expression_braces,
         }

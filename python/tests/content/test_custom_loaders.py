@@ -10,7 +10,7 @@ except ImportError:
     HAS_PYDANTIC = False
     pydantic = None
 
-from hyper.content import Singleton, Collection
+from hyperhtml.content import Singleton, Collection
 
 
 # ==========================================

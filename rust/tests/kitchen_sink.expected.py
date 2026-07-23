@@ -1,12 +1,46 @@
 from collections.abc import Iterable
-from hyper import html, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
+from hyperhtml import component, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
 
 
 # Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
 # Open this file in JetBrains after any injection change and verify highlighting.
-@html
+@component
+def Badge(
+        *,
+        text: str,
+        badge_variant: str = "info",
+):
+    yield f"""<span class="badge badge-{escape(badge_variant)}">{escape(text)}</span>"""
+
+
+@component
+def CachedList(
+        *,
+        entries: list,
+):
+    yield """<ul>"""
+    for entry in entries:
+        yield f"""<li>{escape(entry)}</li>"""
+    yield """</ul>"""
+
+
+@component
+def Card(
+        *,
+        title: str,
+        content: Iterable[str] | None = None,
+):
+    yield """<div class="card">"""
+    yield f"""<h2>{escape(title)}</h2>"""
+    # <{...}>
+    if content is not None:
+        yield from content
+    # </{...}>
+    yield """</div>"""
+
+
+@component(subcomponents=[Badge, CachedList, Card])
 def KitchenSink(
-        _default_slot: Iterable[str] | None = None,
         *,
         name: str,
         count: int = 0,
@@ -24,8 +58,9 @@ def KitchenSink(
         names: list = [],
         scores: list = [],
         matrix: list = [],
-        _header_slot: Iterable[str] | None = None,
-        _sidebar_slot: Iterable[str] | None = None,
+        content: Iterable[str] | None = None,
+        header: Iterable[str] | None = None,
+        sidebar: Iterable[str] | None = None,
 ):
     ########################################
     # STATEMENTS
@@ -50,12 +85,12 @@ def KitchenSink(
     ########################################
     yield f"""\
 <div>
-    <img src="/img/{escape(name)}.png" alt="{escape(name)}" />
-    <input type="text" value="{escape(name)}"{render_attr("disabled", is_active)} />
-    <br />
-    <hr />
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="style.css" />
+    <img src="/img/{escape(name)}.png" alt="{escape(name)}">
+    <input type="text" value="{escape(name)}"{render_attr("disabled", is_active)}>
+    <br>
+    <hr>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="style.css">
 </div>
 <div />
 <span />"""
@@ -108,9 +143,9 @@ Text after elements"""
 
     # Shorthand
     yield f"""\
-<input{render_attr("name", name)}{render_attr("value", value)}{render_attr("is_active", is_active)} />
+<input{render_attr("name", name)}{render_attr("value", value)}{render_attr("is_active", is_active)}>
 <button{render_attr("name", name)}{render_attr("variant", variant)}{render_attr("is_active", is_active)}>Click</button>
-<input type="text"{render_attr("name", name)} class="input" />"""
+<input type="text"{render_attr("name", name)} class="input">"""
 
     # Spread on HTML
     yield f"""\
@@ -163,8 +198,8 @@ Text after elements"""
     ########################################
     yield f"""\
 <button{render_attr("disabled", is_active)}>Submit</button>
-<input type="checkbox" checked />
-<input type="checkbox" disabled />"""
+<input type="checkbox" checked>
+<input type="checkbox" disabled>"""
 
 
     ########################################
@@ -240,69 +275,51 @@ Text after elements"""
     ########################################
     # DEFINITIONS
     ########################################
-    @fragment
-    def Badge(text: str, badge_variant: str = "info"):
-        yield f"""<span class="badge badge-{escape(badge_variant)}">{escape(text)}</span>"""
     @cache
-    @fragment
-    def CachedList(entries: list):
-        yield """<ul>"""
-        for entry in entries:
-            yield f"""<li>{escape(entry)}</li>"""
-        yield """</ul>"""
-    @fragment(name="card")
-    def Card(title: str):
-        yield """<div class="card">"""
-        yield f"""<h2>{escape(title)}</h2>"""
-        # <{...}>
-        if _default_slot is not None:
-            yield from _default_slot
-        # </{...}>
-        yield """</div>"""
     def format_name(n: str) -> str:
         return n.upper()
     yield f"""\
-{escape(Badge("New"))}
-{escape(CachedList(items))}"""
+{escape(Badge(text="New"))}
+{escape(CachedList(entries=items))}"""
 
 
     ########################################
     # COMPONENTS
     ########################################
-    yield from Badge(text="Sale", badge_variant="danger")
-    yield from Badge()
-    yield from Badge(is_active=is_active)
-    yield from Badge(text=format_name(name))
+    yield from Badge.stream(text="Sale", badge_variant="danger")
+    yield from Badge.stream()
+    yield from Badge.stream(is_active=is_active)
+    yield from Badge.stream(text=format_name(name))
 
     # <{CachedList}>
-    def _cached_list_default_slot():
+    def _cached_list_content():
         yield """<p>Fallback content</p>"""
-    yield from CachedList(_cached_list_default_slot(), entries=items)
+    yield from CachedList.stream(content=_cached_list_content(), entries=items)
     # </{CachedList}>
 
-    yield from callback()
+    yield from callback.stream()
 
 
     ########################################
     # SLOTS
     ########################################
     # <{...header}>
-    if _header_slot is not None:
-        yield from _header_slot
+    if header is not None:
+        yield from header
     else:
         yield """<h2>Default Header</h2>"""
     # </{...header}>
 
     # <{...sidebar}>
-    if _sidebar_slot is not None:
-        yield from _sidebar_slot
+    if sidebar is not None:
+        yield from sidebar
     else:
         yield """<nav>Default Nav</nav>"""
     # </{...sidebar}>
 
     # <{...}>
-    if _default_slot is not None:
-        yield from _default_slot
+    if content is not None:
+        yield from content
     # </{...}>
 
 
@@ -312,11 +329,11 @@ Text after elements"""
     yield """<section>"""
     if is_active:
         for item in items:
-            yield from Badge(text=item)
+            yield from Badge.stream(text=item)
             yield """<div class="wrapper">"""
             match item:
                 case "special":
-                    yield from CachedList(entries=[item, item])
+                    yield from CachedList.stream(entries=[item, item])
                 case _:
                     yield f"""<span>{escape(item)}</span>"""
             yield """</div>"""

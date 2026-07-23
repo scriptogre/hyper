@@ -3,9 +3,9 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "hyper"
+name = "hyperhtml"
 version = "0.1.0"
-description = "A Python framework for hypermedia-driven applications"
+description = "Backend-neutral Hyper HTML templates for Python"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -40,15 +40,17 @@ django = [
 ]
 
 [tool.maturin]
-bindings = "bin"
+bindings = "pyo3"
 manifest-path = "rust/Cargo.toml"
-module-name = "hyper"
+module-name = "hyperhtml._native"
 python-source = "python"
+features = ["python-extension"]
+include = ["hyperhtml_autohook.pth"]
 strip = true
 
 [dependency-groups]
 dev = [
-    "hyper[content,jinja2,django]",
+    "hyperhtml[content,jinja2,django]",
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
     "msgspec>=0.20",

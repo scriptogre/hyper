@@ -25,16 +25,16 @@
       "source_start": 42
     },
     {
-      "compiled_end": 147,
-      "compiled_start": 138,
+      "compiled_end": 161,
+      "compiled_start": 152,
       "language": "python",
       "needs_injection": true,
       "source_end": 77,
       "source_start": 68
     },
     {
-      "compiled_end": 205,
-      "compiled_start": 179,
+      "compiled_end": 219,
+      "compiled_start": 193,
       "language": "python",
       "needs_injection": true,
       "source_end": 114,
@@ -57,8 +57,8 @@
       "source_start": 115
     },
     {
-      "compiled_end": 261,
-      "compiled_start": 225,
+      "compiled_end": 275,
+      "compiled_start": 239,
       "language": "python",
       "needs_injection": true,
       "source_end": 162,
@@ -81,8 +81,8 @@
       "source_start": 163
     },
     {
-      "compiled_end": 301,
-      "compiled_start": 284,
+      "compiled_end": 315,
+      "compiled_start": 298,
       "language": "python",
       "needs_injection": true,
       "source_end": 194,

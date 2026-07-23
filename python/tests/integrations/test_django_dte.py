@@ -1,4 +1,4 @@
-"""Tests for hyper.integrations.django rendering through Django's native template engine (DTE).
+"""Tests for hyperhtml.integrations.django rendering through Django's native template engine (DTE).
 
 Verifies:
   - The Hyper app discovers components from every installed app's components/ dir
@@ -30,7 +30,7 @@ def django_dte_setup():
         settings.configure(
             DEBUG=True,
             INSTALLED_APPS=[
-                "hyper.integrations.django",
+                "hyperhtml.integrations.django",
                 "fixtures.apps.FixturesConfig",
             ],
             TEMPLATES=[
@@ -39,10 +39,10 @@ def django_dte_setup():
                     "DIRS": [str(fixtures_root)],
                     "OPTIONS": {
                         "context_processors": [
-                            "hyper.integrations.django.context_processors.components",
+                            "hyperhtml.integrations.django.context_processors.components",
                         ],
                         "builtins": [
-                            "hyper.integrations.django.templatetags.hyper",
+                            "hyperhtml.integrations.django.templatetags.hyper",
                         ],
                     },
                 },
@@ -60,7 +60,7 @@ def _populate_registry():
     For these DTE tests we want it freshly populated by HyperConfig.ready() before
     each test, so re-run discovery here.
     """
-    from hyper.integrations.django.apps import HyperConfig
+    from hyperhtml.integrations.django.apps import HyperConfig
     from django.apps import apps as django_apps
 
     config = django_apps.get_app_config("hyper")
@@ -111,7 +111,7 @@ def test_hyper_tag_escapes_user_input_inside_component():
 
 def test_hyper_tag_accepts_dotted_string_path():
     out = _render(
-        "{% hyper 'fixtures.components.Greeting.Greeting' name='Linus' / %}",
+        "{% hyper 'fixtures.components.Greeting' name='Linus' / %}",
         {},  # no context processor needed for string-path lookups
     )
     assert out == "<p>Hello, Linus!</p>"
@@ -196,7 +196,7 @@ def test_spread_conflicting_key_raises_like_python():
 def test_discovery_scans_configured_template_dirs():
     # The fixtures live under a DIRS entry; discovery finds them with no setting.
     from django.apps import apps as django_apps
-    from hyper.integrations.django.apps import HyperConfig
+    from hyperhtml.integrations.django.apps import HyperConfig
 
     config = django_apps.get_app_config("hyper")
     HyperConfig.ready(config)

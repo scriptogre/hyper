@@ -27,7 +27,7 @@ def django_jinja_setup(components_dir: Path):
                     "BACKEND": "django.template.backends.jinja2.Jinja2",
                     "DIRS": [str(components_dir)],
                     "OPTIONS": {
-                        "extensions": ["hyper.integrations.jinja2.HyperExtension"],
+                        "extensions": ["hyperhtml.integrations.jinja2.HyperExtension"],
                     },
                 },
             ]
@@ -44,7 +44,7 @@ def django_jinja_setup(components_dir: Path):
                 "BACKEND": "django.template.backends.jinja2.Jinja2",
                 "DIRS": [str(components_dir)],
                 "OPTIONS": {
-                    "extensions": ["hyper.integrations.jinja2.HyperExtension"],
+                    "extensions": ["hyperhtml.integrations.jinja2.HyperExtension"],
                 },
             },
         ],

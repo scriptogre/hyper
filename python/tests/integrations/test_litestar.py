@@ -13,10 +13,10 @@ from litestar import MediaType, get
 from litestar.response import Stream
 from litestar.testing import create_test_client
 
-from hyper import escape, html
+from hyperhtml import component, escape
 
 
-@html
+@component
 def Greeting(*, name: str):
     yield "<h1>Hello "
     yield escape(name)  # a component escapes its own inputs
@@ -44,9 +44,9 @@ def test_user_input_escaped_in_component():
     with create_test_client([index]) as client:
         r = client.get("/")
 
-    assert "<script>" not in r.text       # the component escaped the input
+    assert "<script>" not in r.text  # the component escaped the input
     assert "&lt;script&gt;" in r.text
-    assert "<h1>Hello" in r.text          # but Litestar did not escape its tags
+    assert "<h1>Hello" in r.text  # but Litestar did not escape its tags
 
 
 def test_stream_method_feeds_a_stream_response():

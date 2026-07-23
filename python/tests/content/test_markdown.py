@@ -5,7 +5,7 @@ import os
 import pytest
 import pydantic
 
-from hyper.content import MarkdownCollection
+from hyperhtml.content import MarkdownCollection
 
 
 @pytest.fixture
@@ -214,7 +214,7 @@ title: My Post
 def test_markdown_with_msgspec(content_dir):
     """Test Markdown mixin works with msgspec.Struct."""
     import msgspec
-    from hyper.content import MarkdownCollection
+    from hyperhtml.content import MarkdownCollection
 
     class BlogPost(MarkdownCollection, msgspec.Struct):
         title: str
@@ -310,7 +310,7 @@ except ImportError:
     HAS_MSGSPEC = False
 
 from dataclasses import is_dataclass, fields  # noqa: E402
-from hyper.content import MarkdownSingleton  # noqa: E402
+from hyperhtml.content import MarkdownSingleton  # noqa: E402
 
 
 @pytest.fixture

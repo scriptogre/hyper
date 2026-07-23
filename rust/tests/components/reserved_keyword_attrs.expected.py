@@ -1,12 +1,12 @@
-from hyper import html, escape, render_class
+from hyperhtml import component, escape, render_class
 
 
-@html
+@component
 def ReservedKeywordAttrs(
         *,
         class_: str = "",
         type: str = "button",
 ):
     yield f"""<button class="{render_class(class_)}" type="{escape(type)}">"""
-    yield from Icon(class_="icon", type="svg")
+    yield from Icon.stream(class_="icon", type="svg")
     yield """</button>"""

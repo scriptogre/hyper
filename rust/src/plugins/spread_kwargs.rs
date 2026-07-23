@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::context::BLESSED_SPREAD_NAMES;
 use super::{Flow, Plugin, walk};
-use crate::ast::{Ast, Attribute, AttributeKind, Node, ParamKind, ParameterNode, TextRange};
+use crate::ast::{Attribute, AttributeKind, Function, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
 
 /// Auto-injects a `**kwargs` parameter for blessed spread names (kwargs, props,
@@ -51,9 +51,9 @@ impl Default for SpreadKwargs {
 }
 
 impl Plugin for SpreadKwargs {
-    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, self)?;
-        walk(&mut ast.function.body, self)?;
+    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        walk(&mut function.params, self)?;
+        walk(&mut function.body, self)?;
 
         // Guard: only one distinct blessed spread name is allowed per template.
         if self.blessed_spreads.len() > 1 {
@@ -72,7 +72,7 @@ impl Plugin for SpreadKwargs {
         if !self.has_explicit_kwargs
             && let Some((name, _)) = self.blessed_spreads.first()
         {
-            ast.function.params.push(Node::Parameter(ParameterNode {
+            function.params.push(Node::Parameter(ParameterNode {
                 name: format!("**{name}"),
                 type_hint: None,
                 default: None,

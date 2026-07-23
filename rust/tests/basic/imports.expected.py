@@ -1,10 +1,10 @@
 from datetime import datetime
 import json
 from pathlib import Path
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
-@html
+@component
 def Imports(
         *,
         name: str,

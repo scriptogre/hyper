@@ -11,10 +11,10 @@ from __future__ import annotations
 from sanic import Sanic, response
 from sanic.response import ResponseStream
 
-from hyper import escape, html
+from hyperhtml import component, escape
 
 
-@html
+@component
 def Greeting(*, name: str):
     yield "<h1>Hello "
     yield escape(name)  # a component escapes its own inputs
@@ -49,9 +49,9 @@ def test_user_input_escaped_in_component():
 
     _, r = app.test_client.get("/")
 
-    assert "<script>" not in r.text       # the component escaped the input
+    assert "<script>" not in r.text  # the component escaped the input
     assert "&lt;script&gt;" in r.text
-    assert "<h1>Hello" in r.text          # but Sanic did not escape its tags
+    assert "<h1>Hello" in r.text  # but Sanic did not escape its tags
 
 
 def test_stream_method_feeds_a_stream_response():

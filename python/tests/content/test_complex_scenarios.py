@@ -7,7 +7,7 @@ import pytest
 import pydantic
 from pydantic import BaseModel, field_validator
 
-from hyper.content import Collection, Singleton, load
+from hyperhtml.content import Collection, Singleton, load
 
 try:
     import msgspec

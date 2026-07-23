@@ -6,9 +6,9 @@
 use std::sync::Arc;
 
 use crate::ast::python::{Arguments, Code, Expr, ExprCall, ExprName, Identifier, StringLiteral};
-use crate::ast::{Ast, ExpressionNode, Function, Node, Position, TextRange};
+use crate::ast::{Ast, ExpressionNode, FileMode, Function, Node, Position, TextRange};
 
-pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
+pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
     let n = nodes.len();
 
     // A decorator "leads to a definition" when only decorators, comments, or
@@ -79,7 +79,19 @@ pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
         }
     }
 
+    // Declarations remain module-level unless the file explicitly starts rendering.
+    let mode = if has_separator
+        || !params.is_empty()
+        || !decorators.is_empty()
+        || body.iter().any(selects_implicit_component)
+    {
+        FileMode::ImplicitComponent
+    } else {
+        FileMode::Library
+    };
+
     Ast::new(
+        mode,
         Function {
             is_async: false,
             params,
@@ -90,6 +102,29 @@ pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
         },
         Arc::from(source),
     )
+}
+
+fn selects_implicit_component(node: &Node) -> bool {
+    match node {
+        Node::Text(text) => !text.content.is_empty(),
+        Node::Expression(_)
+        | Node::Element(_)
+        | Node::Component(_)
+        | Node::Slot(_)
+        | Node::If(_)
+        | Node::For(_)
+        | Node::Match(_)
+        | Node::While(_)
+        | Node::With(_)
+        | Node::Try(_) => true,
+        Node::Fragment(fragment) => fragment.children.iter().any(selects_implicit_component),
+        Node::Comment(_)
+        | Node::Statement(_)
+        | Node::Definition(_)
+        | Node::Import(_)
+        | Node::Parameter(_)
+        | Node::Decorator(_) => false,
+    }
 }
 
 /// Lower a template interpolation to an output expression for the cases already

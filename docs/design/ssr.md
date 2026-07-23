@@ -284,34 +284,6 @@ if request.method == "POST":
     <div>User deleted</div>
 ```
 
-### With Fragments (Planned)
-
-```hyper
-users: list[User]
-
----
-
-<div class="page">
-    fragment UserList:
-        for user in users:
-            <div class="user">{user.name}</div>
-        end
-    end
-</div>
-```
-
-Import fragments separately for HTMX endpoints:
-
-```python
-from pages.Users import UserList
-
-@app.get("/users/list", response_class=HTMLResponse)
-def users_list():
-    return UserList(users=get_all_users())
-```
-
----
-
 ## Streaming (Planned)
 
 > **Status**: 🔮 Exploring design

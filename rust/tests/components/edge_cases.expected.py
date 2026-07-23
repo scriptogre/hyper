@@ -1,43 +1,43 @@
-from hyper import html
+from hyperhtml import component
 
 
-@html
+@component
 def EdgeCases(
         *,
         module: object,
         components: dict,
 ):
     # Component from module
-    yield from module.Button(label="Click")
+    yield from module.Button.stream(label="Click")
 
     # Component from dict
     # <{components['Card']}>
-    def _components_card_default_slot():
+    def _components_card_content():
         yield """<p>Content</p>"""
-    yield from components['Card'](_components_card_default_slot())
+    yield from components['Card'].stream(content=_components_card_content())
     # </{components['Card']}>
 
     # Empty component (not self-closing)
-    yield from Wrapper()
+    yield from Wrapper.stream()
 
     # Component with only whitespace
     # <{Container}>
-    def _container_default_slot():
+    def _container_content():
         pass
-    yield from Container(_container_default_slot())
+    yield from Container.stream(content=_container_content())
     # </{Container}>
 
     # Deeply nested components
     # <{Outer}>
-    def _outer_default_slot():
+    def _outer_content():
         # <{Middle}>
-        def _middle_default_slot():
+        def _middle_content():
             # <{Inner}>
-            def _inner_default_slot():
+            def _inner_content():
                 yield """<span>Deep</span>"""
-            yield from Inner(_inner_default_slot())
+            yield from Inner.stream(content=_inner_content())
             # </{Inner}>
-        yield from Middle(_middle_default_slot())
+        yield from Middle.stream(content=_middle_content())
         # </{Middle}>
-    yield from Outer(_outer_default_slot())
+    yield from Outer.stream(content=_outer_content())
     # </{Outer}>

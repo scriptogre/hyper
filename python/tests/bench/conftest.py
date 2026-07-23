@@ -1,52 +1,32 @@
-"""Fixtures for the render/escape benchmarks.
-
-Compiles the .hyper templates once per session with the release binary, then
-imports the generated component so benchmarks run against real output.
-"""
+"""Fixtures for the render/escape benchmarks."""
 
 from __future__ import annotations
 
-import importlib.util
-import subprocess
 from pathlib import Path
 
 import pytest
 
+from hyperhtml import _autohook
+from hyperhtml.integrations._discovery import import_hyper
+
 TEMPLATES = Path(__file__).parent / "templates"
-BINARY = Path(__file__).resolve().parents[3] / "rust" / "target" / "release" / "hyper"
 
 
 @pytest.fixture(scope="session", autouse=True)
-def compile_templates():
-    if not BINARY.exists():
-        pytest.skip(
-            f"Hyper release binary not found at {BINARY}. Run 'just build' first.",
-            allow_module_level=True,
-        )
-
+def install_hyper_imports():
+    _autohook._install_finder()
     for stale in TEMPLATES.glob("*.py"):
         stale.unlink()
-
-    result = subprocess.run(
-        [str(BINARY), "generate", str(TEMPLATES)],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        pytest.fail(f"Failed to compile templates:\nstderr: {result.stderr}")
-
     yield
 
 
 def _load(name: str):
-    spec = importlib.util.spec_from_file_location(name, TEMPLATES / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return getattr(module, name)
+    loaded = import_hyper(TEMPLATES / f"{name}.hyper")
+    return loaded if getattr(loaded, "__hyper__", False) else getattr(loaded, name)
 
 
 @pytest.fixture
-def product_page(compile_templates):
+def product_page(install_hyper_imports):
     return _load("ProductPage")
 
 

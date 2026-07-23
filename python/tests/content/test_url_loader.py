@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 import time
 
-from hyper.content import Singleton, Collection
+from hyperhtml.content import Singleton, Collection
 
 
 # Simple HTTP server for testing
@@ -135,7 +135,7 @@ def test_url_loader_real_api_pattern(http_server):
 
 def test_url_loader_with_computed_fields(http_server):
     """URL loading works with computed fields."""
-    from hyper.content import computed
+    from hyperhtml.content import computed
 
     class Post(Collection):
         title: str

@@ -1,6 +1,8 @@
-# Templates
+# Template Compiler
 
-`.hyper` files compile to Python generator functions that yield HTML chunks.
+This document defines the approved compiler target. Open decisions remain in [the implementation plan](component-language-plan.md).
+
+Components compile to Python generator functions. Component libraries compile to Python modules.
 
 ## Basic Example
 
@@ -23,33 +25,33 @@ count: int = 0
 Get this:
 
 ```python
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
-@html
-def Template(*, name: str, count: int = 0):
-    yield f"""\
-<div>
-    <h1>Hello {escape(name)}</h1>"""
-
+@component
+def Greeting(
+        *,
+        name: str,
+        count: int = 0,
+):
+    yield """<div>"""
+    yield f"""<h1>Hello {escape(name)}</h1>"""
     if count > 0:
-        yield f"""\
-<p>You have {escape(count)} items</p>"""
-
-    yield "</div>"
+        yield f"""<p>You have {escape(count)} items</p>"""
+    yield """</div>"""
 ```
 
-The `@html` decorator handles string conversion — `str(Template(name="World"))` joins all yielded chunks. Iterating directly enables streaming.
+The `@component` decorator returns a callable `Component`. Calls buffer output; `.stream()` exposes generated chunks.
 
-Transpile once. Execute many times.
+Compile once. Render many times.
 
 ---
 
 ## The `---` Delimiter
 
-Each `.hyper` file is a Python module. The `---` separates module-level code from the function body.
+A `.hyper` file is either an implicit component or a component library. The `---` separates an implicit component's header from its rendering code. A declaration-only library has no implicit rendering function.
 
-### Above `---`: Module-Level
+### Above `---`: Header
 
 Type hints become keyword-only function parameters:
 
@@ -61,32 +63,39 @@ count: int = 0
 ```
 
 ```python
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
-@html
-def Template(*, title: str, count: int = 0):
+@component
+def Page(
+        *,
+        title: str,
+        count: int = 0,
+):
     yield f"""<div>{escape(title)}</div>"""
 ```
 
-Spread names like `kwargs`, `props`, `rest`, `attrs`, and `attributes` are auto-injected into the signature when used in the body without explicit declaration:
+Spread names like `kwargs`, `props`, `rest`, `attrs`, and `attributes` are auto-injected into the signature:
 
 ```hyper
 title: str
 ---
-<{Card} title={title} {**props} />
+<div {**props}>{title}</div>
 ```
 
 ```python
-def Template(*, title: str, **props):
-    yield from Card(title=title, **props)
+@component
+def Page(
+        *,
+        title: str,
+        **props,
+):
+    yield f"""<div{spread_attrs(props)}>{escape(title)}</div>"""
 ```
 
 ### Below `---`: Function Body
 
-**This is regular Python.** Write any code you'd write in a function body: variables, loops, functions, classes, control flow.
-
-The magic: Write HTML directly. Use `{expr}` for interpolation.
+Python statements compile into the component function. HTML emits output. `{expr}` emits an escaped value.
 
 ```hyper
 ---
@@ -100,26 +109,20 @@ items = ["Apple", "Banana", "Cherry"]
 ```
 
 ```python
-@html
-def Template():
-
+@component
+def ItemsLoop():
     items = ["Apple", "Banana", "Cherry"]
-
-    yield "<ul>"
-
+    yield """<ul>"""
     for item in items:
-        yield f"""\
-<li>{escape(item)}</li>"""
-
-    yield "</ul>"
+        yield f"""<li>{escape(item)}</li>"""
+    yield """</ul>"""
 ```
 
-### The `end` Keyword
+### Blocks and `end`
 
-`end` is required for control flow inside HTML-rendering contexts — below `---`, or inside `def` blocks that emit HTML:
+A compound statement whose content follows on indented lines requires an aligned `end` in every file zone:
 
 ```hyper
----
 for item in items:
     <li>{item}</li>
 end
@@ -129,107 +132,35 @@ if is_active:
 end
 ```
 
-Without `end`, the parser can't tell where blocks end (HTML closing tags don't signal block boundaries to the parser).
+Indentation defines the contents. `end` closes the statement. Dedentation alone never closes it.
 
-**Above `---`**, blocks scope by indentation like normal Python. No `end` needed:
+A compound statement owns one `end`. Its `elif`, `else`, `except`, `finally`, and `case` clauses do not have separate endings.
+
+Short content may follow the outer colon on the same logical line and does not use `end`:
 
 ```hyper
-def format_date(date):
-    return date.strftime("%Y-%m-%d")
-
-def Card(title: str):
-    <div class="card">
-        <h2>{title}</h2>
-        if show:
-            <p>Details</p>
-        end
-    </div>
-
-name: str
----
+if is_active: <span>Active</span>
+component Divider(): <hr />
 ```
 
-Both `def` blocks end via dedentation. The `if` inside `Card` needs `end` because it's inside an HTML-rendering context.
+Same-line content selects Python or template context once. Python semicolons remain Python separators; semicolons in template output remain text. Python and template output cannot mix on the same line.
+
+The tokenizer finds the outer colon while ignoring colons inside strings, annotations, dictionaries, patterns, slices, lambdas, and brackets.
+
+Structural indentation uses spaces. Tabs are rejected. `end` may have a trailing Python comment.
+
+The tree builder uses one indentation-aware block parser for headers, rendering code, branch clauses, and component declarations. Structural indentation metadata is separate from rendered whitespace.
 
 ### Add Imports
 
-Imports go above `---`:
+Imports go above `---` and remain module-level:
 
 ```hyper
-from components.Button import Button
+from app.components import Button
 title: str
 ---
 <{Button} label={title} />
 ```
-
-```python
-from components.Button import Button
-from hyper import html
-
-
-@html
-def Template(*, title: str):
-    yield from Button(label=title)
-```
-
-### Add Helpers
-
-Functions and classes go above `---`:
-
-```hyper
-def format_date(date):
-    return date.strftime("%Y-%m-%d")
-
-created_at: datetime
----
-<p>Created: {format_date(created_at)}</p>
-```
-
-```python
-def format_date(date):
-    return date.strftime("%Y-%m-%d")
-
-
-@html
-def Template(*, created_at: datetime):
-    yield f"""<p>Created: {escape(format_date(created_at))}</p>"""
-```
-
-Pure Python helpers above `---` use normal Python scoping — no `end` needed.
-
-Functions and classes are importable:
-
-```python
-from components.utils import format_date
-```
-
-### Add Constants
-
-Use `Final` annotation. Not a parameter.
-
-```hyper
-from typing import Final
-
-MAX_ITEMS: Final[int] = 100
-
-items: list
----
-<p>Showing {len(items[:MAX_ITEMS])} items</p>
-```
-
-```python
-from typing import Final
-from hyper import html, escape
-
-MAX_ITEMS: Final[int] = 100
-
-
-@html
-def Template(*, items: list):
-    yield f"""<p>Showing {escape(len(items[:MAX_ITEMS]))} items</p>"""
-```
-
-Constants stay at module level.
 
 ### When `---` Is Optional
 
@@ -246,9 +177,11 @@ No `---` needed. Everything is template body.
 ```hyper
 def helper():
     return "value"
+end
 
-class Component:
+class Value:
     pass
+end
 ```
 
 No `---` needed. Everything is module-level. No render function generated. This is a library file.
@@ -258,27 +191,105 @@ No `---` needed. Everything is module-level. No render function generated. This 
 ```hyper
 def helper():
     return "value"
+end
 ---
 <div>{helper()}</div>
 ```
 
 ---
 
-## How Transpilation Works
+## Explicit Components
 
-Three stages:
+`component` parses into a component-definition AST node. A normal `def` remains a Python definition and cannot contain HTML.
 
+```hyper
+component Badge(*, text: str):
+    <span>{text}</span>
+end
+
+component Divider(): <hr />
 ```
-Source → Parser → Transformer → Generator → Python
+
+The generator emits an `@component`-decorated Python function. The decorator returns a `Component` while preserving the generated function's name and signature.
+
+**Coming soon:** `@render_here` will export a subcomponent and render it at its declaration position:
+
+```hyper
+title: str
+---
+@render_here
+component Header(*, title: str):
+    <header>{title}</header>
+end
+```
+
+Subcomponents are defined first and attached by name:
+
+```python
+@component
+def Header(*, title: str):
+    yield f"""<header>{escape(title)}</header>"""
+
+
+@component(subcomponents=[Header])
+def Page(*, title: str):
+    yield from Header.stream(title=title)
+```
+
+`Page.Header` exposes the same read-only `Header` component.
+
+### Slot Parameters
+
+Default and named slots become keyword-only component arguments:
+
+```hyper
+component Layout(*, title: str):
+    <header>{...header}</header>
+    <main>{...}</main>
+end
+```
+
+```python
+from collections.abc import Iterable
+
+
+@component
+def Layout(
+        *,
+        title: str,
+        content: Iterable[str] | None = None,
+        header: Iterable[str] | None = None,
+):
+    yield """<header>"""
+    if header is not None:
+        yield from header
+    yield """</header><main>"""
+    if content is not None:
+        yield from content
+    yield """</main>"""
+```
+
+`content` is reserved for the default slot. Named slots use their source names. A prop cannot use `content` or share a named slot's name. These collisions are compile errors.
+
+A bare `return` remains a bare generated return. Scope-aware validation rejects `return value` and explicit `yield` only in the active component. Nested normal functions retain Python return and yield behavior.
+
+`async component` is explicit. Implicit components infer async from `await`, `async for`, or `async with` in their own rendering scope.
+
+`<>...</>` parses as a transparent fragment node and emits only its children.
+
+## Compiler Pipeline
+
+```text
+Source → Parse → Lower → Plugins → Generate → Map
 ```
 
 ### Parser
 
-Splits on `---`. Builds AST. Tracks positions for errors and IDE.
+Builds the source tree and validates its structure.
 
-### Transformer
+### Lowering and Plugins
 
-Collects info: which helpers are used, async detection, slot parameters.
+Lowering creates the compiler AST. Plugins transform it, collect metadata, and validate component scopes.
 
 ### Generator: Yield-Based Streaming
 
@@ -287,154 +298,56 @@ The generator emits `yield` statements instead of appending to a list. Static HT
 Special attributes use helper functions:
 
 ```hyper
-class = ["btn", "active"]
-<div {class}>
+classes = ["btn", "active"]
+<div class={classes}>content</div>
 ```
 
 ```python
-class_ = ["btn", "active"]
-yield f"""<div class="{render_class(class_)}">"""
+classes = ["btn", "active"]
+yield f"""<div class="{render_class(classes)}">content</div>"""
 ```
 
 Content expressions use `escape()`, class attributes use `render_class()`, boolean attributes use `render_attr()`. All processing happens inline in f-strings with no post-processing step.
 
 ---
 
-## CLI Usage
+## Zero-Build Loading
 
-```bash
-# Single file
-hyper generate Button.hyper
+Python calls the Rust compiler through PyO3 and executes generated code in memory. Applications keep only `.hyper` source files.
 
-# Directory
-hyper generate components/
+Compilation returns generated Python plus structured metadata:
 
-# Stdin (IDE integration)
-hyper generate --stdin --json --injection
+```text
+file mode
+implicit component name
+exports
+source ranges
+expression brace ranges
 ```
 
-File structure:
+Implicit components are exposed as callable `Component` objects on their containing package:
 
+```python
+from app.components import Button
 ```
-components/
-├── Button.hyper    # Source
-└── Button.py       # Generated (gitignored)
+
+Component libraries load as normal modules:
+
+```python
+from app.components.controls import Button, Link
 ```
+
+The loader uses compiler metadata rather than filename capitalization or generated-source inspection. Import order cannot change an implicit component into a module.
+
+Automatic activation installs a lightweight finder without importing the runtime, MarkupSafe, optional integrations, or the native compiler until a `.hyper` file is requested.
 
 ---
 
-## Using Templates
+## Source Maps and IDE Integration
 
-Import like normal Python:
+Generation records Python and HTML source ranges. Mapping validates byte offsets before converting source positions to UTF-16 for JetBrains.
 
-```python
-from components.Button import Button
-
-html = str(Button(label="Click me", disabled=False))
-```
-
-Templates return generators. Use `str()` for buffered output, or iterate for streaming.
-
-### Framework Integration
-
-Works with any framework.
-
-**FastAPI (streaming):**
-```python
-from fastapi.responses import StreamingResponse
-from pages.Home import Home
-@app.get("/")
-def index():
-    return StreamingResponse(
-        Home(title="Welcome"),
-        media_type="text/html"
-    )
-```
-
-**FastAPI (buffered):**
-```python
-from fastapi.responses import HTMLResponse
-from pages.Home import Home
-@app.get("/")
-def index():
-    return HTMLResponse(str(Home(title="Welcome")))
-```
-
-**Django / Flask:** Same patterns. Import template, call function, iterate or `str()`.
-
----
-
-## Generated Code Patterns
-
-Type hints → keyword-only parameters:
-
-```hyper
-title: str
-is_active: bool = False
-```
-```python
-@html
-def Template(*, title: str, is_active: bool = False):
-```
-
-Control flow → Python with yields:
-
-```hyper
-if active:
-    <span>Active</span>
-end
-```
-```python
-if active:
-    yield """<span>Active</span>"""
-```
-
-Loops → Python with yields:
-
-```hyper
-for item in items:
-    <li>{item.name}</li>
-end
-```
-```python
-for item in items:
-    yield f"""<li>{escape(item.name)}</li>"""
-```
-
-Components → yield from:
-
-```hyper
-<{Button} label="Save" />
-```
-```python
-yield from Button(label="Save")
-```
-
----
-
-## IDE Integration
-
-Transpiler tracks source positions to compiled positions:
-
-```json
-{
-  "ranges": [{
-    "type": "python",
-    "source_start": 21,
-    "source_end": 27,
-    "compiled_start": 94,
-    "compiled_end": 108
-  }]
-}
-```
-
-IDE splices source into compiled context. Python tooling works on `.hyper` files.
-
-CLI outputs JSON for IDE plugins:
-
-```bash
-hyper generate --stdin --json --injection
-```
+The IDE bridge transports generated code, ranges, and diagnostics. It does not expose file generation as a user command or write `.py` files on save.
 
 ---
 
@@ -463,45 +376,33 @@ Use `safe()` for trusted content:
 
 Only use `safe()` on content you control.
 
-### Static Code Generation
+### Trusted Source
 
-No `eval()`. No runtime execution. What you transpile is what runs.
+A `.hyper` file may contain Python. Its generated module code executes on import and its component code executes on render. Treat templates as application source code, not untrusted content.
 
-Control imports via:
-- Virtual environments
-- Import hooks (for sandboxing)
-- Code review
+Control imports through virtual environments, application boundaries, and code review.
+
+---
+
+## Error Contracts
+
+Compiler errors preserve filename, source ranges, related labels, and help text across PyO3. The binding does not reduce them to message-only exceptions.
+
+Generated Python uses a stable synthetic filename registered with `linecache`, so syntax errors and runtime tracebacks do not show `<string>`.
+
+Representative corrections live in the language guide. Exact source spans and formatting live in `.expected.err` tests and follow [Error Messages](../standards/error-messages.md).
 
 ---
 
 ## Compile-Time Validation
 
-Validates templates before code runs.
+Reject these errors before rendering:
 
-**Implemented:**
-- Unclosed tags
-- Mismatched tags
-- Void element children
-- Duplicate attributes
-- Invalid HTML nesting (block in inline, nested interactive)
-
-**Planned:**
-- Type mismatches in component props
-- Unknown props
-- Missing required props
-- Missing accessibility attributes
-- Slot validation
-
----
-
-## Summary
-
-- `.hyper` → `.py` at build time
-- Yield-based generators enable streaming
-- `@html` decorator handles `str()` conversion
-- Auto-escaping via `escape()` prevents XSS
-- Source maps for IDE support
-- `end` keyword required in HTML-rendering contexts, not for pure Python above `---`
+- unclosed tags;
+- mismatched tags;
+- children in void elements;
+- duplicate attributes;
+- invalid HTML nesting.
 
 ---
 

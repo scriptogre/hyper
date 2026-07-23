@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from flask import Flask
 
-from hyper import escape, html
+from hyperhtml import component, escape
 
 
-@html
+@component
 def Greeting(*, name: str):
     yield "<h1>Hello "
     yield escape(name)  # a component escapes its own inputs

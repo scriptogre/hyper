@@ -10,10 +10,17 @@ use crate::ast::*;
 /// Returns `(open_byte, close_byte)` pairs for each expression brace pair.
 pub fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
     let mut braces = Vec::new();
-    for node in ast.function.params.iter().chain(&ast.function.body) {
-        collect_braces_node(node, &mut braces);
+    for definition in &ast.definitions {
+        collect_function_braces(&definition.function, &mut braces);
     }
+    collect_function_braces(&ast.function, &mut braces);
     braces
+}
+
+fn collect_function_braces(function: &Function, braces: &mut Vec<(usize, usize)>) {
+    for node in function.params.iter().chain(&function.body) {
+        collect_braces_node(node, braces);
+    }
 }
 
 fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {

@@ -9,7 +9,7 @@ use std::path::PathBuf;
 pub fn run(path: &PathBuf) -> Result<(), Failed> {
     let source = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let result = compile(path)?;
-    let tokens = tokenize(&source);
+    let tokens = tokenize(&source).map_err(|error| error.to_string())?;
 
     let html_segments: Vec<_> = result
         .segments

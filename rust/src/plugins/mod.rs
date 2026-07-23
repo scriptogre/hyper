@@ -1,4 +1,6 @@
 mod r#async;
+mod component_control_flow;
+mod components;
 mod context;
 mod mutable_defaults;
 mod rename_reserved_keywords;
@@ -6,13 +8,15 @@ mod slots;
 mod spread_kwargs;
 
 pub use r#async::Async;
+pub use component_control_flow::ComponentControlFlow;
+pub use components::Components;
 pub use context::{BLESSED_SPREAD_NAMES, Helper};
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
 pub use spread_kwargs::SpreadKwargs;
 
-use crate::ast::{Ast, Node};
+use crate::ast::{Ast, FileMode, Function, Node};
 use crate::error::CompileError;
 
 /// Whether [`walk`] descends into a node's children after `enter`.
@@ -30,9 +34,9 @@ pub enum Flow {
 pub trait Plugin {
     /// Run the plugin over the whole tree. Default walks top-down, calling
     /// `enter` then `exit` on each node.
-    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, self)?;
-        walk(&mut ast.function.body, self)
+    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        walk(&mut function.params, self)?;
+        walk(&mut function.body, self)
     }
 
     /// Called before a node's children. Return [`Flow::SkipChildren`] to prune.
@@ -116,10 +120,30 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
     ]
 }
 
-/// Run all standard plugins over the AST.
-pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
+fn run_scoped(function: &mut Function) -> Result<(), CompileError> {
     for mut plugin in standard_plugins() {
-        plugin.run(ast)?;
+        plugin.run(function)?;
     }
     Ok(())
+}
+
+fn run_component(function: &mut Function) -> Result<(), CompileError> {
+    ComponentControlFlow.run(function)?;
+    run_scoped(function)
+}
+
+/// Lower components, then run standard plugins once per function scope.
+pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
+    let mut components = Components::default();
+    components.run(&mut ast.function)?;
+    ast.definitions = components.into_definitions();
+
+    for definition in &mut ast.definitions {
+        run_component(&mut definition.function)?;
+    }
+    if ast.mode == FileMode::ImplicitComponent {
+        run_component(&mut ast.function)
+    } else {
+        run_scoped(&mut ast.function)
+    }
 }

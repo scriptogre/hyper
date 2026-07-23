@@ -37,16 +37,11 @@
         <externalAnnotator language="Hyper"
                            implementationClass="com.hyper.plugin.HyperExternalAnnotator"/>
 
-        <!-- Auto-generate .py on save -->
-        <vfs.asyncListener implementation="com.hyper.plugin.HyperFileListener"/>
-
         <!-- Debug tool window showing virtual injected files -->
         <toolWindow id="Hyper Inspector"
                     anchor="right"
                     factoryClass="com.hyper.plugin.HyperInspectorToolWindowFactory"
                     icon="/icons/hyper.svg"/>
 
-        <!-- File nesting: .py files nest under their corresponding .hyper files -->
-        <treeStructureProvider implementation="com.hyper.plugin.HyperFileNestingProvider"/>
     </extensions>
 </idea-plugin>

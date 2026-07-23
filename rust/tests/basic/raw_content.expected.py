@@ -1,7 +1,7 @@
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
-@html
+@component
 def RawContent(
         *,
         theme_color: str = "red",

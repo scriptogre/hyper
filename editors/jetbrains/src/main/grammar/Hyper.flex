@@ -35,10 +35,13 @@ COMMENT_LINE=[ \t]*"#"[^\r\n]*
 // Matches lines starting with optional whitespace then <
 HTML_LINE=[ \t]*"<"[^\r\n]*
 
+// Component signatures may continue across lines before reaching their colon.
+COMPONENT_LINE=[ \t]*(async[ \t]+)?component[ \t]+[A-Za-z_][^\r\n]*
+
 // Control flow: keyword + content + trailing colon (matching Rust transpiler's is_control_flow).
 // The trailing `:` is required — without it, "for example, this is text" is content, not control flow.
 // [^\r\n]*: backtracks to find the last `:` on the line, then allows optional whitespace and comment.
-CONTROL_LINE_BODY=[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|except|case|with|fragment)[ \t(][^\r\n]*:[ \t]*(#[^\r\n]*)?
+CONTROL_LINE_BODY=[ \t]*(async[ \t]+)?(if|for|while|match|def|class|component|elif|except|case|with)[ \t(][^\r\n]*:[ \t]*(#[^\r\n]*)?
 
 // Bare block keywords: just keyword + colon (else:, try:, finally:, except:)
 CONTROL_LINE_BARE=[ \t]*(else|try|finally|except)[ \t]*:[ \t]*(#[^\r\n]*)?
@@ -55,6 +58,7 @@ PYTHON_LINE=[^\r\n]+
   {SEPARATOR} {EOL}?     { return SEPARATOR_TOKEN; }
   {COMMENT_LINE} {EOL}?  { return COMMENT_TOKEN; }
   {HTML_LINE} {EOL}?     { return HTML_LINE_TOKEN; }
+  {COMPONENT_LINE} {EOL}?     { return CONTROL_LINE_TOKEN; }
   {CONTROL_LINE_BODY} {EOL}?  { return CONTROL_LINE_TOKEN; }
   {CONTROL_LINE_BARE} {EOL}?  { return CONTROL_LINE_TOKEN; }
   {END_LINE} {EOL}?      { return END_LINE_TOKEN; }

@@ -16,7 +16,7 @@
     SEPARATOR_TOKEN = "regexp:[ \t]*---[ \t]*"
     COMMENT_TOKEN = "regexp:[ \t]*#[^\r\n]*"
     HTML_LINE_TOKEN = "regexp:[ \t]*<[^\r\n]*"
-    CONTROL_LINE_TOKEN = "regexp:[ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with|fragment)[ \t(:][^\r\n]*"
+    CONTROL_LINE_TOKEN = "regexp:([ \t]*(async[ \t]+)?component[ \t]+[A-Za-z_][^\r\n]*)|([ \t]*(async[ \t]+)?(if|for|while|match|def|class|elif|else|case|try|except|finally|with)[ \t(:][^\r\n]*)"
     END_LINE_TOKEN = "regexp:[ \t]*end[ \t]*"
     PYTHON_LINE_TOKEN = "regexp:[^\r\n]+"
   ]

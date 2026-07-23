@@ -1,45 +1,86 @@
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use super::{Flow, Plugin, walk};
-use crate::ast::{Ast, Node, ParamKind, ParameterNode, TextRange};
-use crate::error::CompileError;
+use crate::ast::{Function, Node, ParamKind, ParameterNode, TextRange};
+use crate::error::{CompileError, ErrorKind, ParseError};
 
-pub const DEFAULT_SLOT_PARAM: &str = "_default_slot";
+pub const DEFAULT_SLOT_PARAM: &str = "content";
 const SLOT_TYPE_HINT: &str = "Iterable[str] | None";
 
-/// Python identifier for a slot's parameter (`_default_slot`, `_header_slot`).
+/// Public Python argument for a slot.
 pub fn slot_param_name(name: Option<&str>) -> String {
-    match name {
-        Some(n) => format!("_{n}_slot"),
-        None => DEFAULT_SLOT_PARAM.to_string(),
-    }
+    name.unwrap_or(DEFAULT_SLOT_PARAM).to_string()
 }
 
-/// Lowers slots into signature parameters: the default slot becomes a positional
-/// `_default_slot`, each named slot a keyword-only `_<name>_slot`. Slot usage in
-/// the body is rendered separately by the generator.
+/// Adds keyword-only parameters for slots used by a component.
 #[derive(Default)]
 pub struct Slots {
-    /// Slot names used; the empty string marks the default slot.
-    names: BTreeSet<String>,
+    /// The empty name marks the default slot.
+    names: BTreeMap<String, TextRange>,
 }
 
 impl Plugin for Slots {
-    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, self)?;
-        walk(&mut ast.function.body, self)?;
+    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        let declared: BTreeMap<String, TextRange> = function
+            .params
+            .iter()
+            .filter_map(|node| match node {
+                Node::Parameter(param) => {
+                    Some((param.name.trim_start_matches('*').to_string(), param.range))
+                }
+                _ => None,
+            })
+            .collect();
 
-        for name in &self.names {
-            let (param_name, kind) = if name.is_empty() {
-                (DEFAULT_SLOT_PARAM.to_string(), ParamKind::Positional)
-            } else {
-                (slot_param_name(Some(name)), ParamKind::KeywordOnly)
-            };
-            ast.function.params.push(Node::Parameter(ParameterNode {
-                name: param_name,
+        walk(&mut function.body, self)?;
+
+        if let Some(range) = declared.get(DEFAULT_SLOT_PARAM) {
+            return Err(ParseError::new(
+                ErrorKind::InvalidSyntax,
+                "`content` is reserved for the default slot.",
+                *range,
+            )
+            .with_help("Rename this prop. Use `{...}` to render caller content.")
+            .boxed()
+            .into());
+        }
+
+        if let Some(range) = self.names.get(DEFAULT_SLOT_PARAM) {
+            return Err(ParseError::new(
+                ErrorKind::InvalidSyntax,
+                "`content` names the default slot, not a named slot.",
+                *range,
+            )
+            .with_help("Use `{...}` for the default slot, or rename this named slot.")
+            .boxed()
+            .into());
+        }
+
+        for (name, range) in self.names.iter().filter(|(name, _)| !name.is_empty()) {
+            if let Some(prop_range) = declared.get(name) {
+                return Err(ParseError::new(
+                    ErrorKind::InvalidSyntax,
+                    format!("`{name}` is both a prop and a named slot."),
+                    *range,
+                )
+                .with_related(*prop_range)
+                .with_related_label("prop declared here")
+                .with_help("Rename the prop or the slot.")
+                .boxed()
+                .into());
+            }
+        }
+
+        for name in self.names.keys() {
+            function.params.push(Node::Parameter(ParameterNode {
+                name: if name.is_empty() {
+                    DEFAULT_SLOT_PARAM.to_string()
+                } else {
+                    slot_param_name(Some(name))
+                },
                 type_hint: Some(SLOT_TYPE_HINT.to_string()),
                 default: Some("None".to_string()),
-                kind,
+                kind: ParamKind::KeywordOnly,
                 range: TextRange::synthetic(),
             }));
         }
@@ -50,11 +91,11 @@ impl Plugin for Slots {
     fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
             Node::Slot(slot) => {
-                self.names.insert(slot.name.clone().unwrap_or_default());
+                self.names
+                    .insert(slot.name.clone().unwrap_or_default(), slot.range);
             }
-            // {...} is the default children slot
             Node::Expression(expr) if expr.expr == "..." => {
-                self.names.insert(String::new());
+                self.names.insert(String::new(), expr.range);
             }
             _ => {}
         }

@@ -1,8 +1,8 @@
 from typing import Any
-from hyper import html, escape, spread_attrs
+from hyperhtml import component, escape, spread_attrs
 
 
-@html
+@component
 def KwargsCollector(
         *,
         title: str,

@@ -1,7 +1,7 @@
 """Escape contract. Output must be identical whether the C fast path or the
 pure-Python fallback runs, so these lock the exact bytes."""
 
-from hyper.helpers import escape_html, safe
+from hyperhtml.helpers import escape_html, safe
 
 
 def test_escapes_all_five_special_chars():

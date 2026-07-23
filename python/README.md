@@ -1,11 +1,11 @@
-# Hyper
+# Hyper runtime
 
-Runtime helpers and CLI for Hyper HTML templates.
+Runtime helpers, integrations, and import hook for `.hyper` templates.
 
 ## Installation
 
 ```bash
-pip install hyper
+uv add hyperhtml
 ```
 
 Requires Python 3.10+.
@@ -21,8 +21,7 @@ name: str
 <h1>Hello {name}</h1>
 ```
 
-Compile it, then call it like any function. The result is a `str` subclass, so
-it drops straight into any framework that returns strings:
+Import it like a Python component:
 
 ```python
 from Greeting import Greeting
@@ -30,23 +29,10 @@ from Greeting import Greeting
 Greeting(name="Ada")        # HtmlResult('<h1>Hello Ada</h1>')
 ```
 
+The import hook compiles `.hyper` files in memory. It does not write `.py` files.
+
 A compiled component is a plain `@html`-decorated callable. It escapes its own
-arguments and marks its output safe (no double-escaping under MarkupSafe).
-
-## CLI
-
-Compile `.hyper` templates to Python:
-
-```bash
-# Single file
-hyper generate Button.hyper
-
-# Directory (walks for .hyper files, writes a .py beside each)
-hyper generate components/
-
-# From stdin to stdout
-echo '<div>{message}</div>' | hyper generate --stdin
-```
+arguments and marks its output safe under MarkupSafe.
 
 ## Integrations
 
@@ -57,7 +43,7 @@ Components are just callables returning strings, so they fit any engine. See
 **Jinja2.** Add the extension; components in the loader's paths become globals:
 
 ```python
-env.add_extension("hyper.integrations.jinja2.HyperExtension")
+env.add_extension("hyperhtml.integrations.jinja2.HyperExtension")
 # {{ Greeting(name="Ada") }}
 # {% hyper Card(title="Pricing") %}…{% slot actions %}…{% endslot %}{% endhyper %}
 ```
@@ -65,7 +51,7 @@ env.add_extension("hyper.integrations.jinja2.HyperExtension")
 **Django.** Add the app, register the tag as a builtin:
 
 ```python
-INSTALLED_APPS = ["hyper.integrations.django", ...]
+INSTALLED_APPS = ["hyperhtml.integrations.django", ...]
 # {% hyper Greeting name=user.first_name / %}
 # {% hyper Card title="Pricing" %}…{% slot actions %}…{% endslot %}{% endhyper %}
 ```
@@ -79,7 +65,7 @@ return StreamingResponse(Greeting.stream(name="Ada"))   # chunk-by-chunk
 
 ## Runtime helpers
 
-Compiled templates import what they use from `hyper`. You rarely call these
+Compiled templates import what they use from `hyperhtml`. You rarely call these
 directly, but they make up the generated output:
 
 ### Escaping

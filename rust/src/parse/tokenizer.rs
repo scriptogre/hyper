@@ -1,3 +1,5 @@
+use crate::error::{ErrorKind, ParseError, ParseResult};
+
 /// Position in source code (byte offset only; convert to UTF-16 at output time)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
@@ -95,6 +97,8 @@ pub enum Token {
         range: TextRange,
         rest_range: TextRange,
     },
+    /// Explicit component declaration header.
+    ComponentDefinition { signature: String, range: TextRange },
     /// Control flow continuation: else, elif, case, except, finally
     ControlContinuation {
         keyword: String,
@@ -160,10 +164,6 @@ pub enum Token {
         range: TextRange,
     },
 
-    // === Fragments ===
-    /// Fragment definition start: fragment Name:
-    FragmentStart { name: String, range: TextRange },
-
     // === File Structure ===
     /// Header/body separator: ---
     Separator { range: TextRange },
@@ -179,6 +179,7 @@ impl Token {
                 end: *position,
             },
             Token::ControlStart { range, .. } => *range,
+            Token::ComponentDefinition { range, .. } => *range,
             Token::ControlContinuation { range, .. } => *range,
             Token::End { range, .. } => *range,
             Token::PythonStatement { range, .. } => *range,
@@ -193,7 +194,6 @@ impl Token {
             Token::HtmlElementClose { range, .. } => *range,
             Token::SlotOpen { range, .. } => *range,
             Token::SlotClose { range, .. } => *range,
-            Token::FragmentStart { range, .. } => *range,
             Token::Separator { range, .. } => *range,
         }
     }
@@ -248,21 +248,21 @@ impl<'a> Tokenizer<'a> {
     }
 
     /// Tokenize the entire source
-    pub fn tokenize(&mut self) -> Vec<Token> {
+    pub fn tokenize(&mut self) -> ParseResult<Vec<Token>> {
         let mut tokens = Vec::new();
 
         while !self.at_eof() {
-            self.tokenize_line(&mut tokens);
+            self.tokenize_line(&mut tokens)?;
         }
 
         tokens.push(Token::Eof {
             position: self.position,
         });
-        tokens
+        Ok(tokens)
     }
 
     /// Tokenize a single line
-    fn tokenize_line(&mut self, tokens: &mut Vec<Token>) {
+    fn tokenize_line(&mut self, tokens: &mut Vec<Token>) -> ParseResult<()> {
         // 1. Handle indentation
         let indent_start = self.position;
         let indent_level = self.consume_indent();
@@ -278,7 +278,7 @@ impl<'a> Tokenizer<'a> {
 
         // 2. Check for empty line or EOF
         if self.at_eof() {
-            return;
+            return Ok(());
         }
         if self.at_newline() {
             let nl_start = self.position;
@@ -289,7 +289,7 @@ impl<'a> Tokenizer<'a> {
                     end: self.position,
                 },
             });
-            return;
+            return Ok(());
         }
 
         // 3. Handle multi-line string continuation
@@ -322,7 +322,7 @@ impl<'a> Tokenizer<'a> {
                     },
                 });
             }
-            return;
+            return Ok(());
         }
 
         // 4. Handle raw content mode (<style>, <script>, or `raw:` block).
@@ -347,7 +347,7 @@ impl<'a> Tokenizer<'a> {
                 match exit_mode {
                     RawContentExit::ClosingTag(_) => {
                         // Tokenize </style> or </script> normally for tree-builder
-                        self.tokenize_content(tokens);
+                        self.tokenize_content(tokens)?;
                     }
                     RawContentExit::EndKeyword { .. } => {
                         // `end` closes `raw:` — consume entire line silently.
@@ -361,7 +361,7 @@ impl<'a> Tokenizer<'a> {
                         if self.at_newline() {
                             self.consume_newline();
                         }
-                        return;
+                        return Ok(());
                     }
                 }
             } else {
@@ -406,7 +406,7 @@ impl<'a> Tokenizer<'a> {
                     },
                 });
             }
-            return;
+            return Ok(());
         }
 
         // 4b. Detect `raw:` directive — enters raw mode silently (no token emitted)
@@ -427,7 +427,7 @@ impl<'a> Tokenizer<'a> {
                 if self.at_newline() {
                     self.consume_newline();
                 }
-                return;
+                return Ok(());
             }
         }
 
@@ -470,7 +470,7 @@ impl<'a> Tokenizer<'a> {
                     },
                 });
             }
-            return;
+            return Ok(());
         }
 
         // Check for special patterns - ORDER MATTERS!
@@ -504,7 +504,7 @@ impl<'a> Tokenizer<'a> {
         }
         // 4. Component tags: <{Name}>
         else if line_content.starts_with("<{") {
-            self.tokenize_component_open(tokens);
+            self.tokenize_component_open(tokens)?;
         } else if line_content.starts_with("</{") {
             self.tokenize_component_close(tokens);
         }
@@ -519,22 +519,21 @@ impl<'a> Tokenizer<'a> {
                 },
             });
         }
-        // 5. Fragment definition
-        else if line_content.trim().starts_with("fragment ") && line_content.trim().ends_with(':')
-        {
-            self.tokenize_fragment_start(tokens, &line_content);
+        // 5. Explicit component definition
+        else if self.is_component_definition(&line_content) {
+            self.tokenize_component_definition(tokens);
         }
         // 6. Control flow keywords
         else if self.is_control_flow(&line_content) {
             self.tokenize_control_start(tokens, &line_content);
         }
-        // 6. Control continuation keywords (else, elif, except, finally)
+        // 7. Control continuation keywords (else, elif, except, finally)
         else if self.is_control_continuation(&line_content) {
             self.tokenize_control_continuation(tokens, &line_content);
         }
         // 7. HTML content (starts with <)
         else if line_content.starts_with('<') {
-            self.tokenize_content(tokens);
+            self.tokenize_content(tokens)?;
         }
         // 7.5. HTML assignment (identifier = <...>)
         else if self.is_html_assignment(&line_content) {
@@ -550,7 +549,7 @@ impl<'a> Tokenizer<'a> {
         }
         // 9. Default: treat as content
         else {
-            self.tokenize_content(tokens);
+            self.tokenize_content(tokens)?;
         }
 
         // 4. Handle trailing comment if we haven't consumed to newline
@@ -567,6 +566,7 @@ impl<'a> Tokenizer<'a> {
                 },
             });
         }
+        Ok(())
     }
 
     // === Classification helpers ===
@@ -574,6 +574,11 @@ impl<'a> Tokenizer<'a> {
     fn is_end_keyword(&self, line: &str) -> bool {
         let trimmed = line.trim();
         trimmed == "end"
+    }
+
+    fn is_component_definition(&self, line: &str) -> bool {
+        let trimmed = line.trim();
+        trimmed.starts_with("component ") || trimmed.starts_with("async component ")
     }
 
     fn is_control_flow(&self, line: &str) -> bool {
@@ -743,14 +748,10 @@ impl<'a> Tokenizer<'a> {
             '0'..='9' => {
                 return true;
             }
-            // Uppercase letters are typically content (English text, not Python)
-            // Python statements start with lowercase keywords
-            'A'..='Z' => {
-                return true;
-            }
             _ => {}
         }
 
+        // Uppercase names may be Python constants; patterns below distinguish them from prose.
         // Check for common Python statement patterns that REQUIRE tree-sitter
         // These are the only cases worth parsing
         let needs_parsing =
@@ -955,28 +956,6 @@ impl<'a> Tokenizer<'a> {
         });
     }
 
-    /// Tokenize a fragment definition: fragment Name:
-    fn tokenize_fragment_start(&mut self, tokens: &mut Vec<Token>, _line: &str) {
-        let start = self.position;
-        let code = self.consume_to_eol();
-        let trimmed = code.trim();
-
-        // Extract fragment name from "fragment Name:"
-        let name = trimmed
-            .strip_prefix("fragment ")
-            .and_then(|s| s.strip_suffix(':'))
-            .map(|s| s.trim().to_string())
-            .unwrap_or_default();
-
-        tokens.push(Token::FragmentStart {
-            name,
-            range: TextRange {
-                start,
-                end: self.position,
-            },
-        });
-    }
-
     fn tokenize_control_start(&mut self, tokens: &mut Vec<Token>, _line: &str) {
         let start = self.position;
         let code = self.consume_to_eol();
@@ -1133,51 +1112,46 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn tokenize_python_statement(&mut self, tokens: &mut Vec<Token>) {
+        let (code, range) = self.consume_bracketed_statement();
+        tokens.push(Token::PythonStatement { code, range });
+    }
+
+    fn tokenize_component_definition(&mut self, tokens: &mut Vec<Token>) {
+        let (signature, range) = self.consume_bracketed_statement();
+        tokens.push(Token::ComponentDefinition { signature, range });
+    }
+
+    fn consume_bracketed_statement(&mut self) -> (String, TextRange) {
         let start = self.position;
         let mut code = self.consume_to_eol();
-
-        // Check for multiline continuation (unclosed brackets)
         let mut depth = self.calculate_bracket_depth(&code);
 
         while depth > 0 && !self.at_eof() {
-            // Consume newline and add to code
             if self.at_newline() {
                 code.push('\n');
                 self.consume_newline();
             }
 
-            // Consume indentation
-            while !self.at_eof() && !self.at_newline() {
-                match self.peek_char() {
-                    Some(c @ (' ' | '\t')) => {
-                        code.push(c);
-                        self.advance();
-                    }
-                    _ => break,
-                }
+            while let Some(c @ (' ' | '\t')) = self.peek_char() {
+                code.push(c);
+                self.advance();
             }
 
-            // Check for EOF after indentation
             if self.at_eof() || self.at_newline() {
-                // Empty continuation line - keep going
                 continue;
             }
 
-            // Consume the next line
-            let line = self.consume_to_eol();
-            code.push_str(&line);
-
-            // Recalculate bracket depth
+            code.push_str(&self.consume_to_eol());
             depth = self.calculate_bracket_depth(&code);
         }
 
-        tokens.push(Token::PythonStatement {
+        (
             code,
-            range: TextRange {
+            TextRange {
                 start,
                 end: self.position,
             },
-        });
+        )
     }
 
     /// Calculate net bracket depth, accounting for strings and comments
@@ -1241,7 +1215,7 @@ impl<'a> Tokenizer<'a> {
         depth
     }
 
-    fn tokenize_content(&mut self, tokens: &mut Vec<Token>) {
+    fn tokenize_content(&mut self, tokens: &mut Vec<Token>) -> ParseResult<()> {
         // Tokenize content, extracting:
         // - Text segments
         // - {expr} expressions
@@ -1325,7 +1299,7 @@ impl<'a> Tokenizer<'a> {
                         },
                         inline: true,
                     });
-                    return; // Line is done
+                    return Ok(()); // Line is done
                 }
 
                 // Escaped braces
@@ -1412,12 +1386,12 @@ impl<'a> Tokenizer<'a> {
                         });
                         text_buf.clear();
                     }
-                    self.tokenize_html_element_open(tokens);
+                    self.tokenize_html_element_open(tokens)?;
                     // If the element entered raw content mode, stop inline processing.
                     // The rest of this line (and subsequent lines) will be handled
                     // by the raw content handler in tokenize_line().
                     if self.in_raw_content.is_some() {
-                        return;
+                        return Ok(());
                     }
                     text_start = self.position;
                     after_structural = true;
@@ -1480,6 +1454,7 @@ impl<'a> Tokenizer<'a> {
                 },
             });
         }
+        Ok(())
     }
 
     fn tokenize_expression(&mut self, tokens: &mut Vec<Token>) {
@@ -1701,7 +1676,7 @@ impl<'a> Tokenizer<'a> {
         None
     }
 
-    fn tokenize_component_open(&mut self, tokens: &mut Vec<Token>) {
+    fn tokenize_component_open(&mut self, tokens: &mut Vec<Token>) -> ParseResult<()> {
         let start = self.position;
         self.advance(); // <
         self.advance(); // {
@@ -1721,10 +1696,16 @@ impl<'a> Tokenizer<'a> {
         let mut attrs = Vec::new();
 
         loop {
-            self.skip_whitespace_inline();
+            // Formatting whitespace separates attributes; values retain their whitespace.
+            let crossed_line = self.skip_opening_tag_whitespace();
 
-            if self.at_eof() || self.at_newline() {
+            if self.at_eof() {
                 break;
+            }
+            if crossed_line
+                && let Some(error) = self.opening_tag_statement_error(&format!("<{{{name}}}"))
+            {
+                return Err(error);
             }
 
             let Some(ch) = self.peek_char() else { break };
@@ -1743,7 +1724,7 @@ impl<'a> Tokenizer<'a> {
                         end: self.position,
                     },
                 });
-                return;
+                return Ok(());
             }
             if ch == '>' {
                 self.advance();
@@ -1759,9 +1740,9 @@ impl<'a> Tokenizer<'a> {
                 });
                 // There might be trailing content on this line - tokenize it
                 if !self.at_eof() && !self.at_newline() {
-                    self.tokenize_content(tokens);
+                    self.tokenize_content(tokens)?;
                 }
-                return;
+                return Ok(());
             }
 
             // Parse attribute using shared function
@@ -1773,17 +1754,16 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        // Reached end of line without closing
-        tokens.push(Token::ComponentOpen {
-            name,
-            name_range,
-            attributes: attrs,
-            self_closing: false,
-            range: TextRange {
+        Err(ParseError::new(
+            ErrorKind::InvalidSyntax,
+            "Unclosed opening tag.",
+            TextRange {
                 start,
                 end: self.position,
             },
-        });
+        )
+        .with_help("Close the opening tag with '>'.")
+        .boxed())
     }
 
     fn tokenize_component_close(&mut self, tokens: &mut Vec<Token>) {
@@ -1930,7 +1910,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     /// Parse an HTML element opening tag: <tag attributes>
-    fn tokenize_html_element_open(&mut self, tokens: &mut Vec<Token>) {
+    fn tokenize_html_element_open(&mut self, tokens: &mut Vec<Token>) -> ParseResult<()> {
         let start = self.position;
         self.advance(); // <
 
@@ -1942,10 +1922,16 @@ impl<'a> Tokenizer<'a> {
         let mut attrs = Vec::new();
 
         loop {
-            self.skip_whitespace_inline();
+            // Formatting whitespace separates attributes; values retain their whitespace.
+            let crossed_line = self.skip_opening_tag_whitespace();
 
-            if self.at_eof() || self.at_newline() {
+            if self.at_eof() {
                 break;
+            }
+            if crossed_line
+                && let Some(error) = self.opening_tag_statement_error(&format!("<{tag}"))
+            {
+                return Err(error);
             }
 
             let Some(ch) = self.peek_char() else { break };
@@ -1969,7 +1955,7 @@ impl<'a> Tokenizer<'a> {
                         end: self.position,
                     },
                 });
-                return;
+                return Ok(());
             }
             if ch == '>' {
                 let close_pos = self.position; // Position of ">"
@@ -1992,7 +1978,7 @@ impl<'a> Tokenizer<'a> {
                 if is_raw {
                     self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
                 }
-                return;
+                return Ok(());
             }
 
             // Parse attribute using shared function
@@ -2004,25 +1990,16 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        // Reached end of line without closing >
-        let is_raw = Self::is_raw_text_element(&tag);
-        tokens.push(Token::HtmlElementOpen {
-            tag: tag.clone(),
-            tag_range: TextRange {
-                start,
-                end: tag_end,
-            },
-            attributes: attrs,
-            close_bracket_pos: self.position, // No actual ">" - use end position
-            self_closing: false,
-            range: TextRange {
+        Err(ParseError::new(
+            ErrorKind::InvalidSyntax,
+            "Unclosed opening tag.",
+            TextRange {
                 start,
                 end: self.position,
             },
-        });
-        if is_raw {
-            self.in_raw_content = Some(RawContentExit::ClosingTag(tag));
-        }
+        )
+        .with_help("Close the opening tag with '>'.")
+        .boxed())
     }
 
     /// Parse an HTML element closing tag: </tag>
@@ -2153,13 +2130,43 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn skip_whitespace_inline(&mut self) {
-        while !self.at_eof() && !self.at_newline() {
+    fn skip_opening_tag_whitespace(&mut self) -> bool {
+        let start_line = self.position.line;
+        while !self.at_eof() {
             match self.peek_char() {
-                Some(' ') | Some('\t') => self.advance(),
+                Some(ch) if ch.is_whitespace() => self.advance(),
                 _ => break,
             }
         }
+        self.position.line != start_line
+    }
+
+    fn opening_tag_statement_error(&mut self, opening: &str) -> Option<Box<ParseError>> {
+        let line = self.peek_line();
+        if !self.is_control_flow(&line) {
+            return None;
+        }
+
+        let start = self.position;
+        let trimmed = line.trim();
+        let help = trimmed
+            .strip_prefix("if ")
+            .and_then(|condition| condition.strip_suffix(':'))
+            .map(|condition| format!("{opening} class={{\"active\" if {condition} else None}}>"));
+        self.skip_to_eol();
+
+        let mut error = ParseError::new(
+            ErrorKind::InvalidSyntax,
+            "Python statements cannot appear inside an opening tag.",
+            TextRange {
+                start,
+                end: self.position,
+            },
+        );
+        if let Some(help) = help {
+            error = error.with_help(help);
+        }
+        Some(error.boxed())
     }
 
     /// Consume characters until `stop` is found at bracket depth 0.
@@ -2254,7 +2261,7 @@ impl<'a> Tokenizer<'a> {
 }
 
 /// Tokenize source code
-pub fn tokenize(source: &str) -> Vec<Token> {
+pub fn tokenize(source: &str) -> ParseResult<Vec<Token>> {
     Tokenizer::new(source).tokenize()
 }
 
@@ -2291,17 +2298,17 @@ pub struct IncrementalTokenizer {
 
 impl IncrementalTokenizer {
     /// Create a new incremental tokenizer from source
-    pub fn new(source: &str) -> Self {
-        let tokens = tokenize(source);
+    pub fn new(source: &str) -> ParseResult<Self> {
+        let tokens = tokenize(source)?;
         let line_count = source.lines().count().max(1);
         let line_to_tokens = Self::build_line_map(&tokens, line_count);
 
-        Self {
+        Ok(Self {
             source: source.to_string(),
             tokens,
             line_to_tokens,
             line_count,
-        }
+        })
     }
 
     /// Build mapping from line numbers to token index ranges
@@ -2347,7 +2354,7 @@ impl IncrementalTokenizer {
     /// Apply a text change incrementally
     ///
     /// Returns the range of tokens that were affected (for potential re-generation)
-    pub fn update(&mut self, change: TextChange) -> (usize, usize) {
+    pub fn update(&mut self, change: TextChange) -> ParseResult<(usize, usize)> {
         // Calculate the new source
         let lines: Vec<&str> = self.source.lines().collect();
         let mut new_lines: Vec<String> = Vec::new();
@@ -2396,7 +2403,7 @@ impl IncrementalTokenizer {
         // and adjust positions for lines after
 
         // Full re-tokenize (simpler, still much faster than full transpile)
-        let new_tokens = tokenize(&new_source);
+        let new_tokens = tokenize(&new_source)?;
         let new_line_count = new_source.lines().count().max(1);
         let new_line_map = Self::build_line_map(&new_tokens, new_line_count);
 
@@ -2409,7 +2416,7 @@ impl IncrementalTokenizer {
         self.line_to_tokens = new_line_map;
         self.line_count = new_line_count;
 
-        (new_token_start, new_token_end)
+        Ok((new_token_start, new_token_end))
     }
 
     /// Get tokens for a specific line range
@@ -2430,15 +2437,16 @@ impl IncrementalTokenizer {
     }
 
     /// Re-tokenize completely (for when incremental update isn't sufficient)
-    pub fn full_retokenize(&mut self) {
-        self.tokens = tokenize(&self.source);
+    pub fn full_retokenize(&mut self) -> ParseResult<()> {
+        self.tokens = tokenize(&self.source)?;
         self.line_count = self.source.lines().count().max(1);
         self.line_to_tokens = Self::build_line_map(&self.tokens, self.line_count);
+        Ok(())
     }
 }
 
 /// Tokenize a single line (for incremental updates)
-pub fn tokenize_line(line: &str, line_number: usize) -> Vec<Token> {
+pub fn tokenize_line(line: &str, line_number: usize) -> ParseResult<Vec<Token>> {
     // Add newline if not present for consistent tokenization
     let source = if line.ends_with('\n') {
         line.to_string()
@@ -2452,17 +2460,21 @@ pub fn tokenize_line(line: &str, line_number: usize) -> Vec<Token> {
     tokenizer.position.line = line_number;
 
     let mut tokens = Vec::new();
-    tokenizer.tokenize_line(&mut tokens);
+    tokenizer.tokenize_line(&mut tokens)?;
 
     // Remove the Eof token if present
     tokens.retain(|t| !matches!(t, Token::Eof { .. }));
 
-    tokens
+    Ok(tokens)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn tokenize(source: &str) -> Vec<Token> {
+        super::tokenize(source).expect("test source should tokenize")
+    }
 
     #[test]
     fn test_simple_html() {
@@ -2565,9 +2577,17 @@ mod tests {
     }
 
     #[test]
+    fn test_uppercase_python_assignment() {
+        let tokens = tokenize("DEFAULT_LABEL = \"Save\"\n");
+        assert!(
+            matches!(&tokens[0], Token::PythonStatement { code, .. } if code == "DEFAULT_LABEL = \"Save\"")
+        );
+    }
+
+    #[test]
     fn test_decorator() {
-        let tokens = tokenize("@fragment\n");
-        assert!(matches!(&tokens[0], Token::Decorator { code, .. } if code == "@fragment"));
+        let tokens = tokenize("@cache\n");
+        assert!(matches!(&tokens[0], Token::Decorator { code, .. } if code == "@cache"));
     }
 
     #[test]
@@ -2957,7 +2977,7 @@ mod rest_span_tests {
     fn test_rest_span_points_to_condition_only() {
         // rest_range should point to just the condition part, not the keyword or colon
         let source = "if is_active:\n";
-        let tokens = tokenize(source);
+        let tokens = tokenize(source).expect("test source should tokenize");
 
         if let Token::ControlStart {
             keyword,

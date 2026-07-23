@@ -18,7 +18,7 @@ except ImportError:
     HAS_MSGSPEC = False
     msgspec = None
 
-from hyper.content import Singleton, Collection, computed
+from hyperhtml.content import Singleton, Collection, computed
 
 
 # ==========================================

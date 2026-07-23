@@ -1,5 +1,5 @@
 use super::{Flow, Plugin, walk};
-use crate::ast::{Ast, IfNode, Node, StatementNode, TextRange};
+use crate::ast::{Function, IfNode, Node, StatementNode, TextRange};
 use crate::error::CompileError;
 
 /// Rewrites mutable defaults on nullable params to the None-sentinel pattern.
@@ -13,9 +13,9 @@ pub struct MutableDefaults {
 }
 
 impl Plugin for MutableDefaults {
-    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, self)?;
-        walk(&mut ast.function.body, self)?;
+    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        walk(&mut function.params, self)?;
+        walk(&mut function.body, self)?;
 
         let guards = self.guards.iter().map(|(name, default)| {
             Node::If(IfNode {
@@ -30,7 +30,7 @@ impl Plugin for MutableDefaults {
                 range: TextRange::synthetic(),
             })
         });
-        ast.function.body.splice(0..0, guards);
+        function.body.splice(0..0, guards);
 
         Ok(())
     }

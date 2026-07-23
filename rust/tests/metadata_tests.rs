@@ -9,8 +9,8 @@ fn test_selective_helper_imports() {
 
     let code = compile(source);
 
-    //Should import html and render_class for class attributes
-    assert!(code.contains("from hyper import html, render_class"));
+    // Should import component and render_class for class attributes.
+    assert!(code.contains("from hyperhtml import component, render_class"));
     assert!(code.contains("render_class("));
     // Should NOT contain old markers
     assert!(!code.contains("replace_markers"));
@@ -43,9 +43,9 @@ fn test_non_async_template() {
     assert!(!code.contains("async def"));
     assert!(code.contains("def Render():"));
 
-    // Should have component import
-    assert!(code.contains("from hyper import html"));
-    assert!(code.contains("@html"));
+    // Should have component import.
+    assert!(code.contains("from hyperhtml import component"));
+    assert!(code.contains("@component"));
 }
 
 #[test]
@@ -55,11 +55,8 @@ fn test_content_slot_parameter() {
 
     let code = compile(source);
 
-    //Function should have _default_slot parameter for default slot
-    assert!(code.contains("_default_slot"));
-
-    // Should be optional with Iterable type
-    assert!(code.contains("_default_slot: Iterable[str] | None = None"));
+    // The default slot is the optional, keyword-only content argument.
+    assert!(code.contains("content: Iterable[str] | None = None"));
 }
 
 #[test]
@@ -84,9 +81,9 @@ fn test_component_always_imported() {
 
     let code = compile(source);
 
-    //Should always import html for the decorator
-    assert!(code.contains("from hyper import html"));
-    assert!(code.contains("@html"));
+    // Should always import component for the decorator.
+    assert!(code.contains("from hyperhtml import component"));
+    assert!(code.contains("@component"));
 
     // Should NOT have replace_markers (no markers needed)
     assert!(!code.contains("replace_markers"));
@@ -107,8 +104,8 @@ fn test_parameters_with_slots() {
     // Should have parameter in signature (keyword-only, multi-line format)
     assert!(code.contains("*,") && code.contains("title: str,"));
 
-    // Should have _default_slot parameter for default slot
-    assert!(code.contains("_default_slot: Iterable[str] | None = None"));
+    // Should have the default slot after declared props.
+    assert!(code.contains("content: Iterable[str] | None = None"));
 }
 
 #[test]

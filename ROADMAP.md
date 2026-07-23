@@ -30,6 +30,7 @@
 - [ ] **Newline between attributes breaks the tag** — when an opening tag splits attributes across lines (`<div id="x"\n class="y">`), the tokenizer closes the tag after the first attribute and emits the rest as text content. Only a single attribute's value may currently wrap (newlines inside the quotes are fine); workaround is to keep all attributes on the tag's first line with only the last value wrapping.
 - [ ] **Parser panics on multibyte chars inside inline `{...}` expressions** — a non-ASCII char in an expression embedded in template text (e.g. `{x or "aprofundată"}`) panics at `tree_builder.rs:1172` with "byte index N is not a char boundary", because the span offset is computed in bytes not char boundaries. Workaround is to compute the string in the Python zone and emit an ASCII-named variable instead.
 - [ ] **No way to emit a literal `{`/`}`** — any brace in template text or an attribute is read as an expression delimiter, which breaks inline JS/JSON (e.g. `onclick="if(c){f()}"` or `data-config='{"k":"v"}'`). `{{`/`}}` only stays literal in lines with no real expression (where it renders doubled, not collapsed), and `\{` produces broken Python; there is no escape that yields a single literal brace, so the only workaround is to avoid braces entirely or move the value into a `{expression}` that returns the string.
+- [ ] **Reserved Python keywords as component attributes emit invalid kwargs** — a component call with an attribute that is a Python keyword (`<{Dropdown} class="...">`) compiles to `Dropdown(..., class="...")`, which is a syntax error because `class` is reserved (also `for`, `import`, etc.). The compiler should emit reserved-word attributes on component calls as `**{"class": "..."}` instead of a bare kwarg. Workaround is to write the spread by hand in the source: `<{Dropdown} {**{"class": "..."}}>`.
 - [ ] **Spread `{**kwargs}` does not merge `class` with a literal `class`** — when a tag has both a literal `class="base"` and a `{**kwargs}` spread whose dict contains `class`, the output emits two separate `class` attributes (`class="base" class="caller"`) instead of merging them, so the browser silently drops the second. This makes the common "component with base classes + caller-supplied extra classes" pattern impossible via spread; the spread should detect `class` and concatenate it onto the literal one.
 
 ## Future
@@ -37,5 +38,5 @@
 - [ ] File-based routing
 - [ ] SSR framework integrations (FastAPI, Django, Flask)
 - [ ] Static site generation
-- [ ] Fragments for htmx partial rendering
+- [ ] Component partial rendering for htmx
 - [ ] VS Code extension

@@ -1,8 +1,8 @@
 from typing import Any, Callable
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
-@html
+@component
 def ComplexTypes(
         *,
         simple: str,

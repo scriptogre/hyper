@@ -12,10 +12,12 @@ categories = ["command-line-utilities", "development-tools"]
 [lib]
 name = "hyper"
 path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
 
-[[bin]]
-name = "hyper"
-path = "src/main.rs"
+
+[features]
+default = []
+python-extension = ["dep:pyo3"]
 
 [dependencies]
 tree-sitter = "0.25"
@@ -24,6 +26,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 clap = { version = "4", features = ["derive"] }
 walkdir = "2"
+pyo3 = { version = "0.27", features = ["extension-module", "abi3-py310"], optional = true }
 
 [dev-dependencies]
 glob = "0.3"

@@ -60,8 +60,8 @@ class HyperSyntaxAnnotator : Annotator {
 
         // Keywords that start a control line, matched at the beginning (after indent)
         private val CONTROL_KEYWORDS = listOf(
-            "async for ", "async with ",
-            "for ", "if ", "elif ", "else:", "while ", "match ", "with ",
+            "async component ", "async for ", "async with ",
+            "component ", "for ", "if ", "elif ", "else:", "while ", "match ", "with ",
             "try:", "except:", "except ", "finally:",
         )
 
@@ -289,14 +289,13 @@ class HyperSyntaxAnnotator : Annotator {
         // Match the leading keyword
         for (kw in CONTROL_KEYWORDS) {
             if (trimmed.startsWith(kw)) {
-                // Highlight just the keyword part (without trailing space/colon)
+                // Compound async forms use separate ranges, matching Python highlighting.
                 val kwText = kw.trimEnd(' ', ':')
-                highlight(holder, base + indent, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD)
-
-                // For "async for" / "async with", also highlight the second keyword
-                if (kwText == "async for" || kwText == "async with") {
-                    highlight(holder, base + indent, base + indent + 5, HyperSyntaxHighlighter.KEYWORD) // "async"
-                    highlight(holder, base + indent + 6, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD) // "for"/"with"
+                if (kwText.startsWith("async ")) {
+                    highlight(holder, base + indent, base + indent + 5, HyperSyntaxHighlighter.KEYWORD)
+                    highlight(holder, base + indent + 6, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD)
+                } else {
+                    highlight(holder, base + indent, base + indent + kwText.length, HyperSyntaxHighlighter.KEYWORD)
                 }
 
                 break

@@ -761,17 +761,17 @@ fn test_template_attribute_html_range_splits() {
 
 #[test]
 fn test_decorator_has_python_range() {
-    let source = "@fragment\ndef Badge(text: str):\n    <span>{text}</span>\nend";
+    let source = "@cache\ndef Badge(text: str):\n    <span>{text}</span>\nend";
     let result = compile_with_ranges(source, "Test");
 
     let py = python_segments(&result);
     let has_decorator = py.iter().any(|r| {
         let text = &source[r.source_start..r.source_end];
-        text == "@fragment"
+        text == "@cache"
     });
     assert!(
         has_decorator,
-        "Should have Python range for @fragment decorator. Ranges: {:?}",
+        "Should have Python range for @cache decorator. Ranges: {:?}",
         py.iter()
             .map(|r| &source[r.source_start..r.source_end])
             .collect::<Vec<_>>()
@@ -1092,8 +1092,8 @@ fn test_spread_on_component() {
     let result = compile_with_ranges(source, "Test");
 
     assert!(
-        result.code.contains("Card(**props)"),
-        "Spread on component should emit Card(**props). Got:\n{}",
+        result.code.contains("Card.stream(**props)"),
+        "Spread on component should stream Card(**props). Got:\n{}",
         result.code
     );
 }
@@ -1162,8 +1162,8 @@ fn test_non_blessed_spread_no_injection() {
         result.code
     );
     assert!(
-        result.code.contains("Card(**my_dict)"),
-        "Should still emit Card(**my_dict) at call site. Got:\n{}",
+        result.code.contains("Card.stream(**my_dict)"),
+        "Should still stream Card(**my_dict) at the call site. Got:\n{}",
         result.code
     );
 }
@@ -1174,8 +1174,8 @@ fn test_explicit_param_prevents_injection() {
     let result = compile_with_ranges(source, "Test");
 
     assert!(
-        result.code.contains("Card(**props)"),
-        "Should emit Card(**props) at call site. Got:\n{}",
+        result.code.contains("Card.stream(**props)"),
+        "Should stream Card(**props) at the call site. Got:\n{}",
         result.code
     );
     assert!(

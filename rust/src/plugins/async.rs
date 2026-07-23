@@ -1,5 +1,5 @@
 use super::{Flow, Plugin, walk};
-use crate::ast::{Ast, Node};
+use crate::ast::{Function, Node};
 use crate::error::CompileError;
 
 /// Marks the function async when the template awaits anything.
@@ -9,10 +9,10 @@ pub struct Async {
 }
 
 impl Plugin for Async {
-    fn run(&mut self, ast: &mut Ast) -> Result<(), CompileError> {
-        walk(&mut ast.function.params, self)?;
-        walk(&mut ast.function.body, self)?;
-        ast.function.is_async = self.is_async;
+    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        walk(&mut function.params, self)?;
+        walk(&mut function.body, self)?;
+        function.is_async = self.is_async;
         Ok(())
     }
 

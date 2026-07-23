@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from hyper.helpers import escape_html
+from hyperhtml.helpers import escape_html
 
 PLAIN = "A sturdy, well-made item for everyday use." * 4
 SOME = 'Bolts & Nuts <model "X-1"> for the price of one'

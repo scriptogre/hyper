@@ -87,6 +87,20 @@ class HyperAnnotatorTest : BasePlatformTestCase() {
         }
     }
 
+    fun testComponentDeclarationKeywords() {
+        myFixture.configureByFile("annotation/declaration.hyper")
+        val source = sourceText("annotation/declaration.hyper")
+        val highlights = myFixture.doHighlighting()
+        val keywords = highlightedTexts(highlights, HyperSyntaxHighlighter.KEYWORD, source)
+
+        assertEquals(
+            "Expected both component declarations to use keyword highlighting",
+            2,
+            keywords.count { it == "component" }
+        )
+        assertTrue("Expected async to use keyword highlighting", keywords.contains("async"))
+    }
+
     fun testInlineComments() {
         myFixture.configureByFile("annotation/comments.hyper")
         val source = sourceText("annotation/comments.hyper")

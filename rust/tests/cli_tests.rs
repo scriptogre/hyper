@@ -34,8 +34,8 @@ fn stdin_valid_source_produces_python() {
         "Output should contain compiled function"
     );
     assert!(
-        stdout.contains("@html"),
-        "Output should contain @html decorator"
+        stdout.contains("@component"),
+        "Output should contain @component decorator"
     );
 }
 

@@ -121,7 +121,7 @@ pub struct Output {
     current_line: String,
     line_number: usize,
     segments: Vec<Segment>,
-    // Runtime helpers emitted so far; drives the `from hyper import ...` line.
+    // Runtime helpers emitted so far; drives the `from hyperhtml import ...` line.
     helpers: std::collections::BTreeSet<String>,
     // Formatting-aware position tracking
     skip_remaining: usize, // characters left to skip (for leading whitespace)

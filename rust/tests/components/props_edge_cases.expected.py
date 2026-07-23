@@ -1,9 +1,9 @@
 from typing import Any
-from hyper import html, escape
+from hyperhtml import component, escape
 
 
 # Docstring in header
-@html
+@component
 def PropsEdgeCases(
         *,
         simple: str,

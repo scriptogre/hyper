@@ -256,14 +256,11 @@ end
 # DEFINITIONS
 ########################################
 
-@fragment
-def Badge(text: str, badge_variant: str = "info"):
+component Badge(*, text: str, badge_variant: str = "info"):
     <span class="badge badge-{badge_variant}">{text}</span>
 end
 
-@cache
-@fragment
-def CachedList(entries: list):
+component CachedList(*, entries: list):
     <ul>
         for entry in entries:
             <li>{entry}</li>
@@ -271,20 +268,20 @@ def CachedList(entries: list):
     </ul>
 end
 
-@fragment(name="card")
-def Card(title: str):
+component Card(*, title: str):
     <div class="card">
         <h2>{title}</h2>
         {...}
     </div>
 end
 
+@cache
 def format_name(n: str) -> str:
     return n.upper()
 end
 
-{Badge("New")}
-{CachedList(items)}
+{Badge(text="New")}
+{CachedList(entries=items)}
 
 
 ########################################

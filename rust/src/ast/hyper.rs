@@ -11,17 +11,41 @@ use std::sync::Arc;
 // This allows the rest of the codebase to use a single TextRange type
 pub use crate::parse::tokenizer::{Position, TextRange};
 
+/// Whether a file renders an implicit component or exports declarations.
+/// Keep this on the file AST because plugins hoist declarations out of the body.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileMode {
+    ImplicitComponent,
+    Library,
+}
+
 /// Abstract Syntax Tree
 #[derive(Debug, Clone)]
 pub struct Ast {
+    pub mode: FileMode,
+    pub definitions: Vec<FunctionDefinition>,
     pub function: Function,
     pub source: Arc<str>,
 }
 
 impl Ast {
-    pub fn new(function: Function, source: Arc<str>) -> Self {
-        Self { function, source }
+    pub fn new(mode: FileMode, function: Function, source: Arc<str>) -> Self {
+        Self {
+            mode,
+            definitions: Vec::new(),
+            function,
+            source,
+        }
     }
+}
+
+/// A named module-level function produced during lowering.
+#[derive(Debug, Clone)]
+pub struct FunctionDefinition {
+    pub name: String,
+    pub name_range: TextRange,
+    pub function: Function,
+    pub range: TextRange,
 }
 
 /// The template's top-level function, with frontmatter split from body by the
@@ -231,6 +255,7 @@ pub struct DefinitionNode {
 pub enum DefinitionKind {
     Function,
     Class,
+    Component,
 }
 
 /// Import statement
@@ -265,7 +290,7 @@ pub struct ParameterNode {
 /// Decorator
 #[derive(Debug, Clone)]
 pub struct DecoratorNode {
-    pub decorator: String, // "@fragment" or "@app.route('/path')"
+    pub decorator: String, // "@cache" or "@app.route('/path')"
     pub range: TextRange,
 }
 

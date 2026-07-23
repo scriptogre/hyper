@@ -25,7 +25,7 @@ Create `components/Hello.hyper`:
 Render it in `main.py`:
 
 ```python
-from components.Hello import Hello
+from app.components import Hello
 
 print(Hello())
 ```
@@ -51,7 +51,7 @@ name: str
 ```
 
 ```python
-from components.Greeting import Greeting
+from app.components import Greeting
 print(Greeting(name="Alice"))
 ```
 
@@ -74,7 +74,7 @@ count: int = 0
 ```
 
 ```python
-from components.Counter import Counter
+from app.components import Counter
 print(Counter())                    # Uses defaults
 print(Counter(name="Bob", count=5)) # Override defaults
 ```
@@ -115,12 +115,19 @@ title: str = "My Site"
 </html>
 ```
 
-The `{...}` marks where caller content is inserted.
+The `{...}` marks where caller content is inserted. It adds the reserved, keyword-only `content` argument:
+
+```python
+from inspect import signature
+
+signature(Layout)
+# (*, title: str = "My Site", content=None)
+```
 
 Create `pages/Home.hyper`:
 
 ```hyper
-from layouts.Layout import Layout
+from app.layouts import Layout
 ---
 
 <{Layout} title="Home">
@@ -132,7 +139,7 @@ from layouts.Layout import Layout
 Render it:
 
 ```python
-from pages.Home import Home
+from app.pages import Home
 print(Home())
 ```
 
@@ -194,7 +201,7 @@ is_admin: bool
 ```
 
 ```python
-from components.Nav import Nav
+from app.components import Nav
 print(Nav(is_admin=True))   # <nav><a href="/admin">Admin</a></nav>
 print(Nav(is_admin=False))  # <nav><a href="/account">Account</a></nav>
 ```
@@ -216,7 +223,7 @@ items: list[str]
 ```
 
 ```python
-from components.List import List
+from app.components import List
 print(List(items=["Apple", "Banana", "Cherry"]))
 ```
 
@@ -248,9 +255,32 @@ end
 ```
 
 ```python
-from components.Status import Status
+from app.components import Status
 print(Status(status="loading"))  # <p>Loading...</p>
 print(Status(status="done"))     # <p>Ready</p>
+```
+
+### Block Boundaries
+
+Indent blocks. Align each `end` with its opener:
+
+```hyper
+if show_list:
+    <ul>
+        for item in items:
+            <li>{item}</li>
+        end
+    </ul>
+end
+```
+
+Close inner blocks first. Branch clauses share their parent's `end`.
+
+Python's single-line form also works without `end`:
+
+```hyper
+if missing: return
+if ready: <span>Ready</span>
 ```
 
 ---
@@ -306,7 +336,7 @@ print(Template(title=None))     # <h1>Untitled</h1>
 
 ## Named Slots
 
-Templates can have multiple insertion points.
+Templates can have multiple insertion points. Each named slot adds a keyword-only argument with the same name.
 
 Create `layouts/Layout.hyper`:
 
@@ -329,7 +359,7 @@ Create `layouts/Layout.hyper`:
 Create `pages/Dashboard.hyper`:
 
 ```hyper
-from layouts.Layout import Layout
+from app.layouts import Layout
 ---
 
 <{Layout}>
@@ -346,7 +376,7 @@ from layouts.Layout import Layout
 ```
 
 ```python
-from pages.Dashboard import Dashboard
+from app.pages import Dashboard
 print(Dashboard())
 ```
 
@@ -373,7 +403,7 @@ print(Dashboard())
 When a named slot contains one element, mark it directly:
 
 ```hyper
-from layouts.Layout import Layout
+from app.layouts import Layout
 ---
 
 <{Layout}>
@@ -387,6 +417,30 @@ from layouts.Layout import Layout
 ```
 
 The `{...sidebar}` on the element marks it as sidebar content. Same output as above.
+
+Default and named slots use the same arguments from Python:
+
+```python
+Layout(
+    title="Dashboard",
+    content=main_content,
+    sidebar=navigation,
+)
+```
+
+`content` is reserved for the default slot. A prop cannot share a named slot's name:
+
+```hyper
+component Panel(*, sidebar: str):
+    <aside>{...sidebar}</aside>
+end
+```
+
+```text
+error: `sidebar` is both a prop and a named slot
+
+Rename the prop or the slot.
+```
 
 ---
 
@@ -439,6 +493,66 @@ last: str
 
 ```html
 <button data-name="Alice Smith">Click</button>
+```
+
+### Split Attributes Across Lines
+
+Split HTML and component attributes across lines:
+
+```hyper
+<div
+    id="profile"
+    class={["card", {"active": active}]}
+    {**attrs}
+>
+    Content
+</div>
+
+<{Card}
+    title={title}
+    selected
+/>
+```
+
+The formatting whitespace does not render:
+
+```html
+<div id="profile" class="card active" data-role="admin">Content</div>
+```
+
+Whitespace inside a quoted value remains part of that value:
+
+```hyper
+<button
+    _="
+        on click
+            toggle .active
+    "
+>
+    Toggle
+</button>
+```
+
+```html
+<button _="
+        on click
+            toggle .active
+    ">Toggle</button>
+```
+
+Multiline expressions follow Python bracket rules:
+
+```hyper
+<div
+    class={
+        [
+            "card",
+            {"selected": selected},
+        ]
+    }
+>
+    Content
+</div>
 ```
 
 ### Boolean Attributes
@@ -669,175 +783,257 @@ my_dict = {"class": "card"}
 
 ---
 
-## Fragments
+## Transparent Fragments
 
-Fragments are named sections that render inline AND are importable standalone. Useful for partial updates (e.g., HTMX).
-
-Create `pages/Profile.hyper`:
+Group elements without adding a wrapper:
 
 ```hyper
-user: User
-posts: list[Post]
-
----
-
-<div class="page">
-    fragment Sidebar:
-        <aside>
-            <h3>{user.name}</h3>
-            <p>{user.bio}</p>
-        </aside>
-    end
-
-    <main>
-        for post in posts:
-            <article>{post.title}</article>
-        end
-    </main>
-</div>
+<>
+    <button>Save</button>
+    <button>Cancel</button>
+</>
 ```
 
-The compiler analyzes which variables each fragment uses.
+Render text without adding a wrapper:
 
-Render the full page:
-
-```python
-from pages.Profile import Profile
-user = User(name="Alice", bio="Developer")
-posts = [Post(title="Hello"), Post(title="World")]
-
-print(Profile(user=user, posts=posts))
-```
-
-```html
-<div class="page">
-    <aside>
-        <h3>Alice</h3>
-        <p>Developer</p>
-    </aside>
-    <main>
-        <article>Hello</article>
-        <article>World</article>
-    </main>
-</div>
-```
-
-Render just the sidebar (without fetching posts):
-
-```python
-from pages.Profile import Sidebar  # Import fragment directly
-
-user = User(name="Alice", bio="Developer")
-
-print(Sidebar(user=user))
-```
-
-```html
-<aside>
-    <h3>Alice</h3>
-    <p>Developer</p>
-</aside>
+```hyper
+<>Text without a wrapper</>
 ```
 
 ---
 
 ## Defining Components
 
-Define reusable components with `def` in the header zone.
-
-Create `components/Cards.hyper`:
+Define a reusable component with `component`:
 
 ```hyper
-def Card(title: str):
+component Card(*, title: str):
     <div class="card">
         <h2>{title}</h2>
         {...}
     </div>
+end
+```
 
+Component props are explicitly keyword-only:
+
+```hyper
+component Badge(*, text: str, tone: str = "info"):
+    <span class={tone}>{text}</span>
+end
+```
+
+```python
+Badge(text="Saved", tone="success")
+Badge("Saved")  # TypeError: component props are keyword-only
+```
+
+Props above `---` use the same calling convention:
+
+```hyper
+title: str
 ---
-
-<{Card} title="Welcome">
-    <p>Card content here.</p>
-</{Card}>
-
-<{Card} title="Another">
-    <p>More content.</p>
-</{Card}>
+<h1>{title}</h1>
 ```
 
-Use in templates with `<{Name}>` syntax:
+```python
+Page(title="Home")
+Page("Home")  # TypeError
+```
+
+Write Python directly inside a component. Use bare `return` to stop rendering:
+
+```hyper
+component Profile(*, user: User | None):
+    if user is None:
+        <p>Not signed in</p>
+        return
+    end
+
+    <h1>{user.name}</h1>
+end
+```
+
+Use `def` for normal Python functions:
+
+```hyper
+def format_date(value: datetime) -> str:
+    return value.strftime("%B %d, %Y")
+end
+```
+
+Use `async component` when a declared component awaits Python code:
+
+```hyper
+async component UserList():
+    users = await load_users()
+
+    for user in users:
+        <p>{user.name}</p>
+    end
+end
+```
+
+Use `await` normally in a file component. Hyper makes that component async automatically.
+
+### Coming soon: Render and Reuse a Subcomponent
+
+> `@render_here` is planned after the alpha. It is not implemented yet.
+
+Turn markup at its current position into a reusable subcomponent.
+
+Create `pages/Page.hyper`:
+
+```hyper
+title: str
+---
+<article>
+    @render_here
+    component Header(*, title: str):
+        <header>{title}</header>
+    end
+
+    <main>...</main>
+</article>
+```
 
 ```python
-from components.Cards import Cards
-print(Cards())
+from app.pages import Page
+
+print(Page(title="Home"))
 ```
 
 ```html
-<div class="card">
-    <h2>Welcome</h2>
-    <p>Card content here.</p>
-</div>
-<div class="card">
-    <h2>Another</h2>
-    <p>More content.</p>
-</div>
+<article><header>Home</header><main>...</main></article>
 ```
 
-Import components directly from Python:
+Reuse or stream the component through `Page.Header`:
 
 ```python
-from components.Cards import Card
+print(Page.Header(title="Other"))
+print(list(Page.Header.stream(title="Other")))
+```
 
-print(Card("Welcome", slot="<p>Card content.</p>"))
+```text
+<header>Other</header>
+['<header>Other</header>']
+```
+
+Names that match bind automatically. Pass only names that differ:
+
+```hyper
+page_title: str
+name: str
+---
+@render_here(title=page_title)
+component Header(*, title: str, name: str, suffix: str = "!"):
+    <header>{title}: {name}{suffix}</header>
+end
+```
+
+```python
+print(Page(page_title="Home", name="Ada"))
 ```
 
 ```html
-<div class="card">
-    <h2>Welcome</h2>
-    <p>Card content.</p>
-</div>
+<header>Home: Ada!</header>
 ```
 
-Functions and classes in the header are also importable:
+Leave off `@render_here` to export without rendering:
+
+```hyper
+---
+component Notice():
+    <aside>Saved</aside>
+end
+
+<p>Page body</p>
+```
 
 ```python
-from components.Article import format_date
-from datetime import datetime
-
-print(format_date(datetime(2024, 12, 25)))
+print(Page())
+print(Page.Notice())
 ```
 
+```text
+<p>Page body</p>
+<aside>Saved</aside>
 ```
-December 25, 2024
+
+Use a normal component call when the declaration-site render needs slot content:
+
+```hyper
+---
+component Panel():
+    <section>{...}</section>
+end
+
+<{Panel}>
+    <p>Custom content</p>
+</{Panel}>
+```
+
+```python
+print(Page())
+```
+
+```html
+<section><p>Custom content</p></section>
+```
+
+Control flow changes where the component renders. The export remains available:
+
+```hyper
+show_header: bool
+---
+if show_header:
+    @render_here
+    component Header():
+        <header>Visible</header>
+    end
+end
+```
+
+```python
+print(repr(Page(show_header=False)))
+print(Page.Header())
+```
+
+```text
+''
+<header>Visible</header>
 ```
 
 ---
 
 ## Multiple Components Per File
 
-Files without top-level HTML are component libraries.
+Every template so far has defined one component named after its file.
 
-Create `components/forms.hyper`:
+Group related components in one library file. Create `components/forms.hyper`:
 
 ```hyper
-def Form(action: str):
+component Form(*, action: str):
     <form {action}>
         {...}
     </form>
+end
 
-def Input(name: str, type: str = "text"):
+component Input(*, name: str, type: str = "text"):
     <input {name} {type} />
+end
 
-def Button(type: str = "submit"):
+component Button(*, type: str = "submit"):
     <button {type}>
         {...}
     </button>
+end
 ```
 
 Create `pages/Login.hyper`:
 
 ```hyper
-from components.forms import Form, Input, Button
+from app.components.forms import Form, Input, Button
 
 ---
 
@@ -849,7 +1045,7 @@ from components.forms import Form, Input, Button
 ```
 
 ```python
-from pages.Login import Login
+from app.pages import Login
 print(Login())
 ```
 
@@ -874,6 +1070,7 @@ from datetime import datetime
 
 def format_date(d: datetime) -> str:
     return d.strftime("%B %d, %Y")
+end
 
 title: str
 created_at: datetime
@@ -888,7 +1085,7 @@ created_at: datetime
 
 ```python
 from datetime import datetime
-from components.Article import Article
+from app.components import Article
 print(Article(title="Hello", created_at=datetime(2024, 12, 25)))
 ```
 
@@ -953,21 +1150,28 @@ Only use `safe()` for content you trust (e.g., sanitized HTML from your database
 
 ## Streaming
 
-Templates compile to generator functions using `yield`, enabling HTTP streaming.
+Call a component to render all its HTML:
 
 ```python
-from components.Feed import Feed
+from app.pages import Feed
+
+html = Feed(posts=all_posts)
+```
+
+Use `.stream()` to send chunks as they render:
+
+```python
 from fastapi.responses import StreamingResponse
 
 @app.get("/feed")
 def feed():
     return StreamingResponse(
-        Feed(posts=all_posts),
-        media_type="text/html"
+        Feed.stream(posts=all_posts),
+        media_type="text/html",
     )
 ```
 
-The template stays the same:
+Write the component normally:
 
 ```hyper
 posts: list[Post]
@@ -981,84 +1185,87 @@ posts: list[Post]
 </div>
 ```
 
-Each iteration yields a chunk. Use `str(Template())` for buffered output, or iterate for streaming.
-
 ---
 
 ## File Structure
 
-A `.hyper` file has two zones separated by `---`:
+Each file is one implicit component or one component library.
+
+Use `---` to select an implicit component and separate setup from rendering:
 
 ```hyper
-# Header zone: imports, defs, props (runs once at import)
-
 from utils import helper
-
-def Badge(text: str):
-    <span class="badge">{text}</span>
 
 name: str
 count: int = 0
 
 ---
 
-# Body zone: template code (runs every render)
-
-greeting = f"Hello {name}"
+greeting = helper(name)
 
 <div>
-    <{Badge} text={greeting} />
+    <h1>{greeting}</h1>
     <span>{count}</span>
 </div>
 ```
 
-**Header zone** (above `---`):
-- `import` statements
-- `def` functions — with HTML becomes `@html`, without HTML becomes regular function
-- `class` definitions (including `@dataclass`, `Enum`, `Protocol`)
-- `NAME: Final[type] = expr` — module-level constants
-- `type Name = type_expr` — type aliases (Python 3.12+)
-- Type-annotated variables become props: `name: str`, `count: int = 0`
-- `**kwargs` captures extra attributes (optional if using `{**kwargs}` in the body)
+Put imports, helpers, constants, and props above `---`. Put rendering code below it.
 
-**Body zone** (below `---`):
-- Local variables (can reference props)
-- HTML template
-- Control flow
-- `def` functions — closures that can reference props, NOT exported
-
-### When `---` is Required
-
-`---` is required when the header contains **parameters** (props).
-
-| File type | Has parameters? | Needs `---`? |
-|-----------|-----------------|--------------|
-| HTML only | No | No |
-| Parameters + HTML | Yes | **Yes** |
-| Library (imports, defs, constants) | No | No |
-
-Simple HTML needs no separator:
+Plain HTML needs no separator:
 
 ```hyper
 <div>Hello World</div>
 ```
 
-Props require the separator:
+A component library needs no separator either:
 
 ```hyper
-name: str
-
----
-
-<div>Hello {name}</div>
-```
-
-Library files (no top-level HTML) need no separator:
-
-```hyper
-def Header(title: str):
+component Header(*, title: str):
     <header>{title}</header>
+end
 
-def Footer():
+component Footer():
     <footer>Copyright 2024</footer>
+end
 ```
+
+```python
+from app.components.layout import Header, Footer
+```
+
+Top-level output selects an implicit component even without `---`:
+
+```hyper
+<h1>Hello</h1>
+```
+
+```python
+from app.pages import Home
+```
+
+Declarations and Python without rendered output select library mode:
+
+```hyper
+DEFAULT_TITLE = "Home"
+
+component Header(*, title: str = DEFAULT_TITLE):
+    <header>{title}</header>
+end
+```
+
+```python
+from app.components.layout import DEFAULT_TITLE, Header
+```
+
+Normal Python takes precedence when both files exist:
+
+```text
+Home.py
+Home.hyper
+```
+
+```python
+from app.pages import Home  # Home.py
+```
+
+Implicit components must live inside a package. Root-level `.hyper` files work only as component libraries.

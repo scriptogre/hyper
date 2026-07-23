@@ -12,19 +12,28 @@ pub struct TreeBuilder {
     tokens: Vec<Token>,
     pos: usize,
     source: Arc<str>,
-    in_header: bool,            // Track if we're before the --- separator
+    in_header: bool, // Track if we're before the --- separator
+    has_separator: bool,
     element_stack: Vec<String>, // Parent element names for nesting validation
 }
 
 impl TreeBuilder {
     pub fn new(tokens: Vec<Token>, source: Arc<str>) -> Self {
+        let has_separator = tokens
+            .iter()
+            .any(|token| matches!(token, Token::Separator { .. }));
         Self {
             tokens,
             pos: 0,
             source,
-            element_stack: Vec::new(),
             in_header: true, // Start in header zone
+            has_separator,
+            element_stack: Vec::new(),
         }
+    }
+
+    pub fn has_separator(&self) -> bool {
+        self.has_separator
     }
 
     pub fn build(&mut self) -> ParseResult<Vec<Node>> {
@@ -37,6 +46,21 @@ impl TreeBuilder {
         }
 
         Ok(nodes)
+    }
+
+    /// Multiline opening syntax is formatting, including its child boundary lines.
+    fn trim_tag_boundary_whitespace(nodes: &mut Vec<Node>) {
+        let leading = nodes
+            .iter()
+            .take_while(|node| matches!(node, Node::Text(text) if text.content.trim().is_empty()))
+            .count();
+        nodes.drain(..leading);
+
+        let keep = nodes
+            .iter()
+            .rposition(|node| !matches!(node, Node::Text(text) if text.content.trim().is_empty()))
+            .map_or(0, |index| index + 1);
+        nodes.truncate(keep);
     }
 
     /// Get a range at the current position (for EOF or current token)
@@ -264,11 +288,14 @@ impl TreeBuilder {
 
                 self.advance();
 
-                let (children, close_range) = if is_self_closing {
+                let (mut children, close_range) = if is_self_closing {
                     (Vec::new(), None)
                 } else {
                     self.parse_until_element_close(&element_tag, &element_range)?
                 };
+                if element_range.start.line != element_range.end.line {
+                    Self::trim_tag_boundary_whitespace(&mut children);
+                }
 
                 Ok(Some(Node::Element(ElementNode {
                     tag: element_tag,
@@ -304,11 +331,17 @@ impl TreeBuilder {
 
                 self.advance();
 
-                let (children, slots, close_range) = if is_self_closing {
+                let (mut children, mut slots, close_range) = if is_self_closing {
                     (Vec::new(), HashMap::new(), None)
                 } else {
                     self.parse_until_component_close(&component_name, &component_range)?
                 };
+                if component_range.start.line != component_range.end.line {
+                    Self::trim_tag_boundary_whitespace(&mut children);
+                    for slot in slots.values_mut() {
+                        Self::trim_tag_boundary_whitespace(slot);
+                    }
+                }
 
                 Ok(Some(Node::Component(ComponentNode {
                     name: component_name,
@@ -325,6 +358,12 @@ impl TreeBuilder {
                 // Unexpected closing tag at top level - skip it
                 self.advance();
                 Ok(None)
+            }
+
+            Token::ComponentDefinition { signature, range } => {
+                let signature = signature.clone();
+                let range = *range;
+                self.parse_component_definition(&signature, &range)
             }
 
             Token::ControlStart {
@@ -433,15 +472,6 @@ impl TreeBuilder {
                 // Unexpected at top level - skip and continue
                 self.advance();
                 Ok(None)
-            }
-
-            Token::FragmentStart { name: _, range } => {
-                let node = Node::Fragment(FragmentNode {
-                    children: Vec::new(), // TODO: parse fragment children
-                    range: *range,
-                });
-                self.advance();
-                Ok(Some(node))
             }
         }
     }
@@ -742,6 +772,27 @@ impl TreeBuilder {
             else_clause,
             finally_clause,
             range: try_range,
+        })))
+    }
+
+    fn parse_component_definition(
+        &mut self,
+        signature: &str,
+        range: &TextRange,
+    ) -> ParseResult<Option<Node>> {
+        self.advance();
+        let in_header = self.in_header;
+        self.in_header = false;
+        let body = self.parse_until_block_end()?;
+        self.expect_end("component", range)?;
+        self.in_header = in_header;
+
+        Ok(Some(Node::Definition(DefinitionNode {
+            kind: DefinitionKind::Component,
+            signature: signature.to_string(),
+            signature_range: *range,
+            body,
+            range: *range,
         })))
     }
 

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from hyper.content import Collection, Singleton, load
+from hyperhtml.content import Collection, Singleton, load
 
 
 @pytest.fixture

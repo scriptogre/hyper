@@ -1,11 +1,11 @@
-from hyper import html
+from hyperhtml import component
 
 
-@html
+@component
 def OnlyParams(
         *,
         name: str,
         count: int = 0,
         items: list,
 ):
-    pass
+    yield from ()

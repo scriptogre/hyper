@@ -1,6 +1,6 @@
-from hyper import html
+from hyperhtml import component
 
 
-@html
+@component
 def UnexpectedEnd():
     yield """<div>Content</div>"""

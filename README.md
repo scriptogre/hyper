@@ -3,13 +3,13 @@
 [![CI](https://github.com/scriptogre/hyper/actions/workflows/ci.yml/badge.svg)](https://github.com/scriptogre/hyper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Type-safe templates for Python, powered by Rust.
+Backend-neutral, type-safe HTML templates for Python, powered by Rust.
 
 ```
-uvx hyper .
+uv add hyperhtml
 ```
 
-`.hyper` files compile to Python components with slots, type-safe arguments, and full IDE support.
+Write `.hyper` files and import them like Python components. No build step, no generated `.py` files.
 
 ### Quick Start
 
@@ -25,14 +25,7 @@ name: str
 <h1>Hello, {name}!</h1>
 ```
 
-**2. Compile it.**
-
-```
-uvx hyper .
-# ✓ app/components/Greeting.py
-```
-
-**3. Use it.**
+**2. Use it.**
 
 ```python
 from app.components import Greeting
@@ -41,6 +34,8 @@ from app.components import Greeting
 def index():
     return Greeting(name="World")
 ```
+
+Hyper compiles `Greeting.hyper` on import and caches it for the life of the process.
 
 ### Features
 
@@ -79,12 +74,7 @@ products: list[Product]
 
 <{Layout} title="Store">
     for product in products:
-        <{ProductCard}
-            name={product.name}
-            price={product.price}
-            image={product.image}
-            on_sale={product.on_sale}
-        />
+        <{ProductCard} name={product.name} price={product.price} image={product.image} on_sale={product.on_sale} />
     end
 </{Layout}>
 ```
@@ -130,12 +120,12 @@ from app.pages import Store
 
 @app.get("/store")
 def store():
-    return StreamingResponse(Store(products=products), media_type="text/html")
+    return StreamingResponse(Store.stream(products=products), media_type="text/html")
 ```
 
 ### IDE Support
 
-- **JetBrains** (PyCharm, IntelliJ) — Full Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation on save
+- **JetBrains** (PyCharm, IntelliJ) — Python intelligence inside `.hyper` files: autocomplete, go-to-definition, type checking, auto-transpilation for IDE analysis
 - **TextMate / VS Code** — Syntax highlighting
 
 ### Acknowledgements

@@ -1,4 +1,4 @@
-"""Tests for hyper.integrations.jinja2.HyperExtension.
+"""Tests for hyperhtml.integrations.jinja2.HyperExtension.
 
 Verifies that adding the extension to a Jinja2 env auto-discovers compiled
 Hyper components living next to Jinja templates, exposes them as globals,
@@ -20,8 +20,8 @@ from jinja2 import (
     select_autoescape,
 )
 
-from hyper import html
-from hyper.integrations.jinja2 import HyperExtension
+from hyperhtml import component
+from hyperhtml.integrations.jinja2 import HyperExtension
 
 
 def _env(loader, autoescape=True):
@@ -104,7 +104,7 @@ def test_warns_on_non_introspectable_loader_and_skips_discovery():
 def test_register_components_with_callable():
     env = _env(DictLoader({"index.html": "{{ Custom(x='hi') }}"}))
 
-    @html
+    @component
     def Custom(*, x: str):
         yield f"<b>{x}</b>"
 
@@ -117,11 +117,11 @@ def test_register_components_with_callable():
 def test_register_components_with_iterable():
     env = _env(DictLoader({}))
 
-    @html
+    @component
     def A(*, v: str):
         yield f"<a>{v}</a>"
 
-    @html
+    @component
     def B(*, v: str):
         yield f"<b>{v}</b>"
 
@@ -134,6 +134,7 @@ def test_register_components_with_iterable():
 def test_register_components_with_package(components_dir: Path, monkeypatch):
     # Use the discovery-from-package code path via the test fixtures package.
     import sys
+
     fixtures_root = components_dir.parent.parent
     monkeypatch.syspath_prepend(str(fixtures_root))
     # Force a fresh import so __hyper__ markers are present.
@@ -142,6 +143,7 @@ def test_register_components_with_package(components_dir: Path, monkeypatch):
             sys.modules.pop(name, None)
 
     import importlib
+
     pkg = importlib.import_module("fixtures.components")
 
     env = _env(DictLoader({}))
@@ -165,7 +167,7 @@ def test_hyper_tag_fills_default_and_named_slots(components_dir: Path):
     template = env.from_string(
         "{% hyper Panel(title='Pricing') %}"
         "<p>Body</p>"
-        "{% slot actions %}<a href=\"/buy\">Buy</a>{% endslot %}"
+        '{% slot actions %}<a href="/buy">Buy</a>{% endslot %}'
         "{% endhyper %}"
     )
     out = template.render()
@@ -181,10 +183,10 @@ def test_slots_work_in_an_async_environment():
     # works: AssignBlock captures and the call all compile to async code.
     import asyncio
 
-    @html
-    async def Panel(*, title, _default_slot=None, _actions_slot=None):
+    @component
+    async def Panel(*, title, content=None, actions=None):
         yield f"<h2>{title}</h2>"
-        for s in _actions_slot or ["No actions"]:
+        for s in actions or ["No actions"]:
             yield s
 
     env = Environment(loader=DictLoader({}), enable_async=True)
@@ -233,9 +235,7 @@ def test_blank_body_leaves_default_slot_empty(components_dir: Path):
 
 def test_hyper_tag_spreads_a_dict(components_dir: Path):
     env = _env(FileSystemLoader(str(components_dir)))
-    template = env.from_string(
-        "{% hyper Panel(**props) %}<p>Body</p>{% endhyper %}"
-    )
+    template = env.from_string("{% hyper Panel(**props) %}<p>Body</p>{% endhyper %}")
     out = template.render(props={"title": "Pricing"})
 
     assert "<h2>Pricing</h2>" in out

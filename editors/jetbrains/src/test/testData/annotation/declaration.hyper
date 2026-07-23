@@ -1,0 +1,12 @@
+---
+component Header(
+    *,
+    title: str,
+):
+    <header>{title}</header>
+end
+
+async component Results(*, query: str):
+    items = await search(query)
+    <ul>{items}</ul>
+end
