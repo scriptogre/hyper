@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/hyperhtml.svg)](https://pypi.org/project/hyperhtml/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Write type-safe HTML in `.hyper` files and import it directly from Python. Hyper compiles templates in memory, with no CLI, build step, or generated `.py` files.
+Write HTML with Python. Import `.hyper` files without a build step or generated `.py` files.
 
 ```bash
 uv add hyperhtml
@@ -12,9 +12,31 @@ uv add hyperhtml
 
 Requires Python 3.10 or newer.
 
-## Render a component
+## Create a component
 
-Create `app/templates/Greeting.hyper`:
+Create `app/pages/Greeting.hyper`:
+
+```hyper
+<h1>Hello, World!</h1>
+```
+
+Import and call it:
+
+```python
+from app.pages import Greeting
+
+print(Greeting())
+```
+
+```html
+<h1>Hello, World!</h1>
+```
+
+The filename becomes the component name. Hyper compiles it on first import.
+
+## Pass data
+
+Add typed props above `---`:
 
 ```hyper
 name: str
@@ -22,200 +44,204 @@ name: str
 <h1>Hello, {name}!</h1>
 ```
 
-Import it in a FastAPI endpoint:
-
 ```python
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-
-from app.templates import Greeting
-
-app = FastAPI()
-
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return Greeting(name="World")
+print(Greeting(name="Ada"))
 ```
-
-The response is:
 
 ```html
-<h1>Hello, World!</h1>
+<h1>Hello, Ada!</h1>
 ```
 
-Hyper compiles `Greeting.hyper` on first import and caches it for the life of the process.
+Props are keyword-only. Values are escaped by default.
 
-## Use Django
+## Add a nested component
 
-Return a component directly from a Django view:
-
-```python
-from django.http import HttpResponse
-
-from app.templates import Greeting
-
-
-def home(request):
-    return HttpResponse(Greeting(name="World"))
-```
-
-To call Hyper components from Django templates, install the extra:
-
-```bash
-uv add "hyperhtml[django]"
-```
-
-Add the app, context processor, and builtin to your existing Django settings:
-
-```python
-INSTALLED_APPS = [
-    # ...
-    "hyperhtml.integrations.django",
-]
-
-TEMPLATES = [{
-    # ...
-    "OPTIONS": {
-        "context_processors": [
-            # ...
-            "hyperhtml.integrations.django.context_processors.components",
-        ],
-        "builtins": [
-            "hyperhtml.integrations.django.templatetags.hyper",
-        ],
-    },
-}]
-```
-
-Components in Django template directories become available by name:
-
-```django
-{% hyper Greeting name=user.first_name / %}
-```
-
-## Use Jinja
-
-Install the Jinja extra:
-
-```bash
-uv add "hyperhtml[jinja2]"
-```
-
-Add the extension to an environment with a filesystem loader:
-
-```python
-from jinja2 import Environment, FileSystemLoader
-
-from hyperhtml.integrations.jinja2 import HyperExtension
-
-
-env = Environment(
-    loader=FileSystemLoader("templates"),
-    extensions=[HyperExtension],
-)
-```
-
-`.hyper` files under `templates/` become Jinja globals:
-
-```jinja
-{{ Greeting(name="Ada") }}
-```
-
-Both Jinja and Django preserve Hyper output as safe HTML. Hyper still escapes values passed into components.
-
-## Compose components
-
-Components compose like HTML elements:
+Use `component` for reusable markup inside the file:
 
 ```hyper
-# app/components/ProductCard.hyper
-name: str
-price: float
-image: str
-on_sale: bool = False
+# app/pages/Dashboard.hyper
+title: str
 ---
-<div class={["card", {"sale": on_sale}]}>
-    <img src={image} alt={name} />
-    <h3>{name}</h3>
-    if on_sale:
-        <span class="badge">Sale</span>
-    end
-    <p class="price">${price:.2f}</p>
-</div>
+component Header(*, title: str):
+    <header><h1>{title}</h1></header>
+end
+
+<{Header} title={title} />
 ```
 
-```hyper
-# app/pages/Store.hyper
-from app.components import ProductCard
-from app.models import Product
+The file exports `Dashboard` and its nested `Header`:
 
-products: list[Product]
----
-<main>
-    for product in products:
-        <{ProductCard}
-            name={product.name}
-            price={product.price}
-            image={product.image}
-            on_sale={product.on_sale}
-        />
-    end
-</main>
+```python
+from app.pages import Dashboard
+
+Dashboard(title="Account")
+Dashboard.Header(title="Account")
 ```
 
-## Use control flow
+Both calls return:
 
-The template body accepts Python control flow. Blocks end with `end`:
+```html
+<header><h1>Account</h1></header>
+```
+
+`Dashboard("Account")` raises `TypeError` because props are keyword-only.
+
+## Pass content
+
+Place `{...}` where caller content belongs:
 
 ```hyper
-from app.enums import Status
-from app.models import Product
-
-status: Status
-products: list[Product]
+# app/components/Card.hyper
+title: str
 ---
-match status:
-    case Status.LOADING:
-        <div class="spinner"></div>
-    case Status.ERROR:
-        <p class="error">Something went wrong</p>
-    case Status.OK:
-        if not products:
-            <p>No products found</p>
-        else:
-            for product in products:
-                <p>{product.name}</p>
-            end
-        end
+<article>
+    <h2>{title}</h2>
+    <main>{...}</main>
+</article>
+```
+
+Pass content between component tags:
+
+```hyper
+# app/pages/Confirm.hyper
+from app.components import Card
+---
+<{Card} title="Delete item">
+    <p>This cannot be undone.</p>
+</{Card}>
+```
+
+```html
+<article><h2>Delete item</h2><main><p>This cannot be undone.</p></main></article>
+```
+
+## Group components in one file
+
+A file with declarations and no rendered output is a component library:
+
+```hyper
+# app/components/forms.hyper
+component Button(*, label: str, **attrs):
+    <button {**attrs}>{label}</button>
+end
+
+component Input(*, name: str, type: str = "text"):
+    <input {name} {type} />
 end
 ```
 
-## Stream a response
+Import its components like a Python module:
 
-Every component exposes its generated function as `.stream`:
+```python
+from app.components.forms import Button, Input
+
+Button(label="Save", disabled=True)
+Input(name="email", type="email")
+```
+
+```html
+<button disabled>Save</button>
+<input name="email" type="email">
+```
+
+## Use Python
+
+Python statements and expressions stay Python:
+
+```hyper
+items: list[str]
+show_count: bool = True
+---
+<ul>
+    for item in items:
+        <li>{item.upper()}</li>
+    end
+</ul>
+
+if show_count:
+    <p>{len(items)} items</p>
+end
+```
+
+Imports, functions, classes, `match`, `try`, `with`, and async code use the same block form.
+
+## Split long tags
+
+Formatting whitespace between attributes does not render:
+
+```hyper
+<{Button}
+    label="Save"
+    class={["button", {"active": active}]}
+    hx-post="/save"
+/>
+```
+
+## Stream output
+
+Calling a component joins its chunks. `.stream()` returns the generated iterator:
+
+```python
+html = Feed(posts=posts)
+chunks = Feed.stream(posts=posts)
+```
 
 ```python
 from fastapi.responses import StreamingResponse
 
-from app.pages import Store
 
-
-@app.get("/store")
-def store():
+@app.get("/feed")
+def feed():
     return StreamingResponse(
-        Store.stream(products=products),
+        Feed.stream(posts=posts),
         media_type="text/html",
     )
 ```
+
+## Use Django or Jinja
+
+Django views can return a component directly:
+
+```python
+from django.http import HttpResponse
+
+
+def home(request):
+    return HttpResponse(Dashboard(title="Account"))
+```
+
+Jinja can discover `.hyper` files from its template paths:
+
+```python
+env.add_extension("hyperhtml.integrations.jinja2.HyperExtension")
+```
+
+```jinja
+{{ Dashboard(title="Account") }}
+```
+
+See [Integrations](docs/design/integrations.md) for Django templates, Jinja slots, Flask, Litestar, and Sanic.
+
+## How files import
+
+| `.hyper` file | Python import |
+| --- | --- |
+| Contains rendered output or `---` | Component named after the file |
+| Contains declarations only | Normal module with exported names |
+| Has an adjacent `.py` file | Python file wins |
+
+Implicit file components must live inside a package. Root-level `.hyper` files can be component libraries.
 
 ## IDE support
 
 - **JetBrains:** syntax highlighting, Python language injection, and compiler diagnostics
 - **TextMate and VS Code:** syntax highlighting
 
-## Contributing
+## Documentation
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+- [Template language](docs/design/templates.md)
+- [Integrations](docs/design/integrations.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 

@@ -1,22 +1,13 @@
 # Integrations
 
-A Hyper component is just a function that returns HTML.
-
-Take `Greeting.hyper`:
-
-```hyper
-name: str
----
-<h1>Hello {name}</h1>
-```
-
-Under the hood, this is equivalent to a Python function:
+A Hyper component returns safe HTML when called and yields chunks through `.stream()`:
 
 ```python
-def Greeting(name: str) -> str: ...
+html = Greeting(name="Ada")
+chunks = Greeting.stream(name="Ada")
 ```
 
-To use it from a template, call the function. That is the whole integration.
+Framework integrations only need to set the HTML response type.
 
 ## Jinja2
 
@@ -26,7 +17,7 @@ To use it from a template, call the function. That is the whole integration.
     from jinja2 import Environment, FileSystemLoader
 
     env = Environment(loader=FileSystemLoader("templates"))
-    env.add_extension("hyper.integrations.jinja2.HyperExtension")
+    env.add_extension("hyperhtml.integrations.jinja2.HyperExtension")
     # env.register_components(myapp.other.path.to.components)  # register components outside templates/
     ```
 
@@ -91,7 +82,7 @@ Spread a dict with `**`, like Python:
     ```python
     INSTALLED_APPS = [
         ...,
-        "hyper.integrations.django",
+        "hyperhtml.integrations.django",
     ]
     ```
 
@@ -100,7 +91,14 @@ Spread a dict with `**`, like Python:
     ```python
     TEMPLATES = [{
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "OPTIONS": {"builtins": ["hyper.integrations.django.templatetags.hyper"]},
+        "OPTIONS": {
+            "context_processors": [
+                "hyperhtml.integrations.django.context_processors.components",
+            ],
+            "builtins": [
+                "hyperhtml.integrations.django.templatetags.hyper",
+            ],
+        },
     }]
     ```
 
@@ -148,7 +146,9 @@ Spread a dict with `**`, like Python:
         "BACKEND": "django.template.backends.jinja2.Jinja2",
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
-        "OPTIONS": {"extensions": ["hyper.integrations.jinja2.HyperExtension"]},
+        "OPTIONS": {
+            "extensions": ["hyperhtml.integrations.jinja2.HyperExtension"],
+        },
     }]
     ```
 
