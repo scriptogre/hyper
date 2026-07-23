@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Fix named slot composition between Hyper components
+- Document explicit components and current integration imports
+
 ## 0.1.1
 
 - Include the license in the source distribution
