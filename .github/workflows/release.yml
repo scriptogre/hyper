@@ -49,6 +49,7 @@ jobs:
         with:
           command: sdist
           args: --out dist
+      - run: python .github/scripts/check_sdist.py dist/*.tar.gz
       - uses: actions/upload-artifact@v7
         with:
           name: sdist

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Include the license in the source distribution
+- Check source metadata paths before publishing
+
 ## 0.1.0
 
 Initial alpha release.
