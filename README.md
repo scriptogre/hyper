@@ -32,7 +32,7 @@ print(Greeting())
 <h1>Hello, World!</h1>
 ```
 
-The filename becomes the component name. Hyper compiles it on first import.
+The filename sets the component name.
 
 ## Pass data
 
@@ -54,183 +54,174 @@ print(Greeting(name="Ada"))
 
 Props are keyword-only. Values are escaped by default.
 
-## Add a nested component
+## Use Python
 
-Use `component` for reusable markup inside the file:
+Use Python expressions and control flow directly:
 
 ```hyper
-# app/pages/Dashboard.hyper
-title: str
+names: list[str]
 ---
-component Header(*, title: str):
-    <header><h1>{title}</h1></header>
+for name in names:
+    <h1>Hello, {name}!</h1>
 end
-
-<{Header} title={title} />
 ```
 
-The file exports `Dashboard` and its nested `Header`:
+```python
+print(Greeting(names=["Ada", "Lin"]))
+```
+
+```html
+<h1>Hello, Ada!</h1><h1>Hello, Lin!</h1>
+```
+
+Close each indented block with `end`.
+
+## Compose components
+
+Create `app/components/Card.hyper`:
+
+```hyper
+title: str
+---
+<article><h2>{title}</h2></article>
+```
+
+Use it from `app/pages/Dashboard.hyper`:
+
+```hyper
+from app.components import Card
+---
+<{Card} title="Orders" />
+```
 
 ```python
 from app.pages import Dashboard
 
-Dashboard(title="Account")
-Dashboard.Header(title="Account")
+print(Dashboard())
 ```
-
-Both calls return:
 
 ```html
-<header><h1>Account</h1></header>
+<article><h2>Orders</h2></article>
 ```
-
-`Dashboard("Account")` raises `TypeError` because props are keyword-only.
 
 ## Pass content
 
 Place `{...}` where caller content belongs:
 
 ```hyper
-# app/components/Card.hyper
 title: str
 ---
 <article>
     <h2>{title}</h2>
-    <main>{...}</main>
+    <div>{...}</div>
 </article>
 ```
 
 Pass content between component tags:
 
 ```hyper
-# app/pages/Confirm.hyper
 from app.components import Card
 ---
-<{Card} title="Delete item">
-    <p>This cannot be undone.</p>
+<{Card} title="Orders">
+    <p>3 open orders</p>
 </{Card}>
 ```
 
 ```html
-<article><h2>Delete item</h2><main><p>This cannot be undone.</p></main></article>
+<article><h2>Orders</h2><div><p>3 open orders</p></div></article>
 ```
 
-## Group components in one file
+## Pass named content
 
-A file with declarations and no rendered output is a component library:
+Use a named slot when content belongs in a specific place:
+
+```hyper
+title: str
+---
+<article>
+    <h2>{title}</h2>
+    <div>{...}</div>
+    <footer>{...actions}</footer>
+</article>
+```
+
+Mark the element that fills it:
+
+```hyper
+from app.components import Card
+---
+<{Card} title="Orders">
+    <p>3 open orders</p>
+    <button {...actions}>View orders</button>
+</{Card}>
+```
+
+```html
+<article><h2>Orders</h2><div><p>3 open orders</p></div><footer><button>View orders</button></footer></article>
+```
+
+## Define several components
+
+Use `component` to group related components in one file:
 
 ```hyper
 # app/components/forms.hyper
-component Button(*, label: str, **attrs):
-    <button {**attrs}>{label}</button>
+component Button(*, label: str):
+    <button>{label}</button>
 end
 
-component Input(*, name: str, type: str = "text"):
-    <input {name} {type} />
+component Input(*, name: str):
+    <input name={name} />
 end
 ```
 
-Import its components like a Python module:
+A declarations-only file imports like a Python module:
 
 ```python
 from app.components.forms import Button, Input
 
-Button(label="Save", disabled=True)
-Input(name="email", type="email")
+print(Button(label="Save"))
 ```
 
 ```html
-<button disabled>Save</button>
-<input name="email" type="email">
+<button>Save</button>
 ```
 
-## Use Python
+## Use FastAPI
 
-Python statements and expressions stay Python:
-
-```hyper
-items: list[str]
-show_count: bool = True
----
-<ul>
-    for item in items:
-        <li>{item.upper()}</li>
-    end
-</ul>
-
-if show_count:
-    <p>{len(items)} items</p>
-end
-```
-
-Imports, functions, classes, `match`, `try`, `with`, and async code use the same block form.
-
-## Split long tags
-
-Formatting whitespace between attributes does not render:
-
-```hyper
-<{Button}
-    label="Save"
-    class={["button", {"active": active}]}
-    hx-post="/save"
-/>
-```
-
-## Stream output
-
-Calling a component joins its chunks. `.stream()` returns the generated iterator:
+Set the response type to HTML, then return a component:
 
 ```python
-html = Feed(posts=posts)
-chunks = Feed.stream(posts=posts)
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+from app.pages import Dashboard
+
+app = FastAPI(default_response_class=HTMLResponse)
+
+
+@app.get("/dashboard")
+def dashboard():
+    return Dashboard()
 ```
+
+## Stream a response
+
+Use `.stream()` to send each generated chunk:
 
 ```python
 from fastapi.responses import StreamingResponse
 
 
-@app.get("/feed")
-def feed():
+@app.get("/dashboard/stream")
+def stream_dashboard():
     return StreamingResponse(
-        Feed.stream(posts=posts),
+        Dashboard.stream(),
         media_type="text/html",
     )
 ```
 
-## Use Django or Jinja
-
-Django views can return a component directly:
-
-```python
-from django.http import HttpResponse
-
-
-def home(request):
-    return HttpResponse(Dashboard(title="Account"))
-```
-
-Jinja can discover `.hyper` files from its template paths:
-
-```python
-env.add_extension("hyperhtml.integrations.jinja2.HyperExtension")
-```
-
-```jinja
-{{ Dashboard(title="Account") }}
-```
-
-See [Integrations](docs/design/integrations.md) for Django templates, Jinja slots, Flask, Litestar, and Sanic.
-
-## How files import
-
-| `.hyper` file | Python import |
-| --- | --- |
-| Contains rendered output or `---` | Component named after the file |
-| Contains declarations only | Normal module with exported names |
-| Has an adjacent `.py` file | Python file wins |
-
-Implicit file components must live inside a package. Root-level `.hyper` files can be component libraries.
+See [Integrations](docs/design/integrations.md) for Django, Jinja, Flask, Litestar, and Sanic.
 
 ## IDE support
 
