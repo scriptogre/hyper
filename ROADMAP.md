@@ -11,6 +11,7 @@
 - [x] Content collections (JSON, YAML, TOML, Markdown)
 - [x] JetBrains IDE plugin
 - [x] TextMate syntax bundle
+- [ ] Contact the owner of the `hyper` PyPI project about a transfer
 - [ ] PyPI package release
 - [ ] JetBrains Marketplace release
 
