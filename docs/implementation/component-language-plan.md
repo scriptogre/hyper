@@ -36,6 +36,7 @@ The durable docs describe the approved target, including behavior that has not l
 
 ### Components
 
+- The [component instance contract](../design/component-instances.md) supersedes the eager call and definition-level streaming API below. It is a target, not implemented behavior.
 - `@render_here` is coming soon and is not part of the alpha.
 - Generated render functions use the sole runtime decorator `@component`; there is no `@html` alias.
 - `@component` returns a callable `Component` that buffers calls and exposes raw chunks through `.stream()`.
