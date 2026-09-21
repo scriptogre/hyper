@@ -1,0 +1,11 @@
+{
+  "name": "hyper-grammar-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "shiki": "3.22.0"
+  }
+}

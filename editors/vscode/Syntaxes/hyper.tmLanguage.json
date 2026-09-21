@@ -4,12 +4,25 @@
   "scopeName": "source.hyper",
   "fileTypes": ["hyper"],
   "patterns": [
+    { "include": "#component" },
     { "include": "#comment" },
     { "include": "#props" },
     { "include": "#keywords" },
     { "include": "#html" }
   ],
   "repository": {
+    "component": {
+      "begin": "^\\s*(component)\\s+([A-Za-z_]\\w*)(?=\\s*\\()",
+      "beginCaptures": {
+        "1": { "name": "storage.type.function.hyper" },
+        "2": { "name": "entity.name.function.python" }
+      },
+      "end": "(:)\\s*$",
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.python" }
+      },
+      "patterns": [{ "include": "source.python" }]
+    },
     "comment": {
       "name": "comment.block.html",
       "begin": "<!--",
@@ -19,27 +32,13 @@
     "props": {
       "patterns": [
         {
-          "match": "^([a-z_][a-z_0-9]*)(:)\\s*([A-Z][a-zA-Z0-9_]*)",
-          "captures": {
-            "1": { "name": "variable.parameter.python" },
-            "2": { "name": "punctuation.separator.annotation.python" },
-            "3": { "name": "entity.name.type.class.python" }
-          }
+          "begin": "^(?=[a-z_][a-z_0-9]*:)",
+          "end": "$",
+          "patterns": [{ "include": "source.python" }]
         },
         {
-          "match": "^([a-z_][a-z_0-9]*)(:)\\s*(str|int|float|bool|list|dict|set|tuple)",
-          "captures": {
-            "1": { "name": "variable.parameter.python" },
-            "2": { "name": "punctuation.separator.annotation.python" },
-            "3": { "name": "support.type.python" }
-          }
-        },
-        {
-          "match": "(=)\\s*(True|False|None)",
-          "captures": {
-            "1": { "name": "keyword.operator.assignment.python" },
-            "2": { "name": "constant.language.python" }
-          }
+          "match": "^---\\s*$",
+          "name": "keyword.control.hyper"
         }
       ]
     },
@@ -51,6 +50,7 @@
           "match": "^\\s*(if|elif|for|while|with|try|match)\\b(.+)(:)\\s*$",
           "captures": {
             "1": { "name": "keyword.control.flow.python" },
+            "2": { "patterns": [{ "include": "source.python" }] },
             "3": { "name": "punctuation.section.block.python" }
           }
         },
@@ -68,13 +68,6 @@
           "captures": {
             "1": { "name": "keyword.control.flow.python" },
             "3": { "name": "punctuation.section.block.python" }
-          }
-        },
-        {
-          "comment": "for..in: highlight 'in' only within a for-loop line",
-          "match": "^\\s*for\\b.+\\b(in)\\b.+:\\s*$",
-          "captures": {
-            "1": { "name": "keyword.operator.python" }
           }
         },
         {
