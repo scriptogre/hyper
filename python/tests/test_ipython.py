@@ -1,5 +1,9 @@
-import ast
 import json
+import re
+import shutil
+import subprocess
+import sys
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -92,21 +96,53 @@ def test_named_components_can_be_composed(shell):
     assert shell.user_ns['Button']() == '<button>Save</button>'
 
 
-def test_public_notebook_bundles_current_sources():
+def test_compiler_errors_show_only_the_diagnostic(shell, capsys):
+    result = shell.run_cell('%%hyper Greeting\nif True:\n    <p>Hello</p>')
+    output = capsys.readouterr().out
+
+    assert isinstance(result.error_in_exec, ValueError)
+    assert "This 'if' block is never closed" in output
+    assert "Close with 'end'" in output
+    assert 'Traceback' not in output
+    assert 'run_cell_magic' not in output
+
+
+def test_runtime_errors_keep_their_traceback(shell, capsys):
+    result = shell.run_cell('%%hyper Greeting\n<p>{1 / 0}</p>')
+    output = capsys.readouterr().out
+
+    assert isinstance(result.error_in_exec, ZeroDivisionError)
+    assert 'Traceback' in output
+
+
+def test_public_notebook_setup_loads_pinned_sources(shell, tmp_path, monkeypatch):
     root = Path(__file__).parents[2]
     notebook = json.loads((root / 'examples/solveit-public.ipynb').read_text())
-    setup = ''.join(notebook['cells'][0]['source'])
-    tree = ast.parse('\n'.join(line for line in setup.splitlines() if not line.startswith('%')))
-    calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, 'path', sys.path.copy())
 
-    write = next(call for call in calls if isinstance(call.func, ast.Attribute)
-                 and call.func.attr == 'write_text')
-    assert ast.literal_eval(write.args[0]) == (root / 'python/hyperhtml/ipython.py').read_text()
+    uv = tmp_path / '.hyper-demo/tools/uv-0.12.17/uv'
+    uv.parent.mkdir(parents=True)
+    uv.touch()
 
-    javascript = next(call for call in calls if isinstance(call.func, ast.Name)
-                      and call.func.id == 'Javascript')
-    bootstrap = ast.literal_eval(javascript.args[0])
-    assert json.dumps((root / 'examples/solveit-highlight.js').read_text()) in bootstrap
+    downloads = []
+    commands = []
 
-    grammar = json.loads((root / 'editors/vscode/Syntaxes/hyper.tmLanguage.json').read_text())
-    assert json.dumps(grammar) in bootstrap
+    def retrieve(url, destination):
+        match = re.fullmatch(r'https://raw.githubusercontent.com/scriptogre/hyper/([a-f0-9]{40})/(.+)', url)
+        assert match, 'Setup downloads must pin a commit'
+        downloads.append(match[2])
+        shutil.copyfile(root / match[2], destination)
+        return destination, None
+
+    monkeypatch.setattr(urllib.request, 'urlretrieve', retrieve)
+    monkeypatch.setattr(subprocess, 'run', lambda command, **kwargs: commands.append(command))
+
+    for cell in notebook['cells']:
+        shell.run_cell(''.join(cell['source'])).raise_error()
+
+    assert downloads == ['examples/solveit-install.py', 'python/hyperhtml/ipython.py']
+    assert commands == [[str(uv), 'pip', 'install', '--target',
+                         str(tmp_path / '.hyper-demo/packages'), 'hyperhtml==0.1.2']]
+    assert shell.user_ns['assets'].endswith('@' + shell.user_ns['revision'])
+    assert 'Hello, Ada!' in shell.user_ns['Greeting'](names=['Ada'])

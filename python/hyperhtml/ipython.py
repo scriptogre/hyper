@@ -9,6 +9,11 @@ from uuid import uuid4
 from hyperhtml import _native
 
 
+class HyperCompileError(ValueError):
+    def _render_traceback_(self):
+        return [str(self).strip()]
+
+
 @dataclass
 class HyperPreview:
     html: str
@@ -45,7 +50,11 @@ def load_ipython_extension(ipython):
             raise ValueError('Provide a component name, for example: %%hyper Button')
 
         filename = f'{name}.hyper'
-        python = _native.transpile(cell, filename)
+        try:
+            python = _native.transpile(cell, filename)
+        except ValueError as error:
+            raise HyperCompileError(str(error)) from None
+
         namespace = ipython.user_ns.copy()
         exec(compile(python, filename, 'exec'), namespace)
         component = namespace[name]
