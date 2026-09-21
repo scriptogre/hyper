@@ -18,7 +18,7 @@ def shell():
 
 def test_cell_compiles_renders_and_exports_component(shell):
     shell.user_ns['name'] = '<Ada>'
-    result = shell.run_cell_magic('hyper', 'Greeting name=name',
+    result = shell.run_cell_magic('hyper', 'Greeting',
         'name: str\n---\n<h1>Hello, {name}!</h1>')
     assert result.html == '<h1>Hello, &lt;Ada&gt;!</h1>'
     assert 'def Greeting(' in result.python
@@ -40,9 +40,10 @@ def test_preview_keeps_html_in_sandbox(shell):
     assert 'Preview' in output and 'Python' in output
 
 
-def test_invalid_name_is_rejected(shell):
+@pytest.mark.parametrize('name', ['', '../oops', 'class', 'Greeting name=name'])
+def test_invalid_name_is_rejected(shell, name):
     with pytest.raises(ValueError, match='component name'):
-        shell.run_cell_magic('hyper', '../oops', '<p>Hi</p>')
+        shell.run_cell_magic('hyper', name, '<p>Hi</p>')
 
 
 def test_demo_notebook_runs(shell):
@@ -51,7 +52,7 @@ def test_demo_notebook_runs(shell):
     for cell in notebook['cells']:
         result = shell.run_cell(''.join(cell['source']))
         result.raise_error()
-    assert 'Hello, Answer.AI!' in shell.user_ns['Preview'](names=['Answer.AI'])
+    assert 'Hello, Answer.AI!' in shell.user_ns['Greeting'](names=['Answer.AI'])
 
 
 def test_failed_rerun_preserves_last_working_component(shell):
@@ -61,22 +62,30 @@ def test_failed_rerun_preserves_last_working_component(shell):
     assert shell.user_ns['Greeting']() == '<p>Works</p>'
 
 
-def test_plain_magic_uses_notebook_variables(shell):
+def test_magic_uses_notebook_variables(shell):
     shell.user_ns['names'] = ['Ada', '<Lin>']
-    result = shell.run_cell_magic('hyper', '',
+    result = shell.run_cell_magic('hyper', 'Greeting',
         'names: list[str]\n---\nfor name in names:\n    <p>{name}</p>\nend')
     assert result.html == '<p>Ada</p><p>&lt;Lin&gt;</p>'
-    assert 'def Preview(' in result.python
+    assert 'def Greeting(' in result.python
 
 
-def test_plain_magic_reads_updated_variables(shell):
+def test_magic_reads_updated_variables(shell):
     source = 'name: str\n---\n<p>{name}</p>'
     shell.user_ns['name'] = 'Ada'
-    shell.run_cell_magic('hyper', '', source)
+    shell.run_cell_magic('hyper', 'Greeting', source)
     shell.user_ns['name'] = 'Lin'
-    assert shell.run_cell_magic('hyper', '', source).html == '<p>Lin</p>'
+    assert shell.run_cell_magic('hyper', 'Greeting', source).html == '<p>Lin</p>'
 
 
-def test_plain_magic_keeps_prop_defaults(shell):
-    result = shell.run_cell_magic('hyper', '', 'name: str = "Ada"\n---\n<p>{name}</p>')
+def test_magic_keeps_prop_defaults(shell):
+    result = shell.run_cell_magic('hyper', 'Greeting', 'name: str = "Ada"\n---\n<p>{name}</p>')
     assert result.html == '<p>Ada</p>'
+
+
+def test_named_components_can_be_composed(shell):
+    shell.run_cell_magic('hyper', 'Button', '<button>Save</button>')
+    result = shell.run_cell_magic('hyper', 'Panel', '<section>\n    <{Button} />\n</section>')
+
+    assert result.html == '<section><button>Save</button></section>'
+    assert shell.user_ns['Button']() == '<button>Save</button>'

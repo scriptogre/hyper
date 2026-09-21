@@ -1,4 +1,4 @@
-"""Load with `%load_ext hyperhtml.ipython`; run `%%hyper` using notebook variables."""
+"""Load with `%load_ext hyperhtml.ipython`; run `%%hyper Button`."""
 
 from dataclasses import dataclass
 from html import escape
@@ -39,25 +39,29 @@ class HyperPreview:
 
 def load_ipython_extension(ipython):
     def hyper(line, cell):
-        """Render Hyper using notebook variables. A name and prop overrides are optional."""
-        parts = line.strip().split(maxsplit=1)
-        name = parts[0] if parts else 'Preview'
+        """Compile a named component and preview it using notebook variables."""
+        name = line.strip()
         if not name.isidentifier() or iskeyword(name):
-            raise ValueError('Use a Python identifier for the component name')
-        namespace = dict(ipython.user_ns)
-        generated = _native.transpile(cell, f'{name}.hyper')
-        exec(compile(generated, f'{name}.hyper', 'exec'), namespace)
+            raise ValueError('Provide a component name, for example: %%hyper Button')
+
+        filename = f'{name}.hyper'
+        python = _native.transpile(cell, filename)
+        namespace = ipython.user_ns.copy()
+        exec(compile(python, filename, 'exec'), namespace)
         component = namespace[name]
-        props = {key: ipython.user_ns[key] for key in signature(component).parameters
-                 if key in ipython.user_ns}
-        if len(parts) > 1:
-            props.update(eval(f'dict({parts[1]})', ipython.user_ns))
+
+        props = {
+            prop: ipython.user_ns[prop]
+            for prop in signature(component).parameters
+            if prop in ipython.user_ns
+        }
         rendered = component(**props)
         if isawaitable(rendered):
             rendered.close()
             raise TypeError('The Hyper preview requires a synchronous component')
+
         ipython.user_ns[name] = component
-        return HyperPreview(str(rendered), generated)
+        return HyperPreview(str(rendered), python)
 
     ipython.register_magic_function(hyper, magic_kind='cell', magic_name='hyper')
 
