@@ -6,7 +6,7 @@ from inspect import isawaitable, signature
 from keyword import iskeyword
 from uuid import uuid4
 
-from hyperhtml import _native
+from hyperhtml import _native as compiler
 
 
 class HyperCompileError(ValueError):
@@ -51,7 +51,7 @@ def load_ipython_extension(ipython):
 
         filename = f'{name}.hyper'
         try:
-            python = _native.transpile(cell, filename)
+            python = compiler.transpile(cell, filename)
         except ValueError as error:
             raise HyperCompileError(str(error)) from None
 
