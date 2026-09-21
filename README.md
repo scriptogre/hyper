@@ -16,7 +16,7 @@ Requires Python 3.10 or newer.
 
 Create `app/pages/Greeting.hyper`:
 
-```hyper
+```html
 <h1>Hello, World!</h1>
 ```
 
@@ -38,7 +38,7 @@ The filename sets the component name.
 
 Add typed props above `---`:
 
-```hyper
+```html
 name: str
 ---
 <h1>Hello, {name}!</h1>
@@ -58,7 +58,7 @@ Props are keyword-only. Values are escaped by default.
 
 Use Python expressions and control flow directly:
 
-```hyper
+```html
 names: list[str]
 ---
 for name in names:
@@ -80,7 +80,7 @@ Close each indented block with `end`.
 
 Create `app/components/Card.hyper`:
 
-```hyper
+```html
 title: str
 ---
 <article><h2>{title}</h2></article>
@@ -88,7 +88,7 @@ title: str
 
 Use it from `app/pages/Dashboard.hyper`:
 
-```hyper
+```html
 from app.components import Card
 ---
 <{Card} title="Orders" />
@@ -108,7 +108,7 @@ print(Dashboard())
 
 Place `{...}` where caller content belongs:
 
-```hyper
+```html
 title: str
 ---
 <article>
@@ -119,7 +119,7 @@ title: str
 
 Pass content between component tags:
 
-```hyper
+```html
 from app.components import Card
 ---
 <{Card} title="Orders">
@@ -135,7 +135,7 @@ from app.components import Card
 
 Use a named slot when content belongs in a specific place:
 
-```hyper
+```html
 title: str
 ---
 <article>
@@ -147,7 +147,7 @@ title: str
 
 Mark the element that fills it:
 
-```hyper
+```html
 from app.components import Card
 ---
 <{Card} title="Orders">
@@ -164,7 +164,7 @@ from app.components import Card
 
 Use `component` to group related components in one file:
 
-```hyper
+```html
 # app/components/forms.hyper
 component Button(*, label: str):
     <button>{label}</button>
