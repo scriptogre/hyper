@@ -256,24 +256,24 @@ end
 # DEFINITIONS
 ########################################
 
-component Badge(*, text: str, badge_variant: str = "info"):
+@subcomponent
+def Badge(*, text: str, badge_variant: str = "info") -> Component:
     <span class="badge badge-{badge_variant}">{text}</span>
-end
 
-component CachedList(*, entries: list):
+@subcomponent
+def CachedList(*, entries: list) -> Component:
     <ul>
         for entry in entries:
             <li>{entry}</li>
         end
     </ul>
-end
 
-component Card(*, title: str):
+@subcomponent
+def Card(*, title: str) -> Component:
     <div class="card">
         <h2>{title}</h2>
         {...}
     </div>
-end
 
 @cache
 def format_name(n: str) -> str:

@@ -262,7 +262,7 @@ print(Status(status="done"))     # <p>Ready</p>
 
 ### Block Boundaries
 
-Indent blocks. Align each `end` with its opener:
+Indentation defines Python blocks. Use `end` only when it helps show the boundary:
 
 ```hyper
 if show_list:
@@ -274,7 +274,9 @@ if show_list:
 end
 ```
 
-Close inner blocks first. Branch clauses share their parent's `end`.
+Both `end` lines above are optional. If present, each must align with its opener. HTML still needs closing tags.
+
+The same rule applies before and after `---`, and in component libraries. Branch clauses share their parent's optional `end`.
 
 Python's single-line form also works without `end`:
 
@@ -425,13 +427,13 @@ Layout(
     title="Dashboard",
     content=main_content,
     sidebar=navigation,
-)
+).render()
 ```
 
 `content` is reserved for the default slot. A prop cannot share a named slot's name:
 
 ```hyper
-component Panel(*, sidebar: str):
+def Panel(*, sidebar: str) -> Component:
     <aside>{...sidebar}</aside>
 end
 ```
@@ -804,205 +806,97 @@ Render text without adding a wrapper:
 
 ## Defining Components
 
-Define a reusable component with `component`:
+### Annotated Definitions
+
+Use `-> Component` to write a template function. Hyper reads the annotation during compilation, much like FastAPI uses annotations to control behavior.
+
+A standalone `{name}` in that function is template output, not a Python set expression.
 
 ```hyper
-component Card(*, title: str):
-    <div class="card">
-        <h2>{title}</h2>
-        {...}
-    </div>
+def Heading(*, text: str) -> Component:
+    <h1>{text}</h1>
 end
 ```
 
-Component props are explicitly keyword-only:
+Calling a template definition creates a lazy component instance. Render it explicitly:
+
+```python
+heading = Heading(text="Hello")
+html = heading.render()
+```
+
+A function without template output remains an ordinary Python factory:
 
 ```hyper
-component Badge(*, text: str, tone: str = "info"):
-    <span class={tone}>{text}</span>
+def Greeting(*, name: str) -> Component:
+    return Heading(text=f"Hello, {name}")
 end
 ```
 
-```python
-Badge(text="Saved", tone="success")
-Badge("Saved")  # TypeError: component props are keyword-only
-```
-
-Props above `---` use the same calling convention:
+Use bare `return` to stop template output:
 
 ```hyper
-title: str
----
-<h1>{title}</h1>
-```
-
-```python
-Page(title="Home")
-Page("Home")  # TypeError
-```
-
-Write Python directly inside a component. Use bare `return` to stop rendering:
-
-```hyper
-component Profile(*, user: User | None):
-    if user is None:
-        <p>Not signed in</p>
+def Greeting(*, name: str | None) -> Component:
+    if name is None:
+        <p>Hello, stranger</p>
         return
     end
-
-    <h1>{user.name}</h1>
+    <h1>Hello, {name}</h1>
 end
 ```
 
-Use `def` for normal Python functions:
+Do not mix template output and `return value` in the same function. Compose components with tags instead:
 
 ```hyper
-def format_date(value: datetime) -> str:
-    return value.strftime("%B %d, %Y")
+def Greeting() -> Component:
+    <h1>Hello</h1>
+    <{Heading} text="Goodbye" />
 end
 ```
 
-Use `async component` when a declared component awaits Python code:
+Each function has its own scope. Markup in a nested definition does not make its enclosing factory a template. Ordinary nested helpers retain Python `return` and `yield` behavior.
+
+These examples keep optional `end` markers for visual clarity. See [Block Boundaries](#block-boundaries).
+
+### Export a Subcomponent
+
+Nested component definitions use normal Python scope. They may capture values from their enclosing function:
 
 ```hyper
-async component UserList():
-    users = await load_users()
+def Greeting(*, name: str) -> Component:
+    def Heading() -> Component:
+        <h1>Hello, {name}</h1>
 
-    for user in users:
-        <p>{user.name}</p>
-    end
-end
+    <{Heading} />
 ```
 
-Use `await` normally in a file component. Hyper makes that component async automatically.
-
-### Coming soon: Render and Reuse a Subcomponent
-
-> `@render_here` is planned after the alpha. It is not implemented yet.
-
-Turn markup at its current position into a reusable subcomponent.
-
-Create `pages/Page.hyper`:
+Add `@subcomponent` when callers also need the nested component:
 
 ```hyper
-title: str
----
-<article>
-    @render_here
-    component Header(*, title: str):
+def Page(*, title: str) -> Component:
+    @subcomponent
+    def Header(*, title: str) -> Component:
         <header>{title}</header>
-    end
 
-    <main>...</main>
-</article>
+    <{Header} title={title} />
 ```
 
-```python
-from app.pages import Page
+`Header` receives its own props and does not capture parent render state:
 
-print(Page(title="Home"))
+```python
+page = Page(title="Home")
+page.render()
+
+other_header = Page.Header(title="Other")
+other_header.render()
 ```
 
 ```html
-<article><header>Home</header><main>...</main></article>
-```
-
-Reuse or stream the component through `Page.Header`:
-
-```python
-print(Page.Header(title="Other"))
-print(list(Page.Header.stream(title="Other")))
-```
-
-```text
+<header>Home</header>
 <header>Other</header>
-['<header>Other</header>']
 ```
 
-Names that match bind automatically. Pass only names that differ:
-
-```hyper
-page_title: str
-name: str
----
-@render_here(title=page_title)
-component Header(*, title: str, name: str, suffix: str = "!"):
-    <header>{title}: {name}{suffix}</header>
-end
-```
-
-```python
-print(Page(page_title="Home", name="Ada"))
-```
-
-```html
-<header>Home: Ada!</header>
-```
-
-Leave off `@render_here` to export without rendering:
-
-```hyper
----
-component Notice():
-    <aside>Saved</aside>
-end
-
-<p>Page body</p>
-```
-
-```python
-print(Page())
-print(Page.Notice())
-```
-
-```text
-<p>Page body</p>
-<aside>Saved</aside>
-```
-
-Use a normal component call when the declaration-site render needs slot content:
-
-```hyper
----
-component Panel():
-    <section>{...}</section>
-end
-
-<{Panel}>
-    <p>Custom content</p>
-</{Panel}>
-```
-
-```python
-print(Page())
-```
-
-```html
-<section><p>Custom content</p></section>
-```
-
-Control flow changes where the component renders. The export remains available:
-
-```hyper
-show_header: bool
----
-if show_header:
-    @render_here
-    component Header():
-        <header>Visible</header>
-    end
-end
-```
-
-```python
-print(repr(Page(show_header=False)))
-print(Page.Header())
-```
-
-```text
-''
-<header>Visible</header>
-```
+`Page.Header` is read-only. Without `@subcomponent`, `Header` remains local and `Page.Header` does not exist.
 
 ---
 
@@ -1013,17 +907,17 @@ Every template so far has defined one component named after its file.
 Group related components in one library file. Create `components/forms.hyper`:
 
 ```hyper
-component Form(*, action: str):
+def Form(*, action: str) -> Component:
     <form {action}>
         {...}
     </form>
 end
 
-component Input(*, name: str, type: str = "text"):
+def Input(*, name: str, type: str = "text") -> Component:
     <input {name} {type} />
 end
 
-component Button(*, type: str = "submit"):
+def Button(*, type: str = "submit") -> Component:
     <button {type}>
         {...}
     </button>
@@ -1061,7 +955,23 @@ print(Login())
 
 ## Imports and Helpers
 
-Import Python modules and define helpers above `---`.
+In `.hyper` files, these names need no explicit import:
+
+| Names | When imported |
+|---|---|
+| `Component` | Used as a component annotation |
+| `subcomponent` | Used as a decorator |
+| `safe` | Called in a template expression |
+| `Any`, `Callable`, `Optional`, `Union`, `TypeVar` | Used in component prop annotations |
+| `Iterable` | Used in component prop annotations or generated slot parameters |
+
+Generated Python also imports the runtime helpers it uses: `component`, `escape`, `render_attr`, `render_class`, `render_style`, `render_data`, `render_aria`, and `spread_attrs`. These are compiler dependencies, not additional names to rely on in source.
+
+Import everything else explicitly, including application components, models, other typing names, standard-library modules, and third-party libraries. Python builtins such as `str` and `list` need no import.
+
+Explicit imports of the listed names also work. Ordinary `.py` files use normal Python imports.
+
+Put imports and helper definitions above `---`.
 
 Create `components/Article.hyper`:
 
@@ -1155,10 +1065,10 @@ Call a component to render all its HTML:
 ```python
 from app.pages import Feed
 
-html = Feed(posts=all_posts)
+html = Feed(posts=all_posts).render()
 ```
 
-Use `.stream()` to send chunks as they render:
+Pass `stream=True` to send chunks as they render:
 
 ```python
 from fastapi.responses import StreamingResponse
@@ -1166,7 +1076,7 @@ from fastapi.responses import StreamingResponse
 @app.get("/feed")
 def feed():
     return StreamingResponse(
-        Feed.stream(posts=all_posts),
+        Feed(posts=all_posts).render(stream=True),
         media_type="text/html",
     )
 ```
@@ -1220,11 +1130,11 @@ Plain HTML needs no separator:
 A component library needs no separator either:
 
 ```hyper
-component Header(*, title: str):
+def Header(*, title: str) -> Component:
     <header>{title}</header>
 end
 
-component Footer():
+def Footer() -> Component:
     <footer>Copyright 2024</footer>
 end
 ```
@@ -1248,7 +1158,7 @@ Declarations and Python without rendered output select library mode:
 ```hyper
 DEFAULT_TITLE = "Home"
 
-component Header(*, title: str = DEFAULT_TITLE):
+def Header(*, title: str = DEFAULT_TITLE) -> Component:
     <header>{title}</header>
 end
 ```

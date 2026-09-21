@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable, Iterator
+from functools import wraps
 from pathlib import Path
 
 from jinja2 import BaseLoader, ChoiceLoader, FileSystemLoader, nodes
@@ -36,6 +37,14 @@ from jinja2.ext import Extension
 from hyperhtml.integrations._discovery import discover_in_package, discover_in_path
 
 __all__ = ["HyperExtension"]
+
+
+def jinja_component(definition):
+    @wraps(definition)
+    def render(**props):
+        return definition(**props).render()
+
+    return render
 
 
 class _Slot:
@@ -190,7 +199,7 @@ class HyperExtension(Extension):
                 if name in seen:
                     continue
                 seen.add(name)
-                environment.globals[name] = component
+                environment.globals[name] = jinja_component(component)
 
     def _register(self, *targets) -> None:
         env = self.environment
@@ -199,9 +208,9 @@ class HyperExtension(Extension):
                 continue
             if hasattr(t, "__path__"):  # python package
                 for name, component in discover_in_package(t):
-                    env.globals[name] = component
+                    env.globals[name] = jinja_component(component)
             elif callable(t):  # single component
-                env.globals[t.__name__] = t
+                env.globals[t.__name__] = jinja_component(t)
             elif isinstance(t, Iterable):  # iterable of any of the above
                 self._register(*t)
             else:

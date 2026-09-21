@@ -31,16 +31,19 @@ Lowercase files are entrypoints called by routes. PascalCase names are component
 Keep small components in their entrypoint file:
 
 ```hyper
-@render_here
-component ChatMessage(*, message: Message):
+message: Message
+---
+@subcomponent
+def ChatMessage(*, message: Message) -> Component:
     <article>{message.text}</article>
-end
+
+<{ChatMessage} message={message} />
 ```
 
-The route can also render the exported fragment directly:
+The route can also render the exported component directly:
 
 ```python
-chat.ChatMessage(message=message)
+chat.ChatMessage(message=message).render()
 ```
 
 When an inline component outgrows its entrypoint, extract it beside the page:

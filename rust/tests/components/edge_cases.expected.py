@@ -1,4 +1,4 @@
-from hyperhtml import component
+from hyper import component
 
 
 @component
@@ -8,23 +8,23 @@ def EdgeCases(
         components: dict,
 ):
     # Component from module
-    yield from module.Button.stream(label="Click")
+    yield from module.Button(label="Click").render(stream=True)
 
     # Component from dict
     # <{components['Card']}>
     def _components_card_content():
         yield """<p>Content</p>"""
-    yield from components['Card'].stream(content=_components_card_content())
+    yield from components['Card'](content=_components_card_content()).render(stream=True)
     # </{components['Card']}>
 
     # Empty component (not self-closing)
-    yield from Wrapper.stream()
+    yield from Wrapper().render(stream=True)
 
     # Component with only whitespace
     # <{Container}>
     def _container_content():
         pass
-    yield from Container.stream(content=_container_content())
+    yield from Container(content=_container_content()).render(stream=True)
     # </{Container}>
 
     # Deeply nested components
@@ -35,9 +35,9 @@ def EdgeCases(
             # <{Inner}>
             def _inner_content():
                 yield """<span>Deep</span>"""
-            yield from Inner.stream(content=_inner_content())
+            yield from Inner(content=_inner_content()).render(stream=True)
             # </{Inner}>
-        yield from Middle.stream(content=_middle_content())
+        yield from Middle(content=_middle_content()).render(stream=True)
         # </{Middle}>
-    yield from Outer.stream(content=_outer_content())
+    yield from Outer(content=_outer_content()).render(stream=True)
     # </{Outer}>

@@ -15,7 +15,8 @@ fn compile_source(source: &str) -> Result<String, String> {
 #[test]
 fn bare_return_stops_component_rendering() {
     let code = compile_source(
-        r#"component Guard(*, visible: bool):
+        r#"from hyper import Component
+def Guard(*, visible: bool) -> Component:
     if not visible:
         return
     end
@@ -31,8 +32,13 @@ end
 #[test]
 fn component_return_value_is_rejected() {
     let error = compile_source(
-        r#"component Invalid():
-    return "value"
+        r#"from hyper import Component
+def Invalid(*, ready: bool) -> Component:
+    if ready:
+        <p>Visible</p>
+    else:
+        return "value"
+    end
 end
 "#,
     )
@@ -44,7 +50,9 @@ end
 #[test]
 fn component_yield_is_rejected() {
     let error = compile_source(
-        r#"component Invalid():
+        r#"from hyper import Component
+def Invalid() -> Component:
+    <p>Visible</p>
     yield "value"
 end
 "#,
@@ -57,7 +65,8 @@ end
 #[test]
 fn nested_python_function_keeps_return_and_yield() {
     let code = compile_source(
-        r#"component Valid():
+        r#"from hyper import Component
+def Valid() -> Component:
     def values():
         yield "value"
         return

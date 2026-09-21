@@ -1,4 +1,4 @@
-from hyperhtml import component
+from hyper import component
 
 
 @component

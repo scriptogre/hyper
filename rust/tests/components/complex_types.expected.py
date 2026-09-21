@@ -1,5 +1,5 @@
 from typing import Any, Callable
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component

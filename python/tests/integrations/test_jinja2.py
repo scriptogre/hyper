@@ -20,7 +20,7 @@ from jinja2 import (
     select_autoescape,
 )
 
-from hyperhtml import component
+from hyper import component
 from hyperhtml.integrations.jinja2 import HyperExtension
 
 
@@ -191,7 +191,7 @@ def test_slots_work_in_an_async_environment():
 
     env = Environment(loader=DictLoader({}), enable_async=True)
     env.add_extension(HyperExtension)
-    env.globals["Panel"] = Panel
+    env.register_components(Panel)
 
     template = env.from_string(
         "{% hyper Panel(title='Pricing') %}"

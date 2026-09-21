@@ -25,6 +25,7 @@ pub struct Ast {
     pub mode: FileMode,
     pub definitions: Vec<FunctionDefinition>,
     pub function: Function,
+    pub runtime_imports: Vec<&'static str>,
     pub source: Arc<str>,
 }
 
@@ -34,6 +35,7 @@ impl Ast {
             mode,
             definitions: Vec::new(),
             function,
+            runtime_imports: Vec::new(),
             source,
         }
     }
@@ -44,7 +46,14 @@ impl Ast {
 pub struct FunctionDefinition {
     pub name: String,
     pub name_range: TextRange,
+    pub return_annotation: Option<ReturnAnnotation>,
     pub function: Function,
+    pub range: TextRange,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReturnAnnotation {
+    pub source: String,
     pub range: TextRange,
 }
 
@@ -86,6 +95,7 @@ pub enum Node {
     // Python
     Statement(StatementNode),
     Definition(DefinitionNode),
+    Function(FunctionDefinition),
     Import(ImportNode),
     Parameter(ParameterNode),
     Decorator(DecoratorNode),
@@ -257,7 +267,6 @@ pub struct DefinitionNode {
 pub enum DefinitionKind {
     Function,
     Class,
-    Component,
 }
 
 /// Import statement

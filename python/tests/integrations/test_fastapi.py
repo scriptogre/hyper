@@ -1,8 +1,7 @@
 """Tests for using Hyper components with FastAPI.
 
-A component is a ``str`` subclass, so a route returns it directly. FastAPI's
-default response is JSON, so mark the response HTML with ``response_class`` (or
-``default_response_class``). ``.stream()`` feeds a ``StreamingResponse``.
+A route renders a component inside an HTML response. ``render(stream=True)``
+feeds a ``StreamingResponse``.
 
 The snippets here mirror the FastAPI block in docs/design/integrations.md.
 """
@@ -13,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.testclient import TestClient
 
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -28,7 +27,7 @@ def test_return_component_with_per_route_html_response():
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
 
     r = TestClient(app).get("/")
 
@@ -43,7 +42,7 @@ def test_return_component_with_default_response_class():
 
     @app.get("/")
     def index():
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
 
     r = TestClient(app).get("/")
 
@@ -57,7 +56,7 @@ def test_user_input_escaped_in_component():
 
     @app.get("/{name}")
     def show(name: str):
-        return Greeting(name=name)
+        return Greeting(name=name).render()
 
     r = TestClient(app).get("/<script>")
 
@@ -70,7 +69,8 @@ def test_streaming_response_with_stream_method():
 
     @app.get("/stream")
     def stream():
-        return StreamingResponse(Greeting.stream(name="Ada"), media_type="text/html")
+        greeting = Greeting(name="Ada")
+        return StreamingResponse(greeting.render(stream=True), media_type="text/html")
 
     r = TestClient(app).get("/stream")
 
@@ -85,7 +85,7 @@ def test_returning_html_response_directly_still_works():
 
     @app.get("/")
     def index():
-        return HTMLResponse(Greeting(name="Ada"))
+        return HTMLResponse(Greeting(name="Ada").render())
 
     r = TestClient(app).get("/")
 

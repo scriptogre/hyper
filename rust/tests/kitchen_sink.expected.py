@@ -1,35 +1,38 @@
 from collections.abc import Iterable
-from hyperhtml import component, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
+from hyper import component, Component, subcomponent, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
 
 
 # Kitchen sink: exercises every syntax construct for visual IDE smoke testing.
 # Open this file in JetBrains after any injection change and verify highlighting.
+@subcomponent
 @component
 def Badge(
         *,
         text: str,
         badge_variant: str = "info",
-):
+) -> Component:
     yield f"""<span class="badge badge-{escape(badge_variant)}">{escape(text)}</span>"""
 
 
+@subcomponent
 @component
 def CachedList(
         *,
         entries: list,
-):
+) -> Component:
     yield """<ul>"""
     for entry in entries:
         yield f"""<li>{escape(entry)}</li>"""
     yield """</ul>"""
 
 
+@subcomponent
 @component
 def Card(
         *,
         title: str,
         content: Iterable[str] | None = None,
-):
+) -> Component:
     yield """<div class="card">"""
     yield f"""<h2>{escape(title)}</h2>"""
     # <{...}>
@@ -286,18 +289,18 @@ Text after elements"""
     ########################################
     # COMPONENTS
     ########################################
-    yield from Badge.stream(text="Sale", badge_variant="danger")
-    yield from Badge.stream()
-    yield from Badge.stream(is_active=is_active)
-    yield from Badge.stream(text=format_name(name))
+    yield from Badge(text="Sale", badge_variant="danger").render(stream=True)
+    yield from Badge().render(stream=True)
+    yield from Badge(is_active=is_active).render(stream=True)
+    yield from Badge(text=format_name(name)).render(stream=True)
 
     # <{CachedList}>
     def _cached_list_content():
         yield """<p>Fallback content</p>"""
-    yield from CachedList.stream(content=_cached_list_content(), entries=items)
+    yield from CachedList(content=_cached_list_content(), entries=items).render(stream=True)
     # </{CachedList}>
 
-    yield from callback.stream()
+    yield from callback().render(stream=True)
 
 
     ########################################
@@ -329,11 +332,11 @@ Text after elements"""
     yield """<section>"""
     if is_active:
         for item in items:
-            yield from Badge.stream(text=item)
+            yield from Badge(text=item).render(stream=True)
             yield """<div class="wrapper">"""
             match item:
                 case "special":
-                    yield from CachedList.stream(entries=[item, item])
+                    yield from CachedList(entries=[item, item]).render(stream=True)
                 case _:
                     yield f"""<span>{escape(item)}</span>"""
             yield """</div>"""

@@ -143,6 +143,9 @@ fn process_file(path: &Path, write: bool) -> bool {
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown");
                 has_changes |= write_if_changed(&expected_err, &e.render(&source, filename), write);
+                for stale in ["expected.py", "expected.json"] {
+                    has_changes |= remove_if_exists(&path.with_extension(stale), write);
+                }
             } else {
                 eprintln!(
                     "ERROR: {:?} failed to compile but is not in errors/: {}",
@@ -153,6 +156,21 @@ fn process_file(path: &Path, write: bool) -> bool {
     }
 
     has_changes
+}
+
+fn remove_if_exists(path: &Path, write: bool) -> bool {
+    if !path.exists() {
+        return false;
+    }
+    if write {
+        fs::remove_file(path).unwrap_or_else(|error| panic!("Failed to remove {path:?}: {error}"));
+    }
+    println!(
+        "  {}: {}",
+        if write { "removed" } else { "REMOVE" },
+        path.display()
+    );
+    true
 }
 
 fn write_if_changed(path: &Path, new_content: &str, write: bool) -> bool {

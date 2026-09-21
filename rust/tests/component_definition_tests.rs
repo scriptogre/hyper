@@ -1,12 +1,12 @@
 use hyper::{CompileOptions, compile};
 
 #[test]
-fn explicit_component_is_hoisted_and_attached() {
+fn subcomponent_is_hoisted_and_attached() {
     let source = r#"title: str
 ---
-component Header(*, title: str):
+@subcomponent
+def Header(*, title: str) -> Component:
     <header>{title}</header>
-end
 
 <{Header} title={title} />
 "#;
@@ -17,7 +17,7 @@ end
             include_ranges: false,
         },
     )
-    .expect("component should compile");
+    .expect("subcomponent should compile");
 
     let header = result
         .code
@@ -38,21 +38,20 @@ end
     assert!(
         result
             .code
-            .contains("yield from Header.stream(title=title)")
+            .contains("yield from Header(title=title).render(stream=True)")
     );
 }
 
 #[test]
-fn component_signature_supports_multiline_props_and_attrs() {
+fn annotated_component_signature_supports_multiline_props_and_attrs() {
     let code = compile_code(
-        r#"component Button(
+        r#"def Button(
     *,
     label: str,
     kind: str = "button",
     **attrs,
-):
+) -> Component:
     <button {**attrs}>{label}</button>
-end
 "#,
     );
 
@@ -66,10 +65,10 @@ fn slots_are_scoped_to_the_declared_component() {
     let code = compile_code(
         r#"title: str
 ---
-component Layout(*, title: str):
+@subcomponent
+def Layout(*, title: str) -> Component:
     <header>{...header}</header>
     <main>{...}</main>
-end
 
 <{Layout} title={title} />
 "#,
@@ -142,7 +141,8 @@ fn named_slot_binding_preserves_component_namespaces() {
     );
 
     assert!(code.contains("def _u_i_card_actions():"));
-    assert!(code.contains("yield from UI.Card.stream("));
+    assert!(code.contains("yield from UI.Card("));
+    assert!(code.contains(").render(stream=True)"));
     assert!(code.contains("actions=_u_i_card_actions()"));
 }
 
@@ -166,12 +166,12 @@ fn duplicate_named_slot_fills_are_rejected() {
 fn nested_components_attach_to_their_direct_parent() {
     let code = compile_code(
         r#"---
-component Header():
-    component Logo():
+@subcomponent
+def Header() -> Component:
+    @subcomponent
+    def Logo() -> Component:
         <strong>Hyper</strong>
-    end
     <{Logo} />
-end
 
 <{Header} />
 "#,
@@ -186,10 +186,10 @@ end
 fn child_async_detection_does_not_change_the_parent() {
     let code = compile_code(
         r#"---
-async component Results(*, query: str):
+@subcomponent
+def Results(*, query: str) -> Component:
     rows = await search(query)
     <p>{rows}</p>
-end
 "#,
     );
 
@@ -200,13 +200,24 @@ end
 
 #[test]
 fn component_props_require_the_keyword_only_marker() {
-    let source = "component Button(label: str):\n    <button>{label}</button>\nend\n";
+    let source = "def Button(label: str) -> Component:\n    <button>{label}</button>\n";
     let error = compile(source, &CompileOptions::default())
         .expect_err("positional component prop should fail");
     let message = error.render(source, "Button.hyper");
 
     assert!(message.contains("keyword-only"));
-    assert!(message.contains("component Button(*, label: str):"));
+    assert!(message.contains("def Button(*, label: str) -> Component:"));
+}
+
+#[test]
+fn component_keyword_is_rejected_with_the_replacement() {
+    let source = "component Button(*, label: str):\n    <button>{label}</button>\nend\n";
+    let error = compile(source, &CompileOptions::default())
+        .expect_err("removed component keyword should fail");
+    let message = error.render(source, "Button.hyper");
+
+    assert!(message.contains("keyword is not valid Hyper syntax"));
+    assert!(message.contains("def Name(*, prop: Type) -> Component:"));
 }
 
 fn compile_code(source: &str) -> String {

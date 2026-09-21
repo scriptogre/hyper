@@ -20,12 +20,18 @@ TITLE = "All Products"
 @pytest.mark.parametrize("n", [10, 100, 500], ids=["small", "medium", "large"])
 def test_render_full_page(benchmark, product_page, n):
     products = make_products(n)
-    result = benchmark(lambda: product_page(title=TITLE, products=products))
+    result = benchmark(
+        lambda: product_page(title=TITLE, products=products).render()
+    )
     assert result.startswith("<html")
 
 
 def test_render_stream_chunks(benchmark, product_page):
     """Generation only (no final join), to isolate generator + escape cost."""
     products = make_products(100)
-    chunks = benchmark(lambda: list(product_page.stream(title=TITLE, products=products)))
+    chunks = benchmark(
+        lambda: list(
+            product_page(title=TITLE, products=products).render(stream=True)
+        )
+    )
     assert len(chunks) > 100

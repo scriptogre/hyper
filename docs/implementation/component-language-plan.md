@@ -1,6 +1,6 @@
 # Component language implementation plan
 
-**Status:** Design complete for block syntax. Implementation not started.
+**Status:** Annotated definitions, lazy instances, explicit subcomponents, runtime imports, and optional `end` are implemented. Release validation remains.
 
 This temporary checklist tracks delivery of the durable specifications:
 
@@ -10,13 +10,52 @@ This temporary checklist tracks delivery of the durable specifications:
 
 Delete this file when every release gate is complete. Keep lasting behavior and architecture in the linked documents.
 
-The durable docs describe the approved target, including behavior that has not landed yet. Conformance tests prove the implementation reaches that target.
+The durable docs describe the implemented behavior. This file tracks remaining release checks.
 
 ## Confirmed direction
 
+### Annotated Definition Migration
+
+The compiler follows the [annotated definition contract](../design/templates.md#annotated-definitions).
+
+- [x] Add factory, template, composition, and scope tests in `python/tests/test_annotated_components.py`.
+- [x] Reuse early-return, mixed-return, explicit-yield, and helper-scope tests in `rust/tests/component_return_tests.rs`.
+- [x] Run the contracts against the current compiler and confirm the missing behavior.
+- [x] Document the target in the language guide and compiler document.
+- [x] Implement annotated definitions and make the contracts pass.
+- [x] Review affected snapshots before accepting changes; run existing regressions and range invariants.
+
+Keep annotation aliases and precise async typing outside this slice until their behavior is decided.
+
+### Runtime Imports
+
+- [x] Test annotated definitions with automatic imports and explicit `from hyper import Component, subcomponent`.
+- [x] Add an independent `@subcomponent` export contract in both import modes.
+- [x] Document optional imports in `.hyper` files.
+- [x] Expose the Python runtime as `hyper`; keep the distribution name `hyperhtml`.
+- [x] Supply required runtime imports during compilation.
+- [ ] Verify the import namespace and automatic activation from an installed wheel.
+
+`@render_here(...)` is on hold and outside this implementation batch.
+
+### Component Instances
+
+- [x] Replace the eager runtime tests with lazy construction, rerendering, string conversion, inspection, and `render(stream=True)` contracts.
+- [x] Cover sync and async templates through the same `Component` API.
+- [x] Confirm the eight runtime contracts fail against the current namespace and runtime.
+- [x] Implement the lazy instance runtime and make the contracts pass.
+- [x] Migrate existing compiler and integration tests from eager calls and `.stream()`.
+
+### Optional End Migration
+
+- [x] Add `rust/tests/optional_end_tests.rs`; confirm all ten tests fail.
+- [x] Document indentation-defined scope and optional aligned `end`.
+- [x] Unify block parsing and pass the contracts.
+- [x] Review changed diagnostics and snapshots before accepting them.
+
 ### Product
 
-- The Python package and runtime are `hyperhtml`.
+- The distribution is `hyperhtml`; the Python import namespace is `hyper`.
 - Templates remain backend-neutral and separate from a future `hyperapi` package.
 - Applications have no build step and no generated `.py` files.
 - Installing the wheel activates `.hyper` imports automatically. Users do not call an installer or bootstrap import.
@@ -36,18 +75,13 @@ The durable docs describe the approved target, including behavior that has not l
 
 ### Components
 
-- The [component instance contract](../design/component-instances.md) supersedes the eager call and definition-level streaming API below. It is a target, not implemented behavior.
-- `@render_here` is coming soon and is not part of the alpha.
-- Generated render functions use the sole runtime decorator `@component`; there is no `@html` alias.
-- `@component` returns a callable `Component` that buffers calls and exposes raw chunks through `.stream()`.
-- Generated parents use `@component(subcomponents=[Header, Footer])`; each child becomes a read-only attribute under its own `__name__`.
-- `@render_here` exports a declared subcomponent and renders it at that exact source position.
-- `@render_here(...)` accepts keyword arguments; explicit arguments override automatic same-name binding.
-- Automatic binding uses matching props, locals, and loop variables available at that source position.
-- Positional `@render_here(...)` arguments are invalid.
-- Missing required values and arguments absent from the component signature are compile errors.
-- Declared components never close over parent render state.
-- `component Name(...):` declares a component. A normal `def` remains a normal Python function.
+- Calling a component binds keyword-only props and returns a lazy `Component` instance.
+- `.render()` buffers output; `.render(stream=True)` returns a fresh stream.
+- Sync string conversion renders. Async string conversion raises and directs the caller to await `.render()`.
+- Every render executes the template again. `repr()` never renders.
+- Generated render functions use the internal `@component` decorator.
+- `@subcomponent` explicitly exports an independent definition as a read-only component attribute.
+- Unmarked nested definitions use normal Python scope and may capture parent values.
 - Implicit and declared component props are keyword-only.
 - Declared components with named props must write the leading `*` explicitly.
 - Declared components reject positional props, `/`, and `*args`; `**attrs` remains valid.
@@ -55,19 +89,19 @@ The durable docs describe the approved target, including behavior that has not l
 - The default slot uses the reserved `content` argument; named slots use their source names.
 - A `.hyper` prop cannot use `content` or share a named slot's name; these collisions are compile errors.
 - Transparent `<>...</>` fragments group output but do not declare a renderable component.
-- HTML is valid in implicit rendering code and component declarations, not normal Python functions.
+- HTML is valid in implicit rendering code and annotated template definitions.
 - Component code supports normal Python statements and control flow.
-- `async component` is explicit. Implicit components infer async from `await`, `async for`, or `async with` in their own rendering scope.
+- Async is inferred from `await`, `async for`, or `async with` in the active rendering scope.
 - Bare `return` stops rendering.
 - `return value` and explicit `yield` are invalid only in the active component scope.
 - Nested normal Python functions retain normal return and yield behavior.
 
 ### Blocks and contexts
 
-- Indented compound statements require indentation and an aligned `end`.
-- Inner statements close before outer statements.
-- Each compound statement owns one `end`; `elif`, `else`, `except`, `finally`, and `case` own none.
-- A `match` has one `end`, regardless of its number of cases.
+- Indentation defines scope in headers, bodies, and libraries.
+- `end` is optional. If present, it must align with its opener.
+- Dedenting to an outer `end` also closes any inner blocks.
+- Each compound statement may have one `end`; `elif`, `else`, `except`, `finally`, and `case` own none.
 - Structural indentation uses spaces. Tabs are rejected.
 - `end` may have a trailing Python comment.
 - Statements begin only at the first non-whitespace position of a logical line.
@@ -103,10 +137,11 @@ For each behavior:
 
 1. Add a focused test.
 2. Confirm it fails for the intended reason.
-3. Implement or refactor until it passes.
-4. Run the focused tests.
-5. Run all Rust, Python, and affected JetBrains tests.
-6. Commit the test and implementation together.
+3. Update the existing design and implementation docs with the confirmed behavior.
+4. Implement or refactor until it passes.
+5. Run the focused tests.
+6. Run all Rust, Python, and affected JetBrains tests.
+7. Commit the test and implementation together.
 
 Expected-output updates follow the repository review and approval workflow.
 
@@ -122,7 +157,7 @@ Expected-output updates follow the repository review and approval workflow.
 
 ### Same-line forms
 
-Cover `if`, `for`, `while`, `with`, `case`, `def`, `component`, and supported async forms:
+Cover `if`, `for`, `while`, `with`, `case`, `def`, and supported async forms:
 
 - [ ] Python simple statements.
 - [ ] Semicolon-separated Python statements.
@@ -140,11 +175,11 @@ Apply this matrix to every compound statement:
 
 - [ ] Valid indentation and aligned `end`.
 - [ ] Unindented content.
-- [ ] Missing, over-indented, and under-indented `end`.
-- [ ] Nested blocks closed in the wrong order.
+- [ ] Omitted `end`, including nested blocks.
+- [ ] Stray and misaligned `end`.
 - [ ] Blank lines and comments before content.
 - [ ] Valid and invalid branch-clause alignment.
-- [ ] One `end` for `match`; none for individual `case` clauses.
+- [ ] Optional `end` for `match`; none for individual `case` clauses.
 - [ ] Multiline Python continuations.
 - [ ] Tabs and mixed indentation.
 - [ ] Trailing comments after `end`.
@@ -204,28 +239,31 @@ Complete when the lexical-context section of the compiler conformance matrix is 
 
 ## 2. Unify block parsing
 
-- [ ] Replace header, body, and case termination loops with shared indentation-aware parsing.
+- [x] Replace header, body, and case termination loops with shared indentation-aware parsing.
 - [ ] Support same-line Python and template content.
 - [ ] Lock same-line content to one context.
 - [ ] Support semicolons according to the selected context.
-- [ ] Require indentation and aligned `end` for content on following lines.
-- [ ] Give each compound statement one `end`; give branch clauses none.
+- [x] Require indentation for content on following lines; accept an optional aligned `end`.
+- [x] Allow one `end` per compound statement; give branch clauses none.
 - [ ] Add transparent `<>...</>` fragments.
-- [ ] Preserve source ranges and whitespace semantics.
-- [ ] Add the same-line and indented conformance matrices.
+- [x] Preserve source ranges and whitespace semantics.
+- [x] Add the indented conformance matrix.
 
 Complete when every compound statement follows the durable block rules and all existing parser invariants pass.
 
-## 3. Add explicit components
+## 3. Add annotated components
 
-- [ ] Parse and lower `component` and `async component`.
-- [ ] Keep normal `def` semantics independent of HTML discovery.
-- [ ] Support Python statements, template output, slots, and composition in components.
-- [ ] Allow bare `return`.
-- [ ] Reject `return value` and explicit `yield` in the active component scope.
-- [ ] Preserve normal return and yield behavior in nested Python scopes.
-- [ ] Infer async for implicit components only from their own rendering scope.
-- [ ] Add source-map and JetBrains coverage.
+- [x] Classify `def ... -> Component` from template output in its own scope.
+- [x] Preserve ordinary sync and async factories without template output.
+- [x] Lower template definitions to lazy component factories.
+- [x] Export only definitions marked with `@subcomponent`.
+- [x] Keep unmarked nested definitions local and preserve Python closure behavior.
+- [x] Support Python statements, template output, slots, and composition.
+- [x] Allow bare `return`.
+- [x] Reject `return value` and explicit `yield` in the active component scope.
+- [x] Preserve normal return and yield behavior in nested Python scopes.
+- [x] Infer async from each component's own rendering scope.
+- [x] Preserve source ranges.
 
 Complete when the component conformance matrix is green and all generated Python is syntax-checked.
 
@@ -267,9 +305,9 @@ Complete when a clean wheel provides automatic imports within the measured start
 
 - [ ] Carry structured compiler errors through PyO3.
 - [ ] Preserve filename, ranges, source, related labels, and help.
-- [ ] Compile generated Python with a stable synthetic filename.
-- [ ] Register generated source with `linecache`.
-- [ ] Remove `<string>` from syntax errors and runtime tracebacks.
+- [x] Compile generated Python with a stable synthetic filename.
+- [x] Register generated source with `linecache`.
+- [x] Remove `<string>` from syntax errors and runtime tracebacks.
 - [ ] Add exact expected errors for every documented correction.
 
 Expected errors cover:
@@ -278,8 +316,7 @@ Expected errors cover:
 - HTML inside normal Python functions;
 - `await` inside non-async declared components;
 - component `return value` and explicit `yield`;
-- missing indentation and missing or misaligned `end`;
-- inner blocks left open by an outer `end`;
+- missing indentation, invalid dedents, and stray or misaligned `end`;
 - statements inside HTML tags;
 - mixed Python and template content on one line;
 - incomplete same-line tags and transparent fragments;
@@ -314,13 +351,10 @@ Complete when no public workflow generates Python files and Rust, Python, and Je
 
 Resolve a decision before starting the phase that depends on it.
 
-### Explicit components
+### Annotated components
 
-- [ ] Decide whether explicit components in an implicit file are allowed and private.
-- [x] Require explicit keyword-only component props and allow `**attrs`; expose slots as keyword-only arguments.
-- [ ] Define component decorator order.
-- [ ] Decide whether explicit components may be nested.
-- [ ] Define sync and async component composition without losing stream chunk boundaries.
+- [ ] Decide which annotation aliases and qualified forms select component compilation.
+- [ ] Define precise static typing for sync and async `.render()` without separate public classes.
 
 ### File scopes, modes, and imports
 

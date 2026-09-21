@@ -97,8 +97,6 @@ pub enum Token {
         range: TextRange,
         rest_range: TextRange,
     },
-    /// Explicit component declaration header.
-    ComponentDefinition { signature: String, range: TextRange },
     /// Control flow continuation: else, elif, case, except, finally
     ControlContinuation {
         keyword: String,
@@ -179,7 +177,6 @@ impl Token {
                 end: *position,
             },
             Token::ControlStart { range, .. } => *range,
-            Token::ComponentDefinition { range, .. } => *range,
             Token::ControlContinuation { range, .. } => *range,
             Token::End { range, .. } => *range,
             Token::PythonStatement { range, .. } => *range,
@@ -228,6 +225,24 @@ enum QuoteCtx {
     None,
     Double,
     Single,
+}
+
+pub(crate) fn is_parameter_declaration(line: &str) -> bool {
+    let trimmed = line.trim();
+    if trimmed.starts_with('*') {
+        return true;
+    }
+    let Some(first) = trimmed.chars().next() else {
+        return false;
+    };
+    if !first.is_alphabetic() && first != '_' {
+        return false;
+    }
+    match (trimmed.find(':'), trimmed.find('=')) {
+        (Some(colon), Some(equals)) => colon < equals,
+        (Some(_), None) => true,
+        _ => false,
+    }
 }
 
 impl<'a> Tokenizer<'a> {
@@ -338,7 +353,7 @@ impl<'a> Tokenizer<'a> {
             let should_exit = match &exit_mode {
                 RawContentExit::ClosingTag(tag) => trimmed.starts_with(&format!("</{}", tag)),
                 RawContentExit::EndKeyword { indent } => {
-                    trimmed == "end" && indent_level == *indent
+                    self.is_end_keyword(trimmed) && indent_level == *indent
                 }
             };
 
@@ -518,10 +533,21 @@ impl<'a> Tokenizer<'a> {
                     end: self.position,
                 },
             });
-        }
-        // 5. Explicit component definition
-        else if self.is_component_definition(&line_content) {
-            self.tokenize_component_definition(tokens);
+        } else if line_content.trim_start().starts_with("component ")
+            || line_content.trim_start().starts_with("async component ")
+        {
+            let start = self.position;
+            self.skip_to_eol();
+            return Err(ParseError::new(
+                ErrorKind::InvalidSyntax,
+                "The `component` keyword is not valid Hyper syntax.",
+                TextRange {
+                    start,
+                    end: self.position,
+                },
+            )
+            .with_help("Use `def Name(*, prop: Type) -> Component:`.")
+            .boxed());
         }
         // 6. Control flow keywords
         else if self.is_control_flow(&line_content) {
@@ -542,8 +568,7 @@ impl<'a> Tokenizer<'a> {
         // 7.6. Parameter declarations (*args: type, **kwargs: type, name: type)
         // These aren't valid Python statements but are valid in header zone
         // 8. Check if it's a Python statement using tree-sitter
-        else if self.is_parameter_declaration(&line_content)
-            || self.is_python_statement(&line_content)
+        else if is_parameter_declaration(&line_content) || self.is_python_statement(&line_content)
         {
             self.tokenize_python_statement(tokens);
         }
@@ -572,13 +597,9 @@ impl<'a> Tokenizer<'a> {
     // === Classification helpers ===
 
     fn is_end_keyword(&self, line: &str) -> bool {
-        let trimmed = line.trim();
-        trimmed == "end"
-    }
-
-    fn is_component_definition(&self, line: &str) -> bool {
-        let trimmed = line.trim();
-        trimmed.starts_with("component ") || trimmed.starts_with("async component ")
+        line.trim()
+            .strip_prefix("end")
+            .is_some_and(|rest| rest.is_empty() || rest.trim_start().starts_with('#'))
     }
 
     fn is_control_flow(&self, line: &str) -> bool {
@@ -587,17 +608,18 @@ impl<'a> Tokenizer<'a> {
         // A trailing comment is `  # ...` (whitespace + hash) outside quotes.
         let effective = self.strip_trailing_comment(trimmed);
 
-        // for: requires trailing `:` (parser validates `in` keyword and reports errors)
-        if trimmed.starts_with("for ") || trimmed.starts_with("async for ") {
-            return effective.ends_with(':');
-        }
-
-        // if, elif, while, match, with: require trailing `:`
-        if trimmed.starts_with("if ")
-            || trimmed.starts_with("while ")
-            || trimmed.starts_with("match ")
-            || trimmed.starts_with("with ")
-            || trimmed.starts_with("async with ")
+        const COLON_BLOCKS: &[&str] = &[
+            "for ",
+            "async for ",
+            "if ",
+            "while ",
+            "match ",
+            "with ",
+            "async with ",
+        ];
+        if COLON_BLOCKS
+            .iter()
+            .any(|prefix| trimmed.starts_with(prefix))
         {
             return effective.ends_with(':');
         }
@@ -648,38 +670,6 @@ impl<'a> Tokenizer<'a> {
             }
         }
         line
-    }
-
-    /// Check if this looks like a parameter declaration (used in header zone)
-    /// Matches patterns like: name: type, name: type = default, *args: tuple, **kwargs: dict
-    fn is_parameter_declaration(&self, line: &str) -> bool {
-        let trimmed = line.trim();
-
-        // **kwargs and *args don't require type annotations
-        if trimmed.starts_with("**") || trimmed.starts_with("*") {
-            return true;
-        }
-
-        // Regular params must contain a colon for type annotation
-        if !trimmed.contains(':') {
-            return false;
-        }
-
-        // Regular parameter: name: type or name: type = default
-        // Must start with identifier character
-        if let Some(first_char) = trimmed.chars().next()
-            && (first_char.is_alphabetic() || first_char == '_')
-        {
-            // Check colon comes before any = (for defaults)
-            if let Some(colon_pos) = trimmed.find(':') {
-                if let Some(equals_pos) = trimmed.find('=') {
-                    return colon_pos < equals_pos;
-                }
-                return true;
-            }
-        }
-
-        false
     }
 
     fn is_control_continuation(&self, line: &str) -> bool {
@@ -958,7 +948,7 @@ impl<'a> Tokenizer<'a> {
 
     fn tokenize_control_start(&mut self, tokens: &mut Vec<Token>, _line: &str) {
         let start = self.position;
-        let code = self.consume_to_eol();
+        let (code, range) = self.consume_bracketed_statement();
         let trimmed = code.trim();
         let leading_ws = code.len() - code.trim_start().len();
 
@@ -1017,10 +1007,7 @@ impl<'a> Tokenizer<'a> {
         tokens.push(Token::ControlStart {
             keyword,
             rest,
-            range: TextRange {
-                start,
-                end: self.position,
-            },
+            range,
             rest_range,
         });
     }
@@ -1114,11 +1101,6 @@ impl<'a> Tokenizer<'a> {
     fn tokenize_python_statement(&mut self, tokens: &mut Vec<Token>) {
         let (code, range) = self.consume_bracketed_statement();
         tokens.push(Token::PythonStatement { code, range });
-    }
-
-    fn tokenize_component_definition(&mut self, tokens: &mut Vec<Token>) {
-        let (signature, range) = self.consume_bracketed_statement();
-        tokens.push(Token::ComponentDefinition { signature, range });
     }
 
     fn consume_bracketed_statement(&mut self) -> (String, TextRange) {

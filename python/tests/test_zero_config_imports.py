@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import sys
 from pathlib import Path
 
@@ -38,8 +39,27 @@ def test_short_import_loads_component_from_hyper_file(tmp_path, monkeypatch):
 
     from app.components import Greeting
 
-    assert Greeting(name="Ada") == "<p>Hello Ada</p>"
+    assert Greeting(name="Ada").render() == "<p>Hello Ada</p>"
     assert not list(tmp_path.rglob("*.py"))
+
+
+def test_component_source_exposes_readable_generated_python(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(tmp_path))
+    write(
+        tmp_path / "app" / "components" / "Greeting.hyper",
+        """name: str
+---
+<p>Hello {name}</p>
+""",
+    )
+
+    from app.components import Greeting
+
+    source = inspect.getsource(Greeting)
+
+    assert "def Greeting(" in source
+    assert "yield" in source
+    assert "escape(name)" in source
 
 
 def test_init_attribute_shadows_short_hyper_lookup(tmp_path, monkeypatch):
@@ -80,4 +100,4 @@ name: str
 
     from app.components import Card
 
-    assert Card(name="Ada") == "<div><span>Hello Ada</span></div>"
+    assert Card(name="Ada").render() == "<div><span>Hello Ada</span></div>"

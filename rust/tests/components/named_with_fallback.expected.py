@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from hyperhtml import component
+from hyper import component
 
 
 @component

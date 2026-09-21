@@ -1,4 +1,4 @@
-use super::tokenizer::{Position, TextRange, Token};
+use super::tokenizer::{Position, TextRange, Token, is_parameter_declaration};
 use crate::ast::*;
 use crate::error::{ErrorKind, ParseError, ParseResult};
 use crate::html;
@@ -14,6 +14,7 @@ pub struct TreeBuilder {
     source: Arc<str>,
     in_header: bool, // Track if we're before the --- separator
     has_separator: bool,
+    content_indent: usize,
     element_stack: Vec<String>, // Parent element names for nesting validation
 }
 
@@ -28,6 +29,7 @@ impl TreeBuilder {
             source,
             in_header: true, // Start in header zone
             has_separator,
+            content_indent: 0,
             element_stack: Vec::new(),
         }
     }
@@ -76,23 +78,6 @@ impl TreeBuilder {
                 start: Position { byte, line, col },
                 end: Position { byte, line, col },
             }
-        }
-    }
-
-    /// Require an 'end' token to close a block
-    fn expect_end(&mut self, block_keyword: &str, open_range: &TextRange) -> ParseResult<()> {
-        if let Some(Token::End { .. }) = self.peek() {
-            self.advance();
-            Ok(())
-        } else {
-            Err(ParseError::new(
-                ErrorKind::UnclosedBlock,
-                format!("This '{}' block is never closed.", block_keyword),
-                self.current_range(),
-            )
-            .with_related(*open_range)
-            .with_help("Close with 'end'")
-            .boxed())
         }
     }
 
@@ -146,9 +131,6 @@ impl TreeBuilder {
             return Ok(None);
         }
 
-        // If we're still in the header zone and encounter a content-producing
-        // token without having seen a --- separator, transition to body mode.
-        // This ensures newlines and indentation are preserved as content.
         if self.in_header {
             let is_content_token = matches!(
                 &self.tokens[self.pos],
@@ -181,8 +163,9 @@ impl TreeBuilder {
             }
             Token::Indent { level, range } => {
                 // In content area, preserve indentation as whitespace
-                if !self.in_header && *level > 0 {
-                    let spaces = " ".repeat(*level);
+                let rendered_level = level.saturating_sub(self.content_indent);
+                if !self.in_header && rendered_level > 0 {
+                    let spaces = " ".repeat(rendered_level);
                     let node = Node::Text(TextNode {
                         content: spaces,
                         range: *range,
@@ -361,12 +344,6 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::ComponentDefinition { signature, range } => {
-                let signature = signature.clone();
-                let range = *range;
-                self.parse_component_definition(&signature, &range)
-            }
-
             Token::ControlStart {
                 keyword,
                 rest,
@@ -385,7 +362,7 @@ impl TreeBuilder {
                 let range = *range;
 
                 // If we're in the header and this looks like a parameter, parse it as such
-                if self.in_header && self.is_parameter_declaration(&code) {
+                if self.in_header && is_parameter_declaration(&code) {
                     self.parse_parameter(&code, &range)
                 } else if self.is_import_statement(&code) {
                     let node = Node::Import(ImportNode { stmt: code, range });
@@ -422,7 +399,6 @@ impl TreeBuilder {
             }
 
             Token::Separator { .. } => {
-                // Mark that we're now in the body zone
                 self.in_header = false;
                 self.advance();
                 Ok(None)
@@ -470,11 +446,18 @@ impl TreeBuilder {
                 Ok(None)
             }
 
-            Token::End { .. } | Token::ControlContinuation { .. } => {
-                // Unexpected at top level - skip and continue
-                self.advance();
-                Ok(None)
-            }
+            Token::End { range } => Err(ParseError::new(
+                ErrorKind::UnexpectedToken,
+                "This `end` does not match an open block.",
+                *range,
+            )
+            .boxed()),
+            Token::ControlContinuation { range, .. } => Err(ParseError::new(
+                ErrorKind::UnexpectedToken,
+                "This branch does not match an open block.",
+                *range,
+            )
+            .boxed()),
         }
     }
 
@@ -494,8 +477,10 @@ impl TreeBuilder {
             "with" => self.parse_with(rest, range, rest_range, false),
             "async with" => self.parse_with(rest, range, rest_range, true),
             "try" => self.parse_try(range),
-            "def" | "async def" => self.parse_function(keyword, rest, range),
-            "class" => self.parse_class(rest, range),
+            "def" | "async def" => {
+                self.parse_definition(DefinitionKind::Function, keyword, rest, range)
+            }
+            "class" => self.parse_definition(DefinitionKind::Class, keyword, rest, range),
             _ => Err(ParseError::new(
                 ErrorKind::InvalidSyntax,
                 format!("'{}' is not a recognized block keyword.", keyword),
@@ -515,7 +500,7 @@ impl TreeBuilder {
         let if_range = *range;
 
         self.advance();
-        let then_branch = self.parse_until_block_end()?;
+        let then_branch = self.parse_block(if_range.start.col)?;
 
         let mut elif_branches = Vec::new();
         let mut else_branch = None;
@@ -533,20 +518,17 @@ impl TreeBuilder {
                     // Use rest_range if available, fall back to full range
                     let elif_range = rest_range.unwrap_or(*range);
                     self.advance();
-                    let elif_body = self.parse_until_block_end()?;
+                    let elif_body = self.parse_block(if_range.start.col)?;
                     elif_branches.push((elif_cond, elif_range, elif_body));
                 }
                 "else" => {
                     self.advance();
-                    else_branch = Some(self.parse_until_block_end()?);
+                    else_branch = Some(self.parse_block(if_range.start.col)?);
                     break;
                 }
                 _ => break,
             }
         }
-
-        // Require 'end' token
-        self.expect_end("if", &if_range)?;
 
         Ok(Some(Node::If(IfNode {
             condition: condition.to_string(),
@@ -602,11 +584,7 @@ impl TreeBuilder {
         let for_range = *range;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
-
-        // Require 'end' token
-        let keyword = if is_async { "async for" } else { "for" };
-        self.expect_end(keyword, &for_range)?;
+        let body = self.parse_block(for_range.start.col)?;
 
         Ok(Some(Node::For(ForNode {
             binding,
@@ -629,10 +607,7 @@ impl TreeBuilder {
         let while_range = *range;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
-
-        // Require 'end' token
-        self.expect_end("while", &while_range)?;
+        let body = self.parse_block(while_range.start.col)?;
 
         Ok(Some(Node::While(WhileNode {
             condition: condition.to_string(),
@@ -669,7 +644,7 @@ impl TreeBuilder {
                 let pattern_range = rest_range.unwrap_or(*range);
                 let case_range = *range;
                 self.advance();
-                let body = self.parse_until_case_end()?;
+                let body = self.parse_block(case_range.start.col)?;
                 cases.push(CaseNode {
                     pattern,
                     pattern_range,
@@ -684,8 +659,7 @@ impl TreeBuilder {
             }
         }
 
-        // Require 'end' token
-        self.expect_end("match", &match_range)?;
+        self.consume_optional_end(match_range.start.col)?;
 
         Ok(Some(Node::Match(MatchNode {
             expr: expr.to_string(),
@@ -706,11 +680,7 @@ impl TreeBuilder {
         let with_range = *range;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
-
-        // Require 'end' token
-        let keyword = if is_async { "async with" } else { "with" };
-        self.expect_end(keyword, &with_range)?;
+        let body = self.parse_block(with_range.start.col)?;
 
         Ok(Some(Node::With(WithNode {
             items: items.to_string(),
@@ -725,7 +695,7 @@ impl TreeBuilder {
         let try_range = *range;
 
         self.advance();
-        let body = self.parse_until_block_end()?;
+        let body = self.parse_block(try_range.start.col)?;
 
         let mut except_clauses = Vec::new();
         let mut else_clause = None;
@@ -744,7 +714,7 @@ impl TreeBuilder {
                     let exception_range = rest_range.or_else(|| rest.as_ref().map(|_| *range));
                     let except_range = *range;
                     self.advance();
-                    let except_body = self.parse_until_block_end()?;
+                    let except_body = self.parse_block(try_range.start.col)?;
                     except_clauses.push(ExceptClause {
                         exception,
                         exception_range,
@@ -754,19 +724,16 @@ impl TreeBuilder {
                 }
                 "else" => {
                     self.advance();
-                    else_clause = Some(self.parse_until_block_end()?);
+                    else_clause = Some(self.parse_block(try_range.start.col)?);
                 }
                 "finally" => {
                     self.advance();
-                    finally_clause = Some(self.parse_until_block_end()?);
+                    finally_clause = Some(self.parse_block(try_range.start.col)?);
                     break;
                 }
                 _ => break,
             }
         }
-
-        // Require 'end' token
-        self.expect_end("try", &try_range)?;
 
         Ok(Some(Node::Try(TryNode {
             body,
@@ -777,156 +744,120 @@ impl TreeBuilder {
         })))
     }
 
-    fn parse_component_definition(
+    fn parse_definition(
         &mut self,
-        signature: &str,
+        kind: DefinitionKind,
+        keyword: &str,
+        rest: &str,
         range: &TextRange,
     ) -> ParseResult<Option<Node>> {
+        let rest_trimmed = rest.trim_end_matches(':').trim();
+        let signature = format!("{} {}:", keyword, rest_trimmed);
+
         self.advance();
         let in_header = self.in_header;
         self.in_header = false;
-        let body = self.parse_until_block_end()?;
-        self.expect_end("component", range)?;
+        let body = self.parse_block(range.start.col)?;
         self.in_header = in_header;
 
         Ok(Some(Node::Definition(DefinitionNode {
-            kind: DefinitionKind::Component,
-            signature: signature.to_string(),
+            kind,
+            signature,
             signature_range: *range,
             body,
             range: *range,
         })))
     }
 
-    fn parse_function(
-        &mut self,
-        keyword: &str,
-        rest: &str,
-        range: &TextRange,
-    ) -> ParseResult<Option<Node>> {
-        // Strip trailing colon from rest if present (parsing may include it)
-        let rest_trimmed = rest.trim_end_matches(':').trim();
-        let signature = format!("{} {}:", keyword, rest_trimmed);
-        let signature_range = *range;
-        let def_range = *range;
-
-        self.advance();
-        let body = if self.in_header {
-            self.parse_header_block_body(def_range.start.col)?
-        } else {
-            let body = self.parse_until_block_end()?;
-            self.expect_end("def", &def_range)?;
-            body
-        };
-
-        Ok(Some(Node::Definition(DefinitionNode {
-            kind: DefinitionKind::Function,
-            signature,
-            signature_range,
-            body,
-            range: def_range,
-        })))
+    fn parse_block(&mut self, base_col: usize) -> ParseResult<Vec<Node>> {
+        let content_indent = self.content_indent;
+        let result = self.parse_block_inner(base_col);
+        self.content_indent = content_indent;
+        result
     }
 
-    fn parse_class(&mut self, rest: &str, range: &TextRange) -> ParseResult<Option<Node>> {
-        // Strip trailing colon from rest if present (parsing may include it)
-        let rest_trimmed = rest.trim_end_matches(':').trim();
-        let signature = format!("class {}:", rest_trimmed);
-        let signature_range = *range;
-        let class_range = *range;
-
-        self.advance();
-        let body = if self.in_header {
-            self.parse_header_block_body(class_range.start.col)?
-        } else {
-            let body = self.parse_until_block_end()?;
-            self.expect_end("class", &class_range)?;
-            body
-        };
-
-        Ok(Some(Node::Definition(DefinitionNode {
-            kind: DefinitionKind::Class,
-            signature,
-            signature_range,
-            body,
-            range: class_range,
-        })))
-    }
-
-    /// Parse a block body in the header zone, ending by dedentation rather than 'end'.
-    /// The block ends when we see a non-whitespace token at or before `base_col`,
-    /// a separator, or EOF. Explicit 'end' is still accepted for backwards compat.
-    fn parse_header_block_body(&mut self, base_col: usize) -> ParseResult<Vec<Node>> {
+    fn parse_block_inner(&mut self, base_col: usize) -> ParseResult<Vec<Node>> {
         let mut nodes = Vec::new();
-        // Track whether we've consumed an Indent token for the current line.
-        // After a Newline resets this to false, a non-Indent token at the start
-        // of a line means column 0 (dedented).
-        let mut line_indent_seen = false;
+        let mut body_col = None;
+
         while !self.is_at_end() {
-            match self.peek() {
-                // Backwards compat: still accept explicit 'end'
-                Some(Token::End { .. }) => {
-                    self.advance();
-                    break;
-                }
-                // Stop at separator
-                Some(Token::Separator { .. }) => break,
-                // Newline: reset line tracking
-                Some(Token::Newline { .. }) => {
-                    line_indent_seen = false;
-                    self.advance();
-                }
-                // Indent at start of a new line: check if dedented
-                Some(Token::Indent { level, .. }) => {
-                    if *level <= base_col {
-                        break;
-                    }
-                    line_indent_seen = true;
-                    self.advance();
-                }
-                // Non-whitespace token with no preceding Indent = column 0
-                Some(_) if !line_indent_seen => {
-                    break;
-                }
-                // Content token within an indented line
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        nodes.push(node);
-                    }
+            if self.layout_precedes_block_boundary(base_col) {
+                self.skip_structural_tokens();
+            }
+            while matches!(self.peek(), Some(Token::Newline { .. })) {
+                if let Some(node) = self.parse_node()? {
+                    nodes.push(node);
                 }
             }
-        }
-        Ok(nodes)
-    }
-
-    fn parse_until_block_end(&mut self) -> ParseResult<Vec<Node>> {
-        let mut nodes = Vec::new();
-
-        while !self.is_at_end() {
-            match self.peek() {
-                Some(Token::End { .. }) | Some(Token::ControlContinuation { .. }) => break,
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        nodes.push(node);
-                    }
-                }
+            if matches!(self.peek(), Some(Token::Indent { .. }))
+                && matches!(self.tokens.get(self.pos + 1), Some(Token::Newline { .. }))
+            {
+                self.advance();
+                continue;
             }
-        }
 
-        Ok(nodes)
-    }
-
-    fn parse_until_case_end(&mut self) -> ParseResult<Vec<Node>> {
-        let mut nodes = Vec::new();
-
-        while !self.is_at_end() {
-            let should_break = match self.peek() {
-                Some(Token::End { .. }) => true,
-                Some(Token::ControlContinuation { keyword, .. }) => keyword == "case",
-                _ => false,
-            };
-            if should_break {
+            if self.is_at_end() || matches!(self.peek(), Some(Token::Separator { .. })) {
                 break;
+            }
+
+            let has_leading_indent = matches!(self.peek(), Some(Token::Indent { .. }));
+            let token = if has_leading_indent {
+                self.tokens.get(self.pos + 1).expect("indented block token")
+            } else {
+                self.peek().expect("block token")
+            };
+            let range = token.range();
+            let col = range.start.col;
+
+            if matches!(token, Token::End { .. }) {
+                if col == base_col {
+                    if has_leading_indent {
+                        self.advance();
+                    }
+                    self.advance();
+                    return Ok(nodes);
+                }
+                if col < base_col {
+                    break;
+                }
+                return Err(self.misaligned_end(range, base_col));
+            }
+
+            if matches!(token, Token::ControlContinuation { .. }) && col == base_col {
+                if has_leading_indent {
+                    self.advance();
+                }
+                return Ok(nodes);
+            }
+            if matches!(token, Token::ControlContinuation { .. }) && col < base_col {
+                break;
+            }
+
+            if col <= base_col {
+                if body_col.is_none() {
+                    return Err(self.missing_indented_body(range));
+                }
+                break;
+            }
+
+            if let Some(expected) = body_col {
+                if col < expected {
+                    return Err(ParseError::new(
+                        ErrorKind::InvalidSyntax,
+                        "This line does not match an active indentation level.",
+                        range,
+                    )
+                    .boxed());
+                }
+            } else {
+                body_col = Some(col);
+                self.content_indent = col;
+            }
+
+            if matches!(self.peek(), Some(Token::Indent { .. }))
+                && let Some(node) = self.parse_node()?
+            {
+                nodes.push(node);
             }
 
             if let Some(node) = self.parse_node()? {
@@ -934,7 +865,60 @@ impl TreeBuilder {
             }
         }
 
+        if body_col.is_none() {
+            return Err(self.missing_indented_body(self.current_range()));
+        }
         Ok(nodes)
+    }
+
+    fn layout_precedes_block_boundary(&self, base_col: usize) -> bool {
+        let mut index = self.pos;
+        while matches!(
+            self.tokens.get(index),
+            Some(Token::Newline { .. } | Token::Indent { .. })
+        ) {
+            index += 1;
+        }
+        if index == self.pos {
+            return false;
+        }
+
+        match self.tokens.get(index) {
+            None | Some(Token::Eof { .. } | Token::Separator { .. }) => true,
+            Some(token) => token.range().start.col <= base_col,
+        }
+    }
+
+    fn consume_optional_end(&mut self, base_col: usize) -> ParseResult<()> {
+        self.skip_structural_tokens();
+        let Some(Token::End { range }) = self.peek() else {
+            return Ok(());
+        };
+        let range = *range;
+        if range.start.col != base_col {
+            return Err(self.misaligned_end(range, base_col));
+        }
+        self.advance();
+        Ok(())
+    }
+
+    fn missing_indented_body(&self, range: TextRange) -> Box<ParseError> {
+        ParseError::new(
+            ErrorKind::InvalidSyntax,
+            "An indented block is required here.",
+            range,
+        )
+        .boxed()
+    }
+
+    fn misaligned_end(&self, range: TextRange, base_col: usize) -> Box<ParseError> {
+        ParseError::new(
+            ErrorKind::InvalidSyntax,
+            "`end` must align with the block opener.",
+            range,
+        )
+        .with_help(format!("Indent `end` by {base_col} spaces."))
+        .boxed()
     }
 
     fn parse_until_element_close(
@@ -943,37 +927,15 @@ impl TreeBuilder {
         open_range: &TextRange,
     ) -> ParseResult<(Vec<Node>, Option<TextRange>)> {
         self.element_stack.push(tag.to_string());
-        let mut nodes = Vec::new();
-
-        while !self.is_at_end() {
-            match self.peek() {
-                Some(Token::HtmlElementClose {
-                    tag: close_tag,
-                    range: close_range,
-                    ..
-                }) if close_tag == tag => {
-                    let close_range = *close_range;
-                    self.advance();
-                    self.element_stack.pop();
-                    return Ok((nodes, Some(close_range)));
-                }
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        nodes.push(node);
-                    }
-                }
-            }
-        }
-
-        self.element_stack.pop();
-        Err(ParseError::new(
+        let result = self.parse_until_close(
+            |token| matches!(token, Token::HtmlElementClose { tag: close, .. } if close == tag),
             ErrorKind::UnclosedElement,
             format!("<{}> is never closed.", tag),
-            self.current_range(),
-        )
-        .with_related(*open_range)
-        .with_help(format!("Close with </{}> or <{} />", tag, tag))
-        .boxed())
+            *open_range,
+            format!("Close with </{}> or <{} />", tag, tag),
+        );
+        self.element_stack.pop();
+        result.map(|(nodes, range)| (nodes, Some(range)))
     }
 
     fn parse_until_component_close(
@@ -981,37 +943,14 @@ impl TreeBuilder {
         name: &str,
         open_range: &TextRange,
     ) -> ParseResult<ComponentChildren> {
-        let mut children = Vec::new();
-        // Caller slot syntax binds after parsing, in the component-slot plugin.
-        let slots = HashMap::new();
-
-        while !self.is_at_end() {
-            match self.peek() {
-                Some(Token::ComponentClose {
-                    name: close_name,
-                    range: close_range,
-                    ..
-                }) if close_name == name => {
-                    let close_range = *close_range;
-                    self.advance();
-                    return Ok((children, slots, Some(close_range)));
-                }
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        children.push(node);
-                    }
-                }
-            }
-        }
-
-        Err(ParseError::new(
+        self.parse_until_close(
+            |token| matches!(token, Token::ComponentClose { name: close, .. } if close == name),
             ErrorKind::UnclosedComponent,
             format!("<{{{}}}> is never closed.", name),
-            self.current_range(),
+            *open_range,
+            format!("Close with </{{{}}}> or <{{{}}} />", name, name),
         )
-        .with_related(*open_range)
-        .with_help(format!("Close with </{{{}}}> or <{{{}}} />", name, name))
-        .boxed())
+        .map(|(children, range)| (children, HashMap::new(), Some(range)))
     }
 
     fn parse_until_slot_close(
@@ -1019,39 +958,43 @@ impl TreeBuilder {
         name: &Option<String>,
         open_range: &TextRange,
     ) -> ParseResult<(Vec<Node>, Option<TextRange>)> {
-        let mut nodes = Vec::new();
-
-        while !self.is_at_end() {
-            match self.peek() {
-                Some(Token::SlotClose {
-                    name: close_name,
-                    range: close_range,
-                    ..
-                }) if close_name == name => {
-                    let close_range = *close_range;
-                    self.advance();
-                    return Ok((nodes, Some(close_range)));
-                }
-                _ => {
-                    if let Some(node) = self.parse_node()? {
-                        nodes.push(node);
-                    }
-                }
-            }
-        }
-
         let slot_name = name
             .as_ref()
             .map(|n| format!("...{}", n))
             .unwrap_or_else(|| "...".to_string());
-        Err(ParseError::new(
+        self.parse_until_close(
+            |token| matches!(token, Token::SlotClose { name: close, .. } if close == name),
             ErrorKind::UnclosedSlot,
             format!("<{{{}}}> is never closed.", slot_name),
-            self.current_range(),
+            *open_range,
+            format!("Close with </{{{}}}>", slot_name),
         )
-        .with_related(*open_range)
-        .with_help(format!("Close with </{{{}}}>", slot_name))
-        .boxed())
+        .map(|(nodes, range)| (nodes, Some(range)))
+    }
+
+    fn parse_until_close(
+        &mut self,
+        closes: impl Fn(&Token) -> bool,
+        kind: ErrorKind,
+        message: String,
+        open_range: TextRange,
+        help: String,
+    ) -> ParseResult<(Vec<Node>, TextRange)> {
+        let mut nodes = Vec::new();
+        while !self.is_at_end() {
+            if self.peek().is_some_and(&closes) {
+                let range = self.peek().expect("closing token").range();
+                self.advance();
+                return Ok((nodes, range));
+            }
+            if let Some(node) = self.parse_node()? {
+                nodes.push(node);
+            }
+        }
+        Err(ParseError::new(kind, message, self.current_range())
+            .with_related(open_range)
+            .with_help(help)
+            .boxed())
     }
 
     fn convert_attributes(&self, token_attrs: &[super::tokenizer::Attribute]) -> Vec<Attribute> {
@@ -1348,98 +1291,53 @@ impl TreeBuilder {
         None
     }
 
-    fn is_parameter_declaration(&self, code: &str) -> bool {
-        let trimmed = code.trim();
-
-        // **kwargs: type annotation optional. *args: requires colon (to reach the error message)
-        if trimmed.starts_with("**") {
-            return true;
-        }
-        if trimmed.starts_with('*') && trimmed.contains(':') {
-            return true;
-        }
-
-        // Simple heuristic: contains ":" before any "=" (to allow defaults)
-        // and doesn't contain common statement keywords
-        if !code.contains(':') {
-            return false;
-        }
-
-        if code.starts_with("if ")
-            || code.starts_with("for ")
-            || code.starts_with("while ")
-            || code.starts_with("match ")
-            || code.starts_with("with ")
-        {
-            return false;
-        }
-
-        // Check if ":" comes before "=" (parameter with default)
-        // or if there's no "=" at all (parameter without default)
-        if let Some(colon_pos) = code.find(':') {
-            if let Some(equals_pos) = code.find('=') {
-                colon_pos < equals_pos
-            } else {
-                true
-            }
-        } else {
-            false
-        }
-    }
-
     fn is_import_statement(&self, code: &str) -> bool {
         let trimmed = code.trim();
         trimmed.starts_with("import ") || trimmed.starts_with("from ")
     }
 
     fn parse_parameter(&mut self, code: &str, range: &TextRange) -> ParseResult<Option<Node>> {
-        // Parse "name: type", "name: type = default", or "**kwargs"
-        let parts: Vec<&str> = code.splitn(2, ':').collect();
-
-        let (name, type_hint, default) = if parts.len() == 2 {
-            // Has colon: "name: type" or "name: type = default"
-            let name = parts[0].trim().to_string();
-            let rest = parts[1].trim();
-
-            // Reject *args - hyper components use keyword-only arguments
-            if name.starts_with('*') && !name.starts_with("**") {
-                return Err(ParseError::new(
-                    ErrorKind::InvalidSyntax,
-                    "Hyper components don't support *args.".to_string(),
-                    *range,
-                )
-                .with_help(
-                    "Hyper components use keyword-only arguments, so *args (which captures \
-                    positional arguments) doesn't make sense. If you want to accept extra \
-                    keyword arguments, use **kwargs instead.",
-                )
-                .boxed());
-            }
-
-            if rest.contains('=') {
-                let eq_parts: Vec<&str> = rest.splitn(2, '=').collect();
+        let source = code;
+        let code = source.trim();
+        let Some((name, type_hint, default)) = code
+            .split_once(':')
+            .map(|(name, rest)| {
+                let (type_hint, default) = rest
+                    .split_once('=')
+                    .map_or((rest, None), |(hint, default)| (hint, Some(default)));
                 (
-                    name,
-                    Some(eq_parts[0].trim().to_string()),
-                    Some(eq_parts[1].trim().to_string()),
+                    name.trim().to_string(),
+                    Some(type_hint.trim().to_string()),
+                    default.map(|value| value.trim().to_string()),
                 )
-            } else {
-                (name, Some(rest.to_string()), None)
-            }
-        } else if code.trim().starts_with("**") {
-            // No colon, but **kwargs — type annotation is optional
-            (code.trim().to_string(), None, None)
-        } else {
-            // Not a valid parameter, treat as statement
+            })
+            .or_else(|| {
+                code.starts_with("**")
+                    .then(|| (code.to_string(), None, None))
+            })
+        else {
             let node = Node::Statement(StatementNode {
-                stmt: code.to_string(),
+                stmt: source.to_string(),
                 range: *range,
             });
             self.advance();
             return Ok(Some(node));
         };
 
-        // Hyper components use keyword-only params; **kwargs is the one exception.
+        if name.starts_with('*') && !name.starts_with("**") {
+            return Err(ParseError::new(
+                ErrorKind::InvalidSyntax,
+                "Hyper components don't support *args.",
+                *range,
+            )
+            .with_help(
+                "Hyper components use keyword-only arguments, so *args (which captures \
+                positional arguments) doesn't make sense. If you want to accept extra \
+                keyword arguments, use **kwargs instead.",
+            )
+            .boxed());
+        }
+
         let kind = if name.starts_with("**") {
             ParamKind::VarKeyword
         } else {

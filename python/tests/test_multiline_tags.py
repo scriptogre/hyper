@@ -29,7 +29,7 @@ attrs: dict
 """
     )
 
-    assert template(active=True, attrs={"data-role": "admin"}) == (
+    assert template(active=True, attrs={"data-role": "admin"}).render() == (
         '<div id="profile" class="card active" data-role="admin">Content</div>'
     )
 
@@ -48,7 +48,7 @@ def test_multiline_quoted_attribute_preserves_content_whitespace():
 """
     )
 
-    assert template() == (
+    assert template().render() == (
         '<button _="\n'
         "        on click\n"
         "            toggle .active\n"
@@ -73,7 +73,10 @@ def test_multiline_expression_uses_python_bracket_depth():
 """
     )
 
-    assert template(selected=True) == '<div class="card selected">Content</div>'
+    assert (
+        template(selected=True).render()
+        == '<div class="card selected">Content</div>'
+    )
 
 
 def test_multiline_self_closing_element():
@@ -88,11 +91,14 @@ alt: str
 """
     )
 
-    assert template(src="/avatar.png", alt="Ada") == '<img src="/avatar.png" alt="Ada">'
+    assert (
+        template(src="/avatar.png", alt="Ada").render()
+        == '<img src="/avatar.png" alt="Ada">'
+    )
 
 
 def test_multiline_component_call_with_content():
-    from hyperhtml import component
+    from hyper import component
 
     @component
     def Card(*, title: str, selected: bool = False, content=None):
@@ -116,7 +122,7 @@ title: str
         Card=Card,
     )
 
-    assert template(Card=Card, title="Profile") == (
+    assert template(Card=Card, title="Profile").render() == (
         '<article class="card selected"><h2>Profile</h2><p>Content</p></article>'
     )
 

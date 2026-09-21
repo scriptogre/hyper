@@ -1,39 +1,92 @@
 use super::{Flow, Plugin, walk};
 use crate::ast::{
-    DecoratorNode, DefinitionKind, FragmentNode, Function, FunctionDefinition, Node, ParamKind,
-    ParameterNode, Position, TextRange,
+    Ast, DecoratorNode, DefinitionKind, FileMode, FragmentNode, Function, FunctionDefinition, Node,
+    ParamKind, ParameterNode, Position, ReturnAnnotation, TextRange,
 };
 use crate::error::{CompileError, ErrorKind, ParseError};
+use std::collections::BTreeSet;
 
 #[derive(Default)]
 pub struct Components {
-    children: Vec<Vec<String>>,
     definitions: Vec<FunctionDefinition>,
+    scopes: Vec<Scope>,
+    pending_subcomponent: Option<DecoratorNode>,
+    library_root: bool,
+    runtime_imports: BTreeSet<&'static str>,
+}
+
+#[derive(Default)]
+struct Scope {
+    has_output: bool,
+    subcomponent: Option<DecoratorNode>,
+    children: Vec<String>,
 }
 
 impl Components {
-    pub fn into_definitions(self) -> Vec<FunctionDefinition> {
-        self.definitions
+    pub fn lower(ast: &mut Ast) -> Result<(), CompileError> {
+        let mut components = Self {
+            library_root: ast.mode == FileMode::Library,
+            ..Self::default()
+        };
+        components.run(&mut ast.function)?;
+        ast.runtime_imports = ["component", "Component", "subcomponent"]
+            .into_iter()
+            .filter(|name| components.runtime_imports.contains(name))
+            .collect();
+        ast.definitions = components.definitions;
+        Ok(())
     }
 }
 
 impl Plugin for Components {
     fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        self.children.push(Vec::new());
+        if !self.library_root {
+            self.runtime_imports.insert("component");
+        }
+        self.scopes.push(Scope::default());
         walk(&mut function.body, self)?;
-        let children = self.children.pop().expect("root component scope");
-        function.decorators.push(component_decorator(&children));
+        let root = self.scopes.pop().expect("root component scope");
+        function
+            .decorators
+            .push(component_decorator(&root.children));
         Ok(())
     }
 
     fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
         match node {
-            Node::Definition(definition) if definition.kind == DefinitionKind::Component => {
-                self.children.push(Vec::new());
+            Node::Decorator(decorator) if decorator.decorator.trim() == "@subcomponent" => {
+                let range = decorator.range;
+                self.pending_subcomponent = Some(decorator.clone());
+                *node = Node::Fragment(FragmentNode {
+                    children: Vec::new(),
+                    range,
+                });
                 Ok(Flow::Continue)
             }
-            Node::Definition(_) => Ok(Flow::SkipChildren),
-            _ => Ok(Flow::Continue),
+            Node::Definition(definition) => {
+                let annotated = has_component_annotation(definition);
+                if annotated {
+                    self.runtime_imports.insert("Component");
+                }
+                self.scopes.push(Scope {
+                    subcomponent: self.pending_subcomponent.take(),
+                    ..Scope::default()
+                });
+                Ok(Flow::Continue)
+            }
+            Node::Text(text) if !text.content.trim().is_empty() => {
+                self.scopes.last_mut().expect("component scope").has_output = true;
+                Ok(Flow::Continue)
+            }
+            Node::Expression(_) | Node::Element(_) | Node::Component(_) | Node::Slot(_) => {
+                self.scopes.last_mut().expect("component scope").has_output = true;
+                Ok(Flow::Continue)
+            }
+            Node::Comment(_) | Node::Text(_) | Node::Fragment(_) => Ok(Flow::Continue),
+            _ => {
+                self.pending_subcomponent = None;
+                Ok(Flow::Continue)
+            }
         }
     }
 
@@ -41,37 +94,58 @@ impl Plugin for Components {
         let Node::Definition(definition) = node else {
             return Ok(());
         };
-        if definition.kind != DefinitionKind::Component {
+        let scope = self.scopes.pop().expect("definition scope");
+        let is_template = has_component_annotation(definition) && scope.has_output;
+        if !is_template {
+            self.scopes
+                .last_mut()
+                .expect("parent component scope")
+                .children
+                .extend(scope.children);
             return Ok(());
         }
 
-        let children = self.children.pop().expect("component scope");
-        let (name, name_range, params, is_async) = parse_signature(definition)?;
-        let range = definition.range;
-        self.definitions.push(FunctionDefinition {
-            name: name.clone(),
-            name_range,
-            function: Function {
-                is_async,
-                params: params.into_iter().map(Node::Parameter).collect(),
-                imports: Vec::new(),
-                decorators: vec![component_decorator(&children)],
-                header_comments: Vec::new(),
-                body: std::mem::take(&mut definition.body),
-            },
-            range,
-        });
+        let is_subcomponent = scope.subcomponent.is_some();
+        self.runtime_imports.insert("component");
+        if is_subcomponent {
+            self.runtime_imports.insert("subcomponent");
+        }
+        let mut decorators = vec![component_decorator(&scope.children)];
+        if let Some(subcomponent) = scope.subcomponent {
+            decorators.insert(0, subcomponent);
+        }
+        let lowered = lower_definition(definition, decorators)?;
+        let name = lowered.name.clone();
+        let range = lowered.range;
 
-        *node = Node::Fragment(FragmentNode {
-            children: Vec::new(),
-            range,
-        });
-        self.children
-            .last_mut()
-            .expect("parent component scope")
-            .push(name);
+        let is_module = self.library_root && self.scopes.len() == 1 || is_subcomponent;
+        if is_module {
+            self.definitions.push(lowered);
+            *node = Node::Fragment(FragmentNode {
+                children: Vec::new(),
+                range,
+            });
+        } else {
+            *node = Node::Function(lowered);
+        }
+        if is_subcomponent {
+            self.scopes
+                .last_mut()
+                .expect("parent component scope")
+                .children
+                .push(name);
+        }
         Ok(())
     }
+}
+
+fn has_component_annotation(definition: &crate::ast::DefinitionNode) -> bool {
+    definition.kind == DefinitionKind::Function
+        && definition
+            .signature
+            .trim_end_matches(':')
+            .rsplit_once("->")
+            .is_some_and(|(_, annotation)| annotation.trim() == "Component")
 }
 
 fn component_decorator(children: &[String]) -> DecoratorNode {
@@ -86,19 +160,14 @@ fn component_decorator(children: &[String]) -> DecoratorNode {
     }
 }
 
-fn parse_signature(
-    definition: &crate::ast::DefinitionNode,
-) -> Result<(String, TextRange, Vec<ParameterNode>, bool), CompileError> {
+fn lower_definition(
+    definition: &mut crate::ast::DefinitionNode,
+    decorators: Vec<DecoratorNode>,
+) -> Result<FunctionDefinition, CompileError> {
     let signature = definition.signature.trim_start();
-    let (python, is_async) = if let Some(rest) = signature.strip_prefix("async component ") {
-        (format!("async def {rest}"), true)
-    } else if let Some(rest) = signature.strip_prefix("component ") {
-        (format!("def {rest}"), false)
-    } else {
-        return Err(invalid_signature(definition.range));
-    };
-
-    let source = format!("{python}\n    pass");
+    debug_assert!(has_component_annotation(definition));
+    let is_async = signature.starts_with("async def ");
+    let source = format!("{signature}\n    pass");
     let mut parser = tree_sitter::Parser::new();
     parser
         .set_language(&tree_sitter_python::LANGUAGE.into())
@@ -115,6 +184,13 @@ fn parse_signature(
     let params_node = function
         .child_by_field_name("parameters")
         .expect("function parameters");
+    let return_annotation =
+        function
+            .child_by_field_name("return_type")
+            .map(|node| ReturnAnnotation {
+                source: text(&source, node).to_string(),
+                range: mapped_range(definition, node.start_byte(), node.end_byte()),
+            });
     let name = text(&source, name_node).to_string();
     let name_range = mapped_range(definition, name_node.start_byte(), name_node.end_byte());
     let mut params = Vec::new();
@@ -142,13 +218,12 @@ fn parse_signature(
             _ => {}
         }
 
-        let (name_node, type_node, default_node, kind) = match node.kind() {
-            "identifier" => (node, None, None, ParamKind::KeywordOnly),
+        let (name_node, type_node, default_node) = match node.kind() {
+            "identifier" => (node, None, None),
             "typed_parameter" => {
                 let type_node = node.child_by_field_name("type").expect("parameter type");
                 let name_node = first_named_child_except(node, type_node).expect("parameter name");
-                let kind = parameter_kind(name_node, definition, &name)?;
-                (name_node, Some(type_node), None, kind)
+                (name_node, Some(type_node), None)
             }
             "default_parameter" => (
                 node.child_by_field_name("name").expect("parameter name"),
@@ -157,7 +232,6 @@ fn parse_signature(
                     node.child_by_field_name("value")
                         .expect("parameter default"),
                 ),
-                ParamKind::KeywordOnly,
             ),
             "typed_default_parameter" => (
                 node.child_by_field_name("name").expect("parameter name"),
@@ -166,9 +240,8 @@ fn parse_signature(
                     node.child_by_field_name("value")
                         .expect("parameter default"),
                 ),
-                ParamKind::KeywordOnly,
             ),
-            "dictionary_splat_pattern" => (node, None, None, ParamKind::VarKeyword),
+            "dictionary_splat_pattern" => (node, None, None),
             "list_splat_pattern" => {
                 return Err(keyword_only_error(definition, node, &name));
             }
@@ -181,11 +254,7 @@ fn parse_signature(
             }
         };
 
-        let kind = if name_node.kind() == "dictionary_splat_pattern" {
-            ParamKind::VarKeyword
-        } else {
-            kind
-        };
+        let kind = parameter_kind(name_node, definition, &name)?;
         if kind != ParamKind::VarKeyword && !keyword_only {
             return Err(keyword_only_error(definition, node, &name));
         }
@@ -199,7 +268,20 @@ fn parse_signature(
         });
     }
 
-    Ok((name, name_range, params, is_async))
+    Ok(FunctionDefinition {
+        name,
+        name_range,
+        return_annotation,
+        function: Function {
+            is_async,
+            params: params.into_iter().map(Node::Parameter).collect(),
+            imports: Vec::new(),
+            decorators,
+            header_comments: Vec::new(),
+            body: std::mem::take(&mut definition.body),
+        },
+        range: definition.range,
+    })
 }
 
 fn parameter_kind(
@@ -249,7 +331,7 @@ fn keyword_only_error(
         mapped_range(definition, node.start_byte(), node.end_byte()),
     )
     .with_help(format!(
-        "Add `*,` before the first prop:\n\n  component {name}(*, {parameters}):"
+        "Add `*,` before the first prop:\n\n  def {name}(*, {parameters}) -> Component:"
     ))
     .boxed()
     .into()
@@ -261,7 +343,7 @@ fn invalid_signature(range: TextRange) -> CompileError {
         "This component signature is invalid.",
         range,
     )
-    .with_help("Use `component Name():` or `component Name(*, prop: Type):`.")
+    .with_help("Use `def Name() -> Component:` or `def Name(*, prop: Type) -> Component:`.")
     .boxed()
     .into()
 }
@@ -271,17 +353,16 @@ fn mapped_range(
     python_start: usize,
     python_end: usize,
 ) -> TextRange {
-    const COMPONENT_TO_DEF_OFFSET: usize = 6;
     TextRange {
         start: position_at(
             definition.signature_range.start,
             &definition.signature,
-            python_start + COMPONENT_TO_DEF_OFFSET,
+            python_start,
         ),
         end: position_at(
             definition.signature_range.start,
             &definition.signature,
-            python_end + COMPONENT_TO_DEF_OFFSET,
+            python_end,
         ),
     }
 }

@@ -14,8 +14,12 @@ fn assert_opening_tag_ranges_cover_source(source: &str, opening_start: usize, op
 
     let mut covered = vec![false; source.len()];
     for segment in result.segments {
-        for offset in segment.source_start..segment.source_end {
-            covered[offset] = true;
+        for byte in covered
+            .iter_mut()
+            .take(segment.source_end)
+            .skip(segment.source_start)
+        {
+            *byte = true;
         }
     }
     for braces in result.expression_braces {

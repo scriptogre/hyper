@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 (2026-09-21)
+
+- Replace `component` declarations with `def ... -> Component`
+- Bind component props lazily and render with `.render()`
+- Stream with `.render(stream=True)`
+- Export nested components explicitly with `@subcomponent`
+- Make aligned `end` markers optional
+- Expose the Python runtime as `hyper`
+- Expose generated Python through standard inspection
+
 ## 0.1.2
 
 - Fix named slot composition between Hyper components

@@ -5,6 +5,7 @@
   "fileTypes": ["hyper"],
   "patterns": [
     { "include": "#comment" },
+    { "include": "#definitions" },
     { "include": "#props" },
     { "include": "#keywords" },
     { "include": "#html" }
@@ -14,6 +15,31 @@
       "name": "comment.block.html",
       "begin": "<!--",
       "end": "-->"
+    },
+
+    "definitions": {
+      "patterns": [
+        {
+          "begin": "^\\s*(?:(async)\\s+)?(def)\\s+([A-Z][a-zA-Z0-9_]*)",
+          "end": "(:)\\s*$",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.async.python" },
+            "2": { "name": "storage.type.function.python" },
+            "3": { "name": "entity.name.function.python" }
+          },
+          "endCaptures": {
+            "1": { "name": "punctuation.section.function.begin.python" }
+          },
+          "patterns": [{ "include": "source.python" }]
+        },
+        {
+          "match": "^\\s*(@)(subcomponent)\\b",
+          "captures": {
+            "1": { "name": "punctuation.definition.decorator.python" },
+            "2": { "name": "entity.name.function.decorator.python" }
+          }
+        }
+      ]
     },
 
     "props": {

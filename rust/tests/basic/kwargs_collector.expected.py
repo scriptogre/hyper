@@ -1,5 +1,5 @@
 from typing import Any
-from hyperhtml import component, escape, spread_attrs
+from hyper import component, escape, spread_attrs
 
 
 @component

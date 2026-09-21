@@ -1,4 +1,4 @@
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -15,8 +15,7 @@ def Classes(
             yield f"""\
 <div class="card">
     <h3>{escape(self.title)}</h3>
-</div>
-"""
+</div>"""
     # Class with multiple methods
     class List:
         def __init__(self, items: list):

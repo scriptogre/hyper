@@ -1119,8 +1119,8 @@ fn test_spread_on_component() {
     let result = compile_with_ranges(source, "Test");
 
     assert!(
-        result.code.contains("Card.stream(**props)"),
-        "Spread on component should stream Card(**props). Got:\n{}",
+        result.code.contains("Card(**props).render(stream=True)"),
+        "Spread on component should render Card(**props) as a stream. Got:\n{}",
         result.code
     );
 }
@@ -1189,8 +1189,8 @@ fn test_non_blessed_spread_no_injection() {
         result.code
     );
     assert!(
-        result.code.contains("Card.stream(**my_dict)"),
-        "Should still stream Card(**my_dict) at the call site. Got:\n{}",
+        result.code.contains("Card(**my_dict).render(stream=True)"),
+        "Should still render Card(**my_dict) as a stream at the call site. Got:\n{}",
         result.code
     );
 }
@@ -1201,8 +1201,8 @@ fn test_explicit_param_prevents_injection() {
     let result = compile_with_ranges(source, "Test");
 
     assert!(
-        result.code.contains("Card.stream(**props)"),
-        "Should stream Card(**props) at the call site. Got:\n{}",
+        result.code.contains("Card(**props).render(stream=True)"),
+        "Should render Card(**props) as a stream at the call site. Got:\n{}",
         result.code
     );
     assert!(

@@ -26,17 +26,19 @@ Import it like a Python component:
 ```python
 from app.templates import Greeting
 
-Greeting(name="Ada")        # HtmlResult('<h1>Hello Ada</h1>')
+greeting = Greeting(name="Ada")
+greeting.render()  # HtmlResult('<h1>Hello Ada</h1>')
 ```
 
 The import hook compiles `.hyper` files in memory. It does not write `.py` files.
 
-A compiled component is a plain `@component` callable. It escapes its own
-arguments and marks its output safe under MarkupSafe.
+Calling a component binds its props without rendering. `.render()` returns
+safe HTML; `.render(stream=True)` returns its chunks. String conversion also
+renders synchronous components.
 
 ## Integrations
 
-Components are just callables returning strings, so they fit any engine. See
+Render components at framework boundaries. See
 [docs/design/integrations.md](../docs/design/integrations.md) for the full guide
 (slots, named slots, `**spread`).
 
@@ -56,16 +58,16 @@ INSTALLED_APPS = ["hyperhtml.integrations.django", ...]
 # {% hyper Card title="Pricing" %}…{% slot actions %}…{% endslot %}{% endhyper %}
 ```
 
-**FastAPI / Flask.** No integration needed, return the component:
+**FastAPI / Flask.** Render into the framework response:
 
 ```python
-return HTMLResponse(Greeting(name="Ada"))
-return StreamingResponse(Greeting.stream(name="Ada"))   # chunk-by-chunk
+return HTMLResponse(Greeting(name="Ada").render())
+return StreamingResponse(Greeting(name="Ada").render(stream=True))
 ```
 
 ## Runtime helpers
 
-Compiled templates import what they use from `hyperhtml`. You rarely call these
+Compiled templates import what they use from `hyper`. You rarely call these
 directly, but they make up the generated output:
 
 ### Escaping

@@ -139,6 +139,11 @@ fn collect_braces_node(node: &Node, braces: &mut Vec<(usize, usize)>) {
                 collect_braces_node(child, braces);
             }
         }
+        Node::Function(def) => {
+            for child in &def.function.body {
+                collect_braces_node(child, braces);
+            }
+        }
         _ => {} // Text, Comment, Statement, Import, Parameter, Decorator
     }
 }

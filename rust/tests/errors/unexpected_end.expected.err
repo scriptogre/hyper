@@ -1,0 +1,7 @@
+
+ file: unexpected_end.hyper:2:1
+error: This `end` does not match an open block.
+   |
+ 2 | end
+   | ^^^
+

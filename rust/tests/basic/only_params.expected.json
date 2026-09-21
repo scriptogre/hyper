@@ -1,24 +1,24 @@
 {
   "segments": [
     {
-      "compiled_end": 89,
-      "compiled_start": 80,
+      "compiled_end": 85,
+      "compiled_start": 76,
       "language": "python",
       "needs_injection": true,
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 113,
-      "compiled_start": 99,
+      "compiled_end": 109,
+      "compiled_start": 95,
       "language": "python",
       "needs_injection": true,
       "source_end": 24,
       "source_start": 10
     },
     {
-      "compiled_end": 134,
-      "compiled_start": 123,
+      "compiled_end": 130,
+      "compiled_start": 119,
       "language": "python",
       "needs_injection": true,
       "source_end": 36,

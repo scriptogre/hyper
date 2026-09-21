@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from pathlib import Path
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component

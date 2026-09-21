@@ -1,104 +1,104 @@
 {
   "segments": [
     {
-      "compiled_end": 102,
-      "compiled_start": 93,
+      "compiled_end": 98,
+      "compiled_start": 89,
       "language": "python",
       "needs_injection": true,
       "source_end": 9,
       "source_start": 0
     },
     {
-      "compiled_end": 237,
-      "compiled_start": 216,
+      "compiled_end": 233,
+      "compiled_start": 212,
       "language": "python",
       "needs_injection": true,
       "source_end": 119,
       "source_start": 98
     },
     {
-      "compiled_end": 268,
-      "compiled_start": 247,
+      "compiled_end": 264,
+      "compiled_start": 243,
       "language": "python",
       "needs_injection": true,
       "source_end": 141,
       "source_start": 120
     },
     {
-      "compiled_end": 302,
-      "compiled_start": 278,
+      "compiled_end": 298,
+      "compiled_start": 274,
       "language": "python",
       "needs_injection": true,
       "source_end": 166,
       "source_start": 142
     },
     {
-      "compiled_end": 480,
-      "compiled_start": 476,
+      "compiled_end": 476,
+      "compiled_start": 472,
       "language": "python",
       "needs_injection": true,
       "source_end": 183,
       "source_start": 179
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 178,
       "source_start": 173
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 190,
       "source_start": 184
     },
     {
-      "compiled_end": 508,
-      "compiled_start": 503,
+      "compiled_end": 504,
+      "compiled_start": 499,
       "language": "python",
       "needs_injection": true,
       "source_end": 203,
       "source_start": 198
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 197,
       "source_start": 191
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 211,
       "source_start": 204
     },
     {
-      "compiled_end": 538,
-      "compiled_start": 532,
+      "compiled_end": 534,
+      "compiled_start": 528,
       "language": "python",
       "needs_injection": true,
       "source_end": 225,
       "source_start": 219
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 218,
       "source_start": 212
     },
     {
-      "compiled_end": 42,
-      "compiled_start": 42,
+      "compiled_end": 38,
+      "compiled_start": 38,
       "language": "html",
       "needs_injection": true,
       "source_end": 233,

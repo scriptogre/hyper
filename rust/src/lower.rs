@@ -27,7 +27,7 @@ pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
             match node {
                 Node::Decorator(_) | Node::Comment(_) => continue,
                 Node::Text(t) if t.content.trim().is_empty() => continue,
-                Node::Definition(_) => {
+                Node::Definition(_) | Node::Function(_) => {
                     found_def = true;
                     break;
                 }
@@ -121,6 +121,7 @@ fn selects_implicit_component(node: &Node) -> bool {
         Node::Comment(_)
         | Node::Statement(_)
         | Node::Definition(_)
+        | Node::Function(_)
         | Node::Import(_)
         | Node::Parameter(_)
         | Node::Decorator(_) => false,

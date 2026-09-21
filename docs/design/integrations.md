@@ -1,10 +1,11 @@
 # Integrations
 
-A Hyper component returns safe HTML when called and yields chunks through `.stream()`:
+A Hyper component binds its props when called. Render the instance as one safe HTML value or as a stream:
 
 ```python
-html = Greeting(name="Ada")
-chunks = Greeting.stream(name="Ada")
+greeting = Greeting(name="Ada")
+html = greeting.render()
+chunks = greeting.render(stream=True)
 ```
 
 Framework integrations only need to set the HTML response type.
@@ -165,7 +166,7 @@ Both backends run side by side without clashing.
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
     ```
 
 2. Stream with `StreamingResponse`:
@@ -175,7 +176,8 @@ Both backends run side by side without clashing.
 
     @app.get("/stream")
     def stream():
-        return StreamingResponse(Greeting.stream(name="Ada"), media_type="text/html")
+        greeting = Greeting(name="Ada")
+        return StreamingResponse(greeting.render(stream=True), media_type="text/html")
     ```
 
 ## Litestar
@@ -187,7 +189,7 @@ Both backends run side by side without clashing.
 
     @get("/", media_type=MediaType.HTML)
     async def index() -> str:
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
     ```
 
 2. Stream with `Stream`:
@@ -198,7 +200,7 @@ Both backends run side by side without clashing.
 
     @get("/stream", media_type=MediaType.HTML)
     async def stream() -> Stream:
-        return Stream(Greeting.stream(name="Ada"))
+        return Stream(Greeting(name="Ada").render(stream=True))
     ```
 
 ## Sanic
@@ -210,7 +212,7 @@ Both backends run side by side without clashing.
 
     @app.get("/")
     async def index(request):
-        return response.html(Greeting(name="Ada"))
+        return response.html(Greeting(name="Ada").render())
     ```
 
 2. Stream with `ResponseStream`:
@@ -221,7 +223,7 @@ Both backends run side by side without clashing.
     @app.get("/stream")
     async def stream(request):
         async def body(res):
-            for chunk in Greeting.stream(name="Ada"):
+            for chunk in Greeting(name="Ada").render(stream=True):
                 await res.write(chunk)
         return ResponseStream(body, content_type="text/html")
     ```
@@ -233,7 +235,7 @@ Both backends run side by side without clashing.
     ```python
     @app.get("/")
     def index():
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
     ```
 
 2. Stream any iterator:
@@ -241,6 +243,6 @@ Both backends run side by side without clashing.
     ```python
     @app.get("/stream")
     def stream():
-        return Greeting.stream(name="Ada")
+        return Greeting(name="Ada").render(stream=True)
     ```
 

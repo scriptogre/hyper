@@ -33,10 +33,10 @@ def test_separator_selects_empty_implicit_component(tmp_path, monkeypatch):
     write(tmp_path / "app" / "pages" / "Empty.hyper", "---\n")
 
     from app.pages import Empty
-    from hyperhtml import Component
+    from hyper import Component
 
     assert isinstance(Empty, Component)
-    assert Empty() == ""
+    assert Empty().render() == ""
 
 
 def test_top_level_output_selects_implicit_component(tmp_path, monkeypatch):
@@ -44,10 +44,10 @@ def test_top_level_output_selects_implicit_component(tmp_path, monkeypatch):
     write(tmp_path / "app" / "pages" / "Home.hyper", "<h1>Home</h1>\n")
 
     from app.pages import Home
-    from hyperhtml import Component
+    from hyper import Component
 
     assert isinstance(Home, Component)
-    assert Home() == "<h1>Home</h1>"
+    assert Home().render() == "<h1>Home</h1>"
 
 
 def test_declaration_only_file_is_normal_library_module(tmp_path, monkeypatch):
@@ -56,9 +56,8 @@ def test_declaration_only_file_is_normal_library_module(tmp_path, monkeypatch):
         tmp_path / "app" / "components" / "forms.hyper",
         """DEFAULT_LABEL = "Save"
 
-component Button(*, label: str = DEFAULT_LABEL):
+def Button(*, label: str = DEFAULT_LABEL) -> Component:
     <button>{label}</button>
-end
 """,
     )
 
@@ -67,22 +66,21 @@ end
     assert isinstance(forms, ModuleType)
     assert not callable(forms)
     assert forms.DEFAULT_LABEL == "Save"
-    assert forms.Button() == "<button>Save</button>"
+    assert forms.Button().render() == "<button>Save</button>"
 
 
 def test_root_level_library_is_supported(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(tmp_path))
     write(
         tmp_path / "forms.hyper",
-        """component Button(*, label: str):
+        """def Button(*, label: str) -> Component:
     <button>{label}</button>
-end
 """,
     )
 
     from forms import Button
 
-    assert Button(label="Save") == "<button>Save</button>"
+    assert Button(label="Save").render() == "<button>Save</button>"
 
 
 def test_lowercase_implicit_component_imports_as_package_attribute(tmp_path, monkeypatch):
@@ -90,11 +88,11 @@ def test_lowercase_implicit_component_imports_as_package_attribute(tmp_path, mon
     write(tmp_path / "app" / "templates" / "index.hyper", "<h1>Home</h1>\n")
 
     from app.templates import index
-    from hyperhtml import Component
+    from hyper import Component
 
     assert isinstance(index, Component)
     assert index.__name__ == "Index"
-    assert index() == "<h1>Home</h1>"
+    assert index().render() == "<h1>Home</h1>"
 
 
 def test_root_level_implicit_component_is_rejected(tmp_path, monkeypatch):
@@ -137,4 +135,4 @@ def test_implicit_component_never_becomes_submodule(tmp_path, monkeypatch):
         importlib.import_module("app.pages.Home")
 
     assert pages.Home is Home
-    assert Home() == "<h1>Home</h1>"
+    assert Home().render() == "<h1>Home</h1>"

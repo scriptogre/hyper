@@ -552,6 +552,16 @@ impl PythonGenerator {
             Node::Try(try_node) => self.emit_try(try_node, output, indent),
             Node::Statement(stmt) => self.emit_statement(stmt, output, indent),
             Node::Definition(def) => self.emit_definition(def, output, indent),
+            Node::Function(def) => {
+                self.emit_render_function(
+                    &def.name,
+                    Some(def.name_range),
+                    def.return_annotation.as_ref(),
+                    &def.function,
+                    output,
+                    indent,
+                );
+            }
             Node::Import(import) => self.emit_import(import, output, indent),
             Node::Parameter(_) => {} // Parameters handled separately
             Node::Decorator(dec) => self.emit_decorator(dec, output, indent),
@@ -752,7 +762,7 @@ impl PythonGenerator {
         let name_compiled_start = output.position();
         output.push(&c.name);
         let name_compiled_end = output.position();
-        output.push(".stream(");
+        output.push("(");
 
         let mut first = true;
         if has_content {
@@ -782,7 +792,7 @@ impl PythonGenerator {
             self.emit_component_attribute(attr, output);
             first = false;
         }
-        output.push(")");
+        output.push(").render(stream=True)");
         output.newline();
 
         if has_body {
@@ -1268,13 +1278,16 @@ impl PythonGenerator {
         &self,
         name: &str,
         name_range: Option<TextRange>,
+        definition_return_annotation: Option<&ReturnAnnotation>,
         function: &Function,
         output: &mut Output,
+        indent: usize,
     ) {
         for decorator in &function.decorators {
-            self.emit_decorator(decorator, output, 0);
+            self.emit_decorator(decorator, output, indent);
         }
 
+        self.indent(output, indent);
         if function.is_async {
             output.push("async def ");
         } else {
@@ -1311,26 +1324,25 @@ impl PythonGenerator {
             .find(|param| param.kind == ParamKind::VarKeyword);
 
         if positional.is_empty() && keyword_only.is_empty() && var_keyword.is_none() {
-            output.push("():");
-            output.newline();
+            output.push("()");
         } else {
             output.push("(");
             output.newline();
-            let indent = "        ";
+            let signature_indent = "    ".repeat(indent + 2);
 
             for param in positional {
-                self.emit_signature_param(param, output, indent);
+                self.emit_signature_param(param, output, &signature_indent);
             }
             if !keyword_only.is_empty() {
-                output.push(indent);
+                output.push(&signature_indent);
                 output.push("*,");
                 output.newline();
             }
             for param in keyword_only {
-                self.emit_signature_param(param, output, indent);
+                self.emit_signature_param(param, output, &signature_indent);
             }
             if let Some(param) = var_keyword {
-                output.push(indent);
+                output.push(&signature_indent);
                 output.push(&param.name);
                 if let Some(type_hint) = &param.type_hint {
                     output.push(": ");
@@ -1340,17 +1352,23 @@ impl PythonGenerator {
                 output.newline();
             }
 
-            output.push("):");
-            output.newline();
+            self.indent(output, indent);
+            output.push(")");
         }
+        if let Some(annotation) = definition_return_annotation {
+            output.push(" -> ");
+            print_code(output, &code_from(&annotation.source, annotation.range));
+        }
+        output.push(":");
+        output.newline();
 
         let body: Vec<&Node> = function.body.iter().collect();
         if body.is_empty() || self.is_effectively_empty(&body) {
-            self.indent(output, 1);
+            self.indent(output, indent + 1);
             output.push("yield from ()");
             output.newline();
         } else {
-            self.emit_nodes(&body, output, 1);
+            self.emit_nodes(&body, output, indent + 1);
         }
     }
 }
@@ -1413,22 +1431,21 @@ impl Generator for PythonGenerator {
             self.emit_render_function(
                 &definition.name,
                 Some(definition.name_range),
+                definition.return_annotation.as_ref(),
                 &definition.function,
                 &mut output,
+                0,
             );
             output.newline();
             output.newline();
         }
 
         if ast.mode == FileMode::ImplicitComponent {
-            self.emit_render_function(&function_name, None, function, &mut output);
+            self.emit_render_function(&function_name, None, None, function, &mut output, 0);
         }
 
         // Hyper runtime imports, in Helper::ALL order, for helpers actually emitted.
-        let mut hyper_imports = Vec::new();
-        if ast.mode == FileMode::ImplicitComponent || !ast.definitions.is_empty() {
-            hyper_imports.push("component");
-        }
+        let mut hyper_imports = ast.runtime_imports.clone();
         for helper in Helper::ALL {
             if output.helper_used(helper.import_name()) {
                 hyper_imports.push(helper.import_name());
@@ -1489,10 +1506,7 @@ impl Generator for PythonGenerator {
 
         // Add Hyper runtime imports
         if !hyper_imports.is_empty() {
-            import_lines.push_str(&print_import_from(&import_from(
-                "hyperhtml",
-                &hyper_imports,
-            )));
+            import_lines.push_str(&print_import_from(&import_from("hyper", &hyper_imports)));
             import_lines.push('\n');
         }
         import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)

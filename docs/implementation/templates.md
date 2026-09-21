@@ -25,7 +25,7 @@ count: int = 0
 Get this:
 
 ```python
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -41,7 +41,7 @@ def Greeting(
     yield """</div>"""
 ```
 
-The `@component` decorator returns a callable `Component`. Calls buffer output; `.stream()` exposes generated chunks.
+The internal `@component` decorator turns each generated render function into a component factory. Calling it binds props without running the function. The instance buffers with `.render()` or exposes chunks with `.render(stream=True)`.
 
 Compile once. Render many times.
 
@@ -63,7 +63,7 @@ count: int = 0
 ```
 
 ```python
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -120,7 +120,7 @@ def ItemsLoop():
 
 ### Blocks and `end`
 
-A compound statement whose content follows on indented lines requires an aligned `end` in every file zone:
+Indentation defines block scope in headers, rendering code, and libraries. An aligned `end` is optional:
 
 ```hyper
 for item in items:
@@ -132,15 +132,15 @@ if is_active:
 end
 ```
 
-Indentation defines the contents. `end` closes the statement. Dedentation alone never closes it.
+Dedentation closes the block. An explicit `end` must align with its opener; a stray or misaligned `end` is an error.
 
-A compound statement owns one `end`. Its `elif`, `else`, `except`, `finally`, and `case` clauses do not have separate endings.
+A compound statement may have one `end`. Its `elif`, `else`, `except`, `finally`, and `case` clauses do not have separate endings.
 
 Short content may follow the outer colon on the same logical line and does not use `end`:
 
 ```hyper
 if is_active: <span>Active</span>
-component Divider(): <hr />
+def Divider() -> Component: <hr />
 ```
 
 Same-line content selects Python or template context once. Python semicolons remain Python separators; semicolons in template output remain text. Python and template output cannot mix on the same line.
@@ -149,9 +149,13 @@ The tokenizer finds the outer colon while ignoring colons inside strings, annota
 
 Structural indentation uses spaces. Tabs are rejected. `end` may have a trailing Python comment.
 
-The tree builder uses one indentation-aware block parser for headers, rendering code, branch clauses, and component declarations. Structural indentation metadata is separate from rendered whitespace.
+The tree builder must use one indentation-aware block parser for headers, rendering code, branch clauses, and component declarations. Structural indentation metadata stays separate from rendered whitespace.
+
+Contract tests: `rust/tests/optional_end_tests.rs`.
 
 ### Add Imports
+
+Emit required runtime and typing imports according to [Imports and Helpers](../design/templates.md#imports-and-helpers).
 
 Imports go above `---` and remain module-level:
 
@@ -200,30 +204,30 @@ end
 
 ## Explicit Components
 
-`component` parses into a component-definition AST node. A normal `def` remains a Python definition and cannot contain HTML.
+### Annotated Definitions
+
+The [annotated definition contract](../design/templates.md#annotated-definitions) distinguishes template definitions from ordinary factories by output in each function's own scope.
+
+- Inspect output inside control-flow branches, without crossing nested definition scopes.
+- Treat HTML, component calls, and template expressions as output.
+- Lower template definitions to lazy component factories. Preserve ordinary factories and their return values, including Python coroutine behavior for ordinary async factories.
+- Reject mixed template output and `return value`, regardless of source order or branch. Keep bare `return` as an early exit.
+- Reject explicit `yield` in template definitions. Preserve it in ordinary nested Python helpers.
+
+Contracts live in `python/tests/test_annotated_components.py` and the annotated-template tests in `rust/tests/component_return_tests.rs`.
+
+The generator emits an `@component`-decorated render function while preserving its name, signature, and `__wrapped__` reference.
+
+`@subcomponent` marks an independent nested definition for export. The compiler emits it before its parent and attaches it by name:
 
 ```hyper
-component Badge(*, text: str):
-    <span>{text}</span>
-end
+def Page(*, title: str) -> Component:
+    @subcomponent
+    def Header(*, title: str) -> Component:
+        <header>{title}</header>
 
-component Divider(): <hr />
+    <{Header} title={title} />
 ```
-
-The generator emits an `@component`-decorated Python function. The decorator returns a `Component` while preserving the generated function's name and signature.
-
-**Coming soon:** `@render_here` will export a subcomponent and render it at its declaration position:
-
-```hyper
-title: str
----
-@render_here
-component Header(*, title: str):
-    <header>{title}</header>
-end
-```
-
-Subcomponents are defined first and attached by name:
 
 ```python
 @component
@@ -233,17 +237,17 @@ def Header(*, title: str):
 
 @component(subcomponents=[Header])
 def Page(*, title: str):
-    yield from Header.stream(title=title)
+    yield from Header(title=title).render(stream=True)
 ```
 
-`Page.Header` exposes the same read-only `Header` component.
+`Page.Header` exposes the same read-only component factory. An unmarked nested definition stays local and may capture its enclosing Python scope.
 
 ### Slot Parameters
 
 Default and named slots become keyword-only component arguments:
 
 ```hyper
-component Layout(*, title: str):
+def Layout(*, title: str) -> Component:
     <header>{...header}</header>
     <main>{...}</main>
 end
@@ -273,7 +277,7 @@ def Layout(
 
 A bare `return` remains a bare generated return. Scope-aware validation rejects `return value` and explicit `yield` only in the active component. Nested normal functions retain Python return and yield behavior.
 
-`async component` is explicit. Implicit components infer async from `await`, `async for`, or `async with` in their own rendering scope.
+Implicit components and annotated template definitions infer async from `await`, `async for`, or `async with` in their own rendering scope.
 
 `<>...</>` parses as a transparent fragment node and emits only its children.
 

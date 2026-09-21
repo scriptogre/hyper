@@ -1,5 +1,5 @@
 from typing import Any
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 # Docstring in header

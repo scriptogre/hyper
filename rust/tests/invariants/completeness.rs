@@ -73,14 +73,24 @@ pub fn run(path: &PathBuf) -> Result<(), Failed> {
                 && in_body(rest_range.start.byte)
                 && !is_covered(rest_range.start.byte, rest_range.end.byte) =>
             {
-                return Err(format!(
-                    "{} signature at [{},{}] has no Python range: {:?}",
-                    keyword,
-                    rest_range.start.byte,
-                    rest_range.end.byte,
-                    &source[rest_range.start.byte..rest_range.end.byte]
-                )
-                .into());
+                let missing = source[rest_range.start.byte..rest_range.end.byte]
+                    .char_indices()
+                    .find(|(offset, character)| {
+                        (character.is_alphanumeric() || *character == '_')
+                            && !is_covered(
+                                rest_range.start.byte + offset,
+                                rest_range.start.byte + offset + character.len_utf8(),
+                            )
+                    });
+                if let Some((offset, character)) = missing {
+                    return Err(format!(
+                        "{} signature character at {} has no Python range: {:?}",
+                        keyword,
+                        rest_range.start.byte + offset,
+                        character,
+                    )
+                    .into());
+                }
             }
             Token::Expression { range, .. } if in_body(range.start.byte) => {
                 // Skip slot expressions ({...} / {...name}) — tokenizer converts

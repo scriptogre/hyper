@@ -54,6 +54,13 @@ print(Greeting(name="Ada"))
 
 Props are keyword-only. Values are escaped by default.
 
+Calling a component binds its props. Rendering starts when it becomes a string or when you call `.render()`:
+
+```python
+greeting = Greeting(name="Ada")
+html = greeting.render()
+```
+
 ## Use Python
 
 Use Python expressions and control flow directly:
@@ -63,7 +70,6 @@ names: list[str]
 ---
 for name in names:
     <h1>Hello, {name}!</h1>
-end
 ```
 
 ```python
@@ -74,7 +80,7 @@ print(Greeting(names=["Ada", "Lin"]))
 <h1>Hello, Ada!</h1><h1>Hello, Lin!</h1>
 ```
 
-Close each indented block with `end`.
+Indentation defines Python blocks. Add an aligned `end` only when it makes a boundary clearer.
 
 ## Compose components
 
@@ -162,17 +168,15 @@ from app.components import Card
 
 ## Define several components
 
-Use `component` to group related components in one file:
+Use `def ... -> Component` to group related components in one file:
 
 ```html
 # app/components/forms.hyper
-component Button(*, label: str):
+def Button(*, label: str) -> Component:
     <button>{label}</button>
-end
 
-component Input(*, name: str):
+def Input(*, name: str) -> Component:
     <input name={name} />
-end
 ```
 
 A declarations-only file imports like a Python module:
@@ -187,9 +191,15 @@ print(Button(label="Save"))
 <button>Save</button>
 ```
 
+`.hyper` files receive required runtime and typing imports automatically. In Python files, import the runtime from `hyper`:
+
+```python
+from hyper import Component
+```
+
 ## Use FastAPI
 
-Set the response type to HTML, then return a component:
+Set the response type to HTML, then render a component:
 
 ```python
 from fastapi import FastAPI
@@ -202,12 +212,12 @@ app = FastAPI(default_response_class=HTMLResponse)
 
 @app.get("/dashboard")
 def dashboard():
-    return Dashboard()
+    return Dashboard().render()
 ```
 
 ## Stream a response
 
-Use `.stream()` to send each generated chunk:
+Pass `stream=True` to send each generated chunk:
 
 ```python
 from fastapi.responses import StreamingResponse
@@ -216,7 +226,7 @@ from fastapi.responses import StreamingResponse
 @app.get("/dashboard/stream")
 def stream_dashboard():
     return StreamingResponse(
-        Dashboard.stream(),
+        Dashboard().render(stream=True),
         media_type="text/html",
     )
 ```

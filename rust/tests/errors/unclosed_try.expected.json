@@ -1,0 +1,52 @@
+{
+  "segments": [
+    {
+      "compiled_end": 116,
+      "compiled_start": 109,
+      "language": "python",
+      "needs_injection": true,
+      "source_end": 23,
+      "source_start": 16
+    },
+    {
+      "compiled_end": 38,
+      "compiled_start": 38,
+      "language": "html",
+      "needs_injection": true,
+      "source_end": 15,
+      "source_start": 9
+    },
+    {
+      "compiled_end": 38,
+      "compiled_start": 38,
+      "language": "html",
+      "needs_injection": true,
+      "source_end": 31,
+      "source_start": 24
+    },
+    {
+      "compiled_end": 150,
+      "compiled_start": 140,
+      "language": "python",
+      "needs_injection": true,
+      "source_end": 49,
+      "source_start": 39
+    },
+    {
+      "compiled_end": 38,
+      "compiled_start": 38,
+      "language": "html",
+      "needs_injection": true,
+      "source_end": 61,
+      "source_start": 55
+    },
+    {
+      "compiled_end": 38,
+      "compiled_start": 38,
+      "language": "html",
+      "needs_injection": true,
+      "source_end": 73,
+      "source_start": 66
+    }
+  ]
+}

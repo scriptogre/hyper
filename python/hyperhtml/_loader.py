@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.abc
 import importlib.machinery
+import linecache
 import sys
 import threading
 from pathlib import Path
@@ -101,7 +102,7 @@ class HyperPackageLoader(importlib.abc.Loader):
                     "__file__": str(hyper_path),
                     "__loader__": HyperModuleLoader(hyper_path),
                 }
-                exec(code, namespace)
+                execute_compiled(code, hyper_path, namespace)
 
                 try:
                     component = namespace[component_name]
@@ -130,7 +131,14 @@ class HyperModuleLoader(importlib.abc.Loader):
         module.__file__ = str(self.path)
         module.__package__ = module.__name__.rpartition(".")[0]
         code = self.code if self.code is not None else _compile_file(self.path)[0]
-        exec(code, module.__dict__)
+        execute_compiled(code, self.path, module.__dict__)
+
+
+def execute_compiled(code: str, path: Path, namespace: dict) -> None:
+    filename = f"<hyper:{path}>"
+    lines = code.splitlines(keepends=True)
+    linecache.cache[filename] = len(code), None, lines, filename
+    exec(compile(code, filename, "exec"), namespace)
 
 
 def _search_paths(path) -> Iterable[Path]:

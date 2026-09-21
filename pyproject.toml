@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "hyperhtml"
-version = "0.1.2"
+version = "0.2.0"
 description = "Backend-neutral Hyper HTML templates for Python"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -44,6 +44,7 @@ bindings = "pyo3"
 manifest-path = "rust/Cargo.toml"
 module-name = "hyperhtml._native"
 python-source = "python"
+python-packages = ["hyper", "hyperhtml"]
 features = ["python-extension"]
 include = [
     { path = "hyperhtml_autohook.pth", format = ["sdist", "wheel"] },

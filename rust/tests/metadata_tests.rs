@@ -10,7 +10,7 @@ fn test_selective_helper_imports() {
     let code = compile(source);
 
     // Should import component and render_class for class attributes.
-    assert!(code.contains("from hyperhtml import component, render_class"));
+    assert!(code.contains("from hyper import component, render_class"));
     assert!(code.contains("render_class("));
     // Should NOT contain old markers
     assert!(!code.contains("replace_markers"));
@@ -44,7 +44,7 @@ fn test_non_async_template() {
     assert!(code.contains("def Render():"));
 
     // Should have component import.
-    assert!(code.contains("from hyperhtml import component"));
+    assert!(code.contains("from hyper import component"));
     assert!(code.contains("@component"));
 }
 
@@ -82,7 +82,7 @@ fn test_component_always_imported() {
     let code = compile(source);
 
     // Should always import component for the decorator.
-    assert!(code.contains("from hyperhtml import component"));
+    assert!(code.contains("from hyper import component"));
     assert!(code.contains("@component"));
 
     // Should NOT have replace_markers (no markers needed)

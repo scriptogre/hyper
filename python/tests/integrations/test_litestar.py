@@ -1,8 +1,7 @@
 """Tests for using Hyper components with Litestar.
 
-A component is a ``str`` subclass; a handler with ``media_type=MediaType.HTML``
-returns it as ``text/html``. ``.stream()`` feeds a Litestar ``Stream`` response.
-No wrappers, no integration code.
+A handler renders a component with ``media_type=MediaType.HTML``.
+``render(stream=True)`` feeds a Litestar ``Stream`` response.
 
 The snippets here mirror the Litestar block in docs/design/integrations.md.
 """
@@ -13,7 +12,7 @@ from litestar import MediaType, get
 from litestar.response import Stream
 from litestar.testing import create_test_client
 
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -26,7 +25,7 @@ def Greeting(*, name: str):
 def test_return_component_is_html():
     @get("/", media_type=MediaType.HTML)
     async def index() -> str:
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
 
     with create_test_client([index]) as client:
         r = client.get("/")
@@ -39,7 +38,7 @@ def test_return_component_is_html():
 def test_user_input_escaped_in_component():
     @get("/", media_type=MediaType.HTML)
     async def index() -> str:
-        return Greeting(name="<script>")  # stands in for user input
+        return Greeting(name="<script>").render()  # stands in for user input
 
     with create_test_client([index]) as client:
         r = client.get("/")
@@ -52,7 +51,7 @@ def test_user_input_escaped_in_component():
 def test_stream_method_feeds_a_stream_response():
     @get("/stream", media_type=MediaType.HTML)
     async def stream() -> Stream:
-        return Stream(Greeting.stream(name="Ada"))
+        return Stream(Greeting(name="Ada").render(stream=True))
 
     with create_test_client([stream]) as client:
         r = client.get("/stream")

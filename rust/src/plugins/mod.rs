@@ -97,6 +97,7 @@ pub fn walk<P: Plugin + ?Sized>(nodes: &mut [Node], plugin: &mut P) -> Result<()
                     }
                 }
                 Node::Definition(def) => walk(&mut def.body, plugin)?,
+                Node::Function(_) => {}
                 Node::Text(_)
                 | Node::Expression(_)
                 | Node::Comment(_)
@@ -130,23 +131,32 @@ fn run_scoped(function: &mut Function) -> Result<(), CompileError> {
     Ok(())
 }
 
-fn run_component(function: &mut Function) -> Result<(), CompileError> {
-    ComponentControlFlow.run(function)?;
+fn run_function(function: &mut Function, is_component: bool) -> Result<(), CompileError> {
+    NestedFunctions.run(function)?;
+    if is_component {
+        ComponentControlFlow.run(function)?;
+    }
     run_scoped(function)
+}
+
+struct NestedFunctions;
+
+impl Plugin for NestedFunctions {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
+        let Node::Function(definition) = node else {
+            return Ok(Flow::Continue);
+        };
+        run_function(&mut definition.function, true)?;
+        Ok(Flow::SkipChildren)
+    }
 }
 
 /// Lower components, then run standard plugins once per function scope.
 pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
-    let mut components = Components::default();
-    components.run(&mut ast.function)?;
-    ast.definitions = components.into_definitions();
+    Components::lower(ast)?;
 
     for definition in &mut ast.definitions {
-        run_component(&mut definition.function)?;
+        run_function(&mut definition.function, true)?;
     }
-    if ast.mode == FileMode::ImplicitComponent {
-        run_component(&mut ast.function)
-    } else {
-        run_scoped(&mut ast.function)
-    }
+    run_function(&mut ast.function, ast.mode == FileMode::ImplicitComponent)
 }

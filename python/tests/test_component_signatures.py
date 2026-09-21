@@ -39,7 +39,7 @@ def test_implicit_component_props_are_keyword_only(tmp_path, monkeypatch):
 
     from app.pages import Page
 
-    assert Page(title="Home") == "<h1>Home</h1>"
+    assert Page(title="Home").render() == "<h1>Home</h1>"
     with pytest.raises(TypeError):
         Page("Home")
     assert (
@@ -52,20 +52,19 @@ def test_declared_component_props_and_spread_are_keyword_only(tmp_path, monkeypa
     monkeypatch.syspath_prepend(str(tmp_path))
     write(
         tmp_path / "app" / "components" / "controls.hyper",
-        """component Button(
+        """def Button(
     *,
     label: str,
     kind: str = "button",
     disabled: bool = False,
     **attrs,
-):
+) -> Component:
     <button>{label}</button>
-end
 """,
     )
 
     from app.components.controls import Button
-    from hyperhtml import Component
+    from hyper import Component
 
     signature = inspect.signature(Button)
     assert isinstance(Button, Component)
@@ -73,7 +72,10 @@ end
     assert signature.parameters["kind"].kind is inspect.Parameter.KEYWORD_ONLY
     assert signature.parameters["disabled"].kind is inspect.Parameter.KEYWORD_ONLY
     assert signature.parameters["attrs"].kind is inspect.Parameter.VAR_KEYWORD
-    assert Button(label="Save", disabled=True, id="save") == "<button>Save</button>"
+    assert (
+        Button(label="Save", disabled=True, id="save").render()
+        == "<button>Save</button>"
+    )
     with pytest.raises(TypeError):
         Button("Save")
 
@@ -91,10 +93,9 @@ def test_implicit_and_declared_slot_signatures_match(tmp_path, monkeypatch):
     )
     write(
         tmp_path / "app" / "components" / "layout.hyper",
-        """component Layout(*, title: str):
+        """def Layout(*, title: str) -> Component:
     <aside>{...sidebar}</aside>
     <main>{...}</main>
-end
 """,
     )
 
@@ -113,9 +114,13 @@ end
         parameter.kind is inspect.Parameter.KEYWORD_ONLY
         for parameter in layout_signature.parameters.values()
     )
-    assert Page(title="Home", content=[], sidebar=[]) == "<aside></aside><main></main>"
     assert (
-        Layout(title="Home", content=[], sidebar=[]) == "<aside></aside><main></main>"
+        Page(title="Home", content=[], sidebar=[]).render()
+        == "<aside></aside><main></main>"
+    )
+    assert (
+        Layout(title="Home", content=[], sidebar=[]).render()
+        == "<aside></aside><main></main>"
     )
 
 
@@ -126,9 +131,8 @@ end
 ---
 <p>{content}</p>
 """,
-        """component Panel(*, content: str):
+        """def Panel(*, content: str) -> Component:
     <p>{content}</p>
-end
 """,
     ],
 )
@@ -149,9 +153,8 @@ def test_content_is_reserved_for_the_default_slot(source):
 ---
 <header>{...header}</header>
 """,
-        """component Panel(*, header: str):
+        """def Panel(*, header: str) -> Component:
     <header>{...header}</header>
-end
 """,
     ],
 )
@@ -183,16 +186,15 @@ def test_named_slot_cannot_use_reserved_content_name():
 def test_declared_component_props_require_explicit_star():
     with pytest.raises(Exception) as caught:
         _native.transpile(
-            """component Button(label: str):
+            """def Button(label: str) -> Component:
     <button>{label}</button>
-end
 """,
             "controls.hyper",
         )
 
     message = str(caught.value)
     assert "keyword-only" in message
-    assert "component Button(*, label: str):" in message
+    assert "def Button(*, label: str) -> Component:" in message
 
 
 @pytest.mark.parametrize(
@@ -205,9 +207,8 @@ end
 def test_declared_components_reject_positional_signature_forms(signature):
     with pytest.raises(Exception) as caught:
         _native.transpile(
-            f"""component Button({signature}):
+            f"""def Button({signature}) -> Component:
     <button>Save</button>
-end
 """,
             "controls.hyper",
         )
@@ -259,7 +260,7 @@ def test_hyper_component_named_slot_composition(
 
     from app.pages import Confirm
 
-    assert Confirm() == (
+    assert Confirm().render() == (
         "<article><h2>Delete item</h2><main><p>This cannot be undone.</p></main>"
         "<footer><button>Delete</button></footer></article>"
     )
@@ -270,9 +271,8 @@ def test_component_tags_pass_declared_props_by_keyword(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(tmp_path))
     write(
         tmp_path / "app" / "components" / "controls.hyper",
-        """component Button(*, label: str):
+        """def Button(*, label: str) -> Component:
     <button>{label}</button>
-end
 """,
     )
     write(
@@ -285,42 +285,4 @@ end
 
     from app.pages import Page
 
-    assert Page() == "<button>Save</button>"
-
-
-@pytest.mark.skip(reason="@render_here is coming soon")
-def test_render_here_explicit_arguments_are_keyword_only(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(tmp_path))
-    write(
-        tmp_path / "app" / "pages" / "Page.hyper",
-        """label: str
----
-@render_here(label=label)
-component Button(*, label: str):
-    <button>{label}</button>
-end
-""",
-    )
-
-    from app.pages import Page
-
-    assert Page(label="Save") == "<button>Save</button>"
-
-
-@pytest.mark.skip(reason="@render_here is coming soon")
-def test_render_here_rejects_positional_arguments():
-    with pytest.raises(Exception) as caught:
-        _native.transpile(
-            """label: str
----
-@render_here(label)
-component Button(*, label: str):
-    <button>{label}</button>
-end
-""",
-            "Page.hyper",
-        )
-
-    message = str(caught.value)
-    assert "render_here" in message
-    assert "keyword" in message.lower()
+    assert Page().render() == "<button>Save</button>"

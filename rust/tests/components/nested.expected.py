@@ -1,4 +1,4 @@
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -13,7 +13,7 @@ def Nested(
         # <{CardHeader}>
         def _card_header_content():
             yield f"""<h2>{escape(title)}</h2>"""
-        yield from CardHeader.stream(content=_card_header_content())
+        yield from CardHeader(content=_card_header_content()).render(stream=True)
         # </{CardHeader}>
         # <{CardBody}>
         def _card_body_content():
@@ -23,13 +23,13 @@ def Nested(
                     # <{ListItem}>
                     def _list_item_content():
                         yield f"""{escape(item)}"""
-                    yield from ListItem.stream(content=_list_item_content())
+                    yield from ListItem(content=_list_item_content()).render(stream=True)
                     # </{ListItem}>
-            yield from List.stream(content=_list_content())
+            yield from List(content=_list_content()).render(stream=True)
             # </{List}>
-        yield from CardBody.stream(content=_card_body_content())
+        yield from CardBody(content=_card_body_content()).render(stream=True)
         # </{CardBody}>
-    yield from Card.stream(content=_card_content())
+    yield from Card(content=_card_content()).render(stream=True)
     # </{Card}>
 
     # Component in control flow
@@ -37,12 +37,12 @@ def Nested(
         # <{Alert}>
         def _alert_content():
             yield f"""<span>{escape(title)}</span>"""
-        yield from Alert.stream(content=_alert_content(), type="info")
+        yield from Alert(content=_alert_content(), type="info").render(stream=True)
         # </{Alert}>
     # Components in loop
     for item in items:
         # <{Badge}>
         def _badge_content():
             yield f"""{escape(item)}"""
-        yield from Badge.stream(content=_badge_content(), color="blue")
+        yield from Badge(content=_badge_content(), color="blue").render(stream=True)
         # </{Badge}>

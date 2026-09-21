@@ -1,8 +1,7 @@
 """Tests for using Hyper components with Flask.
 
-A component is a ``str`` subclass, so a Flask view returns it directly and the
-response is ``text/html``. ``.stream()`` returns a chunk iterator that Flask
-streams as-is. No wrappers, no integration code.
+A Flask view explicitly renders a component. ``render(stream=True)`` returns
+a chunk iterator that Flask streams as-is.
 
 The snippets here mirror the Flask block in docs/design/integrations.md.
 """
@@ -11,7 +10,7 @@ from __future__ import annotations
 
 from flask import Flask
 
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -26,7 +25,7 @@ def test_return_component_is_html():
 
     @app.get("/")
     def index():
-        return Greeting(name="Ada")
+        return Greeting(name="Ada").render()
 
     r = app.test_client().get("/")
 
@@ -40,7 +39,7 @@ def test_user_input_escaped_in_component():
 
     @app.get("/<name>")
     def show(name):
-        return Greeting(name=name)
+        return Greeting(name=name).render()
 
     body = app.test_client().get("/<script>").get_data(as_text=True)
 
@@ -53,7 +52,7 @@ def test_stream_method_feeds_a_streaming_response():
 
     @app.get("/stream")
     def stream():
-        return Greeting.stream(name="Ada")  # a bare chunk iterator; Flask streams it
+        return Greeting(name="Ada").render(stream=True)
 
     r = app.test_client().get("/stream")
 

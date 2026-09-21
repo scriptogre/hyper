@@ -7,7 +7,7 @@ Public API exports:
 """
 
 # Components
-from hyperhtml.decorators import Component, component
+from hyperhtml.decorators import Component, HtmlResult, component, subcomponent
 
 # HTML rendering helpers
 from hyperhtml.helpers import (
@@ -28,7 +28,9 @@ escape = escape_html
 __all__ = [
     # Components
     "Component",
+    "HtmlResult",
     "component",
+    "subcomponent",
     # Core escaping
     "Safe",
     "safe",

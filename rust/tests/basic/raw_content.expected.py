@@ -1,4 +1,4 @@
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component

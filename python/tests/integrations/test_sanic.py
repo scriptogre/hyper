@@ -1,7 +1,7 @@
 """Tests for using Hyper components with Sanic.
 
-A component is a ``str`` subclass; return it via ``response.html``. ``.stream()``
-feeds a ``ResponseStream``. No wrappers, no integration code.
+Render a component through ``response.html``. ``render(stream=True)`` feeds
+a ``ResponseStream``.
 
 The snippets here mirror the Sanic block in docs/design/integrations.md.
 """
@@ -11,7 +11,7 @@ from __future__ import annotations
 from sanic import Sanic, response
 from sanic.response import ResponseStream
 
-from hyperhtml import component, escape
+from hyper import component, escape
 
 
 @component
@@ -31,7 +31,7 @@ def test_return_component_is_html():
 
     @app.get("/")
     async def index(request):
-        return response.html(Greeting(name="Ada"))
+        return response.html(Greeting(name="Ada").render())
 
     _, r = app.test_client.get("/")
 
@@ -45,7 +45,7 @@ def test_user_input_escaped_in_component():
 
     @app.get("/")
     async def index(request):
-        return response.html(Greeting(name="<script>"))  # stands in for user input
+        return response.html(Greeting(name="<script>").render())
 
     _, r = app.test_client.get("/")
 
@@ -60,7 +60,7 @@ def test_stream_method_feeds_a_stream_response():
     @app.get("/stream")
     async def stream(request):
         async def body(res):
-            for chunk in Greeting.stream(name="Ada"):
+            for chunk in Greeting(name="Ada").render(stream=True):
                 await res.write(chunk)
 
         return ResponseStream(body, content_type="text/html")
