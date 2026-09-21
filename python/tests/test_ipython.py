@@ -51,7 +51,7 @@ def test_demo_notebook_runs(shell):
     for cell in notebook['cells']:
         result = shell.run_cell(''.join(cell['source']))
         result.raise_error()
-    assert 'Hello, Answer.AI!' in shell.user_ns['Greeting'](names=['Answer.AI'])
+    assert 'Hello, Answer.AI!' in shell.user_ns['Preview'](names=['Answer.AI'])
 
 
 def test_failed_rerun_preserves_last_working_component(shell):
@@ -59,3 +59,24 @@ def test_failed_rerun_preserves_last_working_component(shell):
     with pytest.raises(ValueError):
         shell.run_cell_magic('hyper', 'Greeting', '<p><div>Invalid</div></p>')
     assert shell.user_ns['Greeting']() == '<p>Works</p>'
+
+
+def test_plain_magic_uses_notebook_variables(shell):
+    shell.user_ns['names'] = ['Ada', '<Lin>']
+    result = shell.run_cell_magic('hyper', '',
+        'names: list[str]\n---\nfor name in names:\n    <p>{name}</p>\nend')
+    assert result.html == '<p>Ada</p><p>&lt;Lin&gt;</p>'
+    assert 'def Preview(' in result.python
+
+
+def test_plain_magic_reads_updated_variables(shell):
+    source = 'name: str\n---\n<p>{name}</p>'
+    shell.user_ns['name'] = 'Ada'
+    shell.run_cell_magic('hyper', '', source)
+    shell.user_ns['name'] = 'Lin'
+    assert shell.run_cell_magic('hyper', '', source).html == '<p>Lin</p>'
+
+
+def test_plain_magic_keeps_prop_defaults(shell):
+    result = shell.run_cell_magic('hyper', '', 'name: str = "Ada"\n---\n<p>{name}</p>')
+    assert result.html == '<p>Ada</p>'

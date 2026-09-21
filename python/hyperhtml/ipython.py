@@ -1,8 +1,8 @@
-"""Load with `%load_ext hyperhtml.ipython`; run `%%hyper Greeting name='Ada'`."""
+"""Load with `%load_ext hyperhtml.ipython`; run `%%hyper` using notebook variables."""
 
 from dataclasses import dataclass
 from html import escape
-from inspect import isawaitable
+from inspect import isawaitable, signature
 from keyword import iskeyword
 from uuid import uuid4
 
@@ -39,7 +39,7 @@ class HyperPreview:
 
 def load_ipython_extension(ipython):
     def hyper(line, cell):
-        """Compile and render trusted Hyper source: %%hyper Name prop=value, ..."""
+        """Render Hyper using notebook variables. A name and prop overrides are optional."""
         parts = line.strip().split(maxsplit=1)
         name = parts[0] if parts else 'Preview'
         if not name.isidentifier() or iskeyword(name):
@@ -47,8 +47,11 @@ def load_ipython_extension(ipython):
         namespace = dict(ipython.user_ns)
         generated = _native.transpile(cell, f'{name}.hyper')
         exec(compile(generated, f'{name}.hyper', 'exec'), namespace)
-        props = eval(f'dict({parts[1]})', ipython.user_ns) if len(parts) > 1 else {}
         component = namespace[name]
+        props = {key: ipython.user_ns[key] for key in signature(component).parameters
+                 if key in ipython.user_ns}
+        if len(parts) > 1:
+            props.update(eval(f'dict({parts[1]})', ipython.user_ns))
         rendered = component(**props)
         if isawaitable(rendered):
             rendered.close()
