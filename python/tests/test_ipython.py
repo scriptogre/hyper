@@ -1,3 +1,4 @@
+import ast
 import json
 from pathlib import Path
 
@@ -89,3 +90,23 @@ def test_named_components_can_be_composed(shell):
 
     assert result.html == '<section><button>Save</button></section>'
     assert shell.user_ns['Button']() == '<button>Save</button>'
+
+
+def test_public_notebook_bundles_current_sources():
+    root = Path(__file__).parents[2]
+    notebook = json.loads((root / 'examples/solveit-public.ipynb').read_text())
+    setup = ''.join(notebook['cells'][0]['source'])
+    tree = ast.parse('\n'.join(line for line in setup.splitlines() if not line.startswith('%')))
+    calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
+
+    write = next(call for call in calls if isinstance(call.func, ast.Attribute)
+                 and call.func.attr == 'write_text')
+    assert ast.literal_eval(write.args[0]) == (root / 'python/hyperhtml/ipython.py').read_text()
+
+    javascript = next(call for call in calls if isinstance(call.func, ast.Name)
+                      and call.func.id == 'Javascript')
+    bootstrap = ast.literal_eval(javascript.args[0])
+    assert json.dumps((root / 'examples/solveit-highlight.js').read_text()) in bootstrap
+
+    grammar = json.loads((root / 'editors/vscode/Syntaxes/hyper.tmLanguage.json').read_text())
+    assert json.dumps(grammar) in bootstrap
