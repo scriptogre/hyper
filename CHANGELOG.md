@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2026-09-21)
+
+- Expose colored compiler diagnostics through the Python API
+
 ## 0.2.0 (2026-09-21)
 
 - Replace `component` declarations with `def ... -> Component`
