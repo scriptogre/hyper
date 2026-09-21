@@ -232,11 +232,11 @@
           "beginCaptures": {
             "1": { "name": "entity.other.attribute-name.html" },
             "2": { "name": "punctuation.separator.key-value.html" },
-            "3": { "name": "punctuation.section.interpolation.begin" }
+            "3": { "name": "constant.character.format.placeholder.other.python" }
           },
           "end": "(\\})",
           "endCaptures": {
-            "1": { "name": "punctuation.section.interpolation.end" }
+            "1": { "name": "constant.character.format.placeholder.other.python" }
           },
           "patterns": [{ "include": "#python-expr" }]
         },
@@ -252,18 +252,19 @@
             "1": { "name": "punctuation.definition.string.end.html" }
           },
           "contentName": "string.quoted.double.html"
-        }
+        },
+        { "include": "#expression" }
       ]
     },
 
     "expression": {
       "begin": "(\\{)",
       "beginCaptures": {
-        "1": { "name": "punctuation.section.interpolation.begin" }
+        "1": { "name": "constant.character.format.placeholder.other.python" }
       },
       "end": "(\\})",
       "endCaptures": {
-        "1": { "name": "punctuation.section.interpolation.end" }
+        "1": { "name": "constant.character.format.placeholder.other.python" }
       },
       "patterns": [{ "include": "#python-expr" }]
     },
@@ -274,26 +275,7 @@
           "match": "\\.\\.\\.",
           "name": "keyword.operator.spread.python"
         },
-        {
-          "match": "\\b(True|False|None)\\b",
-          "name": "constant.language.python"
-        },
-        {
-          "match": "[0-9]+",
-          "name": "constant.numeric.python"
-        },
-        {
-          "match": "\"[^\"]*\"",
-          "name": "string.quoted.double.python"
-        },
-        {
-          "match": "'[^']*'",
-          "name": "string.quoted.single.python"
-        },
-        {
-          "match": "[a-z_][a-z_0-9]*",
-          "name": "variable.other.python"
-        }
+        { "include": "source.python" }
       ]
     }
   }
