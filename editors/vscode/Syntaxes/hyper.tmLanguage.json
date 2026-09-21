@@ -37,6 +37,7 @@
           "match": "^\\s*(if|elif|for|while|with|try|match)\\b(.+)(:)\\s*$",
           "captures": {
             "1": { "name": "keyword.control.flow.python" },
+            "2": { "patterns": [{ "include": "source.python" }] },
             "3": { "name": "punctuation.section.block.python" }
           }
         },
@@ -54,13 +55,6 @@
           "captures": {
             "1": { "name": "keyword.control.flow.python" },
             "3": { "name": "punctuation.section.block.python" }
-          }
-        },
-        {
-          "comment": "for..in: highlight 'in' only within a for-loop line",
-          "match": "^\\s*for\\b.+\\b(in)\\b.+:\\s*$",
-          "captures": {
-            "1": { "name": "keyword.operator.python" }
           }
         },
         {

@@ -38,6 +38,17 @@ test('component tags keep their shared grammar scopes', () => {
   expect(scopesAt('<{Button} />', 'Button')).toContain('support.class.component.html');
 });
 
+test('for loops highlight both the keyword and membership operator', () => {
+  const source = '    for name in names:';
+
+  expect(scopesAt(source, 'for')).toContain('keyword.control.flow.python');
+  expect(scopesAt(source, 'in')).toContain('keyword.operator.logical.python');
+});
+
+test('HTML prose does not treat in as Python', () => {
+  expect(scopesAt('<h1>Hyper in SolveIT</h1>', 'in')).toEqual(['source.hyper']);
+});
+
 test('notebook support only prepends the magic header rule', () => {
   expect(notebookGrammar(grammar).patterns.slice(1)).toEqual(grammar.patterns);
   expect(scopesAt('%%hyper Button', '%%hyper')).toContain('keyword.control.hyper');
