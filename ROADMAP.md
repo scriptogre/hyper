@@ -17,6 +17,7 @@
 
 ## Next
 
+- [ ] Preserve valid Python files unchanged
 - [ ] **Fix blank line handling** — `newline_is_content()` can't tell a line ending from a blank line. The generator works around this with `saturating_sub(1)`, which fixes component bodies but eats real blank lines (see `nested.hyper`).
 - [ ] **Document whitespace semantics** in `docs/design/templates.md` and `docs/implementation/templates.md`
 - [ ] Support multiline HTML tags (`<div\n  class="card">`)
