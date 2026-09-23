@@ -969,20 +969,9 @@ print(Login())
 
 ---
 
-## Imports and Helpers
+## Use Python Helpers
 
-Import every name used by the source:
-
-```hyper
-from hyper import Component, safe, subcomponent
-from typing import Any, Callable
-```
-
-Generated Python also imports the runtime helpers it uses: `component`, `escape`, `render_attr`, `render_class`, `render_style`, `render_data`, `render_aria`, and `spread_attrs`. These are compiler dependencies, not additional names to rely on in source.
-
-Generated slot parameters use `Iterable`, so the compiler imports it when needed. User-written `Iterable` annotations require an explicit import. Python builtins such as `str` and `list` need no import.
-
-Put imports and helper definitions above `---`.
+Define imports and helper functions above `---`.
 
 Create `components/Article.hyper`:
 
