@@ -2,7 +2,6 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Helper {
     Escape,
-    Safe,
     RenderClass,
     RenderStyle,
     RenderAttr,
@@ -16,7 +15,6 @@ impl Helper {
     pub fn import_name(&self) -> &'static str {
         match self {
             Helper::Escape => "escape",
-            Helper::Safe => "safe",
             Helper::RenderClass => "render_class",
             Helper::RenderStyle => "render_style",
             Helper::RenderAttr => "render_attr",
@@ -29,7 +27,6 @@ impl Helper {
     /// All helper variants, in import order
     pub const ALL: &'static [Helper] = &[
         Helper::Escape,
-        Helper::Safe,
         Helper::RenderClass,
         Helper::RenderStyle,
         Helper::RenderAttr,

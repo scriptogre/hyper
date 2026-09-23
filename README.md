@@ -172,6 +172,8 @@ Use `def ... -> Component` to group related components in one file:
 
 ```html
 # app/components/forms.hyper
+from hyper import Component
+
 def Button(*, label: str) -> Component:
     <button>{label}</button>
 
@@ -191,7 +193,7 @@ print(Button(label="Save"))
 <button>Save</button>
 ```
 
-`.hyper` files receive required runtime and typing imports automatically. In Python files, import the runtime from `hyper`:
+Import each name used by the source:
 
 ```python
 from hyper import Component

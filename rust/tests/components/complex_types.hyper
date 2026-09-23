@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 simple: str
 with_default: str = "default"
 optional: str | None = None

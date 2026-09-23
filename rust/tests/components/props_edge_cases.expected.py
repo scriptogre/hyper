@@ -2,7 +2,6 @@ from typing import Any
 from hyper import component, escape
 
 
-# Docstring in header
 @component
 def PropsEdgeCases(
         *,
@@ -17,6 +16,7 @@ def PropsEdgeCases(
         complex_default: dict = {"key": "value"},
         **kwargs: Any,
 ):
+    # Docstring in header
     """This is a component docstring."""
     # Various parameter patterns
     yield f"""\

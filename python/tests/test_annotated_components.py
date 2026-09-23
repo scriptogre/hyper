@@ -13,13 +13,11 @@ pytest.importorskip("hyperhtml._native")
 from hyperhtml import _native
 
 
-@pytest.fixture(
-    params=["", "from hyper import Component, subcomponent\n"],
-    ids=["automatic-imports", "explicit-imports"],
-)
-def compile_library(request):
+@pytest.fixture
+def compile_library():
     def compile_source(source: str):
-        generated = _native.transpile(request.param + source, "library.hyper")
+        imports = "from hyper import Component, subcomponent\n"
+        generated = _native.transpile(imports + source, "library.hyper")
         namespace = {}
         exec(compile(generated, "library.hyper", "exec", dont_inherit=True), namespace)
         return namespace

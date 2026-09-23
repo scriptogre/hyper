@@ -41,6 +41,7 @@ Use `generate()` to create multiple pages.
 
 ```hyper
 from content import posts
+from hyper import safe
 
 def generate() -> list[Template]:
     return [

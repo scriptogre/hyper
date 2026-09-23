@@ -31,6 +31,8 @@ Lowercase files are entrypoints called by routes. PascalCase names are component
 Keep small components in their entrypoint file:
 
 ```hyper
+from hyper import Component, subcomponent
+
 message: Message
 ---
 @subcomponent

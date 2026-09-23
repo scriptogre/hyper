@@ -243,9 +243,6 @@ impl PythonGenerator {
                 }
             }
             Node::Expression(expr) if in_fstring => {
-                if expr.expr.contains("safe(") {
-                    output.use_helper("safe");
-                }
                 if let Some(lowered) = lower_interpolation(expr) {
                     output.push("{");
                     print_expr(output, &lowered);
@@ -584,9 +581,6 @@ impl PythonGenerator {
 
     fn emit_expression(&self, expr: &ExpressionNode, output: &mut Output, indent: usize) {
         self.indent(output, indent);
-        if expr.expr.contains("safe(") {
-            output.use_helper("safe");
-        }
         if let Some(lowered) = lower_interpolation(expr) {
             output.push("yield ");
             print_expr(output, &lowered);
@@ -1454,46 +1448,16 @@ impl Generator for PythonGenerator {
 
         let (mut code, tracked_segments) = output.finish();
 
-        // Iterable import is needed when a param is typed with it (slot params).
+        // Slot parameters are generated with Iterable annotations.
         let needs_iterable = all_parameters.iter().any(|p| {
-            p.type_hint
-                .as_deref()
-                .is_some_and(|t| t.contains("Iterable"))
+            p.range.is_synthetic()
+                && p.type_hint
+                    .as_deref()
+                    .is_some_and(|t| t.contains("Iterable"))
         });
-
-        // Detect typing constructs needed from parameter type hints
-        let mut typing_imports: Vec<&str> = Vec::new();
-        let all_type_hints: String = all_parameters
-            .iter()
-            .filter_map(|p| p.type_hint.as_ref())
-            .cloned()
-            .collect::<Vec<_>>()
-            .join(" ");
-
-        if all_type_hints.contains("Any") {
-            typing_imports.push("Any");
-        }
-        if all_type_hints.contains("Callable") {
-            typing_imports.push("Callable");
-        }
-        if all_type_hints.contains("Optional") {
-            typing_imports.push("Optional");
-        }
-        if all_type_hints.contains("Union") {
-            typing_imports.push("Union");
-        }
-        if all_type_hints.contains("TypeVar") {
-            typing_imports.push("TypeVar");
-        }
 
         // Build import block
         let mut import_lines = String::new();
-
-        // Add typing imports if needed
-        if !typing_imports.is_empty() {
-            import_lines.push_str(&print_import_from(&import_from("typing", &typing_imports)));
-            import_lines.push('\n');
-        }
 
         // Add Iterable import if needed
         if needs_iterable {

@@ -29,7 +29,7 @@ impl Components {
             ..Self::default()
         };
         components.run(&mut ast.function)?;
-        ast.runtime_imports = ["component", "Component", "subcomponent"]
+        ast.runtime_imports = ["component"]
             .into_iter()
             .filter(|name| components.runtime_imports.contains(name))
             .collect();
@@ -63,11 +63,7 @@ impl Plugin for Components {
                 });
                 Ok(Flow::Continue)
             }
-            Node::Definition(definition) => {
-                let annotated = has_component_annotation(definition);
-                if annotated {
-                    self.runtime_imports.insert("Component");
-                }
+            Node::Definition(_) => {
                 self.scopes.push(Scope {
                     subcomponent: self.pending_subcomponent.take(),
                     ..Scope::default()
@@ -107,9 +103,6 @@ impl Plugin for Components {
 
         let is_subcomponent = scope.subcomponent.is_some();
         self.runtime_imports.insert("component");
-        if is_subcomponent {
-            self.runtime_imports.insert("subcomponent");
-        }
         let mut decorators = vec![component_decorator(&scope.children)];
         if let Some(subcomponent) = scope.subcomponent {
             decorators.insert(0, subcomponent);

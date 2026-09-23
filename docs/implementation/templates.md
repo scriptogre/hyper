@@ -139,6 +139,8 @@ A compound statement may have one `end`. Its `elif`, `else`, `except`, `finally`
 Short content may follow the outer colon on the same logical line and does not use `end`:
 
 ```hyper
+from hyper import Component
+
 if is_active: <span>Active</span>
 def Divider() -> Component: <hr />
 ```
@@ -155,7 +157,7 @@ Contract tests: `rust/tests/optional_end_tests.rs`.
 
 ### Add Imports
 
-Emit required runtime and typing imports according to [Imports and Helpers](../design/templates.md#imports-and-helpers).
+Preserve user imports. Add only names required by generated code, including runtime helpers and `Iterable` for generated slot parameters.
 
 Imports go above `---` and remain module-level:
 
@@ -221,6 +223,8 @@ The generator emits an `@component`-decorated render function while preserving i
 `@subcomponent` marks an independent nested definition for export. The compiler emits it before its parent and attaches it by name:
 
 ```hyper
+from hyper import Component, subcomponent
+
 def Page(*, title: str) -> Component:
     @subcomponent
     def Header(*, title: str) -> Component:
@@ -247,6 +251,8 @@ def Page(*, title: str):
 Default and named slots become keyword-only component arguments:
 
 ```hyper
+from hyper import Component
+
 def Layout(*, title: str) -> Component:
     <header>{...header}</header>
     <main>{...}</main>
@@ -375,6 +381,8 @@ yield f"""<div>{escape(user_input)}</div>"""
 Use `safe()` for trusted content:
 
 ```hyper
+from hyper import safe
+
 <div>{safe(html_content)}</div>
 ```
 

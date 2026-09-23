@@ -110,6 +110,7 @@ pages/
 **Dynamic route** (`pages/blog/[slug].hyper`):
 
 ```hyper
+from hyper import safe
 from models import Post
 
 slug: str  # Prop from URL

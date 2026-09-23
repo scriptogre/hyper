@@ -1,6 +1,6 @@
 # Component language implementation plan
 
-**Status:** Annotated definitions, lazy instances, explicit subcomponents, runtime imports, and optional `end` are implemented. Release validation remains.
+**Status:** Annotated definitions, lazy instances, explicit subcomponents, generated imports, and optional `end` are implemented. Release validation remains.
 
 This temporary checklist tracks delivery of the durable specifications:
 
@@ -27,13 +27,12 @@ The compiler follows the [annotated definition contract](../design/templates.md#
 
 Keep annotation aliases and precise async typing outside this slice until their behavior is decided.
 
-### Runtime Imports
+### Imports
 
-- [x] Test annotated definitions with automatic imports and explicit `from hyper import Component, subcomponent`.
-- [x] Add an independent `@subcomponent` export contract in both import modes.
-- [x] Document optional imports in `.hyper` files.
+- [x] Require explicit imports for names written in `.hyper` source.
+- [x] Import compiler-generated runtime helpers and slot annotations.
+- [x] Add an independent `@subcomponent` export contract.
 - [x] Expose the Python runtime as `hyper`; keep the distribution name `hyperhtml`.
-- [x] Supply required runtime imports during compilation.
 - [ ] Verify the import namespace and automatic activation from an installed wheel.
 
 `@render_here(...)` is on hold and outside this implementation batch.

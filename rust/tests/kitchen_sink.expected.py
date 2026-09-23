@@ -1,5 +1,6 @@
+from hyper import Component, safe, subcomponent
 from collections.abc import Iterable
-from hyper import component, Component, subcomponent, escape, safe, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
+from hyper import component, escape, render_class, render_style, render_attr, render_data, render_aria, spread_attrs
 
 
 # Kitchen sink: exercises every syntax construct for visual IDE smoke testing.

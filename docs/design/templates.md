@@ -433,6 +433,8 @@ Layout(
 `content` is reserved for the default slot. A prop cannot share a named slot's name:
 
 ```hyper
+from hyper import Component
+
 def Panel(*, sidebar: str) -> Component:
     <aside>{...sidebar}</aside>
 end
@@ -813,6 +815,8 @@ Use `-> Component` to write a template function. Hyper reads the annotation duri
 A standalone `{name}` in that function is template output, not a Python set expression.
 
 ```hyper
+from hyper import Component
+
 def Heading(*, text: str) -> Component:
     <h1>{text}</h1>
 end
@@ -828,6 +832,8 @@ html = heading.render()
 A function without template output remains an ordinary Python factory:
 
 ```hyper
+from hyper import Component
+
 def Greeting(*, name: str) -> Component:
     return Heading(text=f"Hello, {name}")
 end
@@ -836,6 +842,8 @@ end
 Use bare `return` to stop template output:
 
 ```hyper
+from hyper import Component
+
 def Greeting(*, name: str | None) -> Component:
     if name is None:
         <p>Hello, stranger</p>
@@ -848,6 +856,8 @@ end
 Do not mix template output and `return value` in the same function. Compose components with tags instead:
 
 ```hyper
+from hyper import Component
+
 def Greeting() -> Component:
     <h1>Hello</h1>
     <{Heading} text="Goodbye" />
@@ -863,6 +873,8 @@ These examples keep optional `end` markers for visual clarity. See [Block Bounda
 Nested component definitions use normal Python scope. They may capture values from their enclosing function:
 
 ```hyper
+from hyper import Component
+
 def Greeting(*, name: str) -> Component:
     def Heading() -> Component:
         <h1>Hello, {name}</h1>
@@ -873,6 +885,8 @@ def Greeting(*, name: str) -> Component:
 Add `@subcomponent` when callers also need the nested component:
 
 ```hyper
+from hyper import Component, subcomponent
+
 def Page(*, title: str) -> Component:
     @subcomponent
     def Header(*, title: str) -> Component:
@@ -907,6 +921,8 @@ Every template so far has defined one component named after its file.
 Group related components in one library file. Create `components/forms.hyper`:
 
 ```hyper
+from hyper import Component
+
 def Form(*, action: str) -> Component:
     <form {action}>
         {...}
@@ -955,21 +971,16 @@ print(Login())
 
 ## Imports and Helpers
 
-In `.hyper` files, these names need no explicit import:
+Import every name used by the source:
 
-| Names | When imported |
-|---|---|
-| `Component` | Used as a component annotation |
-| `subcomponent` | Used as a decorator |
-| `safe` | Called in a template expression |
-| `Any`, `Callable`, `Optional`, `Union`, `TypeVar` | Used in component prop annotations |
-| `Iterable` | Used in component prop annotations or generated slot parameters |
+```hyper
+from hyper import Component, safe, subcomponent
+from typing import Any, Callable
+```
 
 Generated Python also imports the runtime helpers it uses: `component`, `escape`, `render_attr`, `render_class`, `render_style`, `render_data`, `render_aria`, and `spread_attrs`. These are compiler dependencies, not additional names to rely on in source.
 
-Import everything else explicitly, including application components, models, other typing names, standard-library modules, and third-party libraries. Python builtins such as `str` and `list` need no import.
-
-Explicit imports of the listed names also work. Ordinary `.py` files use normal Python imports.
+Generated slot parameters use `Iterable`, so the compiler imports it when needed. User-written `Iterable` annotations require an explicit import. Python builtins such as `str` and `list` need no import.
 
 Put imports and helper definitions above `---`.
 
@@ -1047,6 +1058,8 @@ If `user_input` is `<script>alert('xss')</script>`, output is:
 Render trusted HTML with `safe()`:
 
 ```hyper
+from hyper import safe
+
 html_content: str
 
 ---
@@ -1130,6 +1143,8 @@ Plain HTML needs no separator:
 A component library needs no separator either:
 
 ```hyper
+from hyper import Component
+
 def Header(*, title: str) -> Component:
     <header>{title}</header>
 end
@@ -1156,6 +1171,8 @@ from app.pages import Home
 Declarations and Python without rendered output select library mode:
 
 ```hyper
+from hyper import Component
+
 DEFAULT_TITLE = "Home"
 
 def Header(*, title: str = DEFAULT_TITLE) -> Component:
