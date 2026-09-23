@@ -29,7 +29,6 @@ def test_annotated_factory_preserves_returned_identity(compile_library):
     library = compile_library("""
 def choose(*, value: Component) -> Component:
     return value
-end
 """)
     value = object()
 
@@ -41,7 +40,6 @@ def test_async_factory_remains_an_ordinary_coroutine_function(compile_library):
     library = compile_library("""
 async def choose(*, value: Component) -> Component:
     return value
-end
 """)
     value = object()
 
@@ -53,10 +51,9 @@ end
     ("body", "expected"),
     [
         ("    <h1>{name}</h1>\n", "<h1>&lt;Ada&gt;</h1>"),
-        ("    {name}\n", "&lt;Ada&gt;"),
         ("    if name:\n        <h1>{name}</h1>\n    end\n", "<h1>&lt;Ada&gt;</h1>"),
     ],
-    ids=["element", "expression", "conditional-markup"],
+    ids=["element", "conditional-markup"],
 )
 def test_template_returns_a_lazy_renderable_instance(compile_library, body, expected):
     library = compile_library(

@@ -836,7 +836,6 @@ from hyper import Component
 
 def Greeting(*, name: str) -> Component:
     return Heading(text=f"Hello, {name}")
-end
 ```
 
 Use bare `return` to stop template output:
@@ -1102,6 +1101,8 @@ posts: list[Post]
 ## File Structure
 
 Each file is one implicit component or one component library.
+
+If CPython accepts the complete file, Hyper loads it unchanged as a normal module. Use `---` or literal markup when the source needs template semantics.
 
 Use `---` to select an implicit component and separate setup from rendering:
 

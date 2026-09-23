@@ -9,7 +9,7 @@ import pytest
 
 pytest.importorskip("hyperhtml._native")
 
-from hyperhtml import _autohook
+from hyperhtml import _autohook, _native
 
 
 @pytest.fixture(autouse=True)
@@ -26,6 +26,32 @@ def hyper_imports():
 def write(path: Path, source: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(source)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "value = 1\n{value}\n",
+        "left = 1\nright = 2\nleft < right\n",
+        "end = 1\nend\n",
+    ],
+)
+def test_valid_python_passes_through_unchanged(source):
+    assert _native.transpile(source, "module.hyper") == source
+    assert _native.transpile_file(source, "module.hyper") == (source, None)
+
+
+def test_valid_python_hyper_file_imports_as_a_module(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(tmp_path))
+    write(
+        tmp_path / "app" / "compat.hyper",
+        'events = []\nevents.append("before")\n{events.append("set")}\n',
+    )
+
+    compat = importlib.import_module("app.compat")
+
+    assert isinstance(compat, ModuleType)
+    assert compat.events == ["before", "set"]
 
 
 def test_separator_selects_empty_implicit_component(tmp_path, monkeypatch):
