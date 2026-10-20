@@ -24,10 +24,18 @@ struct Scope {
 
 impl Components {
     pub fn lower(ast: &mut Ast) -> Result<(), CompileError> {
-        let mut components = Self::default();
-        components.lower_module(&mut ast.module)?;
+        // Module-level templates become exported definitions.
+        let mut components = Self {
+            library_root: true,
+            ..Self::default()
+        };
+        components.scopes.push(Scope::default());
+        walk(&mut ast.module.body, &mut components)?;
+        components.scopes.pop();
+
         if let Some(component) = &mut ast.file_component {
-            components.lower_file_component(&mut component.function)?;
+            components.library_root = false;
+            components.run(&mut component.function)?;
         }
         ast.runtime_imports = ["component"]
             .into_iter()
@@ -36,26 +44,11 @@ impl Components {
         ast.definitions = components.definitions;
         Ok(())
     }
-
-    /// Module-level templates become exported definitions.
-    fn lower_module(&mut self, module: &mut Function) -> Result<(), CompileError> {
-        self.library_root = true;
-        self.scopes.push(Scope::default());
-        walk(&mut module.body, self)?;
-        self.scopes.pop();
-        Ok(())
-    }
-
-    /// The file component is itself a component; nested templates stay inside it.
-    fn lower_file_component(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        self.library_root = false;
-        self.runtime_imports.insert("component");
-        self.run(function)
-    }
 }
 
 impl Plugin for Components {
     fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        self.runtime_imports.insert("component");
         self.scopes.push(Scope::default());
         walk(&mut function.body, self)?;
         let root = self.scopes.pop().expect("root component scope");
