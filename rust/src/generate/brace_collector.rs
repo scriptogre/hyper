@@ -13,7 +13,10 @@ pub fn collect_expression_braces(ast: &Ast) -> Vec<(usize, usize)> {
     for definition in &ast.definitions {
         collect_function_braces(&definition.function, &mut braces);
     }
-    collect_function_braces(&ast.function, &mut braces);
+    collect_function_braces(&ast.module, &mut braces);
+    if let Some(component) = &ast.file_component {
+        collect_function_braces(&component.function, &mut braces);
+    }
     braces
 }
 

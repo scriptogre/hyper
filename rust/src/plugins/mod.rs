@@ -3,6 +3,7 @@ mod component_control_flow;
 mod component_slots;
 mod components;
 mod context;
+mod file_component;
 mod mutable_defaults;
 mod rename_reserved_keywords;
 mod slots;
@@ -13,12 +14,13 @@ pub use component_control_flow::ComponentControlFlow;
 pub use component_slots::ComponentSlots;
 pub use components::Components;
 pub use context::{BLESSED_SPREAD_NAMES, Helper};
+pub use file_component::FileComponent;
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
 pub use slots::{DEFAULT_SLOT_PARAM, Slots, slot_param_name};
 pub use spread_kwargs::SpreadKwargs;
 
-use crate::ast::{Ast, FileMode, Function, Node};
+use crate::ast::{Ast, Function, Node};
 use crate::error::CompileError;
 
 /// Whether [`walk`] descends into a node's children after `enter`.
@@ -151,12 +153,18 @@ impl Plugin for NestedFunctions {
     }
 }
 
-/// Lower components, then run standard plugins once per function scope.
-pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
+/// Run the module passes, then the standard plugins once per function scope.
+/// `filename` names the implicit component when the file renders one.
+pub fn run(ast: &mut Ast, filename: Option<&str>) -> Result<(), CompileError> {
+    FileComponent::lower(ast, filename);
     Components::lower(ast)?;
 
     for definition in &mut ast.definitions {
         run_function(&mut definition.function, true)?;
     }
-    run_function(&mut ast.function, ast.mode == FileMode::ImplicitComponent)
+    run_function(&mut ast.module, false)?;
+    if let Some(component) = &mut ast.file_component {
+        run_function(&mut component.function, true)?;
+    }
+    Ok(())
 }

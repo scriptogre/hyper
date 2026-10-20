@@ -1,6 +1,6 @@
 use super::{Flow, Plugin, walk};
 use crate::ast::{
-    Ast, DecoratorNode, DefinitionKind, FileMode, FragmentNode, Function, FunctionDefinition, Node,
+    Ast, DecoratorNode, DefinitionKind, FragmentNode, Function, FunctionDefinition, Node,
     ParamKind, ParameterNode, Position, ReturnAnnotation, TextRange,
 };
 use crate::error::{CompileError, ErrorKind, ParseError};
@@ -24,11 +24,11 @@ struct Scope {
 
 impl Components {
     pub fn lower(ast: &mut Ast) -> Result<(), CompileError> {
-        let mut components = Self {
-            library_root: ast.mode == FileMode::Library,
-            ..Self::default()
-        };
-        components.run(&mut ast.function)?;
+        let mut components = Self::default();
+        components.lower_module(&mut ast.module)?;
+        if let Some(component) = &mut ast.file_component {
+            components.lower_file_component(&mut component.function)?;
+        }
         ast.runtime_imports = ["component"]
             .into_iter()
             .filter(|name| components.runtime_imports.contains(name))
@@ -36,13 +36,26 @@ impl Components {
         ast.definitions = components.definitions;
         Ok(())
     }
+
+    /// Module-level templates become exported definitions.
+    fn lower_module(&mut self, module: &mut Function) -> Result<(), CompileError> {
+        self.library_root = true;
+        self.scopes.push(Scope::default());
+        walk(&mut module.body, self)?;
+        self.scopes.pop();
+        Ok(())
+    }
+
+    /// The file component is itself a component; nested templates stay inside it.
+    fn lower_file_component(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        self.library_root = false;
+        self.runtime_imports.insert("component");
+        self.run(function)
+    }
 }
 
 impl Plugin for Components {
     fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        if !self.library_root {
-            self.runtime_imports.insert("component");
-        }
         self.scopes.push(Scope::default());
         walk(&mut function.body, self)?;
         let root = self.scopes.pop().expect("root component scope");

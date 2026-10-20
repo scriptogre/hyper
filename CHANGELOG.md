@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Decide implicit file components in a `FileComponent` module pass; the core AST and generator no longer branch on a file mode
+
 ## 0.2.1 (2026-09-21)
 
 - Expose colored compiler diagnostics through the Python API

@@ -11,31 +11,29 @@ use std::sync::Arc;
 // This allows the rest of the codebase to use a single TextRange type
 pub use crate::parse::tokenizer::{Position, TextRange};
 
-/// Whether a file renders an implicit component or exports declarations.
-/// Keep this on the file AST because plugins hoist declarations out of the body.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FileMode {
-    ImplicitComponent,
-    Library,
-}
-
 /// Abstract Syntax Tree
 #[derive(Debug, Clone)]
 pub struct Ast {
-    pub mode: FileMode,
+    /// Module-level imports, header comments, and statements.
+    pub module: Function,
+    /// Component functions hoisted to module level.
     pub definitions: Vec<FunctionDefinition>,
-    pub function: Function,
+    /// The component a rendering file compiles to. Set by the `FileComponent` pass.
+    pub file_component: Option<FunctionDefinition>,
     pub runtime_imports: Vec<&'static str>,
+    /// Whether the source has a `---` separator.
+    pub has_separator: bool,
     pub source: Arc<str>,
 }
 
 impl Ast {
-    pub fn new(mode: FileMode, function: Function, source: Arc<str>) -> Self {
+    pub fn new(module: Function, has_separator: bool, source: Arc<str>) -> Self {
         Self {
-            mode,
+            module,
             definitions: Vec::new(),
-            function,
+            file_component: None,
             runtime_imports: Vec::new(),
+            has_separator,
             source,
         }
     }

@@ -1378,14 +1378,16 @@ impl Generator for PythonGenerator {
         let mut output = Output::new();
 
         // Frontmatter and body are already split by the `lower` pass.
-        let function = &ast.function;
-        let parameters = self.function_parameters(function);
-        let mut all_parameters = parameters.clone();
+        let module = &ast.module;
+        let mut all_parameters = self.function_parameters(module);
         for definition in &ast.definitions {
             all_parameters.extend(self.function_parameters(&definition.function));
         }
-        let imports: Vec<&ImportNode> = function.imports.iter().collect();
-        let header_comments: Vec<&CommentNode> = function.header_comments.iter().collect();
+        if let Some(component) = &ast.file_component {
+            all_parameters.extend(self.function_parameters(&component.function));
+        }
+        let imports: Vec<&ImportNode> = module.imports.iter().collect();
+        let header_comments: Vec<&CommentNode> = module.header_comments.iter().collect();
 
         // Emit user imports
         for import in &imports {
@@ -1405,20 +1407,13 @@ impl Generator for PythonGenerator {
             });
         }
         let runtime_import_offset = output.position();
-        let function_name = options
-            .function_name
-            .as_deref()
-            .map(to_pascal_case)
-            .unwrap_or_else(|| "Render".to_string());
 
-        if ast.mode == FileMode::Library {
-            // Library statements define names used by component defaults and decorators.
-            let body: Vec<&Node> = function.body.iter().collect();
-            if !self.is_effectively_empty(&body) {
-                self.emit_nodes(&body, &mut output, 0);
-                output.newline();
-                output.newline();
-            }
+        // Module statements define names used by component defaults and decorators.
+        let body: Vec<&Node> = module.body.iter().collect();
+        if !self.is_effectively_empty(&body) {
+            self.emit_nodes(&body, &mut output, 0);
+            output.newline();
+            output.newline();
         }
 
         for definition in &ast.definitions {
@@ -1434,8 +1429,15 @@ impl Generator for PythonGenerator {
             output.newline();
         }
 
-        if ast.mode == FileMode::ImplicitComponent {
-            self.emit_render_function(&function_name, None, None, function, &mut output, 0);
+        if let Some(component) = &ast.file_component {
+            self.emit_render_function(
+                &component.name,
+                None,
+                None,
+                &component.function,
+                &mut output,
+                0,
+            );
         }
 
         // Hyper runtime imports, in Helper::ALL order, for helpers actually emitted.
@@ -1510,8 +1512,10 @@ impl Generator for PythonGenerator {
 
         CompileResult {
             code,
-            file_mode: ast.mode,
-            component_name: (ast.mode == FileMode::ImplicitComponent).then_some(function_name),
+            component_name: ast
+                .file_component
+                .as_ref()
+                .map(|component| component.name.clone()),
             segments,
             expression_braces,
         }
@@ -1638,18 +1642,6 @@ fn escape_string(s: &str) -> String {
 /// This is needed when single-quoted source values contain double quotes.
 fn escape_html_attr_quotes(s: &str) -> String {
     s.replace('"', "&quot;")
-}
-
-fn to_pascal_case(s: &str) -> String {
-    s.split('_')
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().chain(chars).collect(),
-            }
-        })
-        .collect()
 }
 
 fn import_from(module: &str, names: &[&str]) -> StmtImportFrom {

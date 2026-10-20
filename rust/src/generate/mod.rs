@@ -14,7 +14,7 @@ pub use output::{
 };
 pub use python::PythonGenerator;
 
-use crate::ast::{Ast, FileMode};
+use crate::ast::Ast;
 
 /// Generator options
 #[derive(Debug, Clone, Default)]
@@ -27,7 +27,6 @@ pub struct CompileOptions {
 #[derive(Debug, Clone)]
 pub struct CompileResult {
     pub code: String,
-    pub file_mode: FileMode,
     pub component_name: Option<String>,
     pub segments: Vec<Segment>,
     pub expression_braces: Vec<ExpressionBrace>,

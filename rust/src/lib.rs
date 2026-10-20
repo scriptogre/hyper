@@ -31,7 +31,7 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
     let parsed = parse::HyperParser::new().parse_file(source)?;
     let mut ast = lower::lower(parsed.nodes, source, parsed.has_separator);
 
-    plugins::run(&mut ast)?;
+    plugins::run(&mut ast, options.function_name.as_deref())?;
 
     let mut result = generate::PythonGenerator::new().generate(&ast, options);
 
@@ -69,7 +69,7 @@ fn function_name_from_filename(filename: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-pub use ast::{Ast, FileMode, Node, Position, TextRange};
+pub use ast::{Ast, Node, Position, TextRange};
 pub use error::{CompileError, ParseError, ParseResult};
 pub use generate::{CompileOptions, CompileResult};
 pub use parse::Parser;

@@ -299,7 +299,7 @@ Builds the source tree and validates its structure.
 
 ### Lowering and Plugins
 
-Lowering creates the compiler AST. Plugins transform it, collect metadata, and validate component scopes.
+Lowering creates a plain module AST: imports, header comments, params, decorators, and body. Module passes then apply file policy. `FileComponent` turns a rendering file into a component named after the file. `Components` hoists `def ... -> Component` templates. Scoped plugins then transform each function, collect metadata, and validate component scopes.
 
 ### Generator: Yield-Based Streaming
 
@@ -328,7 +328,6 @@ Python calls the Rust compiler through PyO3 and executes generated code in memor
 Compilation returns generated Python plus structured metadata:
 
 ```text
-file mode
 implicit component name
 exports
 source ranges
