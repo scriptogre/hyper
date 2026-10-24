@@ -74,7 +74,7 @@ Use Ruff generation for compiler-made fragments where it fits. Do not assume Ruf
 
 Every mapped source range has an exact generated range.
 
-The source-preserving mechanism may use AST printing or ranged edits. Recovery of generated-fragment subranges also remains open.
+Generated fragments splice verbatim user slices into Ruff-printed calls so user source ranges remain exact. Whole-file source-preserving generation may use AST printing or ranged edits.
 
 ## Positions
 
@@ -151,9 +151,9 @@ CLI and PyO3 delivery may be a third crate, HTML features, or binaries. Exact cr
 ## Implementation order
 
 1. Prove syntax lowering preserves original ranges and supports existing language fixtures.
-2. Prove source-preserving generation and exact generated ranges.
-3. Introduce Ruff and result and diagnostic types behind current behavior.
-4. Move built-in language features onto the shared plugin interface.
+2. Prove whole-file source-preserving generation and exact generated ranges.
+3. Introduce `ruff_source_file`, result, and `lsp_types::Diagnostic` types behind current behavior.
+4. Move remaining built-in language features onto the shared plugin interface.
 5. Separate generic core from HTML and delivery.
 
 Each step preserves generated behavior, error and help locations, IDE injections, UTF encodings, CLI behavior, and PyO3 behavior unless deliberately changed and reviewed.
@@ -161,7 +161,7 @@ Each step preserves generated behavior, error and help locations, IDE injections
 ## Open mechanisms
 
 - syntax placeholder and region binding
-- source-preserving generation and generated-fragment subranges
+- whole-file source-preserving generation
 - stable node identity after replacement
 - preset dependency and order validation
 - an optional shared indentation-aware scanner

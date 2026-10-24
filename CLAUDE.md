@@ -37,13 +37,13 @@ The `compile` recipe accepts directories — it walks them for `.hyper` files.
 
 ## Transpiler Architecture
 
-Three-stage pipeline in `rust/src/lib.rs`:
+Pipeline in `rust/src/lib.rs` (target architecture in `docs/implementation/architecture.md`):
 
-1. **Parser** (`parser/`) — `tokenizer.rs` lexes into tokens, `tree_builder.rs` builds AST. Line-based tokenizer with `after_structural` flag for comment detection, `is_control_flow()` requiring trailing `:` to distinguish Python keywords from content text.
+1. **Parser** (`parse/`) — `tokenizer.rs` lexes into tokens, `tree_builder.rs` builds the AST, using `ruff_python_parser` for Python statements and f-string expression parts.
 
-2. **Transformer** (`transform/`) — Visitor-pattern plugins (`HelperDetectionPlugin`, `AsyncDetectionPlugin`, `SlotDetectionPlugin`, `SpreadDetectionPlugin`) analyze the AST and produce `TransformMetadata`.
+2. **Lowering & Plugins** (`lower.rs`, `plugins/`) — `lower.rs` splits module frontmatter from body, `FileComponent` and `Components` lower component scopes, and `Preset` runs `ComponentSlots`, `RenameReservedKeywords`, `Async`, `Slots`, `MutableDefaults`, and `SpreadKwargs` in one traversal.
 
-3. **Generator** (`generate/`) — `python.rs` combines consecutive text/expression/element nodes into single f-strings, emits control flow as separate statements. `injection_analyzer.rs` produces IDE language injection ranges. `output.rs` tracks source positions with UTF-16 mapping.
+3. **Generator** (`generate/`) — `python.rs` and `print.rs` emit Python (using `ruff_python_codegen` for generated fragments and verbatim `Code` slices for user Python), `html_segments.rs` and `brace_collector.rs` emit IDE metadata, and `output.rs` tracks UTF-16 positions.
 
 ### Compile-time HTML validation (`html.rs` + `tree_builder.rs`)
 
@@ -60,7 +60,7 @@ Validation uses an `element_stack` in `TreeBuilder` for parent context.
 - `render()` — plain text (for piped output, tests)
 - `render_color()` — colored (red errors, blue line numbers, cyan related spans, yellow help)
 - `Display` impl outputs just the message (no redundant kind prefix)
-- Errors support `related_span` with custom `related_label` and multiline `help` text
+- Errors support `related_range` with custom `related_label` and multiline `help` text
 
 ## Testing
 
@@ -105,7 +105,6 @@ cargo run --bin accept_expected -- basic --apply   # Write matching "basic"
 - Transpiler binary must be rebuilt and re-bundled for plugin changes: `just build`
 - Plugin requires JDK 17+
 - Expected output files (`.expected.py`, `.expected.json`, `.expected.err`) are managed by `cargo run --bin accept_expected` — never edit them by hand
-- The tokenizer is line-based; multiline HTML tags (attributes spanning lines) are a known limitation. Multiline Python expressions work via bracket depth tracking.
 - `is_control_flow()` uses trailing `:` heuristic — content text that starts with a Python keyword and ends with `:` inside an element is an edge case
 
 ## Bug Fix Workflow
