@@ -1,6 +1,6 @@
 # Template Compiler
 
-This document defines the approved compiler target. Open decisions remain in [the implementation plan](component-language-plan.md).
+This document describes the current `.hyper`-to-Python behavior. Future compiler work lives in [Compiler architecture and migration](architecture.md).
 
 Components compile to Python generator functions. Component libraries compile to Python modules.
 
@@ -288,6 +288,8 @@ Implicit components and annotated template definitions infer async from `await`,
 `<>...</>` parses as a transparent fragment node and emits only its children.
 
 ## Compiler Pipeline
+
+This section describes the current implementation.
 
 ```text
 Source → Parse → Lower → Plugins → Generate → Map
