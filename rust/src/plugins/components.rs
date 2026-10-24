@@ -4,6 +4,8 @@ use crate::ast::{
     ParamKind, ParameterNode, Position, ReturnAnnotation, TextRange,
 };
 use crate::error::{CompileError, ErrorKind, ParseError};
+use ruff_python_ast::Stmt;
+use ruff_text_size::{Ranged, TextRange as PyRange};
 use std::collections::BTreeSet;
 
 #[derive(Default)]
@@ -167,113 +169,61 @@ fn lower_definition(
     debug_assert!(has_component_annotation(definition));
     let is_async = signature.starts_with("async def ");
     let source = format!("{signature}\n    pass");
-    let mut parser = tree_sitter::Parser::new();
-    parser
-        .set_language(&tree_sitter_python::LANGUAGE.into())
-        .expect("tree-sitter Python language");
-    let tree = parser
-        .parse(&source, None)
-        .expect("tree-sitter returned no tree");
-    let root = tree.root_node();
-    let function = root
-        .named_child(0)
-        .filter(|node| node.kind() == "function_definition" && !node.has_error())
-        .ok_or_else(|| invalid_signature(definition.range))?;
-    let name_node = function.child_by_field_name("name").expect("function name");
-    let params_node = function
-        .child_by_field_name("parameters")
-        .expect("function parameters");
-    let return_annotation =
-        function
-            .child_by_field_name("return_type")
-            .map(|node| ReturnAnnotation {
-                source: text(&source, node).to_string(),
-                range: mapped_range(definition, node.start_byte(), node.end_byte()),
-            });
-    let name = text(&source, name_node).to_string();
-    let name_range = mapped_range(definition, name_node.start_byte(), name_node.end_byte());
-    let mut params = Vec::new();
-    let mut keyword_only = false;
-    let mut cursor = params_node.walk();
+    let Some(Stmt::FunctionDef(function)) = ruff_python_parser::parse_module(&source)
+        .ok()
+        .and_then(|parsed| parsed.into_syntax().body.into_iter().next())
+    else {
+        return Err(invalid_signature(definition.range));
+    };
+    let name = function.name.id.to_string();
+    let parameters = &function.parameters;
 
-    for node in params_node.children(&mut cursor) {
-        if !node.is_named() {
-            match node.kind() {
-                "*" => keyword_only = true,
-                "/" => return Err(keyword_only_error(definition, node, &name)),
-                _ => {}
-            }
-            continue;
-        }
-
-        match node.kind() {
-            "keyword_separator" => {
-                keyword_only = true;
-                continue;
-            }
-            "positional_separator" => {
-                return Err(keyword_only_error(definition, node, &name));
-            }
-            _ => {}
-        }
-
-        let (name_node, type_node, default_node) = match node.kind() {
-            "identifier" => (node, None, None),
-            "typed_parameter" => {
-                let type_node = node.child_by_field_name("type").expect("parameter type");
-                let name_node = first_named_child_except(node, type_node).expect("parameter name");
-                (name_node, Some(type_node), None)
-            }
-            "default_parameter" => (
-                node.child_by_field_name("name").expect("parameter name"),
-                None,
-                Some(
-                    node.child_by_field_name("value")
-                        .expect("parameter default"),
-                ),
-            ),
-            "typed_default_parameter" => (
-                node.child_by_field_name("name").expect("parameter name"),
-                Some(node.child_by_field_name("type").expect("parameter type")),
-                Some(
-                    node.child_by_field_name("value")
-                        .expect("parameter default"),
-                ),
-            ),
-            "dictionary_splat_pattern" => (node, None, None),
-            "list_splat_pattern" => {
-                return Err(keyword_only_error(definition, node, &name));
-            }
-            _ => {
-                return Err(invalid_signature(mapped_range(
-                    definition,
-                    node.start_byte(),
-                    node.end_byte(),
-                )));
-            }
-        };
-
-        let kind = parameter_kind(name_node, definition, &name)?;
-        if kind != ParamKind::VarKeyword && !keyword_only {
-            return Err(keyword_only_error(definition, node, &name));
-        }
-
-        params.push(ParameterNode {
-            name: text(&source, name_node).to_string(),
-            type_hint: type_node.map(|value| text(&source, value).to_string()),
-            default: default_node.map(|value| text(&source, value).to_string()),
-            kind,
-            range: mapped_range(definition, node.start_byte(), node.end_byte()),
-        });
+    let positional = parameters
+        .posonlyargs
+        .iter()
+        .chain(&parameters.args)
+        .map(Ranged::range)
+        .chain(parameters.vararg.as_deref().map(Ranged::range))
+        .next();
+    if let Some(range) = positional {
+        return Err(keyword_only_error(definition, range, &name));
     }
+
+    let text = |range: PyRange| source[range].to_string();
+    let keyword_only = parameters.kwonlyargs.iter().map(|param| ParameterNode {
+        name: param.name().id.to_string(),
+        type_hint: param
+            .annotation()
+            .map(|annotation| text(annotation.range())),
+        default: param.default().map(|default| text(default.range())),
+        kind: ParamKind::KeywordOnly,
+        range: mapped_range(definition, param.range()),
+    });
+    let var_keyword = parameters.kwarg.as_deref().map(|kwarg| ParameterNode {
+        name: format!("**{}", kwarg.name.id),
+        type_hint: kwarg
+            .annotation()
+            .map(|annotation| text(annotation.range())),
+        default: None,
+        kind: ParamKind::VarKeyword,
+        range: mapped_range(definition, kwarg.range()),
+    });
+    let params = keyword_only
+        .chain(var_keyword)
+        .map(Node::Parameter)
+        .collect();
+    let return_annotation = function.returns.as_deref().map(|returns| ReturnAnnotation {
+        source: text(returns.range()),
+        range: mapped_range(definition, returns.range()),
+    });
 
     Ok(FunctionDefinition {
         name,
-        name_range,
+        name_range: mapped_range(definition, function.name.range()),
         return_annotation,
         function: Function {
             is_async,
-            params: params.into_iter().map(Node::Parameter).collect(),
+            params,
             imports: Vec::new(),
             decorators,
             header_comments: Vec::new(),
@@ -283,39 +233,9 @@ fn lower_definition(
     })
 }
 
-fn parameter_kind(
-    node: tree_sitter::Node<'_>,
-    definition: &crate::ast::DefinitionNode,
-    component_name: &str,
-) -> Result<ParamKind, CompileError> {
-    match node.kind() {
-        "identifier" => Ok(ParamKind::KeywordOnly),
-        "dictionary_splat_pattern" => Ok(ParamKind::VarKeyword),
-        "list_splat_pattern" => Err(keyword_only_error(definition, node, component_name)),
-        _ => Err(invalid_signature(mapped_range(
-            definition,
-            node.start_byte(),
-            node.end_byte(),
-        ))),
-    }
-}
-
-fn first_named_child_except<'tree>(
-    node: tree_sitter::Node<'tree>,
-    except: tree_sitter::Node<'tree>,
-) -> Option<tree_sitter::Node<'tree>> {
-    let mut cursor = node.walk();
-    node.named_children(&mut cursor)
-        .find(|child| child.id() != except.id())
-}
-
-fn text<'a>(source: &'a str, node: tree_sitter::Node<'_>) -> &'a str {
-    &source[node.byte_range()]
-}
-
 fn keyword_only_error(
     definition: &crate::ast::DefinitionNode,
-    node: tree_sitter::Node<'_>,
+    range: PyRange,
     name: &str,
 ) -> CompileError {
     let parameters = definition
@@ -327,7 +247,7 @@ fn keyword_only_error(
     ParseError::new(
         ErrorKind::InvalidSyntax,
         "Component props must be keyword-only.",
-        mapped_range(definition, node.start_byte(), node.end_byte()),
+        mapped_range(definition, range),
     )
     .with_help(format!(
         "Add `*,` before the first prop:\n\n  def {name}(*, {parameters}) -> Component:"
@@ -347,22 +267,11 @@ fn invalid_signature(range: TextRange) -> CompileError {
     .into()
 }
 
-fn mapped_range(
-    definition: &crate::ast::DefinitionNode,
-    python_start: usize,
-    python_end: usize,
-) -> TextRange {
+fn mapped_range(definition: &crate::ast::DefinitionNode, range: PyRange) -> TextRange {
+    let base = definition.signature_range.start;
     TextRange {
-        start: position_at(
-            definition.signature_range.start,
-            &definition.signature,
-            python_start,
-        ),
-        end: position_at(
-            definition.signature_range.start,
-            &definition.signature,
-            python_end,
-        ),
+        start: position_at(base, &definition.signature, range.start().to_usize()),
+        end: position_at(base, &definition.signature, range.end().to_usize()),
     }
 }
 

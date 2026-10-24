@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, ParseError, ParseResult};
+use ruff_python_ast::{Expr, Stmt};
 
 /// Position in source code (byte offset only; convert to UTF-16 at output time)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -210,8 +211,6 @@ pub struct Tokenizer<'a> {
     source: &'a str,
     bytes: &'a [u8],
     position: Position,
-    /// Parser for Python classification
-    parser: tree_sitter::Parser,
     /// Track if we're inside a multi-line string (""" or ''')
     in_multiline_string: Option<&'static str>,
     /// Track if we're inside raw content (<style>, <script>, or `raw:` block).
@@ -247,16 +246,10 @@ pub(crate) fn is_parameter_declaration(line: &str) -> bool {
 
 impl<'a> Tokenizer<'a> {
     pub fn new(source: &'a str) -> Self {
-        let mut parser = tree_sitter::Parser::new();
-        parser
-            .set_language(&tree_sitter_python::LANGUAGE.into())
-            .expect("tree-sitter-python grammar is statically linked");
-
         Self {
             source,
             bytes: source.as_bytes(),
             position: Position::new(),
-            parser,
             in_multiline_string: None,
             in_raw_content: None,
         }
@@ -567,7 +560,7 @@ impl<'a> Tokenizer<'a> {
         }
         // 7.6. Parameter declarations (*args: type, **kwargs: type, name: type)
         // These aren't valid Python statements but are valid in header zone
-        // 8. Check if it's a Python statement using tree-sitter
+        // 8. Check if it's a Python statement using the Python parser
         else if is_parameter_declaration(&line_content) || self.is_python_statement(&line_content)
         {
             self.tokenize_python_statement(tokens);
@@ -708,7 +701,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     /// Fast heuristic: check if line is obviously NOT Python
-    /// This avoids expensive tree-sitter calls for most content lines
+    /// This avoids expensive parser calls for most content lines
     fn is_obviously_content(&self, trimmed: &str) -> bool {
         // Empty or whitespace-only
         if trimmed.is_empty() {
@@ -742,7 +735,7 @@ impl<'a> Tokenizer<'a> {
         }
 
         // Uppercase names may be Python constants; patterns below distinguish them from prose.
-        // Check for common Python statement patterns that REQUIRE tree-sitter
+        // Check for common Python statement patterns that REQUIRE the parser
         // These are the only cases worth parsing
         let needs_parsing =
             // Assignment patterns
@@ -785,72 +778,54 @@ impl<'a> Tokenizer<'a> {
             return false;
         }
 
-        // Fast path: skip tree-sitter for obvious content
+        // Fast path: skip the parser for obvious content
         if self.is_obviously_content(trimmed) {
             return false;
         }
 
         // Special handling for "class = ..." - Python reserved keyword used as variable
-        // This pattern can't be parsed by tree-sitter but is valid in .hyper files
+        // This pattern can't be parsed as Python but is valid in .hyper files
         if trimmed.starts_with("class =") || trimmed.starts_with("class=") {
             return true;
         }
 
         // Check for potential multiline statements (unclosed brackets with assignment pattern)
-        // These may fail tree-sitter parsing because they're incomplete
+        // These may fail Python parsing because they're incomplete
         if self.looks_like_multiline_start(trimmed) {
             return true;
         }
 
-        // Try to parse with tree-sitter
-        if let Some(tree) = self.parser.parse(trimmed, None) {
-            let root = tree.root_node();
-
-            // Parse error = not Python (unless it's a multiline continuation)
-            if root.has_error() {
-                return false;
-            }
-
-            if root.kind() == "module"
-                && let Some(child) = root.child(0)
-            {
-                match child.kind() {
-                    // These are definitely Python statements
-                    "assignment"
-                    | "augmented_assignment"
-                    | "import_statement"
-                    | "import_from_statement"
-                    | "return_statement"
-                    | "raise_statement"
-                    | "assert_statement"
-                    | "pass_statement"
-                    | "break_statement"
-                    | "continue_statement"
-                    | "delete_statement"
-                    | "global_statement"
-                    | "nonlocal_statement" => {
-                        return true;
-                    }
-                    "expression_statement" => {
-                        // Check if it's a meaningful expression (call, await, etc.)
-                        if let Some(expr) = child.child(0) {
-                            return matches!(
-                                expr.kind(),
-                                "call"
-                                    | "await"
-                                    | "yield"
-                                    | "named_expression"
-                                    | "assignment"
-                                    | "augmented_assignment"
-                            );
-                        }
-                    }
-                    _ => {}
-                }
-            }
+        // Any syntax error means the line is not Python.
+        let Ok(parsed) = ruff_python_parser::parse_module(trimmed) else {
+            return false;
+        };
+        match parsed.syntax().body.first() {
+            Some(
+                Stmt::Assign(_)
+                | Stmt::AnnAssign(_)
+                | Stmt::AugAssign(_)
+                | Stmt::Import(_)
+                | Stmt::ImportFrom(_)
+                | Stmt::Return(_)
+                | Stmt::Raise(_)
+                | Stmt::Assert(_)
+                | Stmt::Pass(_)
+                | Stmt::Break(_)
+                | Stmt::Continue(_)
+                | Stmt::Delete(_)
+                | Stmt::Global(_)
+                | Stmt::Nonlocal(_),
+            ) => true,
+            Some(Stmt::Expr(statement)) => matches!(
+                *statement.value,
+                Expr::Call(_)
+                    | Expr::Await(_)
+                    | Expr::Yield(_)
+                    | Expr::YieldFrom(_)
+                    | Expr::Named(_)
+            ),
+            _ => false,
         }
-
-        false
     }
 
     /// Check if a line is an HTML variable assignment: `name = <...>` or `name = (...)`
