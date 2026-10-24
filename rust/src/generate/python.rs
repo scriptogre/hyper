@@ -3,9 +3,9 @@ use super::{
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_segments_for_component, html_segments_for_element,
 };
-use crate::ast::python::{Alias, Code, Identifier, StmtImportFrom};
+use crate::ast::python::Code;
 use crate::ast::*;
-use crate::generate::print::{print_code, print_expr, print_import_from};
+use crate::generate::print::{print_code, print_helper_call, print_import_from};
 use crate::html;
 use crate::lower::{code_span, helper_call, lower_interpolation, render_attr_call};
 use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
@@ -245,7 +245,7 @@ impl PythonGenerator {
             Node::Expression(expr) if in_fstring => {
                 if let Some(lowered) = lower_interpolation(expr) {
                     output.push("{");
-                    print_expr(output, &lowered);
+                    print_helper_call(output, &lowered);
                     output.push("}");
                     return;
                 }
@@ -401,7 +401,7 @@ impl PythonGenerator {
                                 value_start_byte + expr_byte_start,
                                 value_start_byte + expr_byte_end,
                             );
-                            print_expr(output, &helper_call("escape", code));
+                            print_helper_call(output, &helper_call("escape", code));
                             output.push("}");
                         } else if ch == '"' {
                             output.push("&quot;");
@@ -481,12 +481,12 @@ impl PythonGenerator {
                 output.push(" ");
                 output.push(name);
                 output.push("=\"{");
-                print_expr(output, &expr);
+                print_helper_call(output, &expr);
                 output.push("}\"");
             }
             Scaffold::Whole => {
                 output.push("{");
-                print_expr(output, &expr);
+                print_helper_call(output, &expr);
                 output.push("}");
             }
         }
@@ -583,7 +583,7 @@ impl PythonGenerator {
         self.indent(output, indent);
         if let Some(lowered) = lower_interpolation(expr) {
             output.push("yield ");
-            print_expr(output, &lowered);
+            print_helper_call(output, &lowered);
             output.newline();
             return;
         }
@@ -1463,16 +1463,13 @@ impl Generator for PythonGenerator {
 
         // Add Iterable import if needed
         if needs_iterable {
-            import_lines.push_str(&print_import_from(&import_from(
-                "collections.abc",
-                &["Iterable"],
-            )));
+            import_lines.push_str(&print_import_from("collections.abc", &["Iterable"]));
             import_lines.push('\n');
         }
 
         // Add Hyper runtime imports
         if !hyper_imports.is_empty() {
-            import_lines.push_str(&print_import_from(&import_from("hyper", &hyper_imports)));
+            import_lines.push_str(&print_import_from("hyper", &hyper_imports));
             import_lines.push('\n');
         }
         import_lines.push_str("\n\n"); // Two blank lines before function (PEP 8)
@@ -1642,20 +1639,6 @@ fn escape_string(s: &str) -> String {
 /// This is needed when single-quoted source values contain double quotes.
 fn escape_html_attr_quotes(s: &str) -> String {
     s.replace('"', "&quot;")
-}
-
-fn import_from(module: &str, names: &[&str]) -> StmtImportFrom {
-    StmtImportFrom {
-        module: Some(Identifier::new(module)),
-        names: names
-            .iter()
-            .map(|n| Alias {
-                name: Identifier::new(*n),
-                asname: None,
-            })
-            .collect(),
-        level: 0,
-    }
 }
 
 /// Build a `Code` whose source spans `[start, start + source.len())` in `.hyper`.

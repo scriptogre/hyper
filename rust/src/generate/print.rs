@@ -1,19 +1,39 @@
-//! Printer for output AST nodes. Renders to source text byte-identical to the
-//! prior `format!` paths; caller owns trailing newlines.
+//! Printer for output nodes. Ruff codegen prints compiler-generated Python;
+//! user `Code` is pushed verbatim. Caller owns trailing newlines.
 
-use crate::ast::python::{Alias, Code, Expr, StmtImportFrom};
+use ruff_python_ast::str::Quote;
+use ruff_python_ast::{
+    Alias, Arguments, AtomicNodeIndex, Expr, ExprCall, ExprContext, ExprName, ExprStringLiteral,
+    Identifier, Stmt, StmtImportFrom, StringLiteral, StringLiteralFlags, StringLiteralValue,
+};
+use ruff_python_codegen::{Generator, Indentation};
+use ruff_text_size::TextRange;
+
+use crate::ast::python::{Code, HelperCall};
 use crate::generate::{Language, Output, Segment};
 
-pub fn print_import_from(stmt: &StmtImportFrom) -> String {
-    let module = stmt.module.as_ref().map(|m| m.id.as_str()).unwrap_or("");
-    let dots = ".".repeat(stmt.level as usize);
-    let names = stmt
-        .names
-        .iter()
-        .map(print_alias)
-        .collect::<Vec<_>>()
-        .join(", ");
-    format!("from {dots}{module} import {names}")
+/// Stands in for user `Code` while Ruff prints the generated call around it.
+const CODE_PLACEHOLDER: &str = "__hyper_code__";
+
+/// `from <module> import <names>`, built as a Ruff node and printed by Ruff.
+pub fn print_import_from(module: &str, names: &[&str]) -> String {
+    let stmt = Stmt::ImportFrom(StmtImportFrom {
+        node_index: AtomicNodeIndex::default(),
+        range: TextRange::default(),
+        module: Some(Identifier::new(module, TextRange::default())),
+        names: names
+            .iter()
+            .map(|name| Alias {
+                range: TextRange::default(),
+                node_index: AtomicNodeIndex::default(),
+                name: Identifier::new(*name, TextRange::default()),
+                asname: None,
+            })
+            .collect(),
+        level: 0,
+        is_lazy: false,
+    });
+    Generator::new(&Indentation::default(), Default::default()).stmt(&stmt)
 }
 
 /// Write verbatim source. Record a Python-injection segment when the range
@@ -35,38 +55,51 @@ pub fn print_code(output: &mut Output, code: &Code) {
     }
 }
 
-/// Print an output expression. `Code` records its own source segment via
-/// `print_code`; synthetic scaffolding (`escape`, parens) carries no range.
-pub fn print_expr(output: &mut Output, expr: &Expr) {
-    match expr {
-        Expr::Name(name) => output.push(&name.id.id),
-        Expr::StringLiteral(s) => {
-            output.push("\"");
-            output.push(&s.value);
-            output.push("\"");
-        }
-        Expr::Code(code) => print_code(output, code),
-        Expr::Call(call) => {
-            // Every Call we build wraps a helper; user calls stay inside Code.
-            if let Expr::Name(func) = call.func.as_ref() {
-                output.use_helper(&func.id.id);
-            }
-            print_expr(output, &call.func);
-            output.push("(");
-            for (i, arg) in call.arguments.args.iter().enumerate() {
-                if i > 0 {
-                    output.push(", ");
-                }
-                print_expr(output, arg);
-            }
-            output.push(")");
-        }
-    }
+/// Print a helper call. Ruff prints the call around a placeholder; the user
+/// `Code` replaces it verbatim and records the only source segment.
+pub fn print_helper_call(output: &mut Output, call: &HelperCall) {
+    let attr_name = call.attr_name.as_deref().map(|name| {
+        Expr::StringLiteral(ExprStringLiteral {
+            node_index: AtomicNodeIndex::default(),
+            range: TextRange::default(),
+            value: StringLiteralValue::single(StringLiteral {
+                range: TextRange::default(),
+                node_index: AtomicNodeIndex::default(),
+                value: name.into(),
+                flags: StringLiteralFlags::empty().with_quote_style(Quote::Double),
+            }),
+        })
+    });
+    let expression = Expr::Call(ExprCall {
+        node_index: AtomicNodeIndex::default(),
+        range: TextRange::default(),
+        func: Box::new(build_name(call.helper)),
+        arguments: Arguments {
+            range: TextRange::default(),
+            node_index: AtomicNodeIndex::default(),
+            args: attr_name
+                .into_iter()
+                .chain([build_name(CODE_PLACEHOLDER)])
+                .collect(),
+            keywords: Box::default(),
+        },
+    });
+    let generated = Generator::new(&Indentation::default(), Default::default()).expr(&expression);
+    // The placeholder is the last argument, so the rightmost match is it.
+    let (prefix, suffix) = generated
+        .rsplit_once(CODE_PLACEHOLDER)
+        .expect("Ruff prints the placeholder argument");
+    output.use_helper(call.helper);
+    output.push(prefix);
+    print_code(output, &call.arg);
+    output.push(suffix);
 }
 
-fn print_alias(alias: &Alias) -> String {
-    match &alias.asname {
-        Some(asname) => format!("{} as {}", alias.name.id, asname.id),
-        None => alias.name.id.clone(),
-    }
+fn build_name(id: &str) -> Expr {
+    Expr::Name(ExprName {
+        node_index: AtomicNodeIndex::default(),
+        range: TextRange::default(),
+        id: id.into(),
+        ctx: ExprContext::Load,
+    })
 }

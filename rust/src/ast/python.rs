@@ -1,72 +1,20 @@
-//! Output Python AST. Ruff-faithful (`ruff_python_ast` names/shapes); end goal
-//! is swapping to ruff's crates. `Code` is the unparsed-source seam: holds
-//! verbatim Python text plus its `.hyper` source range; shrinks as we adopt
-//! ruff's parser.
+//! Output nodes Ruff cannot hold. User source stays verbatim in `Code`, so
+//! printing never rewrites it; compiler-generated statements use Ruff nodes.
 
 use crate::ast::TextRange;
 
-#[derive(Debug, Clone)]
-pub struct Identifier {
-    pub id: String,
-}
-
-impl Identifier {
-    pub fn new(id: impl Into<String>) -> Self {
-        Self { id: id.into() }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Alias {
-    pub name: Identifier,
-    pub asname: Option<Identifier>,
-}
-
-/// `from <module> import <names>` (level 0 = absolute). `level > 0` for
-/// relative imports (`.module`, `..module`).
-#[derive(Debug, Clone)]
-pub struct StmtImportFrom {
-    pub module: Option<Identifier>,
-    pub names: Vec<Alias>,
-    pub level: u32,
-}
-
 /// Verbatim Python source with its `.hyper` range. Synthetic range = no IDE
-/// injection. Used for nodes that aren't lowered into structured AST yet
-/// (user imports, control-flow conditions, statement lines).
+/// injection.
 #[derive(Debug, Clone)]
 pub struct Code {
     pub source: String,
     pub range: TextRange,
 }
 
-/// Output expression. `Code` is the verbatim-source seam; `Call`/`Name` are
-/// structured nodes lowering builds (compiler-invented calls like `escape(x)`).
+/// Compiler-invented `helper(arg)` or `helper("attr_name", arg)` around user `Code`.
 #[derive(Debug, Clone)]
-pub enum Expr {
-    Call(ExprCall),
-    Name(ExprName),
-    StringLiteral(StringLiteral),
-    Code(Code),
-}
-
-#[derive(Debug, Clone)]
-pub struct StringLiteral {
-    pub value: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct ExprCall {
-    pub func: Box<Expr>,
-    pub arguments: Arguments,
-}
-
-#[derive(Debug, Clone)]
-pub struct Arguments {
-    pub args: Vec<Expr>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ExprName {
-    pub id: Identifier,
+pub struct HelperCall {
+    pub helper: &'static str,
+    pub attr_name: Option<String>,
+    pub arg: Code,
 }

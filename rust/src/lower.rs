@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use crate::ast::python::{Arguments, Code, Expr, ExprCall, ExprName, Identifier, StringLiteral};
+use crate::ast::python::{Code, HelperCall};
 use crate::ast::{Ast, ExpressionNode, Function, Node, Position, TextRange};
 
 pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
@@ -97,7 +97,7 @@ pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
 /// Lower a template interpolation to an output expression for the cases already
 /// migrated to the output AST. Returns None for cases the old generator path
 /// still emits (raw `{x}`, `str(...)`, format-spec/conversion/debug).
-pub fn lower_interpolation(expr: &ExpressionNode) -> Option<Expr> {
+pub fn lower_interpolation(expr: &ExpressionNode) -> Option<HelperCall> {
     let has_format_extras = expr.format_spec.is_some() || expr.conversion.is_some() || expr.debug;
     if has_format_extras || !expr.escape {
         return None;
@@ -140,30 +140,19 @@ fn interp_code(source: &str, brace_range: TextRange) -> Code {
 /// `helper(arg)` where `arg` is verbatim user `Code`. Used for single-argument
 /// helpers (`escape`, `render_class`, `render_style`, `render_data`,
 /// `render_aria`, `spread_attrs`).
-pub fn helper_call(name: &str, arg: Code) -> Expr {
-    Expr::Call(ExprCall {
-        func: Box::new(Expr::Name(ExprName {
-            id: Identifier::new(name),
-        })),
-        arguments: Arguments {
-            args: vec![Expr::Code(arg)],
-        },
-    })
+pub fn helper_call(helper: &'static str, arg: Code) -> HelperCall {
+    HelperCall {
+        helper,
+        attr_name: None,
+        arg,
+    }
 }
 
 /// `render_attr("name", arg)`: the static attribute name plus the user `Code`.
-pub fn render_attr_call(attr_name: &str, arg: Code) -> Expr {
-    Expr::Call(ExprCall {
-        func: Box::new(Expr::Name(ExprName {
-            id: Identifier::new("render_attr"),
-        })),
-        arguments: Arguments {
-            args: vec![
-                Expr::StringLiteral(StringLiteral {
-                    value: attr_name.to_string(),
-                }),
-                Expr::Code(arg),
-            ],
-        },
-    })
+pub fn render_attr_call(attr_name: &str, arg: Code) -> HelperCall {
+    HelperCall {
+        helper: "render_attr",
+        attr_name: Some(attr_name.to_string()),
+        arg,
+    }
 }
