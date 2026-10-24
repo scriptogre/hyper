@@ -1,6 +1,6 @@
 # Template Compiler
 
-This document describes the current `.hyper`-to-Python behavior. Future compiler work lives in [Compiler architecture and migration](architecture.md).
+This document describes the current `.hyper`-to-Python behavior. The target design lives in [Compiler architecture](architecture.md).
 
 Components compile to Python generator functions. Component libraries compile to Python modules.
 

@@ -1,225 +1,168 @@
-# Compiler architecture and migration
+# Compiler architecture
 
-This is Hyper's only compiler architecture plan.
+Hyper is a lean Rust host for Python DSLs.
 
-Code and tests describe the current implementation.
-This file describes the intended architecture and the path to it.
-
-## Next
-
-Run the two proof tests in this file.
-Do not migrate production code until both pass.
-
-## Mental model
-
-```text
-Plugins recognize their syntax.
-Ruff parses the remaining Python.
-Plugins check and transform the Ruff tree.
-Ruff prints Python.
-Hyper returns the Python, source map, and diagnostics.
-```
-
-## Goal
-
-Hyper becomes a lean Rust host for Python DSLs.
-
-The generic compiler owns Python parsing, plugin coordination, diagnostics, and source maps.
-It knows nothing about:
-
-- HTML, components, slots, fragments, or special attributes
-- implicit file components, `---`, or optional `end`
-- the `.hyper` extension, file writing, or the Python import hook
-
-Those features belong to plugins or outer packages.
-A non-HTML Python DSL must not require changes to the generic compiler.
-
-## Today
-
-At commit `cba077a`, `rust/src` contains 10,759 lines.
-
-```text
-Source -> Parse -> Lower -> Plugins -> Generate -> UTF-16 conversion
-```
-
-| Code | Lines | Job |
-|---|---:|---|
-| `parse/tokenizer.rs` | 2,983 | Tokenizes mixed Python and HTML |
-| `parse/tree_builder.rs` | 1,358 | Builds Hyper's custom tree |
-| `generate/python.rs` | 1,681 | Emits Python and tracks ranges |
-| `error.rs` | 1,038 | Defines and prints compiler errors |
-
-Current constraints:
-
-- `tree-sitter-python` is used by the tokenizer and component-signature parser.
-- The central AST knows HTML, components, slots, fragments, and Python control flow.
-- Function plugins each walk the tree separately.
-- `FileComponent` and `Components` bypass the function-level plugin trait.
-- JetBrains needs source and compiled ranges for Python and HTML injections.
-- The Python import hook needs generated code and the component name, not IDE ranges.
-- Main has no Ruff dependency.
-
-## Intended system
+## Pipeline
 
 ```text
 Source
-  -> plugin-owned syntax handling
-  -> ruff_python_ast
+  -> plugin syntax parsing and lowering
+  -> Ruff Python AST
   -> plugin checks
   -> plugin transforms
-  -> ruff_python_codegen
-  -> Python text + source map + diagnostics
+  -> source-preserving Python generation
+  -> compilation result
 ```
 
-### Reuse
+The syntax stage emits parseable Python, source mapping, and typed plugin-owned data.
 
-- `ruff_python_parser`: Python parsing
-- `ruff_python_ast`: Python syntax tree
-- `ruff_python_codegen`: Python generation
-- `ruff_text_size` and `ruff_source_file`: source locations
-- `lsp-types`: diagnostics and positions
+The Ruff AST is the only whole-file tree. A dialect may use a private tree for its own regions.
 
-Pin all Ruff crates to one revision.
-Do not copy Ruff types into Hyper.
+## Core
 
-LSP does not define source maps, so segments remain a Hyper type.
+Core owns:
 
-### Plugins
+- pipeline coordination
+- Ruff parsing and AST
+- deterministic plugin scheduling
+- typed compilation context
+- structured diagnostics
+- Python generation
+- source-map composition
 
-Plugins run in a deterministic order.
-A standard HTML preset configures the built-in Hyper plugins.
+Core knows nothing about HTML, components, slots, fragments, special attributes, file components, separators, optional block terminators, extensions, filesystem I/O, Python import hooks, or rendering runtimes.
 
-Use these terms:
+A non-HTML DSL requires no core change.
 
-- `context`: shared compilation state and typed plugin data
-- `check`: read-only inspection and diagnostic reporting
-- `transform`: mutation, replacement, or removal of syntax-tree nodes
+## Ruff
 
-A plugin may inspect the whole file before transforms begin.
-Compatible checks and transforms share traversals instead of walking once per plugin.
+Use `ruff_python_parser`, `ruff_python_ast`, `ruff_text_size`, `ruff_source_file`, and `lsp-types` directly.
 
-Shared plugin data is typed.
-Core nodes do not gain plugin-specific fields.
-Plugins do not exchange data through string keys.
+Use `ruff_python_codegen` where suitable for generated fragments.
 
-Built-in and third-party plugins use the same interface.
-Core does not gain a special extension point only for `end`.
+Pin all Ruff crates to one revision. Do not copy or vendor Ruff code or types unless an isolated proof finds no smaller supported solution.
 
-Exact Rust APIs live in code and rustdoc.
+## Plugins
 
-### Output
+Built-in and third-party plugins use the same interface. A preset is an ordered plugin list.
 
-Compilation returns one value containing:
+The HTML package supplies the standard Hyper preset.
 
-- generated Python text
-- source-to-generated segments
-- LSP-shaped diagnostics
+A plugin may own any subset of syntax parsing and lowering, checks, and transforms.
 
-File writing and execution consume that value outside the compiler.
+Syntax plugins parse their own regions. They emit parseable Python, source mapping, and typed data for later stages.
 
-The HTML package owns the standard `.hyper` preset, runtime, and import hook.
-String output is its first rendering strategy.
-FastHTML is a later HTML rendering strategy, not a generic compiler concern.
+Checks inspect the whole file without mutation and emit structured diagnostics. All checks finish before transforms start.
 
-## Proofs
+Transforms run in deterministic preset order. They may mutate, replace, insert, or remove Ruff AST nodes.
 
-The two main simplifications are hypotheses.
-Test them in isolation before changing production code.
+Core may combine compatible visitors into one traversal without changing plugin order or observable behavior.
 
-### 1. Parse through Ruff
+Plugins share a typed compilation context. Values use Rust types as keys, never strings.
 
-Test whether plugins can replace their syntax with valid Python before Ruff parses the file.
+Typed node and range data also lives in the context. Ruff nodes receive no plugin-specific fields.
 
-Cover:
+Preset construction validates dependencies and order. The validation API remains open.
 
-- nested and multiline HTML
-- `<br>` and `<>...</>`
-- components, slots, shorthand, and spreads
-- Python control flow between tags
-- `end` and `---`
-- `a < b` beside `<div>`
-- `<` and braces inside strings, comments, scripts, and styles
-- multibyte text and expressions
+## Generation
 
-Pass when valid fixtures parse and all source, error, and IDE ranges remain exact in bytes and UTF-16.
+Generation preserves unchanged user Python byte-for-byte, except indentation required by generated enclosing code.
 
-Same-length masking is one candidate, not a requirement.
-If it fails, choose another pre-Python representation.
+Comments and blank lines remain intact. A file without DSL syntax compiles to itself.
 
-### 2. Recover generated ranges
+Use Ruff generation for compiler-made fragments where it fits. Do not assume Ruff generates the whole tree.
 
-Test this candidate:
+Every mapped source range has an exact generated range.
 
-1. Print the transformed Ruff tree.
-2. Parse the generated Python with Ruff.
-3. Match the printed tree to the parsed tree.
-4. Recover compiled ranges for JetBrains.
+The source-preserving mechanism may use AST printing or ranged edits. Recovery of generated-fragment subranges also remains open.
 
-Cover nested helper calls, parentheses, multiline expressions, decorators, parameters, control flow, and one-to-many transforms.
+## Positions
 
-Pass when every mapped source slice and generated slice satisfies the current JetBrains injection contract.
+Core uses Ruff byte `TextRange` values internally.
 
-If structural matching fails, test marker substitution or an upstream Ruff hook.
-Do not vendor Ruff's generator unless smaller approaches fail.
+Core converts positions once with `ruff_source_file`. The caller chooses UTF-8, UTF-16, or UTF-32 coordinates.
 
-## Work
+Delivery renders diagnostics without reinterpreting positions.
 
-Each row is one focused session or mergeable change.
+## Result
 
-| # | Goal | Done when |
-|---:|---|---|
-| 1 | Prove the parser boundary | Proof 1 passes without changing production code |
-| 2 | Prove generated-range recovery | Proof 2 selects a reliable mapping mechanism without changing production code |
-| 3 | Establish Ruff | Ruff is pinned; `plugins/components.rs` no longer uses tree-sitter; output is unchanged |
-| 4 | Add Ruff generation | The proven printer and range mapper pass isolated tests; the old generator remains active |
-| 5 | Replace parsing | The proven parser feeds the existing AST; tokenizer, tree builder, and tree-sitter are deleted |
-| 6 | Replace generation | Ruff AST and codegen replace the local Python AST and string generator |
-| 7 | Unify plugins | Ordered registration, typed context, checks, and transforms replace special and per-plugin walks |
-| 8 | Standardize diagnostics | LSP types replace superseded error/location structures without changing CLI or PyO3 behavior |
-| 9 | Separate delivery | File handling, imports, the HTML preset, and future FastHTML rendering live outside the generic compiler |
+A compilation result contains Python source, source-map segments, `lsp_types::Diagnostic` values, and typed plugin outputs required by adapters.
 
-Delete the Hyper-specific AST and lowering layer only after no plugin depends on them.
-Review every expected-output change before accepting it.
+Python output is usable only when no error diagnostics exist.
 
-## Invariants
+LSP defines no source-map type, so source-map segments remain a small core type.
 
-Every production change preserves:
+Exact result fields and the location of diagnostic help text remain code decisions.
 
-- generated Python behavior
-- component and slot behavior
-- error locations and help
-- Python and HTML IDE injections
-- UTF-16 source and compiled ranges
-- CLI and PyO3 behavior until an explicit migration changes them
+## Reuse
 
-Run Rust and Python tests for every step.
-Run affected JetBrains tests for source-map or protocol changes.
+### HTML
 
-## Open decisions
+Source:
 
-These do not block the two proofs:
+```hyper
+name: str
+---
+<h1>Hello {name}</h1>
+```
 
-- neutral names for stages before the Ruff Python tree
-- the exact typed `context` API
-- how plugin ordering and dependencies are validated
-- how one plugin exposes extension points to another
-- how component-specific metadata leaves the generic compiler
-- when to split the generic compiler and HTML package into separate crates
+HTML plugins privately parse and lower their regions. Ruff parses the resulting Python.
 
-## Size
+Checks validate the file. Transforms create the function, yields, and escaping.
 
-The parser, tree builder, generator, and local Python AST contain about 6,000 lines.
-Most may disappear if both proofs pass.
+Generation emits Python and maps it to the original source.
 
-A final Rust total near 2,500 to 4,000 lines is an estimate, not a requirement.
-Correct behavior and clear boundaries take priority.
+### SQL
 
-## Documentation
+Illustrative source:
 
-- `README.md`: public introduction and quickstart
-- `ROADMAP.md`: releases, backlog, and known user-visible bugs
-- `docs/design/templates.md`: `.hyper` language behavior
-- `docs/implementation/templates.md`: current compiler behavior
-- `docs/implementation/architecture.md`: intended architecture and migration
+```python
+def rows(limit):
+    sql:
+        SELECT * FROM events LIMIT {limit}
+```
 
-No other file contains a compiler architecture plan.
+SQL plugins privately parse and lower the query. The same core parses the resulting Python.
+
+Checks validate SQL and interpolation. Transforms produce a form such as:
+
+```python
+Query("SELECT * FROM events LIMIT ?", [limit])
+```
+
+Generation emits and maps the Python.
+
+The SQL block and placeholder forms are illustrative, not chosen syntax.
+
+## Packages
+
+```text
+outer delivery
+    -> HTML package
+        -> core
+```
+
+Core has no HTML, filesystem, Python runtime, or import-hook dependency.
+
+The HTML package owns HTML syntax and features, the ordered Hyper preset, the string renderer, the optional FastHTML renderer, the `.hyper` convention, runtime glue, the import hook, and the IDE bridge.
+
+CLI and PyO3 delivery may be a third crate, HTML features, or binaries. Exact crate names remain open.
+
+## Implementation order
+
+1. Prove syntax lowering preserves original ranges and supports existing language fixtures.
+2. Prove source-preserving generation and exact generated ranges.
+3. Introduce Ruff and result and diagnostic types behind current behavior.
+4. Move built-in language features onto the shared plugin interface.
+5. Separate generic core from HTML and delivery.
+
+Each step preserves generated behavior, error and help locations, IDE injections, UTF encodings, CLI behavior, and PyO3 behavior unless deliberately changed and reviewed.
+
+## Open mechanisms
+
+- syntax placeholder and region binding
+- source-preserving generation and generated-fragment subranges
+- stable node identity after replacement
+- preset dependency and order validation
+- an optional shared indentation-aware scanner
+- package names and an optional third delivery crate
