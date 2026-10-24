@@ -680,6 +680,83 @@ fn highlight_syntax(line: &str) -> String {
         "oct",
     ];
 
+    /// Highlight tag attributes from `i` up to the closing `>`. Returns the new index.
+    fn push_attributes(chars: &[char], mut i: usize, out: &mut String) -> usize {
+        while i < chars.len() && chars[i] != '>' {
+            if chars[i].is_whitespace() {
+                out.push(chars[i]);
+                i += 1;
+            } else if chars[i] == '/' {
+                out.push_str(TAG);
+                out.push('/');
+                out.push_str(RESET);
+                i += 1;
+            } else if chars[i] == '=' {
+                out.push_str(STRING);
+                out.push('=');
+                out.push_str(RESET);
+                i += 1;
+            } else if chars[i] == '"' || chars[i] == '\'' {
+                let quote = chars[i];
+                out.push_str(STRING);
+                out.push(quote);
+                i += 1;
+                while i < chars.len() && chars[i] != quote {
+                    out.push(chars[i]);
+                    i += 1;
+                }
+                if i < chars.len() {
+                    out.push(quote);
+                    i += 1;
+                }
+                out.push_str(RESET);
+            } else if chars[i] == '{' {
+                out.push_str(STRING);
+                out.push('{');
+                out.push_str(RESET);
+                i += 1;
+                let mut depth = 1;
+                while i < chars.len() && depth > 0 {
+                    if chars[i] == '{' {
+                        depth += 1;
+                        out.push_str(STRING);
+                        out.push('{');
+                        out.push_str(RESET);
+                    } else if chars[i] == '}' {
+                        depth -= 1;
+                        out.push_str(STRING);
+                        out.push('}');
+                        out.push_str(RESET);
+                    } else {
+                        out.push(chars[i]);
+                    }
+                    i += 1;
+                }
+            } else if chars[i].is_alphabetic()
+                || chars[i] == '_'
+                || chars[i] == ':'
+                || chars[i] == '@'
+            {
+                out.push_str(ATTR);
+                while i < chars.len()
+                    && (chars[i].is_alphanumeric()
+                        || chars[i] == '-'
+                        || chars[i] == '_'
+                        || chars[i] == ':'
+                        || chars[i] == '@')
+                {
+                    out.push(chars[i]);
+                    i += 1;
+                }
+                out.push_str(RESET);
+            } else {
+                out.push(chars[i]);
+                i += 1;
+            }
+        }
+        i
+    }
+
     // Check if line starts with Python code (keyword at start)
     let trimmed = line.trim_start();
     let first_word: String = trimmed
@@ -716,78 +793,7 @@ fn highlight_syntax(line: &str) -> String {
                     // Handle attributes or self-closing
                     let mut attrs = String::new();
                     let mut found_close = false;
-                    while i < chars.len() && chars[i] != '>' {
-                        if chars[i].is_whitespace() {
-                            attrs.push(chars[i]);
-                            i += 1;
-                        } else if chars[i] == '/' {
-                            attrs.push_str(TAG);
-                            attrs.push('/');
-                            attrs.push_str(RESET);
-                            i += 1;
-                        } else if chars[i] == '=' {
-                            attrs.push_str(STRING);
-                            attrs.push('=');
-                            attrs.push_str(RESET);
-                            i += 1;
-                        } else if chars[i] == '"' || chars[i] == '\'' {
-                            let quote = chars[i];
-                            attrs.push_str(STRING);
-                            attrs.push(quote);
-                            i += 1;
-                            while i < chars.len() && chars[i] != quote {
-                                attrs.push(chars[i]);
-                                i += 1;
-                            }
-                            if i < chars.len() {
-                                attrs.push(quote);
-                                i += 1;
-                            }
-                            attrs.push_str(RESET);
-                        } else if chars[i] == '{' {
-                            attrs.push_str(STRING);
-                            attrs.push('{');
-                            attrs.push_str(RESET);
-                            i += 1;
-                            let mut depth = 1;
-                            while i < chars.len() && depth > 0 {
-                                if chars[i] == '{' {
-                                    depth += 1;
-                                    attrs.push_str(STRING);
-                                    attrs.push('{');
-                                    attrs.push_str(RESET);
-                                } else if chars[i] == '}' {
-                                    depth -= 1;
-                                    attrs.push_str(STRING);
-                                    attrs.push('}');
-                                    attrs.push_str(RESET);
-                                } else {
-                                    attrs.push(chars[i]);
-                                }
-                                i += 1;
-                            }
-                        } else if chars[i].is_alphabetic()
-                            || chars[i] == '_'
-                            || chars[i] == ':'
-                            || chars[i] == '@'
-                        {
-                            attrs.push_str(ATTR);
-                            while i < chars.len()
-                                && (chars[i].is_alphanumeric()
-                                    || chars[i] == '-'
-                                    || chars[i] == '_'
-                                    || chars[i] == ':'
-                                    || chars[i] == '@')
-                            {
-                                attrs.push(chars[i]);
-                                i += 1;
-                            }
-                            attrs.push_str(RESET);
-                        } else {
-                            attrs.push(chars[i]);
-                            i += 1;
-                        }
-                    }
+                    i = push_attributes(&chars, i, &mut attrs);
                     if i < chars.len() && chars[i] == '>' {
                         found_close = true;
                         i += 1;
@@ -842,78 +848,7 @@ fn highlight_syntax(line: &str) -> String {
                 result.push_str(RESET);
 
                 // Handle attributes until >
-                while i < chars.len() && chars[i] != '>' {
-                    if chars[i].is_whitespace() {
-                        result.push(chars[i]);
-                        i += 1;
-                    } else if chars[i] == '/' {
-                        result.push_str(TAG);
-                        result.push('/');
-                        result.push_str(RESET);
-                        i += 1;
-                    } else if chars[i] == '=' {
-                        result.push_str(STRING);
-                        result.push('=');
-                        result.push_str(RESET);
-                        i += 1;
-                    } else if chars[i] == '"' || chars[i] == '\'' {
-                        let quote = chars[i];
-                        result.push_str(STRING);
-                        result.push(quote);
-                        i += 1;
-                        while i < chars.len() && chars[i] != quote {
-                            result.push(chars[i]);
-                            i += 1;
-                        }
-                        if i < chars.len() {
-                            result.push(quote);
-                            i += 1;
-                        }
-                        result.push_str(RESET);
-                    } else if chars[i] == '{' {
-                        result.push_str(STRING);
-                        result.push('{');
-                        result.push_str(RESET);
-                        i += 1;
-                        let mut depth = 1;
-                        while i < chars.len() && depth > 0 {
-                            if chars[i] == '{' {
-                                depth += 1;
-                                result.push_str(STRING);
-                                result.push('{');
-                                result.push_str(RESET);
-                            } else if chars[i] == '}' {
-                                depth -= 1;
-                                result.push_str(STRING);
-                                result.push('}');
-                                result.push_str(RESET);
-                            } else {
-                                result.push(chars[i]);
-                            }
-                            i += 1;
-                        }
-                    } else if chars[i].is_alphabetic()
-                        || chars[i] == '_'
-                        || chars[i] == ':'
-                        || chars[i] == '@'
-                    {
-                        result.push_str(ATTR);
-                        while i < chars.len()
-                            && (chars[i].is_alphanumeric()
-                                || chars[i] == '-'
-                                || chars[i] == '_'
-                                || chars[i] == ':'
-                                || chars[i] == '@')
-                        {
-                            result.push(chars[i]);
-                            i += 1;
-                        }
-                        result.push_str(RESET);
-                    } else {
-                        result.push(chars[i]);
-                        i += 1;
-                    }
-                }
+                i = push_attributes(&chars, i, &mut result);
 
                 if i < chars.len() && chars[i] == '>' {
                     result.push_str(TAG);

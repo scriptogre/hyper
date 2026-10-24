@@ -8,7 +8,18 @@ use crate::ast::*;
 use crate::generate::print::{print_code, print_helper_call, print_import_from};
 use crate::html;
 use crate::lower::{code_span, helper_call, lower_interpolation, render_attr_call};
-use crate::plugins::{DEFAULT_SLOT_PARAM, Helper, rename_reserved_keywords, slot_param_name};
+use crate::plugins::{DEFAULT_SLOT_PARAM, rename_reserved_keywords, slot_param_name};
+
+/// Hyper runtime helpers, in import order.
+const RUNTIME_HELPERS: &[&str] = &[
+    "escape",
+    "render_class",
+    "render_style",
+    "render_attr",
+    "render_data",
+    "render_aria",
+    "spread_attrs",
+];
 
 /// Where a dynamic attribute's helper call lands in the f-string.
 enum Scaffold<'a> {
@@ -1387,11 +1398,11 @@ impl Generator for PythonGenerator {
             );
         }
 
-        // Hyper runtime imports, in Helper::ALL order, for helpers actually emitted.
+        // Hyper runtime imports, in RUNTIME_HELPERS order, for helpers actually emitted.
         let mut hyper_imports = ast.runtime_imports.clone();
-        for helper in Helper::ALL {
-            if output.helper_used(helper.import_name()) {
-                hyper_imports.push(helper.import_name());
+        for helper in RUNTIME_HELPERS {
+            if output.helper_used(helper) {
+                hyper_imports.push(helper);
             }
         }
 

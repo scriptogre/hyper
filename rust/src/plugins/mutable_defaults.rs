@@ -1,4 +1,4 @@
-use super::{Flow, Plugin, walk};
+use super::{Flow, Plugin};
 use crate::ast::{Function, IfNode, Node, StatementNode, TextRange};
 use crate::error::CompileError;
 
@@ -13,10 +13,7 @@ pub struct MutableDefaults {
 }
 
 impl Plugin for MutableDefaults {
-    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        walk(&mut function.params, self)?;
-        walk(&mut function.body, self)?;
-
+    fn finish(&mut self, function: &mut Function) -> Result<(), CompileError> {
         let guards = self.guards.iter().map(|(name, default)| {
             Node::If(IfNode {
                 condition: format!("{name} is None"),

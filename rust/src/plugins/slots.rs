@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use super::{Flow, Plugin, walk};
+use super::{Flow, Plugin};
 use crate::ast::{Function, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::{CompileError, ErrorKind, ParseError};
 
@@ -20,7 +20,7 @@ pub struct Slots {
 }
 
 impl Plugin for Slots {
-    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
+    fn finish(&mut self, function: &mut Function) -> Result<(), CompileError> {
         let declared: BTreeMap<String, TextRange> = function
             .params
             .iter()
@@ -31,8 +31,6 @@ impl Plugin for Slots {
                 _ => None,
             })
             .collect();
-
-        walk(&mut function.body, self)?;
 
         if let Some(range) = declared.get(DEFAULT_SLOT_PARAM) {
             return Err(ParseError::new(

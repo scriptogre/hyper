@@ -1,66 +1,62 @@
-use std::collections::HashSet;
-
-use super::context::BLESSED_SPREAD_NAMES;
-use super::{Flow, Plugin, walk};
-use crate::ast::{Attribute, AttributeKind, Function, Node, ParamKind, ParameterNode, TextRange};
+use super::{Flow, Plugin};
+use crate::ast::{AttributeKind, Function, Node, ParamKind, ParameterNode, TextRange};
 use crate::error::CompileError;
+
+/// Spread names injected into the signature when used as `{**name}` undeclared.
+const BLESSED_SPREAD_NAMES: &[&str] = &["kwargs", "props", "rest", "attrs", "attributes"];
 
 /// Auto-injects a `**kwargs` parameter for blessed spread names (kwargs, props,
 /// rest, attrs, attributes) used as `{**name}` without an explicit declaration.
 ///
-/// Inspect (`enter`): records declared params and blessed spread names used.
+/// Inspect (`enter`): records blessed spread names used.
 ///
-/// Transform (`run`): after the walk, rejects more than one distinct blessed name,
-/// then appends a `**name` parameter so the signature carries it.
+/// Transform (`finish`): drops declared names, rejects more than one distinct
+/// blessed name, then appends a `**name` parameter so the signature carries it.
+#[derive(Default)]
 pub struct SpreadKwargs {
-    declared_params: HashSet<String>,
-    has_explicit_kwargs: bool,
-    blessed_spreads: Vec<(String, TextRange)>,
-}
-
-impl SpreadKwargs {
-    pub fn new() -> Self {
-        Self {
-            declared_params: HashSet::new(),
-            has_explicit_kwargs: false,
-            blessed_spreads: Vec::new(),
-        }
-    }
-
-    fn collect_blessed_spreads(&mut self, attributes: &[Attribute]) {
-        for attr in attributes {
-            if let AttributeKind::Spread { expr, expr_range } = &attr.kind {
-                let name = expr.trim();
-                if self.declared_params.contains(name) {
-                    continue;
-                }
-                if BLESSED_SPREAD_NAMES.contains(&name)
-                    && !self.blessed_spreads.iter().any(|(n, _)| n == name)
-                {
-                    self.blessed_spreads.push((name.to_string(), *expr_range));
-                }
-            }
-        }
-    }
-}
-
-impl Default for SpreadKwargs {
-    fn default() -> Self {
-        Self::new()
-    }
+    blessed_spreads: Vec<String>,
 }
 
 impl Plugin for SpreadKwargs {
-    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        walk(&mut function.params, self)?;
-        walk(&mut function.body, self)?;
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
+        let attributes = match node {
+            Node::Element(el) => &el.attributes,
+            Node::Component(c) => &c.attributes,
+            _ => return Ok(Flow::Continue),
+        };
+        for attr in attributes {
+            if let AttributeKind::Spread { expr, .. } = &attr.kind {
+                let name = expr.trim();
+                if BLESSED_SPREAD_NAMES.contains(&name)
+                    && !self.blessed_spreads.iter().any(|n| n == name)
+                {
+                    self.blessed_spreads.push(name.to_string());
+                }
+            }
+        }
+        Ok(Flow::Continue)
+    }
+
+    // Runs after Slots::finish, so slot params count as declared.
+    fn finish(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        let params: Vec<&str> = function
+            .params
+            .iter()
+            .filter_map(|node| match node {
+                Node::Parameter(param) => Some(param.name.as_str()),
+                _ => None,
+            })
+            .collect();
+        self.blessed_spreads
+            .retain(|name| !params.iter().any(|p| p.trim_start_matches('*') == name));
+        let has_explicit_kwargs = params.iter().any(|p| p.starts_with("**"));
 
         // Guard: only one distinct blessed spread name is allowed per template.
         if self.blessed_spreads.len() > 1 {
             let names_list = self
                 .blessed_spreads
                 .iter()
-                .map(|(n, _)| format!("{{**{n}}}"))
+                .map(|n| format!("{{**{n}}}"))
                 .collect::<Vec<_>>()
                 .join(" and ");
             return Err(CompileError::Generate(format!(
@@ -69,9 +65,7 @@ impl Plugin for SpreadKwargs {
         }
 
         // Transform: inject `**name` into the signature, unless one is declared.
-        if !self.has_explicit_kwargs
-            && let Some((name, _)) = self.blessed_spreads.first()
-        {
+        if !has_explicit_kwargs && let Some(name) = self.blessed_spreads.first() {
             function.params.push(Node::Parameter(ParameterNode {
                 name: format!("**{name}"),
                 type_hint: None,
@@ -82,21 +76,5 @@ impl Plugin for SpreadKwargs {
         }
 
         Ok(())
-    }
-
-    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
-        match node {
-            Node::Parameter(param) => {
-                if param.name.starts_with("**") {
-                    self.has_explicit_kwargs = true;
-                }
-                let name = param.name.trim_start_matches('*');
-                self.declared_params.insert(name.to_string());
-            }
-            Node::Element(el) => self.collect_blessed_spreads(&el.attributes),
-            Node::Component(c) => self.collect_blessed_spreads(&c.attributes),
-            _ => {}
-        }
-        Ok(Flow::Continue)
     }
 }

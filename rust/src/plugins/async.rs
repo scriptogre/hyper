@@ -1,4 +1,4 @@
-use super::{Flow, Plugin, walk};
+use super::{Flow, Plugin};
 use crate::ast::{Function, Node};
 use crate::error::CompileError;
 
@@ -9,9 +9,7 @@ pub struct Async {
 }
 
 impl Plugin for Async {
-    fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
-        walk(&mut function.params, self)?;
-        walk(&mut function.body, self)?;
+    fn finish(&mut self, function: &mut Function) -> Result<(), CompileError> {
         function.is_async = self.is_async;
         Ok(())
     }

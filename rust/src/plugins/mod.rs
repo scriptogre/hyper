@@ -2,7 +2,6 @@ mod r#async;
 mod component_control_flow;
 mod component_slots;
 mod components;
-mod context;
 mod file_component;
 mod mutable_defaults;
 mod rename_reserved_keywords;
@@ -13,7 +12,6 @@ pub use r#async::Async;
 pub use component_control_flow::ComponentControlFlow;
 pub use component_slots::ComponentSlots;
 pub use components::Components;
-pub use context::{BLESSED_SPREAD_NAMES, Helper};
 pub use file_component::FileComponent;
 pub use mutable_defaults::MutableDefaults;
 pub use rename_reserved_keywords::{RenameReservedKeywords, rename_reserved_keywords};
@@ -37,10 +35,11 @@ pub enum Flow {
 /// after the walk. Local state lives on the plugin struct.
 pub trait Plugin {
     /// Run the plugin over the whole tree. Default walks top-down, calling
-    /// `enter` then `exit` on each node.
+    /// `enter` then `exit` on each node, then `finish`.
     fn run(&mut self, function: &mut Function) -> Result<(), CompileError> {
         walk(&mut function.params, self)?;
-        walk(&mut function.body, self)
+        walk(&mut function.body, self)?;
+        self.finish(function)
     }
 
     /// Called before a node's children. Return [`Flow::SkipChildren`] to prune.
@@ -50,6 +49,11 @@ pub trait Plugin {
 
     /// Called after a node's children.
     fn exit(&mut self, _node: &mut Node) -> Result<(), CompileError> {
+        Ok(())
+    }
+
+    /// Called once after the walk, to guard or rewrite the function.
+    fn finish(&mut self, _function: &mut Function) -> Result<(), CompileError> {
         Ok(())
     }
 }
@@ -122,15 +126,31 @@ pub fn standard_plugins() -> Vec<Box<dyn Plugin>> {
         Box::new(Async::default()),
         Box::new(Slots::default()),
         Box::new(MutableDefaults::default()),
-        Box::new(SpreadKwargs::new()),
+        Box::new(SpreadKwargs::default()),
     ]
 }
 
-fn run_scoped(function: &mut Function) -> Result<(), CompileError> {
-    for mut plugin in standard_plugins() {
-        plugin.run(function)?;
+/// Runs plugins in one traversal. Each node meets every plugin in preset order,
+/// so later plugins see earlier rewrites. Members must never skip children.
+struct Preset(Vec<Box<dyn Plugin>>);
+
+impl Plugin for Preset {
+    fn enter(&mut self, node: &mut Node) -> Result<Flow, CompileError> {
+        for plugin in &mut self.0 {
+            plugin.enter(node)?;
+        }
+        Ok(Flow::Continue)
     }
-    Ok(())
+
+    fn exit(&mut self, node: &mut Node) -> Result<(), CompileError> {
+        self.0.iter_mut().try_for_each(|plugin| plugin.exit(node))
+    }
+
+    fn finish(&mut self, function: &mut Function) -> Result<(), CompileError> {
+        self.0
+            .iter_mut()
+            .try_for_each(|plugin| plugin.finish(function))
+    }
 }
 
 fn run_function(function: &mut Function, is_component: bool) -> Result<(), CompileError> {
@@ -138,7 +158,7 @@ fn run_function(function: &mut Function, is_component: bool) -> Result<(), Compi
     if is_component {
         ComponentControlFlow.run(function)?;
     }
-    run_scoped(function)
+    Preset(standard_plugins()).run(function)
 }
 
 struct NestedFunctions;
