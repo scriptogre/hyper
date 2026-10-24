@@ -170,30 +170,10 @@ fn collect_braces_attr(attr: &Attribute, braces: &mut Vec<(usize, usize)>) {
             braces.push((range.start.byte, range.end.byte));
         }
         AttributeKind::Template { name, value } => {
-            // Walk value to find {expr} brace positions
             let value_start_byte = attr.range.start.byte + name.len() + 2; // skip `name="`
-            let mut byte_offset = 0;
-            let mut chars = value.chars().peekable();
-            while let Some(ch) = chars.next() {
-                if ch == '{' {
-                    let open_byte = value_start_byte + byte_offset;
-                    byte_offset += ch.len_utf8();
-                    let mut depth = 1;
-                    while let Some(inner) = chars.next() {
-                        byte_offset += inner.len_utf8();
-                        if inner == '{' {
-                            depth += 1;
-                        } else if inner == '}' {
-                            depth -= 1;
-                            if depth == 0 {
-                                let close_byte = value_start_byte + byte_offset - 1;
-                                braces.push((open_byte, close_byte));
-                                break;
-                            }
-                        }
-                    }
-                } else {
-                    byte_offset += ch.len_utf8();
+            for (open, close) in super::template_interpolations(value) {
+                if close < value.len() {
+                    braces.push((value_start_byte + open, value_start_byte + close));
                 }
             }
         }

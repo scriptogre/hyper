@@ -364,53 +364,24 @@ impl PythonGenerator {
                     output.push(" ");
                     output.push(name);
                     output.push("=\"");
-                    // Emit template value with position tracking for each {expr}
-                    // value_start_byte: skip past `name="` in the source
+                    // Skip past `name="` in the source.
                     let value_start_byte = attr.range.start.byte + name.len() + 2;
-                    let mut byte_offset = 0;
-                    let mut chars = value.chars().peekable();
-                    #[allow(clippy::while_let_on_iterator)]
-                    while let Some(ch) = chars.next() {
-                        if ch == '{' {
-                            // Collect expression until closing }
-                            let expr_byte_start = byte_offset + 1; // past '{'
-                            byte_offset += ch.len_utf8();
-                            let mut expr = String::new();
-                            let mut depth = 1;
-                            while let Some(inner) = chars.next() {
-                                byte_offset += inner.len_utf8();
-                                if inner == '{' {
-                                    depth += 1;
-                                    expr.push(inner);
-                                } else if inner == '}' {
-                                    depth -= 1;
-                                    if depth == 0 {
-                                        break;
-                                    }
-                                    expr.push(inner);
-                                } else {
-                                    expr.push(inner);
-                                }
-                            }
-                            let expr_byte_end = byte_offset - 1; // before '}'
-                            // Template value is parsed here, so rename the extracted expr.
-                            let safe_expr = rename_reserved_keywords(expr.trim());
-                            output.push("{");
-                            let code = code_span(
-                                safe_expr,
-                                value_start_byte + expr_byte_start,
-                                value_start_byte + expr_byte_end,
-                            );
-                            print_helper_call(output, &helper_call("escape", code));
-                            output.push("}");
-                        } else if ch == '"' {
-                            output.push("&quot;");
-                            byte_offset += ch.len_utf8();
-                        } else {
-                            output.push(&ch.to_string());
-                            byte_offset += ch.len_utf8();
-                        }
+                    let mut last = 0;
+                    for (open, close) in super::template_interpolations(value) {
+                        output.push(&escape_html_attr_quotes(&value[last..open]));
+                        // Template value is parsed here, so rename the extracted expr.
+                        let safe_expr = rename_reserved_keywords(value[open + 1..close].trim());
+                        let code = code_span(
+                            safe_expr,
+                            value_start_byte + open + 1,
+                            value_start_byte + close,
+                        );
+                        output.push("{");
+                        print_helper_call(output, &helper_call("escape", code));
+                        output.push("}");
+                        last = (close + 1).min(value.len());
                     }
+                    output.push(&escape_html_attr_quotes(&value[last..]));
                     output.push("\"");
                 }
                 return;
@@ -496,39 +467,15 @@ impl PythonGenerator {
     /// Also escapes double quotes in static parts as &quot; for valid HTML attributes.
     fn convert_template_expressions(&self, template: &str) -> String {
         let mut result = String::new();
-        let mut chars = template.chars().peekable();
-
-        #[allow(clippy::while_let_on_iterator)]
-        while let Some(ch) = chars.next() {
-            if ch == '{' {
-                // Found start of expression, collect until closing }
-                let mut expr = String::new();
-                let mut depth = 1;
-                while let Some(inner) = chars.next() {
-                    if inner == '{' {
-                        depth += 1;
-                        expr.push(inner);
-                    } else if inner == '}' {
-                        depth -= 1;
-                        if depth == 0 {
-                            break;
-                        }
-                        expr.push(inner);
-                    } else {
-                        expr.push(inner);
-                    }
-                }
-                // Emit as direct escape() call
-                result.push_str("{escape(");
-                result.push_str(&expr);
-                result.push_str(")}");
-            } else if ch == '"' {
-                result.push_str("&quot;");
-            } else {
-                result.push(ch);
-            }
+        let mut last = 0;
+        for (open, close) in super::template_interpolations(template) {
+            result.push_str(&escape_html_attr_quotes(&template[last..open]));
+            result.push_str("{escape(");
+            result.push_str(&template[open + 1..close]);
+            result.push_str(")}");
+            last = (close + 1).min(template.len());
         }
-
+        result.push_str(&escape_html_attr_quotes(&template[last..]));
         result
     }
 

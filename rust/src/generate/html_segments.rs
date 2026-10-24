@@ -64,32 +64,10 @@ pub fn html_segments_for_element(el: &ElementNode) -> Vec<Segment> {
                 expr_spans.push((gap_start, range.end.byte + 1));
             }
             AttributeKind::Template { name, value } => {
-                // Walk value to find {expr} positions, exclude them from HTML segments
                 let value_start_byte = attr.range.start.byte + name.len() + 2;
-                let mut byte_offset = 0;
-                let mut chars = value.chars().peekable();
-                #[allow(clippy::while_let_on_iterator)]
-                while let Some(ch) = chars.next() {
-                    if ch == '{' {
-                        let gap_start = value_start_byte + byte_offset;
-                        byte_offset += ch.len_utf8();
-                        let mut depth = 1;
-                        while let Some(inner) = chars.next() {
-                            byte_offset += inner.len_utf8();
-                            if inner == '{' {
-                                depth += 1;
-                            } else if inner == '}' {
-                                depth -= 1;
-                                if depth == 0 {
-                                    break;
-                                }
-                            }
-                        }
-                        let gap_end = value_start_byte + byte_offset;
-                        expr_spans.push((gap_start, gap_end));
-                    } else {
-                        byte_offset += ch.len_utf8();
-                    }
+                for (open, close) in super::template_interpolations(value) {
+                    let end = (close + 1).min(value.len());
+                    expr_spans.push((value_start_byte + open, value_start_byte + end));
                 }
             }
             _ => {}

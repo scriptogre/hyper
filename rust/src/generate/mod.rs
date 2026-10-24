@@ -36,3 +36,32 @@ pub struct CompileResult {
 pub trait Generator {
     fn generate(&self, ast: &Ast, options: &CompileOptions) -> CompileResult;
 }
+
+/// Byte offsets of each top-level `{` and its matching `}` in a template
+/// attribute value. An unclosed `{` pairs with `value.len()`.
+fn template_interpolations(value: &str) -> Vec<(usize, usize)> {
+    let mut pairs = Vec::new();
+    let mut open = 0;
+    let mut depth = 0;
+    for (i, ch) in value.char_indices() {
+        match ch {
+            '{' => {
+                if depth == 0 {
+                    open = i;
+                }
+                depth += 1;
+            }
+            '}' if depth > 0 => {
+                depth -= 1;
+                if depth == 0 {
+                    pairs.push((open, i));
+                }
+            }
+            _ => {}
+        }
+    }
+    if depth > 0 {
+        pairs.push((open, value.len()));
+    }
+    pairs
+}
