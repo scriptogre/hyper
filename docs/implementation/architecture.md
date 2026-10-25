@@ -148,13 +148,22 @@ The HTML package owns HTML syntax and features, the ordered Hyper preset, the st
 
 CLI and PyO3 delivery may be a third crate, HTML features, or binaries. Exact crate names remain open.
 
-## Implementation order
+## Implementation plan
 
-1. Prove syntax lowering preserves original ranges and supports existing language fixtures.
-2. Prove whole-file source-preserving generation and exact generated ranges.
-3. Replace remaining source-position math with `ruff_source_file`.
-4. Move remaining built-in language features onto the shared plugin interface.
-5. Separate generic core from HTML and delivery.
+Complete one step before switching the production path.
+
+- [x] Use Ruff crates directly and remove tree-sitter.
+- [x] Prove Ruff printing and re-parsing recover node ranges across existing Python fixtures ([AST zipper tests](../../rust/tests/ruff_print.rs)).
+- [ ] Preserve original Python, comments, and IDE mappings around Ruff-generated code.
+- [ ] Mask DSL syntax with valid Python, map its ranges back, and adapt the Ruff AST to the existing pipeline.
+- [ ] Replace the tokenizer and tree builder after existing syntax passes through Ruff.
+- [ ] Replace the generator after output and mapping parity; remove the temporary AST bridge.
+- [ ] Replace remaining source-position math with `ruff_source_file`.
+- [ ] Move built-in language features onto the shared plugin interface.
+- [ ] Separate generic core from HTML and delivery.
+
+The zipper is test-only. Production still uses the source-preserving generator.
+Next: preserve source slices and comments while using recovered ranges for generated code.
 
 Each step preserves generated behavior, error and help locations, IDE injections, UTF encodings, CLI behavior, and PyO3 behavior unless deliberately changed and reviewed.
 
