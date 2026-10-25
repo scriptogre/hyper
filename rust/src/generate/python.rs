@@ -1,5 +1,5 @@
 use super::{
-    CompileOptions, CompileResult, Generator, Language, Output, Segment,
+    CompileOptions, Generator, Language, Output, PythonOutput, Segment,
     collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
     html_segments_for_component, html_segments_for_element,
 };
@@ -1332,7 +1332,7 @@ impl Default for PythonGenerator {
 }
 
 impl Generator for PythonGenerator {
-    fn generate(&self, ast: &Ast, options: &CompileOptions) -> CompileResult {
+    fn generate(&self, ast: &Ast, options: &CompileOptions) -> PythonOutput {
         let mut output = Output::new();
 
         // Frontmatter and body are already split by the `lower` pass.
@@ -1465,7 +1465,7 @@ impl Generator for PythonGenerator {
             (Vec::new(), Vec::new())
         };
 
-        CompileResult {
+        PythonOutput {
             code,
             component_name: ast
                 .file_component

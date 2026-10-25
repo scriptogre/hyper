@@ -6,7 +6,7 @@ fn compile_file(
     source: &str,
     filename: Option<&str>,
     color: bool,
-) -> PyResult<Option<crate::CompileResult>> {
+) -> PyResult<Option<crate::PythonOutput>> {
     let display_filename = filename.unwrap_or("<string>");
     let builtins = PyModule::import(py, "builtins")?;
     match builtins
@@ -18,16 +18,15 @@ fn compile_file(
         Err(error) => return Err(error),
     }
 
-    crate::compile_python_file(source, filename)
-        .map(Some)
-        .map_err(|err| {
-            let diagnostic = if color {
-                err.render_color(source, display_filename)
-            } else {
-                err.render(source, display_filename)
-            };
-            PyValueError::new_err(diagnostic)
-        })
+    let result = crate::compile_python_file(source, filename);
+    if result.has_errors() {
+        return Err(PyValueError::new_err(result.render_diagnostics(
+            source,
+            display_filename,
+            color,
+        )));
+    }
+    Ok(result.python)
 }
 
 #[pyfunction]

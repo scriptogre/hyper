@@ -134,6 +134,9 @@ fn json_error_output_has_error_field() {
         json.get("error").is_some(),
         "JSON error should have 'error' field"
     );
+    assert_eq!(json["diagnostics"][0]["source"], "hyper");
+    assert_eq!(json["diagnostics"][0]["severity"], 1);
+    assert_eq!(json["diagnostics"][0]["code"], "unclosed-element");
 }
 
 // ========================================================================

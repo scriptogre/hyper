@@ -152,7 +152,7 @@ CLI and PyO3 delivery may be a third crate, HTML features, or binaries. Exact cr
 
 1. Prove syntax lowering preserves original ranges and supports existing language fixtures.
 2. Prove whole-file source-preserving generation and exact generated ranges.
-3. Introduce `ruff_source_file`, result, and `lsp_types::Diagnostic` types behind current behavior.
+3. Replace remaining source-position math with `ruff_source_file`.
 4. Move remaining built-in language features onto the shared plugin interface.
 5. Separate generic core from HTML and delivery.
 

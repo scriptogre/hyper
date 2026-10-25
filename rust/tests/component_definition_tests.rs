@@ -17,6 +17,7 @@ def Header(*, title: str) -> Component:
             include_ranges: false,
         },
     )
+    .into_python()
     .expect("subcomponent should compile");
 
     let header = result
@@ -154,9 +155,12 @@ fn duplicate_named_slot_fills_are_rejected() {
     <button {...actions}>Cancel</button>
 </{Card}>
 "#;
-    let error = compile(source, &CompileOptions::default())
-        .expect_err("duplicate named slot fills should fail");
-    let message = error.render(source, "Page.hyper");
+    let result = compile(source, &CompileOptions::default());
+    assert!(
+        result.has_errors(),
+        "duplicate named slot fills should fail"
+    );
+    let message = result.render_diagnostics(source, "Page.hyper", false);
 
     assert!(message.contains("`actions` slot is filled more than once"));
     assert!(message.contains("first fill"));
@@ -201,9 +205,9 @@ def Results(*, query: str) -> Component:
 #[test]
 fn component_props_require_the_keyword_only_marker() {
     let source = "def Button(label: str) -> Component:\n    <button>{label}</button>\n";
-    let error = compile(source, &CompileOptions::default())
-        .expect_err("positional component prop should fail");
-    let message = error.render(source, "Button.hyper");
+    let result = compile(source, &CompileOptions::default());
+    assert!(result.has_errors(), "positional component prop should fail");
+    let message = result.render_diagnostics(source, "Button.hyper", false);
 
     assert!(message.contains("keyword-only"));
     assert!(message.contains("def Button(*, label: str) -> Component:"));
@@ -212,9 +216,9 @@ fn component_props_require_the_keyword_only_marker() {
 #[test]
 fn component_keyword_is_rejected_with_the_replacement() {
     let source = "component Button(*, label: str):\n    <button>{label}</button>\nend\n";
-    let error = compile(source, &CompileOptions::default())
-        .expect_err("removed component keyword should fail");
-    let message = error.render(source, "Button.hyper");
+    let result = compile(source, &CompileOptions::default());
+    assert!(result.has_errors(), "removed component keyword should fail");
+    let message = result.render_diagnostics(source, "Button.hyper", false);
 
     assert!(message.contains("keyword is not valid Hyper syntax"));
     assert!(message.contains("def Name(*, prop: Type) -> Component:"));
@@ -228,6 +232,7 @@ fn compile_code(source: &str) -> String {
             include_ranges: false,
         },
     )
+    .into_python()
     .expect("component should compile")
     .code
 }

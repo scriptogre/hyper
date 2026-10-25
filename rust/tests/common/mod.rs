@@ -1,18 +1,19 @@
 #![allow(dead_code)]
 
 use hyper::CompileOptions;
-use hyper::CompileResult;
+use hyper::PythonOutput;
 use hyper::generate::{Language, Segment};
 
 /// Compile source with default options (no ranges, default function name).
 pub fn compile(source: &str) -> String {
     hyper::compile(source, &CompileOptions::default())
+        .into_python()
         .unwrap()
         .code
 }
 
 /// Compile source with ranges enabled, returning the full result.
-pub fn compile_with_ranges(source: &str, name: &str) -> CompileResult {
+pub fn compile_with_ranges(source: &str, name: &str) -> PythonOutput {
     hyper::compile(
         source,
         &CompileOptions {
@@ -20,10 +21,11 @@ pub fn compile_with_ranges(source: &str, name: &str) -> CompileResult {
             include_ranges: true,
         },
     )
+    .into_python()
     .unwrap()
 }
 
-pub fn python_segments(result: &CompileResult) -> Vec<&Segment> {
+pub fn python_segments(result: &PythonOutput) -> Vec<&Segment> {
     result
         .segments
         .iter()
@@ -31,7 +33,7 @@ pub fn python_segments(result: &CompileResult) -> Vec<&Segment> {
         .collect()
 }
 
-pub fn html_segments(result: &CompileResult) -> Vec<&Segment> {
+pub fn html_segments(result: &PythonOutput) -> Vec<&Segment> {
     result
         .segments
         .iter()

@@ -10,7 +10,10 @@ fn only_generated_names_are_imported() {
     <{Label} />
 "#;
 
-    let code = compile(source, &CompileOptions::default()).unwrap().code;
+    let code = compile(source, &CompileOptions::default())
+        .into_python()
+        .unwrap()
+        .code;
     let imports: Vec<_> = code
         .lines()
         .filter(|line| line.starts_with("from "))
@@ -25,6 +28,7 @@ fn generated_slot_annotations_import_iterable() {
         "---\n<section>{...}</section>\n",
         &CompileOptions::default(),
     )
+    .into_python()
     .unwrap()
     .code;
 

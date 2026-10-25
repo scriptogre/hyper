@@ -78,20 +78,22 @@ fn run_output_test(path: &PathBuf) -> Result<(), Failed> {
         include_ranges: false,
     };
 
-    match compile(&source, &options) {
-        Ok(result) => {
-            if result.code.trim() != expected.trim() {
-                Err(format!(
-                    "Output mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
-                    expected.trim(),
-                    result.code.trim()
-                )
-                .into())
-            } else {
-                Ok(())
-            }
-        }
-        Err(e) => Err(format!("Compile error: {}", e).into()),
+    let result = compile(&source, &options);
+    if result.has_errors() {
+        return Err(result
+            .render_diagnostics(&source, &path.display().to_string(), false)
+            .into());
+    }
+    let python = result.python.unwrap();
+    if python.code.trim() != expected.trim() {
+        Err(format!(
+            "Output mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
+            expected.trim(),
+            python.code.trim()
+        )
+        .into())
+    } else {
+        Ok(())
     }
 }
 
@@ -111,24 +113,25 @@ fn run_injection_test(path: &PathBuf) -> Result<(), Failed> {
         include_ranges: true,
     };
 
-    match compile(&source, &options) {
-        Ok(result) => {
-            let actual = serde_json::json!({
-                "segments": result.segments,
-            });
+    let result = compile(&source, &options);
+    if result.has_errors() {
+        return Err(result
+            .render_diagnostics(&source, &path.display().to_string(), false)
+            .into());
+    }
+    let actual = serde_json::json!({
+        "segments": result.python.unwrap().segments,
+    });
 
-            if actual != expected {
-                Err(format!(
-                    "Segments mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
-                    serde_json::to_string_pretty(&expected).unwrap(),
-                    serde_json::to_string_pretty(&actual).unwrap()
-                )
-                .into())
-            } else {
-                Ok(())
-            }
-        }
-        Err(e) => Err(format!("Compile error: {}", e).into()),
+    if actual != expected {
+        Err(format!(
+            "Segments mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
+            serde_json::to_string_pretty(&expected).unwrap(),
+            serde_json::to_string_pretty(&actual).unwrap()
+        )
+        .into())
+    } else {
+        Ok(())
     }
 }
 
@@ -149,32 +152,32 @@ fn run_error_test(path: &PathBuf) -> Result<(), Failed> {
         include_ranges: false,
     };
 
-    match compile(&source, &options) {
-        Ok(_) => {
-            if expected_err.exists() {
-                Err("Expected error but compiled successfully".into())
-            } else {
-                Ok(()) // No .expected.err means it's allowed to compile
-            }
-        }
-        Err(e) => {
-            if expected_err.exists() {
-                let expected = fs::read_to_string(&expected_err).map_err(|e| e.to_string())?;
-                let actual = e.render(&source, filename);
+    let result = compile(&source, &options);
+    if !result.has_errors() {
+        return if expected_err.exists() {
+            Err("Expected error but compiled successfully".into())
+        } else {
+            Ok(())
+        };
+    }
+    if !expected_err.exists() {
+        return Err(format!(
+            "Missing .expected.err file for error: {:?}",
+            result.diagnostics
+        )
+        .into());
+    }
 
-                if actual.trim() != expected.trim() {
-                    Err(format!(
-                        "Error mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
-                        expected.trim(),
-                        actual.trim()
-                    )
-                    .into())
-                } else {
-                    Ok(())
-                }
-            } else {
-                Err(format!("Missing .expected.err file for error: {}", e).into())
-            }
-        }
+    let expected = fs::read_to_string(&expected_err).map_err(|e| e.to_string())?;
+    let actual = result.render_diagnostics(&source, filename, false);
+    if actual.trim() != expected.trim() {
+        Err(format!(
+            "Error mismatch\n--- expected ---\n{}\n--- actual ---\n{}",
+            expected.trim(),
+            actual.trim()
+        )
+        .into())
+    } else {
+        Ok(())
     }
 }

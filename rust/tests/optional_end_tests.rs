@@ -1,9 +1,11 @@
 use hyper::{CompileOptions, compile};
 
 fn compiled(source: &str) -> String {
-    compile(source, &CompileOptions::default())
-        .unwrap_or_else(|error| panic!("{}", error.render(source, "Page.hyper")))
-        .code
+    let result = compile(source, &CompileOptions::default());
+    if result.has_errors() {
+        panic!("{}", result.render_diagnostics(source, "Page.hyper", false));
+    }
+    result.python.unwrap().code
 }
 
 fn assert_optional_end(source: &str) {
@@ -90,7 +92,7 @@ fn indentation_errors_and_unmatched_end_are_rejected() {
     ];
     let accepted: Vec<_> = sources
         .into_iter()
-        .filter(|source| compile(source, &CompileOptions::default()).is_ok())
+        .filter(|source| !compile(source, &CompileOptions::default()).has_errors())
         .collect();
     assert!(accepted.is_empty(), "Unexpectedly accepted: {accepted:?}");
 }

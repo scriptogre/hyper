@@ -104,54 +104,57 @@ fn process_file(path: &Path, write: bool) -> bool {
         },
     );
 
-    match result {
-        Ok(output) => {
-            let expected_py = path.with_extension("expected.py");
-            has_changes |= write_if_changed(&expected_py, &output.code, write);
+    if !result.has_errors() {
+        let output = result.python.unwrap();
+        let expected_py = path.with_extension("expected.py");
+        has_changes |= write_if_changed(&expected_py, &output.code, write);
 
-            let expected_err = path.with_extension("expected.err");
-            if expected_err.exists() {
-                if write {
-                    let _ = fs::remove_file(&expected_err);
-                }
-                has_changes = true;
+        let expected_err = path.with_extension("expected.err");
+        if expected_err.exists() {
+            if write {
+                let _ = fs::remove_file(&expected_err);
             }
-
-            let result_with_ranges = compile(
-                &source,
-                &CompileOptions {
-                    function_name: Some(name.to_string()),
-                    include_ranges: true,
-                },
-            );
-            if let Ok(r) = result_with_ranges
-                && !r.segments.is_empty()
-            {
-                let expected_json = path.with_extension("expected.json");
-                let json = serde_json::json!({
-                    "segments": r.segments,
-                });
-                let content = serde_json::to_string_pretty(&json).unwrap();
-                has_changes |= write_if_changed(&expected_json, &content, write);
-            }
+            has_changes = true;
         }
-        Err(e) => {
-            if is_error_test {
-                let expected_err = path.with_extension("expected.err");
-                let filename = path
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("unknown");
-                has_changes |= write_if_changed(&expected_err, &e.render(&source, filename), write);
-                for stale in ["expected.py", "expected.json"] {
-                    has_changes |= remove_if_exists(&path.with_extension(stale), write);
-                }
-            } else {
-                eprintln!(
-                    "ERROR: {:?} failed to compile but is not in errors/: {}",
-                    path, e
-                );
+
+        let result_with_ranges = compile(
+            &source,
+            &CompileOptions {
+                function_name: Some(name.to_string()),
+                include_ranges: true,
+            },
+        );
+        if let Some(r) = result_with_ranges.python
+            && !r.segments.is_empty()
+        {
+            let expected_json = path.with_extension("expected.json");
+            let json = serde_json::json!({
+                "segments": r.segments,
+            });
+            let content = serde_json::to_string_pretty(&json).unwrap();
+            has_changes |= write_if_changed(&expected_json, &content, write);
+        }
+    } else {
+        if is_error_test {
+            let expected_err = path.with_extension("expected.err");
+            let filename = path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown");
+            has_changes |= write_if_changed(
+                &expected_err,
+                &result.render_diagnostics(&source, filename, false),
+                write,
+            );
+            for stale in ["expected.py", "expected.json"] {
+                has_changes |= remove_if_exists(&path.with_extension(stale), write);
             }
+        } else {
+            eprintln!(
+                "ERROR: {:?} failed to compile but is not in errors/: {}",
+                path,
+                result.render_diagnostics(&source, "unknown", false)
+            );
         }
     }
 

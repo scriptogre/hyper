@@ -8,8 +8,9 @@ fn compile_source(source: &str) -> Result<String, String> {
             include_ranges: false,
         },
     )
+    .into_python()
     .map(|result| result.code)
-    .map_err(|error| error.to_string())
+    .map_err(|diagnostics| diagnostics[0].message.clone())
 }
 
 #[test]

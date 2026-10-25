@@ -79,23 +79,24 @@ fn generate_stdin(json_output: bool, include_injections: bool, name: Option<Stri
         include_ranges: include_injections,
     };
 
-    let result = match compile(&source, &options) {
-        Ok(r) => r,
-        Err(e) => {
-            if json_output {
-                println!("{}", error_to_json(&e));
-            } else {
-                render_error(&e, &source, "stdin");
-            }
-            std::process::exit(1);
+    let result = compile(&source, &options);
+    if result.has_errors() {
+        if json_output {
+            println!("{}", error_to_json(&result.diagnostics));
+        } else {
+            render_errors(&result, &source, "stdin");
         }
-    };
+        std::process::exit(1);
+    }
+    let python = result
+        .python
+        .expect("successful compilation has Python output");
 
     if json_output {
-        let output = result_to_response(result, include_injections);
+        let output = result_to_response(python, include_injections);
         println!("{}", serde_json::to_string(&output).unwrap());
     } else {
-        print!("{}", result.code);
+        print!("{}", python.code);
     }
 }
 
@@ -152,18 +153,19 @@ fn generate_files(
             include_ranges: false,
         };
 
-        let result = match compile(&source, &options) {
-            Ok(r) => r,
-            Err(e) => {
-                render_error(&e, &source, &file_path);
-                has_errors = true;
-                continue;
-            }
-        };
+        let result = compile(&source, &options);
+        if result.has_errors() {
+            render_errors(&result, &source, &file_path);
+            has_errors = true;
+            continue;
+        }
+        let python = result
+            .python
+            .expect("successful compilation has Python output");
 
         // Write to .py file
         let output_path = Path::new(&file_path).with_extension("py");
-        if let Err(e) = fs::write(&output_path, &result.code) {
+        if let Err(e) = fs::write(&output_path, &python.code) {
             eprintln!("Error writing {}: {}", output_path.display(), e);
             has_errors = true;
             continue;
@@ -325,18 +327,22 @@ fn process_request(json: &str) -> String {
         include_ranges: req.injection,
     };
 
-    let result = match compile(&req.content, &options) {
-        Ok(r) => r,
-        Err(e) => return error_to_json(&e),
-    };
+    let result = compile(&req.content, &options);
+    if result.has_errors() {
+        return error_to_json(&result.diagnostics);
+    }
+    let python = result
+        .python
+        .expect("successful compilation has Python output");
 
-    let response = result_to_response(result, req.injection);
+    let response = result_to_response(python, req.injection);
     serde_json::to_string(&response).unwrap_or_else(|e| format!(r#"{{"error":"{}"}}"#, e))
 }
 
 #[derive(serde::Serialize)]
 struct DaemonErrorResponse {
     error: String,
+    diagnostics: Vec<lsp_types::Diagnostic>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error_line: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -347,15 +353,14 @@ struct DaemonErrorResponse {
     error_end_col: Option<usize>,
 }
 
-fn render_error(e: &hyper::CompileError, source: &str, filename: &str) {
-    if io::stderr().is_terminal() {
-        eprint!("{}", e.render_color(source, filename));
-    } else {
-        eprint!("{}", e.render(source, filename));
-    }
+fn render_errors(result: &hyper::CompilationResult, source: &str, filename: &str) {
+    eprint!(
+        "{}",
+        result.render_diagnostics(source, filename, io::stderr().is_terminal())
+    );
 }
 
-fn result_to_response(result: hyper::CompileResult, include_injections: bool) -> DaemonResponse {
+fn result_to_response(result: hyper::PythonOutput, include_injections: bool) -> DaemonResponse {
     DaemonResponse {
         compiled: result.code,
         segments: include_injections.then_some(result.segments),
@@ -363,29 +368,24 @@ fn result_to_response(result: hyper::CompileResult, include_injections: bool) ->
     }
 }
 
-fn error_to_json(e: &hyper::CompileError) -> String {
-    use hyper::CompileError;
-
-    let (line, col, end_line, end_col) = match e {
-        CompileError::Parse(parse_err) => (
-            Some(parse_err.range.start.line),
-            Some(parse_err.range.start.col),
-            Some(parse_err.range.end.line),
-            Some(parse_err.range.end.col),
-        ),
-        CompileError::Generate(_) => (None, None, None, None),
-    };
+fn error_to_json(diagnostics: &[lsp_types::Diagnostic]) -> String {
+    let diagnostic = diagnostics.first().expect("error result has a diagnostic");
+    let has_range = diagnostic
+        .code
+        .as_ref()
+        .is_none_or(|code| code != &lsp_types::NumberOrString::String("generation-error".into()));
+    let position = |value: u32| has_range.then_some(value as usize);
 
     let response = DaemonErrorResponse {
-        error: e.to_string(),
-        error_line: line,
-        error_col: col,
-        error_end_line: end_line,
-        error_end_col: end_col,
+        error: diagnostic.message.clone(),
+        diagnostics: diagnostics.to_vec(),
+        error_line: position(diagnostic.range.start.line),
+        error_col: position(diagnostic.range.start.character),
+        error_end_line: position(diagnostic.range.end.line),
+        error_end_col: position(diagnostic.range.end.character),
     };
 
-    serde_json::to_string(&response)
-        .unwrap_or_else(|_| format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "\\\"")))
+    serde_json::to_string(&response).unwrap_or_else(|error| format!(r#"{{"error":"{error}"}}"#))
 }
 
 #[derive(serde::Serialize)]

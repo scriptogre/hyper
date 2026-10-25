@@ -8,11 +8,12 @@
 //! use hyper::{compile, CompileOptions};
 //!
 //! let source = "<div>{name}</div>\n";
-//! let result = compile(source, &CompileOptions::default()).unwrap();
-//! println!("{}", result.code);
+//! let result = compile(source, &CompileOptions::default());
+//! println!("{}", result.python.unwrap().code);
 //! ```
 
 pub mod ast;
+pub mod diagnostic;
 pub mod error;
 pub mod generate;
 pub mod html;
@@ -24,10 +25,53 @@ pub mod plugins;
 mod python_module;
 
 use generate::Generator;
+use lsp_types::{Diagnostic, DiagnosticSeverity};
 use std::path::Path;
 
-/// Compile a `.hyper` source string to Python.
-pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, CompileError> {
+/// Python output and diagnostics from one compilation.
+#[derive(Debug, Clone)]
+pub struct CompilationResult {
+    pub python: Option<PythonOutput>,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+impl CompilationResult {
+    pub fn has_errors(&self) -> bool {
+        self.diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.severity == Some(DiagnosticSeverity::ERROR))
+    }
+
+    pub fn into_python(self) -> Result<PythonOutput, Vec<Diagnostic>> {
+        match self.python {
+            Some(python) if !self.has_errors() => Ok(python),
+            _ => Err(self.diagnostics),
+        }
+    }
+
+    pub fn render_diagnostics(&self, source: &str, filename: &str, color: bool) -> String {
+        self.diagnostics
+            .iter()
+            .map(|diagnostic| diagnostic::render_diagnostic(diagnostic, source, filename, color))
+            .collect()
+    }
+}
+
+/// Compile a `.hyper` source string.
+pub fn compile(source: &str, options: &CompileOptions) -> CompilationResult {
+    match compile_python(source, options) {
+        Ok(python) => CompilationResult {
+            python: Some(python),
+            diagnostics: Vec::new(),
+        },
+        Err(error) => CompilationResult {
+            python: None,
+            diagnostics: vec![error.diagnostic(source)],
+        },
+    }
+}
+
+fn compile_python(source: &str, options: &CompileOptions) -> Result<PythonOutput, CompileError> {
     let parsed = parse::HyperParser::new().parse_file(source)?;
     let mut ast = lower::lower(parsed.nodes, source, parsed.has_separator);
 
@@ -46,15 +90,14 @@ pub fn compile(source: &str, options: &CompileOptions) -> Result<CompileResult, 
 
 /// Compile a `.hyper` source string to Python code, deriving the component name
 /// from the filename when one is provided.
-pub fn compile_to_python(source: &str, filename: Option<&str>) -> Result<String, CompileError> {
-    compile_python_file(source, filename).map(|result| result.code)
+pub fn compile_to_python(source: &str, filename: Option<&str>) -> Result<String, Vec<Diagnostic>> {
+    compile_python_file(source, filename)
+        .into_python()
+        .map(|python| python.code)
 }
 
 // Import hooks also need the mode from the same parse and compile pass.
-fn compile_python_file(
-    source: &str,
-    filename: Option<&str>,
-) -> Result<CompileResult, CompileError> {
+fn compile_python_file(source: &str, filename: Option<&str>) -> CompilationResult {
     let options = CompileOptions {
         function_name: filename.and_then(function_name_from_filename),
         include_ranges: false,
@@ -71,6 +114,6 @@ fn function_name_from_filename(filename: &str) -> Option<String> {
 
 pub use ast::{Ast, Node, Position, TextRange};
 pub use error::{CompileError, ParseError, ParseResult};
-pub use generate::{CompileOptions, CompileResult};
+pub use generate::{CompileOptions, PythonOutput};
 pub use parse::Parser;
 pub use plugins::{Flow, Plugin, walk};

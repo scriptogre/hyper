@@ -1,10 +1,10 @@
-use hyper::{CompileOptions, CompileResult};
+use hyper::{CompileOptions, PythonOutput};
 use libtest_mimic::Failed;
 use std::fs;
 use std::path::PathBuf;
 
 /// Compile a .hyper file with ranges enabled.
-pub fn compile(path: &PathBuf) -> Result<CompileResult, Failed> {
+pub fn compile(path: &PathBuf) -> Result<PythonOutput, Failed> {
     let source = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let name = path
         .file_stem()
@@ -16,7 +16,9 @@ pub fn compile(path: &PathBuf) -> Result<CompileResult, Failed> {
         include_ranges: true,
     };
 
-    hyper::compile(&source, &options).map_err(|e| format!("Compile error: {}", e).into())
+    hyper::compile(&source, &options)
+        .into_python()
+        .map_err(|diagnostics| format!("Compile error: {diagnostics:?}").into())
 }
 
 /// Extract a substring from `s` using UTF-16 offsets.

@@ -17,18 +17,18 @@ pub enum ErrorKind {
 }
 
 impl ErrorKind {
-    pub fn as_str(&self) -> &'static str {
+    pub fn code(self) -> &'static str {
         match self {
-            ErrorKind::UnclosedElement => "Unclosed element",
-            ErrorKind::UnclosedComponent => "Unclosed component",
-            ErrorKind::UnclosedSlot => "Unclosed slot",
-            ErrorKind::UnclosedBlock => "Unclosed block",
-            ErrorKind::MismatchedCloseTag => "Mismatched close tag",
-            ErrorKind::UnexpectedToken => "Unexpected token",
-            ErrorKind::InvalidSyntax => "Invalid syntax",
-            ErrorKind::VoidElementWithContent => "Void element with content",
-            ErrorKind::DuplicateAttribute => "Duplicate attribute",
-            ErrorKind::InvalidNesting => "Invalid nesting",
+            ErrorKind::UnclosedElement => "unclosed-element",
+            ErrorKind::UnclosedComponent => "unclosed-component",
+            ErrorKind::UnclosedSlot => "unclosed-slot",
+            ErrorKind::UnclosedBlock => "unclosed-block",
+            ErrorKind::MismatchedCloseTag => "mismatched-close-tag",
+            ErrorKind::UnexpectedToken => "unexpected-token",
+            ErrorKind::InvalidSyntax => "invalid-syntax",
+            ErrorKind::VoidElementWithContent => "void-element-with-content",
+            ErrorKind::DuplicateAttribute => "duplicate-attribute",
+            ErrorKind::InvalidNesting => "invalid-nesting",
         }
     }
 }
@@ -84,172 +84,30 @@ impl ParseError {
         self
     }
 
-    /// Render the error with source context (with ANSI colors when `color` is true)
+    /// Render the error with source context.
     pub fn render(&self, source: &str, filename: &str) -> String {
-        self.render_inner(source, filename, false)
+        crate::diagnostic::render_diagnostic(
+            &crate::diagnostic::create_diagnostic(
+                &CompileError::Parse(Box::new(self.clone())),
+                source,
+            ),
+            source,
+            filename,
+            false,
+        )
     }
 
-    /// Render the error with ANSI color codes
+    /// Render the error with ANSI colors.
     pub fn render_color(&self, source: &str, filename: &str) -> String {
-        self.render_inner(source, filename, true)
-    }
-
-    fn render_inner(&self, source: &str, filename: &str, color: bool) -> String {
-        // Visual hierarchy: red for errors only, dim for structural chrome, bold for emphasis
-        let red = if color { "\x1b[1;31m" } else { "" };
-        let dim = if color { "\x1b[2m" } else { "" };
-        let underline = if color { "\x1b[4m" } else { "" };
-        let cyan = if color { "\x1b[1;38;5;73m" } else { "" }; // bold #2cabb8 for help label
-        let reset = if color { "\x1b[0m" } else { "" };
-
-        let mut output = String::new();
-
-        // Leading blank line for visual separation
-        output.push('\n');
-
-        // File location at the top: use related_range if available (points to where fix is needed)
-        let loc_range = self.related_range.as_ref().unwrap_or(&self.range);
-        let line = loc_range.start.line + 1;
-        let col = loc_range.start.col + 1;
-        let location = format!("{}:{}:{}", filename, line, col);
-        if color {
-            // OSC 8 hyperlink: \x1b]8;;URL\x07TEXT\x1b]8;;\x07
-            let abs_path = std::path::Path::new(filename)
-                .canonicalize()
-                .map(|p| p.display().to_string())
-                .unwrap_or_else(|_| filename.to_string());
-            output.push_str(&format!(
-                " {}file:{} \x1b]8;;file://{}\x07{}{}{}\x1b]8;;\x07\n",
-                dim, reset, abs_path, underline, location, reset
-            ));
-        } else {
-            output.push_str(&format!(" file: {}\n", location));
-        }
-
-        // Error header: bold red label, message with highlighted tags
-        let message = if color {
-            highlight_inline_tags(&self.message)
-        } else {
-            self.message.clone()
-        };
-        output.push_str(&format!("{}error:{} {}\n", red, reset, message));
-
-        // Source context
-        let err_line = self.range.start.line + 1;
-        if let Some(source_line) = source.lines().nth(self.range.start.line) {
-            let line_num_width = format!("{}", err_line).len().max(2);
-            let highlighted = if color {
-                highlight_syntax(source_line)
-            } else {
-                source_line.to_string()
-            };
-            output.push_str(&format!(
-                "{}{:>width$} |{}\n",
-                dim,
-                "",
-                reset,
-                width = line_num_width
-            ));
-            output.push_str(&format!(
-                "{}{:>width$} |{} {}\n",
-                dim,
-                err_line,
-                reset,
-                highlighted,
-                width = line_num_width
-            ));
-
-            // Underline: red carets — the primary visual anchor in the code
-            let underline_start = self.range.start.col;
-            let underline_len = if self.range.end.line == self.range.start.line {
-                (self.range.end.col.saturating_sub(self.range.start.col)).max(1)
-            } else {
-                source_line.len().saturating_sub(underline_start).max(1)
-            };
-
-            let spaces = " ".repeat(underline_start);
-            let carets = "^".repeat(underline_len);
-            output.push_str(&format!(
-                "{}{:>width$} |{} {}{}{}{}\n",
-                dim,
-                "",
-                reset,
-                spaces,
-                red,
-                carets,
-                reset,
-                width = line_num_width
-            ));
-        }
-
-        // Related range: dim chrome, normal text — secondary context
-        if let Some(ref related) = self.related_range {
-            let related_line = related.start.line + 1;
-            if let Some(related_source_line) = source.lines().nth(related.start.line) {
-                let line_num_width = format!("{}", related_line).len().max(2);
-                let highlighted = if color {
-                    highlight_syntax(related_source_line)
-                } else {
-                    related_source_line.to_string()
-                };
-                output.push_str(&format!(
-                    "{}{:>width$} |{} {}\n",
-                    dim,
-                    related_line,
-                    reset,
-                    highlighted,
-                    width = line_num_width
-                ));
-
-                let underline_start = related.start.col;
-                let underline_len = if related.end.line == related.start.line {
-                    (related.end.col.saturating_sub(related.start.col)).max(1)
-                } else {
-                    related_source_line
-                        .len()
-                        .saturating_sub(underline_start)
-                        .max(1)
-                };
-
-                let spaces = " ".repeat(underline_start);
-                let carets = "^".repeat(underline_len);
-                let label = self.related_label.as_deref().unwrap_or("opened here");
-                output.push_str(&format!(
-                    "{}{:>width$} |{} {}{}{} {}{}\n",
-                    dim,
-                    "",
-                    reset,
-                    spaces,
-                    dim,
-                    carets,
-                    label,
-                    reset,
-                    width = line_num_width
-                ));
-            }
-        }
-
-        // Help text: bold cyan label (aligned with error:), content with highlighted tags
-        if let Some(ref help) = self.help {
-            output.push('\n'); // blank line before help for spacing
-            for (i, help_line) in help.lines().enumerate() {
-                let content = if color {
-                    highlight_inline_tags(help_line)
-                } else {
-                    help_line.to_string()
-                };
-                if i == 0 {
-                    output.push_str(&format!(" {}help:{} {}\n", cyan, reset, content));
-                } else {
-                    output.push_str(&format!("       {}\n", content));
-                }
-            }
-        }
-
-        // Trailing blank line for visual separation
-        output.push('\n');
-
-        output
+        crate::diagnostic::render_diagnostic(
+            &crate::diagnostic::create_diagnostic(
+                &CompileError::Parse(Box::new(self.clone())),
+                source,
+            ),
+            source,
+            filename,
+            true,
+        )
     }
 }
 
@@ -269,22 +127,19 @@ pub enum CompileError {
 }
 
 impl CompileError {
-    /// Render the error with source context (no color)
-    pub fn render(&self, source: &str, filename: &str) -> String {
-        match self {
-            CompileError::Parse(err) => err.render(source, filename),
-            CompileError::Generate(msg) => format!("error: Generation error: {}\n", msg),
-        }
+    /// Convert this error to the compiler's shared LSP diagnostic.
+    pub fn diagnostic(&self, source: &str) -> lsp_types::Diagnostic {
+        crate::diagnostic::create_diagnostic(self, source)
     }
 
-    /// Render the error with ANSI color codes
+    /// Render the error with source context.
+    pub fn render(&self, source: &str, filename: &str) -> String {
+        crate::diagnostic::render_diagnostic(&self.diagnostic(source), source, filename, false)
+    }
+
+    /// Render the error with ANSI colors.
     pub fn render_color(&self, source: &str, filename: &str) -> String {
-        match self {
-            CompileError::Parse(err) => err.render_color(source, filename),
-            CompileError::Generate(msg) => {
-                format!("\x1b[1;31merror\x1b[0m: \x1b[1m{}\x1b[0m\n", msg)
-            }
-        }
+        crate::diagnostic::render_diagnostic(&self.diagnostic(source), source, filename, true)
     }
 }
 
@@ -306,7 +161,7 @@ impl fmt::Display for CompileError {
 impl std::error::Error for CompileError {}
 
 /// Highlight tags and keywords in prose text (error messages, help text)
-fn highlight_inline_tags(text: &str) -> String {
+pub(crate) fn highlight_inline_tags(text: &str) -> String {
     const TAG: &str = "\x1b[38;5;180m"; // #d5b778 - HTML tags
     const KEYWORD: &str = "\x1b[38;5;173m"; // #ce8e6d - Python keywords
     const RESET: &str = "\x1b[0m";
@@ -619,7 +474,7 @@ fn highlight_inline_tags(text: &str) -> String {
 }
 
 /// Syntax highlighting for error context lines (JetBrains New UI dark theme)
-fn highlight_syntax(line: &str) -> String {
+pub(crate) fn highlight_syntax(line: &str) -> String {
     // 256-color ANSI codes approximating JetBrains New UI dark theme
     const TAG: &str = "\x1b[38;5;180m"; // #d5b778 - HTML tags
     const ATTR: &str = "\x1b[38;5;250m"; // #bababa - attribute names

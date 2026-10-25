@@ -23,9 +23,9 @@ pub struct CompileOptions {
     pub include_ranges: bool,
 }
 
-/// Generation result
+/// Generated Python and its source mapping.
 #[derive(Debug, Clone)]
-pub struct CompileResult {
+pub struct PythonOutput {
     pub code: String,
     pub component_name: Option<String>,
     pub segments: Vec<Segment>,
@@ -34,7 +34,7 @@ pub struct CompileResult {
 
 /// Generator trait - converts AST to code
 pub trait Generator {
-    fn generate(&self, ast: &Ast, options: &CompileOptions) -> CompileResult;
+    fn generate(&self, ast: &Ast, options: &CompileOptions) -> PythonOutput;
 }
 
 /// Byte offsets of each top-level `{` and its matching `}` in a template

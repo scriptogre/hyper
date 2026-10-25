@@ -10,6 +10,7 @@ fn assert_opening_tag_ranges_cover_source(source: &str, opening_start: usize, op
             include_ranges: true,
         },
     )
+    .into_python()
     .expect("multiline opening tag should compile");
 
     let mut covered = vec![false; source.len()];

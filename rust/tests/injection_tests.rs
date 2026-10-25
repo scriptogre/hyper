@@ -334,52 +334,50 @@ fn test_complex_expression_range_excludes_braces() {
 fn test_error_has_position_for_unclosed_element() {
     let source = "<div>unclosed";
 
-    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
-
-    match err {
-        hyper::CompileError::Parse(parse_err) => {
-            assert_eq!(parse_err.range.start.line, 0);
-            assert!(parse_err.message.contains("never closed"));
-        }
-        _ => panic!("Expected ParseError, got {:?}", err),
-    }
+    let result = hyper::compile(source, &CompileOptions::default());
+    let diagnostic = &result.diagnostics[0];
+    assert_eq!(diagnostic.range.start.line, 0);
+    assert!(diagnostic.message.contains("never closed"));
 }
 
 #[test]
 fn test_error_has_position_for_nested_interactive() {
     let source = "<a><button>click</button></a>";
 
-    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
+    let result = hyper::compile(source, &CompileOptions::default());
+    let diagnostic = &result.diagnostics[0];
+    assert!(diagnostic.message.contains("cannot appear inside"));
+    assert!(
+        diagnostic.range.start.character > 0,
+        "Should point to <button>, not start of line"
+    );
+}
 
-    match err {
-        hyper::CompileError::Parse(parse_err) => {
-            assert!(parse_err.message.contains("cannot appear inside"));
-            assert!(
-                parse_err.range.start.col > 0,
-                "Should point to <button>, not start of line"
-            );
-        }
-        _ => panic!("Expected ParseError"),
-    }
+#[test]
+fn diagnostic_columns_use_utf16() {
+    let source = "<p>😀</p><a><button>click</button></a>";
+    let result = hyper::compile(source, &CompileOptions::default());
+    let diagnostic = &result.diagnostics[0];
+    let button_start = source.find("<button>").unwrap();
+
+    assert_eq!(
+        diagnostic.range.start.character as usize,
+        source[..button_start].encode_utf16().count()
+    );
 }
 
 #[test]
 fn test_error_has_position_for_duplicate_attribute() {
     let source = r#"<div class={x} class={y}>text</div>"#;
 
-    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
-
-    match err {
-        hyper::CompileError::Parse(parse_err) => {
-            assert!(
-                parse_err.message.contains("twice")
-                    || parse_err.message.contains("duplicate")
-                    || parse_err.message.contains("set twice")
-            );
-            assert_eq!(parse_err.range.start.line, 0);
-        }
-        _ => panic!("Expected ParseError"),
-    }
+    let result = hyper::compile(source, &CompileOptions::default());
+    let diagnostic = &result.diagnostics[0];
+    assert!(
+        diagnostic.message.contains("twice")
+            || diagnostic.message.contains("duplicate")
+            || diagnostic.message.contains("set twice")
+    );
+    assert_eq!(diagnostic.range.start.line, 0);
 }
 
 // ========================================================================
@@ -1240,17 +1238,12 @@ fn test_same_blessed_name_multiple_components() {
 fn test_multiple_different_blessed_names_error() {
     let source = "<{Card} {**props} />\n<{Button} {**attrs} />\n";
 
-    let err = hyper::compile(source, &CompileOptions::default()).unwrap_err();
-
-    match err {
-        hyper::CompileError::Generate(msg) => {
-            assert!(
-                msg.contains("props") && msg.contains("attrs"),
-                "Error should mention both spread names. Got: {msg}"
-            );
-        }
-        _ => panic!("Expected Generate error, got: {:?}", err),
-    }
+    let result = hyper::compile(source, &CompileOptions::default());
+    let message = &result.diagnostics[0].message;
+    assert!(
+        message.contains("props") && message.contains("attrs"),
+        "Error should mention both spread names. Got: {message}"
+    );
 }
 
 #[test]
