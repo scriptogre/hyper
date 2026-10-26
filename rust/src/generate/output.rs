@@ -116,10 +116,10 @@ fn substring_utf16(s: &str, start: usize, end: usize) -> String {
 /// characters (leading whitespace or anchor-indent spaces) so that
 /// `position()` always returns the correct compiled offset — no
 /// post-hoc range patching needed.
+#[derive(Default)]
 pub struct Output {
-    lines: Vec<String>,
-    current_line: String,
-    line_number: usize,
+    code: String,
+    current_line_start: usize,
     segments: Vec<Segment>,
     helpers: std::collections::BTreeSet<String>,
     // Formatting-aware position tracking
@@ -130,16 +130,7 @@ pub struct Output {
 
 impl Output {
     pub fn new() -> Self {
-        Self {
-            lines: Vec::new(),
-            current_line: String::new(),
-            line_number: 0,
-            segments: Vec::new(),
-            helpers: std::collections::BTreeSet::new(),
-            skip_remaining: 0,
-            dedent_amount: 0,
-            dedent_skip_remaining: 0,
-        }
+        Self::default()
     }
 
     /// Record a runtime helper as used (e.g. `escape`, `render_class`, `safe`).
@@ -158,7 +149,7 @@ impl Output {
     pub fn push(&mut self, text: &str) {
         // Fast path: no formatting active
         if self.skip_remaining == 0 && self.dedent_amount == 0 {
-            self.current_line.push_str(text);
+            self.code.push_str(text);
             return;
         }
 
@@ -183,15 +174,14 @@ impl Output {
                 self.dedent_skip_remaining = 0;
             }
 
-            self.current_line.push(ch);
+            self.code.push(ch);
         }
     }
 
     /// Add a newline
     pub fn newline(&mut self) {
-        self.current_line.push('\n');
-        self.lines.push(std::mem::take(&mut self.current_line));
-        self.line_number += 1;
+        self.code.push('\n');
+        self.current_line_start = self.code.len();
     }
 
     /// Add a segment
@@ -201,21 +191,12 @@ impl Output {
 
     /// Get current UTF-16 position in output
     pub fn position(&self) -> usize {
-        // Build the string so far and count UTF-16 code units
-        let prev_lines: String = self.lines.join("");
-        let so_far = prev_lines + &self.current_line;
-        so_far.encode_utf16().count()
+        self.code.encode_utf16().count()
     }
 
     /// Finish and return the generated code
-    pub fn finish(mut self) -> (String, Vec<Segment>) {
-        // Push final line if not empty (no trailing newline for last line)
-        if !self.current_line.is_empty() {
-            self.lines.push(std::mem::take(&mut self.current_line));
-        }
-
-        let code = self.lines.join("");
-        (code, self.segments)
+    pub fn finish(self) -> (String, Vec<Segment>) {
+        (self.code, self.segments)
     }
 
     /// Transfer segments from another Output, adjusting compiled positions by an offset.
@@ -256,20 +237,29 @@ impl Output {
     /// Remove trailing whitespace (spaces, tabs, newlines) from the current
     /// line buffer. Used to clean up trailing content in combined blocks.
     pub fn trim_trailing(&mut self) {
-        let trimmed_len = self.current_line.trim_end_matches([' ', '\t', '\n']).len();
-        self.current_line.truncate(trimmed_len);
+        let trimmed_end = self.code.trim_end_matches([' ', '\t', '\n']).len();
+        self.code.truncate(trimmed_end.max(self.current_line_start));
     }
 
     /// Remove trailing spaces and tabs only (preserve newlines) from the
     /// current line buffer. Used when the content naturally ends with `\n`.
     pub fn trim_trailing_spaces(&mut self) {
-        let trimmed_len = self.current_line.trim_end_matches([' ', '\t']).len();
-        self.current_line.truncate(trimmed_len);
+        let trimmed_end = self.code.trim_end_matches([' ', '\t']).len();
+        self.code.truncate(trimmed_end.max(self.current_line_start));
     }
 }
 
-impl Default for Output {
-    fn default() -> Self {
-        Self::new()
-    }
+#[test]
+fn preserve_finished_lines_when_trimming_unicode_output() {
+    let mut output = Output::new();
+    output.push("雪🙂 \t\n");
+    output.newline();
+    output.trim_trailing();
+    assert_eq!(output.position(), 7);
+    output.push("é \t\n");
+    output.trim_trailing_spaces();
+    assert_eq!(output.position(), 11);
+    output.trim_trailing();
+    assert_eq!(output.position(), 8);
+    assert_eq!(output.finish().0, "雪🙂 \t\n\né");
 }

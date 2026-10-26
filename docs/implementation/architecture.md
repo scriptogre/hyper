@@ -154,6 +154,7 @@ Each patch replaces existing code and reduces the code or machinery Hyper mainta
 
 - [x] Use Ruff crates directly and remove tree-sitter.
 - [x] Use Ruff's lexer for Python bracket counting instead of a custom string/comment scanner.
+- [x] Store generated Python in one buffer without joining lines to calculate positions.
 - [x] Prove Ruff printing and re-parsing recover node ranges across existing Python fixtures ([AST zipper tests](../../rust/tests/ruff_print.rs)).
 - [ ] Preserve original Python, comments, and IDE mappings around Ruff-generated code.
 - [ ] Mask DSL syntax with valid Python, map its ranges back, and adapt the Ruff AST to the existing pipeline.
