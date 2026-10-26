@@ -1113,63 +1113,18 @@ impl<'a> Tokenizer<'a> {
 
     /// Calculate net bracket depth, accounting for strings and comments
     fn calculate_bracket_depth(&self, code: &str) -> i32 {
-        let mut depth = 0i32;
-        let mut in_string = false;
-        let mut string_char = ' ';
-        let mut in_triple_string = false;
-        let mut chars = code.chars().peekable();
+        use ruff_python_ast::token::TokenKind;
 
-        while let Some(ch) = chars.next() {
-            if in_string {
-                if ch == '\\' && !in_triple_string {
-                    // Skip escaped character in regular strings
-                    chars.next();
-                    continue;
-                }
-                if in_triple_string {
-                    // Check for triple quote end
-                    if ch == string_char && chars.peek() == Some(&string_char) {
-                        chars.next();
-                        if chars.peek() == Some(&string_char) {
-                            chars.next();
-                            in_string = false;
-                            in_triple_string = false;
-                        }
-                    }
-                } else if ch == string_char {
-                    in_string = false;
-                }
-            } else {
-                match ch {
-                    '"' | '\'' => {
-                        // Check for triple quote
-                        if chars.peek() == Some(&ch) {
-                            chars.next();
-                            if chars.peek() == Some(&ch) {
-                                chars.next();
-                                in_string = true;
-                                string_char = ch;
-                                in_triple_string = true;
-                            }
-                            // else: empty string "" or '', not entering string mode
-                        } else {
-                            in_string = true;
-                            string_char = ch;
-                            in_triple_string = false;
-                        }
-                    }
-                    '#' => {
-                        // Rest of line is comment, skip to newline
-                        while chars.next().is_some_and(|c| c != '\n') {}
-                    }
-                    '(' | '[' | '{' => depth += 1,
-                    ')' | ']' | '}' => depth = (depth - 1).max(0),
-                    _ => {}
-                }
+        let mut lexer = ruff_python_parser::lexer::lex(code, ruff_python_parser::Mode::Module);
+        let mut depth = 0;
+        loop {
+            match lexer.next_token() {
+                TokenKind::Lpar | TokenKind::Lsqb | TokenKind::Lbrace => depth += 1,
+                TokenKind::Rpar | TokenKind::Rsqb | TokenKind::Rbrace => depth = (depth - 1).max(0),
+                TokenKind::EndOfFile => return depth,
+                _ => {}
             }
         }
-
-        depth
     }
 
     fn tokenize_content(&mut self, tokens: &mut Vec<Token>) -> ParseResult<()> {
@@ -2660,16 +2615,30 @@ mod tests {
     }
 
     #[test]
-    fn test_multiline_with_string_containing_bracket() {
-        // String containing bracket should not affect depth count
-        let source = "x = {\n    \"key\": \"value with { brace\"\n}\n";
-        let tokens = tokenize(source);
-
-        let stmt_tokens: Vec<_> = tokens
-            .iter()
-            .filter(|t| matches!(t, Token::PythonStatement { .. }))
-            .collect();
-        assert_eq!(stmt_tokens.len(), 1);
+    fn test_multiline_statement_boundaries() {
+        for value in [
+            r#""value with { brace""#,
+            r#""" ''"#,
+            r#"r"\[""#,
+            "'''(\n# }\n)'''",
+            r#"f'{lookup["("]}'"#,
+            "value # ) ] }",
+            "({'雪': [1, 2]}, 3)",
+        ] {
+            let statement = format!("x = (\n    {value}\n)");
+            let tokens = tokenize(&format!("{statement}\nfollowing = 1\n"));
+            let statements: Vec<_> = tokens
+                .iter()
+                .filter_map(|token| match token {
+                    Token::PythonStatement { code, range } => Some((code.as_str(), range)),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(statements.len(), 2, "{value}");
+            assert_eq!(statements[0].0, statement);
+            assert_eq!(statements[0].1.end.byte, statement.len());
+            assert_eq!(statements[1].0, "following = 1");
+        }
     }
 
     #[test]

@@ -150,9 +150,10 @@ CLI and PyO3 delivery may be a third crate, HTML features, or binaries. Exact cr
 
 ## Implementation plan
 
-Complete one step before switching the production path.
+Each patch replaces existing code and reduces the code or machinery Hyper maintains.
 
 - [x] Use Ruff crates directly and remove tree-sitter.
+- [x] Use Ruff's lexer for Python bracket counting instead of a custom string/comment scanner.
 - [x] Prove Ruff printing and re-parsing recover node ranges across existing Python fixtures ([AST zipper tests](../../rust/tests/ruff_print.rs)).
 - [ ] Preserve original Python, comments, and IDE mappings around Ruff-generated code.
 - [ ] Mask DSL syntax with valid Python, map its ranges back, and adapt the Ruff AST to the existing pipeline.
@@ -163,7 +164,6 @@ Complete one step before switching the production path.
 - [ ] Separate generic core from HTML and delivery.
 
 The zipper is test-only. Production still uses the source-preserving generator.
-Next: preserve source slices and comments while using recovered ranges for generated code.
 
 Each step preserves generated behavior, error and help locations, IDE injections, UTF encodings, CLI behavior, and PyO3 behavior unless deliberately changed and reviewed.
 
