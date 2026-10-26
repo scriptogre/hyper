@@ -9,7 +9,7 @@ use std::sync::Arc;
 use crate::ast::python::{Code, HelperCall};
 use crate::ast::{Ast, ExpressionNode, Function, Node, Position, TextRange};
 
-pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
+pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
     let n = nodes.len();
 
     // A decorator "leads to a definition" when only decorators, comments, or
@@ -89,7 +89,6 @@ pub fn lower(nodes: Vec<Node>, source: &str, has_separator: bool) -> Ast {
             header_comments,
             body,
         },
-        has_separator,
         Arc::from(source),
     )
 }

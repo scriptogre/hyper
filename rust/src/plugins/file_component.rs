@@ -8,9 +8,9 @@ pub struct FileComponent;
 
 impl FileComponent {
     /// `filename` is the stem the component is named after; defaults to `Render`.
-    pub fn lower(ast: &mut Ast, filename: Option<&str>) {
+    pub fn lower(ast: &mut Ast, filename: Option<&str>, has_separator: bool) {
         let module = &mut ast.module;
-        let renders = ast.has_separator
+        let renders = has_separator
             || !module.params.is_empty()
             || !module.decorators.is_empty()
             || module.body.iter().any(renders_markup);

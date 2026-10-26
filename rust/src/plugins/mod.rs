@@ -174,9 +174,7 @@ impl Plugin for NestedFunctions {
 }
 
 /// Run the module passes, then the standard plugins once per function scope.
-/// `filename` names the implicit component when the file renders one.
-pub fn run(ast: &mut Ast, filename: Option<&str>) -> Result<(), CompileError> {
-    FileComponent::lower(ast, filename);
+pub fn run(ast: &mut Ast) -> Result<(), CompileError> {
     Components::lower(ast)?;
 
     for definition in &mut ast.definitions {

@@ -13,29 +13,20 @@ pub struct TreeBuilder {
     pos: usize,
     source: Arc<str>,
     in_header: bool, // Track if we're before the --- separator
-    has_separator: bool,
     content_indent: usize,
     element_stack: Vec<String>, // Parent element names for nesting validation
 }
 
 impl TreeBuilder {
     pub fn new(tokens: Vec<Token>, source: Arc<str>) -> Self {
-        let has_separator = tokens
-            .iter()
-            .any(|token| matches!(token, Token::Separator { .. }));
         Self {
             tokens,
             pos: 0,
             source,
             in_header: true, // Start in header zone
-            has_separator,
             content_indent: 0,
             element_stack: Vec::new(),
         }
-    }
-
-    pub fn has_separator(&self) -> bool {
-        self.has_separator
     }
 
     pub fn build(&mut self) -> ParseResult<Vec<Node>> {

@@ -21,19 +21,16 @@ pub struct Ast {
     /// The component a rendering file compiles to. Set by the `FileComponent` pass.
     pub file_component: Option<FunctionDefinition>,
     pub runtime_imports: Vec<&'static str>,
-    /// Whether the source has a `---` separator.
-    pub has_separator: bool,
     pub source: Arc<str>,
 }
 
 impl Ast {
-    pub fn new(module: Function, has_separator: bool, source: Arc<str>) -> Self {
+    pub fn new(module: Function, source: Arc<str>) -> Self {
         Self {
             module,
             definitions: Vec::new(),
             file_component: None,
             runtime_imports: Vec::new(),
-            has_separator,
             source,
         }
     }

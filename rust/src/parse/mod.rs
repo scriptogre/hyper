@@ -33,13 +33,16 @@ impl HyperParser {
 
     pub(crate) fn parse_file(&self, source: &str) -> ParseResult<ParsedFile> {
         let tokens = tokenize(source)?;
+        let has_separator = tokens
+            .iter()
+            .any(|token| matches!(token, Token::Separator { .. }));
         let expression_braces = collect_expression_braces(&tokens);
         let source_arc: Arc<str> = Arc::from(source);
         let mut builder = TreeBuilder::new(tokens, source_arc);
         let nodes = builder.build()?;
         Ok(ParsedFile {
             nodes,
-            has_separator: builder.has_separator(),
+            has_separator,
             expression_braces,
         })
     }
