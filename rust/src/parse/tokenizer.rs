@@ -79,6 +79,104 @@ pub enum AttributeValue {
     SlotAssignment(String, TextRange),
 }
 
+pub(crate) fn collect_expression_braces(tokens: &[Token]) -> Vec<(usize, usize)> {
+    let mut braces = Vec::new();
+
+    for token in tokens {
+        match token {
+            Token::Expression { range, .. } => {
+                braces.push((range.start.byte, range.end.byte - 1));
+            }
+            Token::ComponentOpen {
+                name_range,
+                attributes,
+                ..
+            } => {
+                braces.push((name_range.start.byte - 1, name_range.end.byte));
+                collect_attribute_braces(attributes, &mut braces);
+            }
+            Token::ComponentClose { range, .. } => {
+                braces.push((range.start.byte + 2, range.end.byte - 2));
+            }
+            Token::HtmlElementOpen { attributes, .. } => {
+                collect_attribute_braces(attributes, &mut braces);
+            }
+            Token::SlotOpen { name, range } => {
+                if name.is_some() {
+                    braces.push((range.start.byte + 1, range.end.byte - 2));
+                } else {
+                    braces.push((range.start.byte, range.end.byte - 1));
+                }
+            }
+            Token::SlotClose {
+                name: Some(_),
+                range,
+            } => {
+                braces.push((range.start.byte + 2, range.end.byte - 2));
+            }
+            _ => {}
+        }
+    }
+
+    braces
+}
+
+fn collect_attribute_braces(attributes: &[Attribute], braces: &mut Vec<(usize, usize)>) {
+    for attribute in attributes {
+        match &attribute.value {
+            AttributeValue::Expression(_, range) => {
+                braces.push((range.start.byte, range.end.byte - 1));
+            }
+            AttributeValue::Shorthand(_, range)
+            | AttributeValue::Spread(_, range)
+            | AttributeValue::SlotAssignment(_, range) => {
+                braces.push((range.start.byte, range.end.byte));
+            }
+            AttributeValue::String(value) => {
+                let without_escaped = value.replace("{{", "").replace("}}", "");
+                if !without_escaped.contains('{') || !without_escaped.contains('}') {
+                    continue;
+                }
+
+                let value_start = attribute.range.start.byte + attribute.name.len() + 2;
+                for (open, close) in template_interpolations(value) {
+                    if close < value.len() {
+                        braces.push((value_start + open, value_start + close));
+                    }
+                }
+            }
+            AttributeValue::Bool => {}
+        }
+    }
+}
+
+pub(crate) fn template_interpolations(value: &str) -> Vec<(usize, usize)> {
+    let mut pairs = Vec::new();
+    let mut open = 0;
+    let mut depth = 0;
+    for (index, character) in value.char_indices() {
+        match character {
+            '{' => {
+                if depth == 0 {
+                    open = index;
+                }
+                depth += 1;
+            }
+            '}' if depth > 0 => {
+                depth -= 1;
+                if depth == 0 {
+                    pairs.push((open, index));
+                }
+            }
+            _ => {}
+        }
+    }
+    if depth > 0 {
+        pairs.push((open, value.len()));
+    }
+    pairs
+}
+
 /// Tokens produced by the lexer
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {

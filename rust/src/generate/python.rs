@@ -1,7 +1,6 @@
 use super::{
     CompileOptions, Generator, Language, Output, PythonOutput, Segment,
-    collect_component_attr_expr_spans, collect_expression_braces, convert_braces_to_utf16,
-    html_segments_for_component, html_segments_for_element,
+    collect_component_attr_expr_spans, html_segments_for_component, html_segments_for_element,
 };
 use crate::ast::python::Code;
 use crate::ast::*;
@@ -1441,8 +1440,8 @@ impl Generator for PythonGenerator {
         let import_offset = import_lines.len();
         code.insert_str(runtime_import_offset, &import_lines);
 
-        // Adjust segments and collect IDE metadata when ranges are requested.
-        let (segments, expression_braces) = if options.include_ranges {
+        // Adjust tracked segments when ranges are requested.
+        let segments = if options.include_ranges {
             // Adjust tracked segments by the import line offset, but only for segments
             // at or after the insertion point (user imports come before it)
             let segments: Vec<crate::generate::Segment> = tracked_segments
@@ -1456,13 +1455,9 @@ impl Generator for PythonGenerator {
                 })
                 .collect();
 
-            // Collect expression brace positions from the AST
-            let byte_braces = collect_expression_braces(ast);
-            let expression_braces = convert_braces_to_utf16(&ast.source, &byte_braces);
-
-            (segments, expression_braces)
+            segments
         } else {
-            (Vec::new(), Vec::new())
+            Vec::new()
         };
 
         PythonOutput {
@@ -1472,7 +1467,7 @@ impl Generator for PythonGenerator {
                 .as_ref()
                 .map(|component| component.name.clone()),
             segments,
-            expression_braces,
+            expression_braces: Vec::new(),
         }
     }
 }

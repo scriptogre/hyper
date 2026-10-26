@@ -1,6 +1,7 @@
 pub mod tokenizer;
 mod tree_builder;
 
+use tokenizer::collect_expression_braces;
 pub use tokenizer::{Position, TextRange, Token, tokenize};
 use tree_builder::TreeBuilder;
 
@@ -12,6 +13,7 @@ use std::sync::Arc;
 pub(crate) struct ParsedFile {
     pub nodes: Vec<Node>,
     pub has_separator: bool,
+    pub expression_braces: Vec<(usize, usize)>,
 }
 
 /// Parser trait - converts source code to a flat node stream (lowered later).
@@ -31,12 +33,14 @@ impl HyperParser {
 
     pub(crate) fn parse_file(&self, source: &str) -> ParseResult<ParsedFile> {
         let tokens = tokenize(source)?;
+        let expression_braces = collect_expression_braces(&tokens);
         let source_arc: Arc<str> = Arc::from(source);
         let mut builder = TreeBuilder::new(tokens, source_arc);
         let nodes = builder.build()?;
         Ok(ParsedFile {
             nodes,
             has_separator: builder.has_separator(),
+            expression_braces,
         })
     }
 }

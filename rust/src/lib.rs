@@ -73,6 +73,7 @@ pub fn compile(source: &str, options: &CompileOptions) -> CompilationResult {
 
 fn compile_python(source: &str, options: &CompileOptions) -> Result<PythonOutput, CompileError> {
     let parsed = parse::HyperParser::new().parse_file(source)?;
+    let expression_braces = parsed.expression_braces;
     let mut ast = lower::lower(parsed.nodes, source, parsed.has_separator);
 
     plugins::run(&mut ast, options.function_name.as_deref())?;
@@ -83,6 +84,7 @@ fn compile_python(source: &str, options: &CompileOptions) -> Result<PythonOutput
         generate::validate_python_segments(source, &result.code, &mut result.segments);
         // Convert source offsets from byte to UTF-16 last; validation expects byte offsets.
         generate::segments_source_to_utf16(source, &mut result.segments);
+        result.expression_braces = generate::convert_braces_to_utf16(source, &expression_braces);
     }
 
     Ok(result)
