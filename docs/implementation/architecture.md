@@ -156,12 +156,11 @@ Each patch replaces existing code and reduces the code or machinery Hyper mainta
 - [x] Use Ruff's lexer for Python bracket counting instead of a custom string/comment scanner.
 - [x] Store generated Python in one buffer without joining lines to calculate positions.
 - [x] Prove Ruff printing and re-parsing recover node ranges across existing Python fixtures ([AST zipper tests](../../rust/tests/ruff_print.rs)).
+- [ ] Mask DSL syntax with valid Python, map its ranges back, and feed the Ruff AST to the existing pipeline. This replaces `tokenizer.rs`, `tree_builder.rs`, and `brace_collector.rs`.
 - [ ] Preserve original Python, comments, and IDE mappings around Ruff-generated code.
-- [ ] Mask DSL syntax with valid Python, map its ranges back, and adapt the Ruff AST to the existing pipeline.
-- [ ] Replace the tokenizer and tree builder after existing syntax passes through Ruff.
-- [ ] Replace the generator after output and mapping parity; remove the temporary AST bridge.
 - [ ] Replace remaining source-position math with `ruff_source_file`.
 - [ ] Move built-in language features onto the shared plugin interface.
+- [ ] Replace the generator and remove the temporary AST bridge. `generate/python.rs` is mostly HTML, component, and slot lowering, so this follows the plugin move.
 - [ ] Separate generic core from HTML and delivery.
 
 The zipper is test-only. Production still uses the source-preserving generator.
