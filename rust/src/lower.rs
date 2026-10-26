@@ -4,12 +4,10 @@
 //! structured function instead of re-deriving it. Whether the file renders a
 //! component is decided later by the `FileComponent` pass.
 
-use std::sync::Arc;
-
 use crate::ast::python::{Code, HelperCall};
 use crate::ast::{Ast, ExpressionNode, Function, Node, Position, TextRange};
 
-pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
+pub fn lower(nodes: Vec<Node>) -> Ast {
     let n = nodes.len();
 
     // A decorator "leads to a definition" when only decorators, comments, or
@@ -80,17 +78,14 @@ pub fn lower(nodes: Vec<Node>, source: &str) -> Ast {
         }
     }
 
-    Ast::new(
-        Function {
-            is_async: false,
-            params,
-            imports,
-            decorators,
-            header_comments,
-            body,
-        },
-        Arc::from(source),
-    )
+    Ast::new(Function {
+        is_async: false,
+        params,
+        imports,
+        decorators,
+        header_comments,
+        body,
+    })
 }
 
 /// Lower a template interpolation to an output expression for the cases already

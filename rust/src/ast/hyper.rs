@@ -5,7 +5,6 @@
 //! separate tree.
 
 use std::collections::HashMap;
-use std::sync::Arc;
 
 // Re-export Position and TextRange from tokenizer to avoid duplication
 // This allows the rest of the codebase to use a single TextRange type
@@ -21,17 +20,15 @@ pub struct Ast {
     /// The component a rendering file compiles to. Set by the `FileComponent` pass.
     pub file_component: Option<FunctionDefinition>,
     pub runtime_imports: Vec<&'static str>,
-    pub source: Arc<str>,
 }
 
 impl Ast {
-    pub fn new(module: Function, source: Arc<str>) -> Self {
+    pub fn new(module: Function) -> Self {
         Self {
             module,
             definitions: Vec::new(),
             file_component: None,
             runtime_imports: Vec::new(),
-            source,
         }
     }
 }

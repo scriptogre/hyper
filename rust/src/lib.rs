@@ -75,7 +75,7 @@ fn compile_python(source: &str, options: &CompileOptions) -> Result<PythonOutput
     let parsed = parse::HyperParser::new().parse_file(source)?;
     let expression_braces = parsed.expression_braces;
     let has_separator = parsed.has_separator;
-    let mut ast = lower::lower(parsed.nodes, source);
+    let mut ast = lower::lower(parsed.nodes);
 
     plugins::FileComponent::lower(&mut ast, options.function_name.as_deref(), has_separator);
     plugins::run(&mut ast)?;
